@@ -1775,7 +1775,7 @@ async function goToPayment(){
               pageUrl: window.location.href,
             };
             try {
-              const res = await fetch('/.netlify/functions/create-payment',{
+              const res = await fetch('/api/create-payment',{
                 method:'POST',
                 headers:{'Content-Type':'application/json'},
                 body: JSON.stringify({
@@ -1933,7 +1933,7 @@ function startPixPolling(paymentId) {
   async function poll() {
     attempts++;
     try {
-      const res = await fetch(`/.netlify/functions/check-payment?id=${paymentId}`);
+      const res = await fetch(`/api/check-payment?id=${paymentId}`);
       if (!res.ok) { consecutiveErrors++; if (consecutiveErrors < 5) schedule(); return; }
       consecutiveErrors = 0;
       const data = await res.json();
