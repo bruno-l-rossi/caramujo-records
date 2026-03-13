@@ -8,8 +8,6 @@
  *   RESEND_API_KEY   — API Key do Resend
  */
 
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function isValidEmail(v) {
@@ -32,6 +30,194 @@ function sanitize(v, maxLen = 200) {
 }
 function fmtCpf(cpf) {
   return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
+// ── Gerador de contrato HTML ─────────────────────────────────────────────────
+
+function generateContractHtml({ name, cpf, email, items, amount, paymentId, termsTimestamp }) {
+  const data = new Date(termsTimestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  const cpfFmt = fmtCpf(cpf);
+
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<style>
+  body{font-family:'Courier New',Courier,monospace;background:#fff;color:#111;margin:0;padding:0;}
+  .wrap{max-width:700px;margin:0 auto;padding:40px 32px;}
+  .logo{text-align:center;margin-bottom:8px;}
+  .logo h1{font-size:1.6rem;color:#b82c08;letter-spacing:.12em;margin:0;}
+  .logo p{font-size:.75rem;color:#666;margin:2px 0;}
+  .divider{border:none;border-top:2px solid #b82c08;margin:18px 0;}
+  .title{text-align:center;margin-bottom:24px;}
+  .title h2{font-size:1.1rem;letter-spacing:.08em;margin:0;}
+  .title p{font-size:.8rem;color:#555;margin:4px 0 0;}
+  .section{margin-bottom:20px;}
+  .section h3{font-size:.85rem;color:#b82c08;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid #e0c0b0;padding-bottom:4px;margin-bottom:10px;}
+  .field{display:flex;gap:8px;font-size:.82rem;margin-bottom:6px;}
+  .field b{min-width:160px;color:#333;}
+  .clause{margin-bottom:14px;}
+  .clause h4{font-size:.82rem;color:#b82c08;margin:0 0 4px;}
+  .clause p,.clause li{font-size:.8rem;line-height:1.7;color:#222;margin:2px 0;}
+  ul{margin:4px 0 4px 18px;padding:0;}
+  .accept{background:#fff8f0;border:1px solid #e0c0b0;border-left:4px solid #b82c08;padding:14px 18px;margin:24px 0;font-size:.8rem;}
+  .accept b{display:block;color:#b82c08;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;}
+  .sigs{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:32px;}
+  .sig{border-top:1px solid #999;padding-top:8px;font-size:.78rem;color:#444;}
+  .footer{text-align:center;font-size:.7rem;color:#999;margin-top:32px;border-top:1px solid #eee;padding-top:12px;}
+</style></head><body><div class="wrap">
+
+  <div class="logo">
+    <h1>CARAMUJO RECORDS</h1>
+    <p>Produção Musical Independente · São Carlos, SP</p>
+    <p>@rideblan33 · contato@caramujorecords.com.br</p>
+  </div>
+  <hr class="divider"/>
+  <div class="title">
+    <h2>CONTRATO DE LICENÇA EXCLUSIVA DE USO</h2>
+    <p>Instrumento Particular de Cessão de Direitos de Uso</p>
+  </div>
+
+  <div class="section">
+    <h3>Dados da Transação</h3>
+    <div class="field"><b>Data:</b><span>${data}</span></div>
+    <div class="field"><b>ID do Pagamento:</b><span>${paymentId}</span></div>
+    <div class="field"><b>Itens:</b><span>${items}</span></div>
+    <div class="field"><b>Valor Total:</b><span>R$ ${amount}</span></div>
+  </div>
+
+  <div class="section">
+    <h3>Identificação das Partes</h3>
+    <p style="font-size:.8rem;font-weight:bold;margin-bottom:6px;">PRODUTOR (LICENCIANTE)</p>
+    <div class="field"><b>Nome artístico:</b><span>@rideblan33</span></div>
+    <div class="field"><b>Nome completo:</b><span>Bruno Lanzoni Rossi</span></div>
+    <div class="field"><b>Email:</b><span>contato@caramujorecords.com.br</span></div>
+    <br/>
+    <p style="font-size:.8rem;font-weight:bold;margin-bottom:6px;">COMPRADOR (LICENCIADO)</p>
+    <div class="field"><b>Nome completo:</b><span>${name}</span></div>
+    <div class="field"><b>CPF:</b><span>${cpfFmt}</span></div>
+    <div class="field"><b>Email:</b><span>${email}</span></div>
+  </div>
+
+  <hr class="divider"/>
+  <div class="section">
+    <h3>Termos e Condições</h3>
+    <div class="clause"><h4>1. Objeto do Contrato</h4>
+    <p>O presente contrato tem por objeto a cessão, em caráter exclusivo e definitivo, do direito de uso do beat/serviço identificado acima ("a Obra"), produzido por @rideblan33, para fins de gravação, distribuição e exploração comercial de uma única faixa musical pelo Licenciado.</p></div>
+    <div class="clause"><h4>2. Licença Exclusiva</h4>
+    <p>A licença concedida é EXCLUSIVA: após a conclusão desta compra, a Obra será removida permanentemente do catálogo da Caramujo Records e não será vendida, licenciada ou disponibilizada a terceiros em nenhuma hipótese.</p></div>
+    <div class="clause"><h4>3. Entrega dos Arquivos</h4>
+    <p>O Licenciado receberá no email informado os seguintes arquivos após confirmação do pagamento:</p>
+    <ul><li>Arquivo MP3 em 320kbps</li><li>Arquivo WAV</li><li>Stems separados por instrumento (se contratado Beat + Stems)</li><li>Uma via deste contrato</li></ul></div>
+    <div class="clause"><h4>4. Prazos de Entrega</h4>
+    <ul><li>Beat catálogo: até 24 horas</li><li>Beat personalizado: até 2 semanas</li><li>Mixagem, Masterização ou Mix + Master: até 3 semanas</li></ul></div>
+    <div class="clause"><h4>5. Crédito Obrigatório</h4>
+    <p>Plataformas digitais: creditar @rideblan33 como artista principal. YouTube: adicionar "(prod. @rideblan33)" no título do vídeo.</p></div>
+    <div class="clause"><h4>6. Royalties</h4>
+    <p>Royalties Fonográficos (master): 90% Licenciado / 10% Produtor. O Licenciado deve realizar o split share de 10% ao Produtor no cadastro da faixa em distribuidoras digitais.</p></div>
+    <div class="clause"><h4>7. Vedações</h4>
+    <ul><li>Revender, ceder ou sublicenciar a Obra a terceiros</li><li>Remover ou alterar créditos do Produtor</li><li>Utilizar a Obra em mais de uma faixa sem novo contrato</li><li>Registrar a Obra em nome próprio no ECAD/PRO sem o Produtor</li></ul></div>
+    <div class="clause"><h4>8. Disposições Gerais</h4>
+    <p>As partes elegem o foro da Comarca de São Carlos/SP. Este contrato representa o acordo integral entre as partes e substitui entendimentos anteriores.</p></div>
+  </div>
+
+  <div class="accept">
+    <b>Registro do Aceite Eletrônico</b>
+    O Licenciado aceitou eletronicamente os presentes termos antes de efetuar o pagamento. Este aceite possui validade jurídica nos termos do Art. 107 do Código Civil Brasileiro.<br/><br/>
+    <div class="field"><b>Timestamp:</b><span>${termsTimestamp}</span></div>
+    <div class="field"><b>Versão dos termos:</b><span>caramujo-termos-v1-2026</span></div>
+    <div class="field"><b>Email do comprador:</b><span>${email}</span></div>
+    <div class="field"><b>CPF do comprador:</b><span>${cpfFmt}</span></div>
+  </div>
+
+  <div class="sigs">
+    <div class="sig">Produtor — @rideblan33 / Bruno Lanzoni Rossi</div>
+    <div class="sig">Licenciado — ${name}</div>
+  </div>
+
+  <div class="footer">Caramujo Records · São Carlos, SP · @rideblan33 · caramujorecords.com.br</div>
+</div></body></html>`;
+}
+
+// ── Envio de email via Resend ────────────────────────────────────────────────
+
+async function sendNotificationEmail({ env, payment, name, email, cpf, itemsList, amount, selectedPaymentMethod, termsAcceptance, contractHtml }) {
+  const resendKey   = env.RESEND_API_KEY;
+  const notifyEmail = env.NOTIFY_EMAIL || 'rideblan33@gmail.com';
+  const fromEmail   = env.NOTIFY_FROM  || 'rideblan33@caramujorecords.com.br';
+
+  if (!resendKey) {
+    console.warn('[email] RESEND_API_KEY não configurado — skip.');
+    return;
+  }
+
+  const statusPt = { approved: '✅ APROVADO', pending: '⏳ PENDENTE (PIX)', in_process: '🔄 EM ANÁLISE', rejected: '❌ RECUSADO' };
+  const statusLabel = statusPt[payment.status] || payment.status.toUpperCase();
+  const dataHora = new Date(termsAcceptance.timestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>
+  body{font-family:'Courier New',monospace;background:#1a1108;color:#f0e6c8;margin:0;padding:0;}
+  .wrap{max-width:560px;margin:0 auto;padding:32px 24px;}
+  .hd{background:#7a1a08;padding:20px 24px;}
+  .hd h1{margin:0;font-size:1.1rem;letter-spacing:.12em;color:#fff;text-transform:uppercase;}
+  .hd p{margin:4px 0 0;font-size:.75rem;color:#f0c060;}
+  .bdy{background:#2a1e0e;padding:24px;border:1px solid #4a3010;border-top:none;}
+  .status{font-size:1rem;font-weight:700;margin-bottom:16px;padding:10px 14px;background:#3a2810;border-left:3px solid #e84c18;color:#fff;}
+  table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+  td{padding:7px 4px;font-size:.8rem;border-bottom:1px solid #3a2810;vertical-align:top;color:#f0e6c8;}
+  td:first-child{color:#d4a060;width:38%;white-space:nowrap;font-weight:700;}
+  .sect{color:#e84c18;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;padding:12px 0 4px;border-top:1px solid #4a3010;}
+  .ft{margin-top:24px;padding-top:16px;border-top:1px solid #4a3010;font-size:.68rem;color:#a08050;text-align:center;}
+  </style></head><body><div class="wrap">
+  <div class="hd"><h1>🐌 Caramujo Records — Nova Venda</h1><p>${dataHora}</p></div>
+  <div class="bdy">
+    <div class="status">${statusLabel} — R$ ${amount}</div>
+    <table>
+      <tr class="sect"><td colspan="2">PEDIDO</td></tr>
+      <tr><td>ID Pagamento</td><td>${payment.id}</td></tr>
+      <tr><td>Itens</td><td>${itemsList}</td></tr>
+      <tr><td>Valor Total</td><td>R$ ${amount}</td></tr>
+      <tr><td>Método</td><td>${selectedPaymentMethod === 'bank_transfer' ? 'PIX' : 'Cartão de Crédito'}</td></tr>
+      <tr class="sect"><td colspan="2">CLIENTE</td></tr>
+      <tr><td>Nome</td><td>${name}</td></tr>
+      <tr><td>Email</td><td>${email}</td></tr>
+      <tr><td>CPF</td><td>${fmtCpf(cpf)}</td></tr>
+      <tr class="sect"><td colspan="2">ACEITE DOS TERMOS</td></tr>
+      <tr><td>Versão</td><td>${termsAcceptance.version}</td></tr>
+      <tr><td>Timestamp</td><td>${termsAcceptance.timestamp}</td></tr>
+    </table>
+    <p style="font-size:.78rem;color:#c49040;">📎 Contrato completo no segundo email anexo.</p>
+  </div>
+  <div class="ft">Caramujo Records · São Carlos, SP · @rideblan33</div>
+</div></body></html>`;
+
+  // Email 1: notificação resumida
+  const res1 = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: `Caramujo Records <${fromEmail}>`,
+      to: [notifyEmail],
+      subject: `🐌 Nova venda R$${amount} — ${itemsList} [${statusLabel}]`,
+      html,
+    }),
+  });
+  if (!res1.ok) throw new Error(`Resend error (notif): ${res1.status} — ${await res1.text()}`);
+
+  // Email 2: contrato completo (apenas se gerado)
+  if (contractHtml) {
+    const res2 = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: `Caramujo Records <${fromEmail}>`,
+        to: [notifyEmail],
+        subject: `📋 Contrato — ${itemsList} — ${name} (ID ${payment.id})`,
+        html: contractHtml,
+      }),
+    });
+    if (!res2.ok) console.error(`[email] Falha ao enviar contrato: ${res2.status}`);
+    else console.log('[email] Contrato enviado separadamente via Resend');
+  }
+
+  console.log(`[email] Notificação enviada para ${notifyEmail} via Resend`);
 }
 
 // ── Gerador de contrato PDF ──────────────────────────────────────────────────
@@ -331,24 +517,24 @@ export async function onRequestPost({ request, env }) {
       termsTimestamp: termsAcceptance.timestamp,
     }));
 
-    // Gera contrato PDF
-    let contractBase64 = null;
+    // Gera contrato HTML
+    let contractHtml = null;
     try {
-      contractBase64 = await generateContract({
+      contractHtml = generateContractHtml({
         name, cpf, email,
         items: itemsList,
         amount,
         paymentId: payment.id,
         termsTimestamp: termsAcceptance.timestamp,
       });
-      console.log('[pdf] Contrato gerado com sucesso');
-    } catch (pdfErr) {
-      console.error('[pdf] Erro ao gerar contrato:', pdfErr.message);
+      console.log('[contrato] Contrato HTML gerado com sucesso');
+    } catch (contractErr) {
+      console.error('[contrato] Erro ao gerar contrato:', contractErr.message);
     }
 
-    // Envia email com contrato anexado
+    // Envia email com contrato
     try {
-      await sendNotificationEmail({ env, payment, name, email, cpf, itemsList, amount, selectedPaymentMethod, termsAcceptance, contractBase64 });
+      await sendNotificationEmail({ env, payment, name, email, cpf, itemsList, amount, selectedPaymentMethod, termsAcceptance, contractHtml });
     } catch (emailErr) {
       console.error('[email] Falha ao enviar notificação:', emailErr.message);
     }
@@ -357,7 +543,7 @@ export async function onRequestPost({ request, env }) {
       success: true,
       paymentId: payment.id,
       status: payment.status,
-      contractPdf: contractBase64,
+      contractPdf: null,
       pix: pixInfo ? { qrCode: pixInfo.qr_code, qrCodeBase64: pixInfo.qr_code_base64, expiresAt: pixInfo.date_of_expiration } : null,
     }, { status: 200, headers: corsHeaders });
 
