@@ -8,7 +8,7 @@
  *   RESEND_API_KEY   — API Key do Resend
  */
 
-import { PDFDocument, rgb, StandardFonts } from 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
