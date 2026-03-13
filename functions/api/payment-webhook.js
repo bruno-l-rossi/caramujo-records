@@ -3,13 +3,14 @@
  * POST /api/payment-webhook
  *
  * Quando pagamento é aprovado:
- *  1. Envia email de notificação via MailChannels
+ *  1. Envia email de notificação via Resend
  *  2. Marca o beat como sold:true no GitHub → dispara redeploy automático
  *
  * Variáveis de ambiente necessárias:
  *   MP_ACCESS_TOKEN  — Access Token do Mercado Pago
  *   NOTIFY_EMAIL     — email destinatário das notificações
  *   NOTIFY_FROM      — email remetente (ex: rideblan33@caramujorecords.com.br)
+ *   RESEND_API_KEY   — API Key do Resend (re_...)
  *   GITHUB_TOKEN     — Personal Access Token do GitHub (scope: repo)
  */
 
@@ -18,11 +19,17 @@ const GITHUB_REPO   = 'caramujo-records';
 const GITHUB_FILE   = 'index.html';
 const GITHUB_BRANCH = 'main';
 
-// ── Email via MailChannels ───────────────────────────────────────────────────
+// ── Email via Resend ─────────────────────────────────────────────────────────
 
 async function sendApprovalEmail({ env, payment }) {
+  const resendKey   = env.RESEND_API_KEY;
   const notifyEmail = env.NOTIFY_EMAIL || 'rideblan33@gmail.com';
   const fromEmail   = env.NOTIFY_FROM  || 'rideblan33@caramujorecords.com.br';
+
+  if (!resendKey) {
+    console.warn('[email] RESEND_API_KEY não configurado — skip.');
+    return;
+  }
 
   const payer    = payment.payer || {};
   const name     = [payer.first_name, payer.last_name].filter(Boolean).join(' ') || '—';
@@ -73,22 +80,25 @@ async function sendApprovalEmail({ env, payment }) {
   <div class="ft">Caramujo Records · São Carlos, SP · @rideblan33</div>
 </div></body></html>`;
 
-  const res = await fetch('https://api.mailchannels.net/tx/v1/send', {
+  const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Authorization': `Bearer ${resendKey}`,
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify({
-      personalizations: [{ to: [{ email: notifyEmail }] }],
-      from: { email: fromEmail, name: 'Caramujo Records' },
+      from: `Caramujo Records <${fromEmail}>`,
+      to: [notifyEmail],
       subject: `✅ PAGO R$${amount} — ${desc} — ENVIAR ARQUIVOS`,
-      content: [{ type: 'text/html', value: html }],
+      html,
     }),
   });
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`MailChannels error: ${res.status} — ${err}`);
+    throw new Error(`Resend error: ${res.status} — ${err}`);
   }
-  console.log(`[webhook] Email enviado para ${notifyEmail}`);
+  console.log(`[email] Notificação enviada para ${notifyEmail} via Resend`);
 }
 
 // ── Marca beat como vendido no GitHub ───────────────────────────────────────
@@ -111,7 +121,7 @@ async function markBeatSold({ githubToken, beatName }) {
   if (!getRes.ok) throw new Error(`GitHub GET error: ${getRes.status}`);
   const fileData = await getRes.json();
 
-  // 2. Decodifica o conteúdo (base64 → string)
+  // 2. Decodifica o conteúdo
   const content = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
 
   // 3. Busca o beat pelo nome e troca sold:false por sold:true
@@ -128,7 +138,7 @@ async function markBeatSold({ githubToken, beatName }) {
 
   const updatedContent = content.replace(regex, '$1sold:true');
 
-  // 4. Faz o commit via API do GitHub
+  // 4. Faz o commit
   const encoded = btoa(unescape(encodeURIComponent(updatedContent)));
   const putRes = await fetch(apiBase, {
     method: 'PUT',
@@ -149,7 +159,7 @@ async function markBeatSold({ githubToken, beatName }) {
   console.log(`[github] Beat "${beatName}" marcado como sold:true — redeploy iniciado.`);
 }
 
-// ── Extrai nome do beat da descrição do pagamento ───────────────────────────
+// ── Extrai nome do beat da descrição ────────────────────────────────────────
 
 function extractBeatName(description) {
   return description
@@ -195,7 +205,6 @@ export async function onRequestPost({ request, env }) {
       }
 
       // 2. Marca beat como vendido se for compra de beat do catálogo
-      // (exclui pacotes, serviços e beats personalizados)
       const desc = payment.description || '';
       const isCatalogBeat = desc.includes('Caramujo Records —')
         && !desc.includes('Beat Personalizado')
