@@ -2,13 +2,27 @@
  * Cloudflare Pages Function: payment-webhook
  * POST /api/payment-webhook
  *
- * Recebe notificações do Mercado Pago quando pagamento é aprovado.
- * Configura em: MP Developers → Sua aplicação → Webhooks
- * URL: https://caramujorecords.com.br/api/payment-webhook
+ * Quando pagamento é aprovado:
+ *  1. Envia email de notificação via MailChannels
+ *  2. Marca o beat como sold:true no GitHub → dispara redeploy automático
+ *
+ * Variáveis de ambiente necessárias:
+ *   MP_ACCESS_TOKEN  — Access Token do Mercado Pago
+ *   NOTIFY_EMAIL     — email destinatário das notificações
+ *   NOTIFY_FROM      — email remetente (ex: rideblan33@caramujorecords.com.br)
+ *   GITHUB_TOKEN     — Personal Access Token do GitHub (scope: repo)
  */
 
-async function sendApprovalEmail({ notifyEmail, gmailUser, gmailPass, payment }) {
-  if (!gmailUser || !gmailPass) return;
+const GITHUB_OWNER  = 'bruno-l-rossi';
+const GITHUB_REPO   = 'caramujo-records';
+const GITHUB_FILE   = 'index.html';
+const GITHUB_BRANCH = 'main';
+
+// ── Email via MailChannels ───────────────────────────────────────────────────
+
+async function sendApprovalEmail({ env, payment }) {
+  const notifyEmail = env.NOTIFY_EMAIL || 'rideblan33@gmail.com';
+  const fromEmail   = env.NOTIFY_FROM  || 'rideblan33@caramujorecords.com.br';
 
   const payer    = payment.payer || {};
   const name     = [payer.first_name, payer.last_name].filter(Boolean).join(' ') || '—';
@@ -17,7 +31,7 @@ async function sendApprovalEmail({ notifyEmail, gmailUser, gmailPass, payment })
   const amount   = payment.transaction_amount;
   const methodMap = { bank_transfer: 'PIX', credit_card: 'Cartão de Crédito', debit_card: 'Cartão de Débito' };
   const method   = methodMap[payment.payment_type_id] || payment.payment_type_id || '—';
-  const desc     = payment.description || '—';
+  const desc     = (payment.description || '—').replace('Caramujo Records — ', '');
   const dataHora = new Date(payment.date_approved || payment.date_last_updated)
     .toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 
@@ -42,12 +56,12 @@ async function sendApprovalEmail({ notifyEmail, gmailUser, gmailPass, payment })
     <div class="status">✅ APROVADO — R$ ${amount}</div>
     <div class="action"><strong>⚡ Ação necessária</strong>
       Envie os arquivos para <strong style="color:#f0c060">${email}</strong><br/>
-      Itens: <strong style="color:#f0c060">${desc.replace('Caramujo Records — ', '')}</strong>
+      Itens: <strong style="color:#f0c060">${desc}</strong>
     </div>
     <table>
       <tr class="sect"><td colspan="2">PEDIDO</td></tr>
       <tr><td>ID Pagamento</td><td>${payment.id}</td></tr>
-      <tr><td>Itens</td><td>${desc.replace('Caramujo Records — ', '')}</td></tr>
+      <tr><td>Itens</td><td>${desc}</td></tr>
       <tr><td>Valor Total</td><td>R$ ${amount}</td></tr>
       <tr><td>Método</td><td>${method}</td></tr>
       <tr class="sect"><td colspan="2">CLIENTE</td></tr>
@@ -59,26 +73,93 @@ async function sendApprovalEmail({ notifyEmail, gmailUser, gmailPass, payment })
   <div class="ft">Caramujo Records · São Carlos, SP · @rideblan33</div>
 </div></body></html>`;
 
-  // Cloudflare Workers não tem Node.js — usa fetch para SMTP via MailChannels (gratuito no CF)
-  // ou via Gmail API. Aqui usamos MailChannels que é nativo no Cloudflare Pages.
-  const mailRes = await fetch('https://api.mailchannels.net/tx/v1/send', {
+  const res = await fetch('https://api.mailchannels.net/tx/v1/send', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       personalizations: [{ to: [{ email: notifyEmail }] }],
-      from: { email: gmailUser, name: 'Caramujo Records' },
-      subject: `✅ PAGO R$${amount} — ${desc.replace('Caramujo Records — ', '')} — ENVIAR ARQUIVOS`,
+      from: { email: fromEmail, name: 'Caramujo Records' },
+      subject: `✅ PAGO R$${amount} — ${desc} — ENVIAR ARQUIVOS`,
       content: [{ type: 'text/html', value: html }],
     }),
   });
 
-  if (!mailRes.ok) {
-    const err = await mailRes.text();
-    throw new Error(`MailChannels error: ${mailRes.status} — ${err}`);
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`MailChannels error: ${res.status} — ${err}`);
+  }
+  console.log(`[webhook] Email enviado para ${notifyEmail}`);
+}
+
+// ── Marca beat como vendido no GitHub ───────────────────────────────────────
+
+async function markBeatSold({ githubToken, beatName }) {
+  if (!githubToken) {
+    console.warn('[github] GITHUB_TOKEN não configurado — skip.');
+    return;
   }
 
-  console.log(`[webhook] Email de aprovação enviado para ${notifyEmail}`);
+  const apiBase = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
+  const headers = {
+    Authorization: `Bearer ${githubToken}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+
+  // 1. Busca o arquivo atual
+  const getRes = await fetch(`${apiBase}?ref=${GITHUB_BRANCH}`, { headers });
+  if (!getRes.ok) throw new Error(`GitHub GET error: ${getRes.status}`);
+  const fileData = await getRes.json();
+
+  // 2. Decodifica o conteúdo (base64 → string)
+  const content = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
+
+  // 3. Busca o beat pelo nome e troca sold:false por sold:true
+  const beatNameEscaped = beatName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(
+    `(\\{id:\\d+,\\s*name:'${beatNameEscaped}'[^}]*?)sold:false`,
+    'i'
+  );
+
+  if (!regex.test(content)) {
+    console.warn(`[github] Beat "${beatName}" não encontrado ou já marcado como vendido.`);
+    return;
+  }
+
+  const updatedContent = content.replace(regex, '$1sold:true');
+
+  // 4. Faz o commit via API do GitHub
+  const encoded = btoa(unescape(encodeURIComponent(updatedContent)));
+  const putRes = await fetch(apiBase, {
+    method: 'PUT',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: `chore: marca beat "${beatName}" como vendido [automated]`,
+      content: encoded,
+      sha: fileData.sha,
+      branch: GITHUB_BRANCH,
+    }),
+  });
+
+  if (!putRes.ok) {
+    const err = await putRes.text();
+    throw new Error(`GitHub PUT error: ${putRes.status} — ${err}`);
+  }
+
+  console.log(`[github] Beat "${beatName}" marcado como sold:true — redeploy iniciado.`);
 }
+
+// ── Extrai nome do beat da descrição do pagamento ───────────────────────────
+
+function extractBeatName(description) {
+  return description
+    .replace('Caramujo Records — ', '')
+    .replace(' + Stems', '')
+    .replace(/ x\d+$/, '')
+    .trim() || null;
+}
+
+// ── Handler principal ────────────────────────────────────────────────────────
 
 export async function onRequestPost({ request, env }) {
   let body;
@@ -105,10 +186,36 @@ export async function onRequestPost({ request, env }) {
     console.log(`[webhook] Pagamento ${payment.id} status: ${payment.status}`);
 
     if (payment.status === 'approved') {
-      const notifyEmail = env.NOTIFY_EMAIL || 'rideblan33@gmail.com';
-      const gmailUser   = env.NOTIFY_EMAIL || 'rideblan33@gmail.com';
-      const gmailPass   = env.GMAIL_APP_PASS;
-      await sendApprovalEmail({ notifyEmail, gmailUser, gmailPass, payment });
+
+      // 1. Email de notificação
+      try {
+        await sendApprovalEmail({ env, payment });
+      } catch (emailErr) {
+        console.error('[webhook] Falha no email:', emailErr.message);
+      }
+
+      // 2. Marca beat como vendido se for compra de beat do catálogo
+      // (exclui pacotes, serviços e beats personalizados)
+      const desc = payment.description || '';
+      const isCatalogBeat = desc.includes('Caramujo Records —')
+        && !desc.includes('Beat Personalizado')
+        && !desc.includes('Mixagem')
+        && !desc.includes('Masterização')
+        && !desc.includes('Mix + Master')
+        && !desc.includes('2 Beats')
+        && !desc.includes('3 Beats')
+        && !desc.includes('faixa');
+
+      if (isCatalogBeat) {
+        const beatName = extractBeatName(desc);
+        if (beatName) {
+          try {
+            await markBeatSold({ githubToken: env.GITHUB_TOKEN, beatName });
+          } catch (ghErr) {
+            console.error('[webhook] Falha ao marcar beat no GitHub:', ghErr.message);
+          }
+        }
+      }
     }
 
     return new Response('ok', { status: 200 });
