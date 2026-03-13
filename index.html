@@ -566,6 +566,10 @@ footer p{
 .ci-p{font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--fire);margin-left:.8rem;}
 .ci-rm{background:none;border:none;color:var(--dim);cursor:pointer;font-size:.85rem;margin-left:.4rem;transition:color .14s;}
 .ci-rm:hover{color:var(--fire);}
+.ci-qty{display:flex;align-items:center;gap:0;margin-left:.8rem;}
+.ci-qty-btn{background:var(--mole);border:1px solid var(--wire);color:var(--bone);width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.9rem;line-height:1;transition:background .12s;}
+.ci-qty-btn:hover{background:var(--ember);border-color:var(--ember);}
+.ci-qty-n{font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:var(--cream);min-width:22px;text-align:center;border-top:1px solid var(--wire);border-bottom:1px solid var(--wire);height:22px;display:flex;align-items:center;justify-content:center;}
 .cp-foot{padding:1.2rem 1.8rem;border-top:1px solid var(--wire);}
 .cp-note{font-size:.66rem;color:var(--read);line-height:1.7;margin-bottom:1.1rem;border-left:2px solid var(--ember);padding-left:.7rem;}
 .cp-coupon{margin-bottom:1rem;}
@@ -957,8 +961,8 @@ html, body {
       <p class="svc-desc">Produção sob encomenda com base na referência de sua escolha. Produção do zero.<br/>Stems disponíveis por R$25 a mais.</p>
       <div class="svc-price" style="margin-bottom:1.2rem;color:var(--fire);">R$ 150 / beat &nbsp;·&nbsp; R$ 175 / beat + stems</div>
       <div style="display:flex;gap:0;">
-        <button class="btn btn-fire" style="flex:1;justify-content:center;font-size:.78rem;padding:.55rem .6rem;" onclick="addPkg('Beat Personalizado',150)">Beat · R$150</button>
-        <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.78rem;padding:.55rem .6rem;border-left:none;" onclick="addPkg('Beat Personalizado + Stems',175)">+Stems · R$175</button>
+        <button class="btn btn-fire" style="flex:1;justify-content:center;font-size:.78rem;padding:.55rem .6rem;" onclick="addSvc('Beat Personalizado',150)">Beat · R$150</button>
+        <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.78rem;padding:.55rem .6rem;border-left:none;" onclick="addSvc('Beat Personalizado + Stems',175)">+Stems · R$175</button>
       </div>
     </div>
 
@@ -968,7 +972,7 @@ html, body {
       <div class="svc-name">Mixagem</div>
       <p class="svc-desc">Balanceamento e processamento completo de todos os elementos.<br/>Clareza, presença e dinâmica para a sua voz sobre o beat.</p>
       <div class="svc-price" style="margin-bottom:1.2rem;">R$ 150 / faixa</div>
-      <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:.8rem;" onclick="addPkg('Mixagem (1 faixa)',150)">+ Carrinho</button>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:.8rem;" onclick="addSvc('Mixagem',150)">+ Carrinho</button>
     </div>
 
     <!-- 03 Masterização -->
@@ -977,7 +981,7 @@ html, body {
       <div class="svc-name">Masterização</div>
       <p class="svc-desc">Loudness calibrado para Spotify e todas as demais plataformas digitais.<br/>Entregue em LUFS-compliant, pronto para distribuição.</p>
       <div class="svc-price" style="margin-bottom:1.2rem;">R$ 80 / faixa</div>
-      <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:.8rem;" onclick="addPkg('Masterização (1 faixa)',80)">+ Carrinho</button>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:.8rem;" onclick="addSvc('Masterização',80)">+ Carrinho</button>
     </div>
 
     <!-- 04 Mix + Master — DESTAQUE (fundo amber sutil) -->
@@ -986,7 +990,7 @@ html, body {
       <div class="svc-name" style="color:var(--cream);">Mix + Master <span style="font-family:'Barlow Condensed',sans-serif;font-size:.55rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);margin-left:.5rem;vertical-align:middle;">● Mais popular</span></div>
       <p class="svc-desc">Pacote completo: mixagem e masterização.<br/>Do vocal bruto à faixa finalizada e pronta para lançar.</p>
       <div class="svc-price" style="margin-bottom:1.2rem;color:var(--amber);">R$ 200 / faixa</div>
-      <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:.8rem;border-color:var(--amber);color:var(--amber);" onmouseover="this.style.background='var(--amber)';this.style.color='var(--black)'" onmouseout="this.style.background='';this.style.color='var(--amber)'" onclick="addPkg('Mix + Master (1 faixa)',200)">+ Carrinho</button>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:.8rem;border-color:var(--amber);color:var(--amber);" onmouseover="this.style.background='var(--amber)';this.style.color='var(--black)'" onmouseout="this.style.background='';this.style.color='var(--amber)'" onclick="addSvc('Mix + Master',200)">+ Carrinho</button>
     </div>
   </div>
 </section>
@@ -1469,8 +1473,27 @@ function toggleBeat(beatId,stems){
 
 function addPkg(name,price){
   if(cart.find(c=>c.name===name&&c.type==='Pacote')){showToast(`"${name}" já está no carrinho.`);return;}
-  cart.push({id:Date.now(),name,price,type:'Pacote',beatId:null,stems:false});
+  cart.push({id:Date.now(),name,price,unitPrice:price,type:'Pacote',qty:1,beatId:null,stems:false});
   updateCart();toggleCart();
+}
+
+function addSvc(name,unitPrice){
+  const existing=cart.find(c=>c.name===name&&c.type==='Servico');
+  if(existing){
+    existing.qty++;
+    existing.price=existing.unitPrice*existing.qty;
+  } else {
+    cart.push({id:Date.now(),name,price:unitPrice,unitPrice,type:'Servico',qty:1,beatId:null,stems:false});
+  }
+  updateCart();toggleCart();
+}
+
+function changeQty(id,delta){
+  const item=cart.find(c=>c.id===id);
+  if(!item) return;
+  item.qty=Math.max(1,item.qty+delta);
+  item.price=item.unitPrice*item.qty;
+  updateCart();
 }
 
 function removeItem(id){
@@ -1542,11 +1565,18 @@ function updateCart(){
   }
   pb.innerHTML=cart.map(c=>`
     <div class="ci">
-      <div>
-        <div class="ci-n">${c.name}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="ci-n">${c.type==='Servico'&&c.qty>1?`${c.name} ×${c.qty}`:c.name}</div>
         <div class="ci-t">${c.type}${c.stems?' · Com Stems':''}</div>
       </div>
       <div style="display:flex;align-items:center">
+        ${c.type==='Servico'?`
+          <div class="ci-qty">
+            <button class="ci-qty-btn" onclick="changeQty(${c.id},-1)">−</button>
+            <div class="ci-qty-n">${c.qty}</div>
+            <button class="ci-qty-btn" onclick="changeQty(${c.id},1)">+</button>
+          </div>`:''
+        }
         <span class="ci-p">R$${c.price}</span>
         <button class="ci-rm" onclick="removeItem(${c.id})">✕</button>
       </div>
@@ -1577,7 +1607,7 @@ function openCheckout(){
   const subtotal=cart.reduce((s,c)=>s+c.price,0);
   const discount=calcDiscount(subtotal);
   const total=subtotal - discount;
-  const items=cart.map(c=>c.name).join(', ');
+  const items=cart.map(c=>c.qty&&c.qty>1?`${c.name} x${c.qty}`:c.name).join(', ');
   const discountStr=discount>0?` (${activeCoupon.code} ${activeCoupon.fixedPrice!==undefined?`→ R$${activeCoupon.fixedPrice}`:`-${activeCoupon.pct}%`})`:'';
   document.getElementById('mpModalSub').textContent=`${cart.length} item(s) · R$ ${total}${discountStr}`;
   document.getElementById('mpStep1').style.display='block';
@@ -1681,7 +1711,7 @@ async function goToPayment(){
     const subtotalPay=cart.reduce((s,c)=>s+c.price,0);
     const discountPay=calcDiscount(subtotalPay);
     const total=subtotalPay - discountPay;
-    const itemsDesc=cart.map(c=>c.name).join(' + ');
+    const itemsDesc=cart.map(c=>c.qty&&c.qty>1?`${c.name} x${c.qty}`:c.name).join(' + ');
     const email=document.getElementById('mpEmail').value.trim();
     const cpf=document.getElementById('mpCpf').value.replace(/\D/g,'');
 
@@ -1745,7 +1775,7 @@ async function goToPayment(){
               pageUrl: window.location.href,
             };
             try {
-              const res = await fetch('/api/create-payment',{
+              const res = await fetch('/.netlify/functions/create-payment',{
                 method:'POST',
                 headers:{'Content-Type':'application/json'},
                 body: JSON.stringify({
@@ -1754,7 +1784,7 @@ async function goToPayment(){
                   description: itemsDesc,
                   email, name,
                   cpf: document.getElementById('mpCpf').value.replace(/\D/g,''),
-                  items: cart.map(c=>({name:c.name,price:c.price,type:c.type})),
+                  items: cart.map(c=>({name:c.qty&&c.qty>1?`${c.name} x${c.qty}`:c.name,price:c.price,type:c.type})),
                   termsAcceptance,
                 }),
               });
@@ -1903,7 +1933,7 @@ function startPixPolling(paymentId) {
   async function poll() {
     attempts++;
     try {
-      const res = await fetch(`/api/check-payment?id=${paymentId}`);
+      const res = await fetch(`/.netlify/functions/check-payment?id=${paymentId}`);
       if (!res.ok) { consecutiveErrors++; if (consecutiveErrors < 5) schedule(); return; }
       consecutiveErrors = 0;
       const data = await res.json();
