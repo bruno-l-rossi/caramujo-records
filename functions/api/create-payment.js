@@ -75,22 +75,25 @@ async function sendNotificationEmail({ env, payment, name, email, cpf, itemsList
   <div class="ft">Caramujo Records · São Carlos, SP · @rideblan33</div>
 </div></body></html>`;
 
-  const res = await fetch('https://api.mailchannels.net/tx/v1/send', {
+  const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify({
-      personalizations: [{ to: [{ email: notifyEmail }] }],
-      from: { email: fromEmail, name: 'Caramujo Records' },
+      from: `Caramujo Records <${fromEmail}>`,
+      to: [notifyEmail],
       subject: `🐌 Nova venda R$${amount} — ${itemsList} [${statusLabel}]`,
-      content: [{ type: 'text/html', value: html }],
+      html,
     }),
   });
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`MailChannels error: ${res.status} — ${err}`);
+    throw new Error(`Resend error: ${res.status} — ${err}`);
   }
-  console.log(`[email] Notificação enviada para ${notifyEmail}`);
+  console.log(`[email] Notificação enviada para ${notifyEmail} via Resend`);
 }
 
 // ── Handler principal ────────────────────────────────────────────────────────
