@@ -39,7 +39,8 @@ async function sendApprovalEmail({ env, payment }) {
   // Para PIX, payer.email/first_name vêm mascarados — usar metadata salvo na criação
   const name     = meta.buyer_name  || [payer.first_name, payer.last_name].filter(Boolean).join(' ') || '—';
   const email    = meta.buyer_email || payer.email || '—';
-  const cpf      = (payer.identification?.number || '—').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  const rawCpf   = meta.buyer_cpf   || payer.identification?.number || '—';
+  const cpf      = rawCpf.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') || rawCpf;
   const amount   = payment.transaction_amount;
   const methodMap = { bank_transfer: 'PIX', credit_card: 'Cartão de Crédito', debit_card: 'Cartão de Débito' };
   const method   = methodMap[payment.payment_type_id] || payment.payment_type_id || '—';
