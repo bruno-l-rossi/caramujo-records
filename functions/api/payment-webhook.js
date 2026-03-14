@@ -35,8 +35,10 @@ async function sendApprovalEmail({ env, payment }) {
   }
 
   const payer    = payment.payer || {};
-  const name     = [payer.first_name, payer.last_name].filter(Boolean).join(' ') || '—';
-  const email    = payer.email || '—';
+  const meta     = payment.metadata || {};
+  // Para PIX, payer.email/first_name vêm mascarados — usar metadata salvo na criação
+  const name     = meta.buyer_name  || [payer.first_name, payer.last_name].filter(Boolean).join(' ') || '—';
+  const email    = meta.buyer_email || payer.email || '—';
   const cpf      = (payer.identification?.number || '—').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
   const amount   = payment.transaction_amount;
   const methodMap = { bank_transfer: 'PIX', credit_card: 'Cartão de Crédito', debit_card: 'Cartão de Débito' };
@@ -292,12 +294,21 @@ async function sendBuyerConfirmationEmail({ env, payment }) {
                 color:#8a8070;line-height:1.8;margin:0 0 10px;">
                 Seus arquivos serão entregues via email conforme os prazos abaixo:
               </p>
-              <p style="font-family:'Courier New',Courier,monospace;font-size:11px;
-                color:#8a8070;line-height:2;margin:0;white-space:nowrap;">
-                &mdash; Beat catálogo&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;até 24 horas<br/>
-                &mdash; Beat personalizado&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;até 2 semanas<br/>
-                &mdash; Mixagem / Masterização&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;até 3 semanas
-              </p>
+              <table cellpadding="0" cellspacing="0" border="0"
+                style="font-family:'Courier New',Courier,monospace;font-size:11px;color:#8a8070;">
+                <tr>
+                  <td style="padding:3px 16px 3px 0;white-space:nowrap;">&mdash; Beat catálogo</td>
+                  <td style="padding:3px 0;white-space:nowrap;">até 24 horas</td>
+                </tr>
+                <tr>
+                  <td style="padding:3px 16px 3px 0;white-space:nowrap;">&mdash; Beat personalizado</td>
+                  <td style="padding:3px 0;white-space:nowrap;">até 2 semanas</td>
+                </tr>
+                <tr>
+                  <td style="padding:3px 16px 3px 0;white-space:nowrap;">&mdash; Mixagem / Masterização</td>
+                  <td style="padding:3px 0;white-space:nowrap;">até 3 semanas</td>
+                </tr>
+              </table>
             </td></tr>
           </table>
           <p style="font-family:Georgia,'Times New Roman',serif;font-size:14px;
