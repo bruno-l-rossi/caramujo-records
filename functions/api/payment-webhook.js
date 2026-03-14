@@ -117,6 +117,7 @@ async function markBeatSold({ githubToken, beatName }) {
     Authorization: `Bearer ${githubToken}`,
     Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
+    'User-Agent': 'caramujo-records-webhook/1.0',
   };
 
   // 1. Busca o arquivo atual
