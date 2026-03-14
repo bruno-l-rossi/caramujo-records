@@ -161,10 +161,13 @@ async function sendNotificationEmail({ env, payment, name, email, cpf, itemsList
 </div></body></html>`;
 
   // Email único — resumo da venda + contrato como anexo
+  const isPending = payment.status === 'pending';
   const emailPayload = {
     from: `Caramujo Records <${fromEmail}>`,
     to: [notifyEmail],
-    subject: `🐌 PAGO R$${amount} — ${itemsList} — ENVIAR ARQUIVOS`,
+    subject: isPending
+      ? `🐌 Novo pedido R$${amount} — ${itemsList} [${statusLabel}]`
+      : `🐌 PAGO R$${amount} — ${itemsList} — ENVIAR ARQUIVOS`,
     html: notifHtml,
   };
 
