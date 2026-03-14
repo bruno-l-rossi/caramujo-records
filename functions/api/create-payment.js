@@ -433,7 +433,13 @@ export async function onRequestPost({ request, env }) {
     if (formData.token)        mpPayload.token = formData.token;
     if (formData.installments) mpPayload.installments = Number(formData.installments);
     if (formData.issuer_id)    mpPayload.issuer_id = formData.issuer_id;
-    if (couponCode)            mpPayload.metadata = { coupon_code: couponCode };
+    if (couponCode) mpPayload.metadata = { coupon_code: couponCode };
+    // Guarda email e nome do comprador no metadata para uso no webhook (PIX não expõe payer.email)
+    mpPayload.metadata = {
+      ...(mpPayload.metadata || {}),
+      buyer_email: email,
+      buyer_name:  name,
+    };
 
     const mpRes = await fetch('https://api.mercadopago.com/v1/payments', {
       method: 'POST',
