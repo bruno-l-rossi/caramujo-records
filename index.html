@@ -1189,9 +1189,9 @@ html, body {
         </p>
         <div id="mpContractDownload" style="display:none;margin-bottom:1.2rem;">
           <button class="mp-btn-primary" id="mpContractBtn" style="background:var(--loam);border-color:var(--loam);" onclick="downloadContract()">
-            ↓ BAIXAR CONTRATO ASSINADO (PDF)
+            ↓ BAIXAR CONTRATO ASSINADO
           </button>
-          <p style="font-size:.65rem;color:var(--dim);margin-top:.5rem;">Guarde este arquivo — é a sua prova do aceite dos termos.</p>
+          <p style="font-size:.65rem;color:var(--dim);margin-top:.5rem;">Baixe este contrato — ele é a sua garantia e prova do aceite dos termos. Guarde em local seguro.</p>
         </div>
         <button class="mp-btn-primary" onclick="closeCheckout();clearCart();">FECHAR</button>
       </div>
@@ -1316,11 +1316,12 @@ let mp, brickController, contractPdfData = null;
 function downloadContract() {
   if (!contractPdfData) return;
   const name = document.getElementById('mpName').value.trim().replace(/\s+/g,'-') || 'comprador';
-  const blob = new Blob([Uint8Array.from(atob(contractPdfData), c => c.charCodeAt(0))], {type:'application/pdf'});
+  const html = decodeURIComponent(escape(atob(contractPdfData)));
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href = url;
-  a.download = `contrato-caramujo-${name}.pdf`;
+  a.download = `contrato-caramujo-${name}.html`;
   a.click();
   URL.revokeObjectURL(url);
 }
