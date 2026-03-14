@@ -233,7 +233,9 @@ async function sendBuyerConfirmationEmail({ env, payment }) {
   const firstName = name.split(' ')[0] || 'músico';
   const itemsList = (payment.description || '').replace('Caramujo Records — ', '');
 
-  if (!email) { console.warn('[email-buyer] Email do comprador ausente — skip.'); return; }
+  console.log(`[email-buyer] Destinatário: "${email}" | Nome: "${name}" | Itens: "${itemsList}"`);
+
+  if (!email) { console.warn('[email-buyer] Email do comprador ausente no objeto payment.payer — skip.'); return; }
 
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -356,9 +358,9 @@ async function sendBuyerConfirmationEmail({ env, payment }) {
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Resend buyer email error: ${res.status} — ${err}`);
+    throw new Error(`Resend buyer email error ${res.status}: ${err}`);
   }
-  console.log(`[email-buyer] Confirmação enviada para ${email}`);
+  console.log(`[email-buyer] ✅ Confirmação enviada para ${email}`);
 }
 
 // ── Extrai nome do beat da descrição ────────────────────────────────────────
