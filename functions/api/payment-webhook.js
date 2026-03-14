@@ -234,6 +234,7 @@ async function sendBuyerConfirmationEmail({ env, payment }) {
   const itemsList = (payment.description || '').replace('Caramujo Records — ', '');
 
   console.log(`[email-buyer] Destinatário: "${email}" | Nome: "${name}" | Itens: "${itemsList}"`);
+  console.log(`[email-buyer] payer completo: ${JSON.stringify(payer)}`);
 
   if (!email) { console.warn('[email-buyer] Email do comprador ausente no objeto payment.payer — skip.'); return; }
 
@@ -397,22 +398,30 @@ export async function onRequestPost({ request, env }) {
     }
 
     const payment = await res.json();
-    console.log(`[webhook] Pagamento ${payment.id} status: ${payment.status}`);
+    console.log(`[webhook] Pagamento ${payment.id} status: ${payment.status} | método: ${payment.payment_type_id}`);
 
     if (payment.status === 'approved') {
 
-      // 1. Email de notificação ao dono
-      try {
-        await sendApprovalEmail({ env, payment });
-      } catch (emailErr) {
-        console.error('[webhook] Falha no email ao dono:', emailErr.message);
+      // Emails só são enviados aqui para PIX — cartão já recebe os emails no create-payment
+      const isPix = payment.payment_type_id === 'bank_transfer';
+      console.log(`[webhook] isPix: ${isPix}`);
+
+      // 1. Email de notificação ao dono (somente PIX — cartão já enviou no create-payment)
+      if (isPix) {
+        try {
+          await sendApprovalEmail({ env, payment });
+        } catch (emailErr) {
+          console.error('[webhook] Falha no email ao dono:', emailErr.message);
+        }
       }
 
-      // 2. Email de confirmação ao comprador (PIX aprovado chega aqui)
-      try {
-        await sendBuyerConfirmationEmail({ env, payment });
-      } catch (emailErr) {
-        console.error('[webhook] Falha no email ao comprador:', emailErr.message);
+      // 2. Email de confirmação ao comprador (somente PIX — cartão já enviou no create-payment)
+      if (isPix) {
+        try {
+          await sendBuyerConfirmationEmail({ env, payment });
+        } catch (emailErr) {
+          console.error('[webhook] Falha no email ao comprador:', emailErr.message);
+        }
       }
 
       // 2. Atualiza index.html (beat + cupom) em UM único commit
