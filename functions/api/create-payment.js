@@ -201,6 +201,8 @@ async function sendBuyerConfirmationEmail({ env, name, email, itemsList }) {
   if (!resendKey) { console.warn('[email-buyer] RESEND_API_KEY não configurado — skip.'); return; }
   if (!email || email === '—') { console.warn('[email-buyer] Email do comprador inválido — skip.'); return; }
 
+  console.log(`[email-buyer] Enviando para: "${email}" | Nome: "${name}" | Itens: "${itemsList}"`);
+
   // firstName para saudação
   const firstName = (name || '').split(' ')[0] || 'músico';
 
@@ -374,9 +376,9 @@ async function sendBuyerConfirmationEmail({ env, name, email, itemsList }) {
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Resend buyer email error: ${res.status} — ${err}`);
+    throw new Error(`Resend buyer email error ${res.status}: ${err}`);
   }
-  console.log(`[email-buyer] Confirmação enviada para ${email}`);
+  console.log(`[email-buyer] ✅ Confirmação enviada para ${email}`);
 }
 
 // ── Handler principal ─────────────────────────────────────────────────────────
