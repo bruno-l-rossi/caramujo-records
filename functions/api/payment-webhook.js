@@ -228,8 +228,10 @@ async function sendBuyerConfirmationEmail({ env, payment }) {
   if (!resendKey) { console.warn('[email-buyer] RESEND_API_KEY não configurado — skip.'); return; }
 
   const payer     = payment.payer || {};
-  const name      = [payer.first_name, payer.last_name].filter(Boolean).join(' ') || '';
-  const email     = payer.email || '';
+  const meta      = payment.metadata || {};
+  // Para PIX, payer.email vem mascarado ("XXXXXXXXXXX") — usar metadata salvo na criação
+  const email     = meta.buyer_email || payer.email || '';
+  const name      = meta.buyer_name  || [payer.first_name, payer.last_name].filter(Boolean).join(' ') || '';
   const firstName = name.split(' ')[0] || 'músico';
   const itemsList = (payment.description || '').replace('Caramujo Records — ', '');
 
