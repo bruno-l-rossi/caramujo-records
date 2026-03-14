@@ -105,9 +105,12 @@ async function sendApprovalEmail({ env, payment }) {
 
 async function markBeatSold({ githubToken, beatName }) {
   if (!githubToken) {
-    console.warn('[github] GITHUB_TOKEN não configurado — skip.');
+    console.error('[github] ❌ GITHUB_TOKEN não está configurado nas variáveis de ambiente do Cloudflare. Acesse Pages → Settings → Environment variables e adicione GITHUB_TOKEN.');
     return;
   }
+
+  console.log(`[github] Iniciando marcação do beat "${beatName}" como vendido…`);
+  console.log(`[github] Repo: ${GITHUB_OWNER}/${GITHUB_REPO} | Arquivo: ${GITHUB_FILE} | Branch: ${GITHUB_BRANCH}`);
 
   const apiBase = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
   const headers = {
@@ -117,9 +120,19 @@ async function markBeatSold({ githubToken, beatName }) {
   };
 
   // 1. Busca o arquivo atual
+  console.log('[github] Buscando arquivo no GitHub…');
   const getRes = await fetch(`${apiBase}?ref=${GITHUB_BRANCH}`, { headers });
-  if (!getRes.ok) throw new Error(`GitHub GET error: ${getRes.status}`);
+
+  if (!getRes.ok) {
+    const errBody = await getRes.text();
+    if (getRes.status === 401) throw new Error(`GitHub GET 401 — Token inválido ou expirado. Gere um novo token em github.com/settings/tokens com escopo "Contents: Read and Write". Detalhe: ${errBody}`);
+    if (getRes.status === 403) throw new Error(`GitHub GET 403 — Token sem permissão de leitura no repositório. Verifique o escopo "repo" ou "Contents: Read and Write". Detalhe: ${errBody}`);
+    if (getRes.status === 404) throw new Error(`GitHub GET 404 — Repositório ou arquivo não encontrado. Verifique GITHUB_OWNER="${GITHUB_OWNER}", GITHUB_REPO="${GITHUB_REPO}", GITHUB_FILE="${GITHUB_FILE}". Detalhe: ${errBody}`);
+    throw new Error(`GitHub GET error: ${getRes.status} — ${errBody}`);
+  }
+
   const fileData = await getRes.json();
+  console.log(`[github] Arquivo obtido. SHA: ${fileData.sha}`);
 
   // 2. Decodifica o conteúdo
   const content = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
@@ -132,13 +145,20 @@ async function markBeatSold({ githubToken, beatName }) {
   );
 
   if (!regex.test(content)) {
-    console.warn(`[github] Beat "${beatName}" não encontrado ou já marcado como vendido.`);
+    // Verifica se o beat existe mas já está vendido
+    const existsRegex = new RegExp(`name:'${beatNameEscaped}'`, 'i');
+    if (existsRegex.test(content)) {
+      console.warn(`[github] ⚠️ Beat "${beatName}" encontrado mas já está como sold:true — nenhuma alteração necessária.`);
+    } else {
+      console.error(`[github] ❌ Beat "${beatName}" não encontrado no arquivo. Verifique se o nome na descrição do pagamento corresponde exatamente ao campo name no array BEATS. Nome recebido: "${beatName}"`);
+    }
     return;
   }
 
   const updatedContent = content.replace(regex, '$1sold:true');
 
   // 4. Faz o commit
+  console.log('[github] Enviando commit para marcar beat como vendido…');
   const encoded = btoa(unescape(encodeURIComponent(updatedContent)));
   const putRes = await fetch(apiBase, {
     method: 'PUT',
@@ -153,10 +173,15 @@ async function markBeatSold({ githubToken, beatName }) {
 
   if (!putRes.ok) {
     const err = await putRes.text();
+    if (putRes.status === 401) throw new Error(`GitHub PUT 401 — Token inválido ou expirado. Renove o token com escopo "Contents: Write". Detalhe: ${err}`);
+    if (putRes.status === 403) throw new Error(`GitHub PUT 403 — Token sem permissão de escrita. Verifique o escopo do token. Detalhe: ${err}`);
+    if (putRes.status === 409) throw new Error(`GitHub PUT 409 — Conflito de SHA (outro commit ocorreu simultaneamente). Será corrigido na próxima tentativa. Detalhe: ${err}`);
+    if (putRes.status === 422) throw new Error(`GitHub PUT 422 — SHA desatualizado ou conteúdo inválido. Detalhe: ${err}`);
     throw new Error(`GitHub PUT error: ${putRes.status} — ${err}`);
   }
 
-  console.log(`[github] Beat "${beatName}" marcado como sold:true — redeploy iniciado.`);
+  const putData = await putRes.json();
+  console.log(`[github] ✅ Beat "${beatName}" marcado como sold:true. Commit: ${putData.commit?.sha} — Redeploy iniciado no Cloudflare Pages.`);
 }
 
 // ── Extrai nome do beat da descrição ────────────────────────────────────────
@@ -206,6 +231,8 @@ export async function onRequestPost({ request, env }) {
 
       // 2. Marca beat como vendido se for compra de beat do catálogo
       const desc = payment.description || '';
+      console.log(`[webhook] Descrição do pagamento: "${desc}"`);
+
       const isCatalogBeat = desc.includes('Caramujo Records —')
         && !desc.includes('Beat Personalizado')
         && !desc.includes('Mixagem')
@@ -215,14 +242,19 @@ export async function onRequestPost({ request, env }) {
         && !desc.includes('3 Beats')
         && !desc.includes('faixa');
 
+      console.log(`[webhook] isCatalogBeat: ${isCatalogBeat}`);
+
       if (isCatalogBeat) {
         const beatName = extractBeatName(desc);
+        console.log(`[webhook] Beat extraído da descrição: "${beatName}"`);
         if (beatName) {
           try {
             await markBeatSold({ githubToken: env.GITHUB_TOKEN, beatName });
           } catch (ghErr) {
             console.error('[webhook] Falha ao marcar beat no GitHub:', ghErr.message);
           }
+        } else {
+          console.error('[webhook] ❌ Não foi possível extrair o nome do beat da descrição.');
         }
       }
     }
