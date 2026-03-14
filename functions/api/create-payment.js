@@ -50,7 +50,7 @@ function generateContractHtml({ name, cpf, email, items, amount, paymentId, term
   .footer{text-align:center;font-size:.68rem;color:#999;margin-top:28px;border-top:1px solid #eee;padding-top:10px;}
 </style></head><body>
   <h1>CARAMUJO RECORDS</h1>
-  <p class="sub">Produção Musical Independente · São Carlos, SP · @rideblan33</p>
+  <p class="sub">Estúdio popular e Independente · São Carlos, SP</p>
   <hr/>
   <h2>CONTRATO DE LICENÇA EXCLUSIVA DE USO</h2>
   <p class="sub">Instrumento Particular de Cessão de Direitos de Uso</p>
@@ -103,9 +103,11 @@ function generateContractHtml({ name, cpf, email, items, amount, paymentId, term
 
   <div class="sigs">
     <div class="sig">Produtor — @rideblan33 / Bruno Lanzoni Rossi</div>
+  </div>
+  <div class="sigs" style="margin-top:24px;">
     <div class="sig">Licenciado — ${name}</div>
   </div>
-  <div class="footer">Caramujo Records · São Carlos, SP · @rideblan33 · caramujorecords.com.br</div>
+  <div class="footer">Caramujo Records · Desde 2018 · caramujorecords.com.br</div>
 </body></html>`;
 }
 
@@ -277,7 +279,7 @@ export async function onRequestPost({ request, env }) {
       success: true,
       paymentId: payment.id,
       status: payment.status,
-      contractPdf: null,
+      contractPdf: contractHtml ? btoa(unescape(encodeURIComponent(contractHtml))) : null,
       pix: pixInfo ? { qrCode: pixInfo.qr_code, qrCodeBase64: pixInfo.qr_code_base64, expiresAt: pixInfo.date_of_expiration } : null,
     }, { status: 200, headers: cors });
 
