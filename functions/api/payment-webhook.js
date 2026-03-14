@@ -3,13 +3,15 @@
  * POST /api/payment-webhook
  *
  * Quando pagamento é aprovado:
- *  1. Envia email de notificação via Resend (com contrato em anexo)
- *  2. Marca o beat como sold:true no GitHub → dispara redeploy automático
- *  3. Incrementa uses do cupom utilizado no GitHub → dispara redeploy automático
+ *  1. Envia email de notificação ao dono (com contrato em anexo)
+ *  2. Atualiza index.html no GitHub em UM único commit:
+ *     — Marca beat como sold:true  (se for beat de catálogo)
+ *     — Incrementa uses do cupom   (se houver cupom)
+ *     → dispara redeploy automático no Cloudflare Pages
  *
  * Variáveis de ambiente necessárias:
  *   MP_ACCESS_TOKEN  — Access Token do Mercado Pago
- *   NOTIFY_EMAIL     — email destinatário das notificações
+ *   NOTIFY_EMAIL     — email destinatário das notificações (dono)
  *   NOTIFY_FROM      — email remetente (ex: rideblan33@caramujorecords.com.br)
  *   RESEND_API_KEY   — API Key do Resend (re_...)
  *   GITHUB_TOKEN     — Personal Access Token do GitHub (scope: Contents Read & Write)
@@ -20,7 +22,7 @@ const GITHUB_REPO   = 'caramujo-records';
 const GITHUB_FILE   = 'index.html';
 const GITHUB_BRANCH = 'main';
 
-// ── Email via Resend ─────────────────────────────────────────────────────────
+// ── Email de notificação ao dono ─────────────────────────────────────────────
 
 async function sendApprovalEmail({ env, payment }) {
   const resendKey   = env.RESEND_API_KEY;
@@ -102,16 +104,17 @@ async function sendApprovalEmail({ env, payment }) {
   console.log(`[email] Notificação enviada para ${notifyEmail} via Resend`);
 }
 
-// ── Marca beat como vendido no GitHub ───────────────────────────────────────
+// ── Atualiza index.html no GitHub (beat + cupom em UM único commit) ──────────
 
-async function markBeatSold({ githubToken, beatName }) {
+async function updateIndex({ githubToken, beatName, couponCode }) {
   if (!githubToken) {
     console.error('[github] ❌ GITHUB_TOKEN não está configurado nas variáveis de ambiente do Cloudflare. Acesse Pages → Settings → Environment variables e adicione GITHUB_TOKEN.');
     return;
   }
 
-  console.log(`[github] Iniciando marcação do beat "${beatName}" como vendido…`);
-  console.log(`[github] Repo: ${GITHUB_OWNER}/${GITHUB_REPO} | Arquivo: ${GITHUB_FILE} | Branch: ${GITHUB_BRANCH}`);
+  const needsBeat   = !!beatName;
+  const needsCoupon = !!couponCode;
+  if (!needsBeat && !needsCoupon) return;
 
   const apiBase = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
   const headers = {
@@ -121,52 +124,82 @@ async function markBeatSold({ githubToken, beatName }) {
     'User-Agent': 'caramujo-records-webhook/1.0',
   };
 
-  // 1. Busca o arquivo atual
+  // 1. UMA única busca do arquivo para ambas as operações
   console.log('[github] Buscando arquivo no GitHub…');
   const getRes = await fetch(`${apiBase}?ref=${GITHUB_BRANCH}`, { headers });
 
   if (!getRes.ok) {
     const errBody = await getRes.text();
-    if (getRes.status === 401) throw new Error(`GitHub GET 401 — Token inválido ou expirado. Gere um novo token em github.com/settings/tokens com escopo "Contents: Read and Write". Detalhe: ${errBody}`);
-    if (getRes.status === 403) throw new Error(`GitHub GET 403 — Token sem permissão de leitura no repositório. Verifique o escopo "repo" ou "Contents: Read and Write". Detalhe: ${errBody}`);
-    if (getRes.status === 404) throw new Error(`GitHub GET 404 — Repositório ou arquivo não encontrado. Verifique GITHUB_OWNER="${GITHUB_OWNER}", GITHUB_REPO="${GITHUB_REPO}", GITHUB_FILE="${GITHUB_FILE}". Detalhe: ${errBody}`);
+    if (getRes.status === 401) throw new Error(`GitHub GET 401 — Token inválido ou expirado. Detalhe: ${errBody}`);
+    if (getRes.status === 403) throw new Error(`GitHub GET 403 — Token sem permissão. Detalhe: ${errBody}`);
+    if (getRes.status === 404) throw new Error(`GitHub GET 404 — Repositório ou arquivo não encontrado. Detalhe: ${errBody}`);
     throw new Error(`GitHub GET error: ${getRes.status} — ${errBody}`);
   }
 
   const fileData = await getRes.json();
   console.log(`[github] Arquivo obtido. SHA: ${fileData.sha}`);
 
-  // 2. Decodifica o conteúdo
-  const content = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
+  let content = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
+  const commitParts = [];
 
-  // 3. Busca o beat pelo nome e troca sold:false por sold:true
-  const beatNameEscaped = beatName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(
-    `(\\{id:\\d+,\\s*name:'${beatNameEscaped}'[^}]*?)sold:false`,
-    'i'
-  );
+  // 2a. Aplica mudança do beat (se necessário)
+  if (needsBeat) {
+    const beatNameEscaped = beatName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const beatRegex = new RegExp(
+      `(\\{id:\\d+,\\s*name:'${beatNameEscaped}'[^}]*?)sold:false`,
+      'i'
+    );
 
-  if (!regex.test(content)) {
-    // Verifica se o beat existe mas já está vendido
-    const existsRegex = new RegExp(`name:'${beatNameEscaped}'`, 'i');
-    if (existsRegex.test(content)) {
-      console.warn(`[github] ⚠️ Beat "${beatName}" encontrado mas já está como sold:true — nenhuma alteração necessária.`);
+    if (!beatRegex.test(content)) {
+      const existsRegex = new RegExp(`name:'${beatNameEscaped}'`, 'i');
+      if (existsRegex.test(content)) {
+        console.warn(`[github] ⚠️ Beat "${beatName}" já está como sold:true — sem alteração.`);
+      } else {
+        console.error(`[github] ❌ Beat "${beatName}" não encontrado no arquivo. Nome recebido: "${beatName}"`);
+      }
     } else {
-      console.error(`[github] ❌ Beat "${beatName}" não encontrado no arquivo. Verifique se o nome na descrição do pagamento corresponde exatamente ao campo name no array BEATS. Nome recebido: "${beatName}"`);
+      content = content.replace(beatRegex, '$1sold:true');
+      commitParts.push(`beat "${beatName}" vendido`);
+      console.log(`[github] Beat "${beatName}": sold:false → sold:true`);
     }
+  }
+
+  // 2b. Aplica incremento do cupom (se necessário) — sobre o content já modificado
+  if (needsCoupon) {
+    const couponEscaped = couponCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const couponRegex = new RegExp(
+      `('${couponEscaped}'\\s*:\\s*\\{[^}]*?uses\\s*:\\s*)(\\d+)`,
+      'i'
+    );
+
+    const match = content.match(couponRegex);
+    if (!match) {
+      console.error(`[github-coupon] ❌ Cupom "${couponCode}" não encontrado no código. Verifique se o nome bate exatamente com a chave no objeto COUPONS.`);
+    } else {
+      const currentUses = parseInt(match[2], 10);
+      const newUses = currentUses + 1;
+      content = content.replace(couponRegex, `$1${newUses}`);
+      commitParts.push(`cupom "${couponCode}" uses: ${currentUses}→${newUses}`);
+      console.log(`[github-coupon] Cupom "${couponCode}": uses ${currentUses} → ${newUses}`);
+    }
+  }
+
+  // 3. Se não houve nenhuma alteração real, não commita
+  if (commitParts.length === 0) {
+    console.log('[github] Nenhuma alteração necessária — commit ignorado.');
     return;
   }
 
-  const updatedContent = content.replace(regex, '$1sold:true');
+  // 4. UM único commit com todas as alterações → um único redeploy
+  const commitMsg = `chore: ${commitParts.join(' + ')} [automated]`;
+  console.log(`[github] Enviando commit: "${commitMsg}"…`);
 
-  // 4. Faz o commit
-  console.log('[github] Enviando commit para marcar beat como vendido…');
-  const encoded = btoa(unescape(encodeURIComponent(updatedContent)));
+  const encoded = btoa(unescape(encodeURIComponent(content)));
   const putRes = await fetch(apiBase, {
     method: 'PUT',
     headers: { ...headers, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      message: `chore: marca beat "${beatName}" como vendido [automated]`,
+      message: commitMsg,
       content: encoded,
       sha: fileData.sha,
       branch: GITHUB_BRANCH,
@@ -175,15 +208,15 @@ async function markBeatSold({ githubToken, beatName }) {
 
   if (!putRes.ok) {
     const err = await putRes.text();
-    if (putRes.status === 401) throw new Error(`GitHub PUT 401 — Token inválido ou expirado. Renove o token com escopo "Contents: Write". Detalhe: ${err}`);
-    if (putRes.status === 403) throw new Error(`GitHub PUT 403 — Token sem permissão de escrita. Verifique o escopo do token. Detalhe: ${err}`);
-    if (putRes.status === 409) throw new Error(`GitHub PUT 409 — Conflito de SHA (outro commit ocorreu simultaneamente). Será corrigido na próxima tentativa. Detalhe: ${err}`);
+    if (putRes.status === 401) throw new Error(`GitHub PUT 401 — Token inválido. Detalhe: ${err}`);
+    if (putRes.status === 403) throw new Error(`GitHub PUT 403 — Token sem permissão de escrita. Detalhe: ${err}`);
+    if (putRes.status === 409) throw new Error(`GitHub PUT 409 — Conflito de SHA (commit concorrente improvável aqui). Detalhe: ${err}`);
     if (putRes.status === 422) throw new Error(`GitHub PUT 422 — SHA desatualizado ou conteúdo inválido. Detalhe: ${err}`);
     throw new Error(`GitHub PUT error: ${putRes.status} — ${err}`);
   }
 
   const putData = await putRes.json();
-  console.log(`[github] ✅ Beat "${beatName}" marcado como sold:true. Commit: ${putData.commit?.sha} — Redeploy iniciado no Cloudflare Pages.`);
+  console.log(`[github] ✅ Commit realizado: ${putData.commit?.sha} — Redeploy iniciado no Cloudflare Pages.`);
 }
 
 // ── Extrai nome do beat da descrição ────────────────────────────────────────
@@ -194,73 +227,6 @@ function extractBeatName(description) {
     .replace(' + Stems', '')
     .replace(/ x\d+$/, '')
     .trim() || null;
-}
-
-// ── Incrementa uso de cupom no GitHub ────────────────────────────────────────
-
-async function incrementCouponUse({ githubToken, couponCode }) {
-  if (!githubToken) {
-    console.error('[github-coupon] ❌ GITHUB_TOKEN não configurado — skip.');
-    return;
-  }
-  if (!couponCode) return;
-
-  console.log(`[github-coupon] Incrementando uses do cupom "${couponCode}"…`);
-
-  const apiBase = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
-  const headers = {
-    Authorization: `Bearer ${githubToken}`,
-    Accept: 'application/vnd.github+json',
-    'X-GitHub-Api-Version': '2022-11-28',
-    'User-Agent': 'caramujo-records-webhook/1.0',
-  };
-
-  const getRes = await fetch(`${apiBase}?ref=${GITHUB_BRANCH}`, { headers });
-  if (!getRes.ok) {
-    const err = await getRes.text();
-    throw new Error(`GitHub GET error ${getRes.status} ao buscar cupom: ${err}`);
-  }
-  const fileData = await getRes.json();
-  const content = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
-
-  // Regex: localiza a linha do cupom e captura o valor atual de uses
-  const couponEscaped = couponCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(
-    `('${couponEscaped}'\\s*:\\s*\\{[^}]*?uses\\s*:\\s*)(\\d+)`,
-    'i'
-  );
-
-  const match = content.match(regex);
-  if (!match) {
-    console.error(`[github-coupon] ❌ Cupom "${couponCode}" não encontrado no código. Verifique se o nome bate exatamente com a chave no objeto COUPONS.`);
-    return;
-  }
-
-  const currentUses = parseInt(match[2], 10);
-  const newUses = currentUses + 1;
-  const updatedContent = content.replace(regex, `$1${newUses}`);
-
-  console.log(`[github-coupon] Cupom "${couponCode}": uses ${currentUses} → ${newUses}`);
-
-  const encoded = btoa(unescape(encodeURIComponent(updatedContent)));
-  const putRes = await fetch(apiBase, {
-    method: 'PUT',
-    headers: { ...headers, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      message: `chore: incrementa uso do cupom "${couponCode}" (uses: ${newUses}) [automated]`,
-      content: encoded,
-      sha: fileData.sha,
-      branch: GITHUB_BRANCH,
-    }),
-  });
-
-  if (!putRes.ok) {
-    const err = await putRes.text();
-    throw new Error(`GitHub PUT error ${putRes.status} ao atualizar cupom: ${err}`);
-  }
-
-  const putData = await putRes.json();
-  console.log(`[github-coupon] ✅ Cupom "${couponCode}" atualizado. Commit: ${putData.commit?.sha}`);
 }
 
 // ── Handler principal ────────────────────────────────────────────────────────
@@ -291,14 +257,14 @@ export async function onRequestPost({ request, env }) {
 
     if (payment.status === 'approved') {
 
-      // 1. Email de notificação
+      // 1. Email de notificação ao dono
       try {
         await sendApprovalEmail({ env, payment });
       } catch (emailErr) {
-        console.error('[webhook] Falha no email:', emailErr.message);
+        console.error('[webhook] Falha no email ao dono:', emailErr.message);
       }
 
-      // 2. Marca beat como vendido se for compra de beat do catálogo
+      // 2. Atualiza index.html (beat + cupom) em UM único commit
       const desc = payment.description || '';
       console.log(`[webhook] Descrição do pagamento: "${desc}"`);
 
@@ -313,28 +279,17 @@ export async function onRequestPost({ request, env }) {
 
       console.log(`[webhook] isCatalogBeat: ${isCatalogBeat}`);
 
-      if (isCatalogBeat) {
-        const beatName = extractBeatName(desc);
-        console.log(`[webhook] Beat extraído da descrição: "${beatName}"`);
-        if (beatName) {
-          try {
-            await markBeatSold({ githubToken: env.GITHUB_TOKEN, beatName });
-          } catch (ghErr) {
-            console.error('[webhook] Falha ao marcar beat no GitHub:', ghErr.message);
-          }
-        } else {
-          console.error('[webhook] ❌ Não foi possível extrair o nome do beat da descrição.');
-        }
-      }
-
-      // 3. Incrementa uso do cupom se houver
+      const beatName   = isCatalogBeat ? extractBeatName(desc) : null;
       const couponCode = payment.metadata?.coupon_code || null;
-      if (couponCode) {
-        console.log(`[webhook] Cupom usado: "${couponCode}" — atualizando uses…`);
+
+      if (beatName)   console.log(`[webhook] Beat extraído da descrição: "${beatName}"`);
+      if (couponCode) console.log(`[webhook] Cupom usado: "${couponCode}"`);
+
+      if (beatName || couponCode) {
         try {
-          await incrementCouponUse({ githubToken: env.GITHUB_TOKEN, couponCode });
-        } catch (cpErr) {
-          console.error('[webhook] Falha ao incrementar cupom no GitHub:', cpErr.message);
+          await updateIndex({ githubToken: env.GITHUB_TOKEN, beatName, couponCode });
+        } catch (ghErr) {
+          console.error('[webhook] Falha ao atualizar index.html no GitHub:', ghErr.message);
         }
       }
     }
