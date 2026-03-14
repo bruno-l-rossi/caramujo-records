@@ -219,6 +219,148 @@ async function updateIndex({ githubToken, beatName, couponCode }) {
   console.log(`[github] ✅ Commit realizado: ${putData.commit?.sha} — Redeploy iniciado no Cloudflare Pages.`);
 }
 
+// ── Email de confirmação de pedido ao comprador ──────────────────────────────
+
+async function sendBuyerConfirmationEmail({ env, payment }) {
+  const resendKey = env.RESEND_API_KEY;
+  const fromEmail = env.NOTIFY_FROM || 'rideblan33@caramujorecords.com.br';
+
+  if (!resendKey) { console.warn('[email-buyer] RESEND_API_KEY não configurado — skip.'); return; }
+
+  const payer     = payment.payer || {};
+  const name      = [payer.first_name, payer.last_name].filter(Boolean).join(' ') || '';
+  const email     = payer.email || '';
+  const firstName = name.split(' ')[0] || 'músico';
+  const itemsList = (payment.description || '').replace('Caramujo Records — ', '');
+
+  if (!email) { console.warn('[email-buyer] Email do comprador ausente — skip.'); return; }
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Caramujo Records — Pedido Recebido</title>
+</head>
+<body style="margin:0;padding:0;background:#0a0905;font-family:'Courier New',Courier,monospace;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0905;min-height:100vh;">
+  <tr><td align="center" style="padding:40px 16px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="max-width:560px;background:#111009;border:1px solid #2a2415;">
+      <tr><td style="background:#b82c08;padding:4px 0;font-size:0;line-height:0;">&nbsp;</td></tr>
+      <tr>
+        <td style="padding:40px 40px 28px;border-bottom:1px solid #2a2415;">
+          <div style="font-family:'Courier New',Courier,monospace;font-size:9px;
+            letter-spacing:0.4em;text-transform:uppercase;color:#b82c08;margin-bottom:10px;">
+            // CARAMUJO RECORDS
+          </div>
+          <div style="font-family:Georgia,'Times New Roman',serif;font-size:28px;
+            font-weight:bold;color:#f5f0e8;letter-spacing:0.05em;
+            text-transform:uppercase;line-height:1.1;">
+            PEDIDO<br/><span style="color:#b82c08;">RECEBIDO.</span>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:36px 40px 28px;">
+          <div style="font-family:'Courier New',Courier,monospace;font-size:8px;
+            letter-spacing:0.3em;color:#8a7a54;text-transform:uppercase;margin-bottom:28px;">
+            -------- OBRIGADO PELA CONFIANÇA --------
+          </div>
+          <p style="font-family:Georgia,'Times New Roman',serif;font-size:15px;
+            color:#c8bfa0;line-height:1.85;margin:0 0 16px;">
+            Olá, ${firstName}.
+          </p>
+          <p style="font-family:Georgia,'Times New Roman',serif;font-size:15px;
+            color:#c8bfa0;line-height:1.85;margin:0 0 28px;">
+            Recebemos seu pedido de <strong style="color:#f5f0e8;">${itemsList}</strong> e ele já está
+            em preparação. Em breve você receberá seus arquivos neste email.
+          </p>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="background:#0f0d07;border-left:2px solid #b82c08;margin-bottom:28px;">
+            <tr><td style="padding:16px 20px;">
+              <div style="font-family:'Courier New',Courier,monospace;font-size:8px;
+                letter-spacing:0.3em;color:#b82c08;text-transform:uppercase;margin-bottom:10px;">
+                // PRÓXIMOS PASSOS
+              </div>
+              <p style="font-family:Georgia,'Times New Roman',serif;font-size:13px;
+                color:#8a8070;line-height:1.8;margin:0 0 10px;">
+                Seus arquivos serão entregues via email conforme os prazos abaixo:
+              </p>
+              <p style="font-family:'Courier New',Courier,monospace;font-size:11px;
+                color:#8a8070;line-height:2;margin:0;white-space:nowrap;">
+                &mdash; Beat catálogo&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;até 24 horas<br/>
+                &mdash; Beat personalizado&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;até 2 semanas<br/>
+                &mdash; Mixagem / Masterização&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;até 3 semanas
+              </p>
+            </td></tr>
+          </table>
+          <p style="font-family:Georgia,'Times New Roman',serif;font-size:14px;
+            color:#8a8070;line-height:1.85;margin:0 0 8px;">
+            Qualquer dúvida, estamos aqui.
+          </p>
+          <div style="margin-top:32px;padding-top:24px;border-top:1px solid #2a2415;">
+            <div style="font-family:'Courier New',Courier,monospace;font-size:8px;
+              letter-spacing:0.3em;color:#8a7a54;text-transform:uppercase;margin-bottom:12px;">
+              // DE
+            </div>
+            <div style="font-family:Georgia,'Times New Roman',serif;font-size:18px;
+              font-weight:bold;color:#f5f0e8;letter-spacing:0.08em;
+              text-transform:uppercase;margin-bottom:4px;">
+              Caramujo Records
+            </div>
+            <div style="font-family:'Courier New',Courier,monospace;font-size:10px;
+              color:#6a5e42;letter-spacing:0.15em;">
+              @rideblan33
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td style="background:#0f0d07;padding:20px 40px;border-top:1px solid #2a2415;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td><div style="font-family:'Courier New',Courier,monospace;font-size:8px;
+              letter-spacing:0.2em;color:#7a6e52;text-transform:uppercase;">
+              contato@caramujorecords.com.br</div></td>
+            <td align="right"><div style="font-family:'Courier New',Courier,monospace;font-size:8px;
+              letter-spacing:0.2em;color:#7a6e52;">&copy; 2026</div></td>
+          </tr></table>
+        </td>
+      </tr>
+      <tr><td style="background:#b82c08;padding:3px 0;font-size:0;line-height:0;">&nbsp;</td></tr>
+    </table>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"
+      style="max-width:560px;margin-top:20px;">
+      <tr><td style="text-align:center;padding:0 40px;">
+        <div style="font-family:'Courier New',Courier,monospace;font-size:9px;
+          letter-spacing:0.15em;color:#6a5e3a;text-transform:uppercase;">
+          Estúdio popular &middot; Produção independente &middot; São Carlos, SP
+        </div>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`;
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: `Caramujo Records <${fromEmail}>`,
+      to: [email],
+      subject: `Caramujo Records — Pedido recebido ✓`,
+      html,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Resend buyer email error: ${res.status} — ${err}`);
+  }
+  console.log(`[email-buyer] Confirmação enviada para ${email}`);
+}
+
 // ── Extrai nome do beat da descrição ────────────────────────────────────────
 
 function extractBeatName(description) {
@@ -262,6 +404,13 @@ export async function onRequestPost({ request, env }) {
         await sendApprovalEmail({ env, payment });
       } catch (emailErr) {
         console.error('[webhook] Falha no email ao dono:', emailErr.message);
+      }
+
+      // 2. Email de confirmação ao comprador (PIX aprovado chega aqui)
+      try {
+        await sendBuyerConfirmationEmail({ env, payment });
+      } catch (emailErr) {
+        console.error('[webhook] Falha no email ao comprador:', emailErr.message);
       }
 
       // 2. Atualiza index.html (beat + cupom) em UM único commit
