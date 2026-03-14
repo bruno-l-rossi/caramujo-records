@@ -892,10 +892,9 @@ html, body {
       <div class="pack-n">1 Beat</div>
       <div class="pack-sep"></div>
       <ul class="pack-ul">
-        <li>1 beat exclusivo à sua escolha</li>
+        <li>1 beat do catálogo à sua escolha</li>
         <li>MP3 (320kbps) + WAV</li>
         <li>Licença exclusiva completa</li>
-        <li>Crédito ao produtor obrigatório</li>
         <li><em style="color:var(--clay)">(Opcional)</em> Stems separados por instrumento</li>
         <li>Contrato digital incluso</li>
       </ul>
@@ -910,10 +909,9 @@ html, body {
       <div class="pack-n">2 Beats</div>
       <div class="pack-sep"></div>
       <ul class="pack-ul">
-        <li>2 beats exclusivos à sua escolha</li>
+        <li>2 beats do catálogo à sua escolha</li>
         <li>MP3 (320kbps) + WAV</li>
         <li>Licença exclusiva por beat</li>
-        <li>Crédito ao produtor obrigatório</li>
         <li><em style="color:var(--amber)">(Opcional)</em> Stems separados por beat</li>
         <li>Contrato digital incluso</li>
       </ul>
@@ -928,10 +926,9 @@ html, body {
       <div class="pack-n">3 Beats</div>
       <div class="pack-sep"></div>
       <ul class="pack-ul">
-        <li>3 beats exclusivos à sua escolha</li>
+        <li>3 beats do catálogo à sua escolha</li>
         <li>MP3 (320kbps) + WAV</li>
         <li>Licença exclusiva por beat</li>
-        <li>Crédito ao produtor obrigatório</li>
         <li><em style="color:var(--clay)">(Opcional)</em> Stems separados por beat</li>
         <li>Contrato digital incluso</li>
       </ul>
@@ -1524,7 +1521,8 @@ function clearCart(){
 const COUPONS = {
   'CARAMUJO25': { pct: 25,  maxUses: 5,        uses: 0 },
   'RIDE20':     { pct: 20,  maxUses: Infinity,  uses: 0 },
-  'PAGUPAGU':   { fixedPrice: 1, maxUses: Infinity, uses: 1 },
+  'PAGUPAGU':   { fixedPrice: 1, maxUses: Infinity, uses: 0 },
+  'SABER50':    { pct: 50,  maxUses: 1,         uses: 0 },
 };
 let activeCoupon = null; // { code, pct?, fixedPrice? }
 
@@ -1581,11 +1579,11 @@ function updateCart(){
   pb.innerHTML=cart.map(c=>`
     <div class="ci">
       <div style="flex:1;min-width:0;">
-        <div class="ci-n">${c.type==='Servico'&&c.qty>1?`${c.name} ×${c.qty}`:c.name}</div>
+        <div class="ci-n">${(c.type==='Servico'||c.type==='Pacote')&&c.qty>1?`${c.name} ×${c.qty}`:c.name}</div>
         <div class="ci-t">${c.type}${c.stems?' · Com Stems':''}</div>
       </div>
       <div style="display:flex;align-items:center">
-        ${c.type==='Servico'?`
+        ${c.type==='Servico'||c.type==='Pacote'?`
           <div class="ci-qty">
             <button class="ci-qty-btn" onclick="changeQty(${c.id},-1)">−</button>
             <div class="ci-qty-n">${c.qty}</div>
