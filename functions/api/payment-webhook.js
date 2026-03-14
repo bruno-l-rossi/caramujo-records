@@ -3,15 +3,16 @@
  * POST /api/payment-webhook
  *
  * Quando pagamento é aprovado:
- *  1. Envia email de notificação via Resend
+ *  1. Envia email de notificação via Resend (com contrato em anexo)
  *  2. Marca o beat como sold:true no GitHub → dispara redeploy automático
+ *  3. Incrementa uses do cupom utilizado no GitHub → dispara redeploy automático
  *
  * Variáveis de ambiente necessárias:
  *   MP_ACCESS_TOKEN  — Access Token do Mercado Pago
  *   NOTIFY_EMAIL     — email destinatário das notificações
  *   NOTIFY_FROM      — email remetente (ex: rideblan33@caramujorecords.com.br)
  *   RESEND_API_KEY   — API Key do Resend (re_...)
- *   GITHUB_TOKEN     — Personal Access Token do GitHub (scope: repo)
+ *   GITHUB_TOKEN     — Personal Access Token do GitHub (scope: Contents Read & Write)
  */
 
 const GITHUB_OWNER  = 'bruno-l-rossi';
@@ -195,6 +196,73 @@ function extractBeatName(description) {
     .trim() || null;
 }
 
+// ── Incrementa uso de cupom no GitHub ────────────────────────────────────────
+
+async function incrementCouponUse({ githubToken, couponCode }) {
+  if (!githubToken) {
+    console.error('[github-coupon] ❌ GITHUB_TOKEN não configurado — skip.');
+    return;
+  }
+  if (!couponCode) return;
+
+  console.log(`[github-coupon] Incrementando uses do cupom "${couponCode}"…`);
+
+  const apiBase = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
+  const headers = {
+    Authorization: `Bearer ${githubToken}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    'User-Agent': 'caramujo-records-webhook/1.0',
+  };
+
+  const getRes = await fetch(`${apiBase}?ref=${GITHUB_BRANCH}`, { headers });
+  if (!getRes.ok) {
+    const err = await getRes.text();
+    throw new Error(`GitHub GET error ${getRes.status} ao buscar cupom: ${err}`);
+  }
+  const fileData = await getRes.json();
+  const content = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
+
+  // Regex: localiza a linha do cupom e captura o valor atual de uses
+  const couponEscaped = couponCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(
+    `('${couponEscaped}'\\s*:\\s*\\{[^}]*?uses\\s*:\\s*)(\\d+)`,
+    'i'
+  );
+
+  const match = content.match(regex);
+  if (!match) {
+    console.error(`[github-coupon] ❌ Cupom "${couponCode}" não encontrado no código. Verifique se o nome bate exatamente com a chave no objeto COUPONS.`);
+    return;
+  }
+
+  const currentUses = parseInt(match[2], 10);
+  const newUses = currentUses + 1;
+  const updatedContent = content.replace(regex, `$1${newUses}`);
+
+  console.log(`[github-coupon] Cupom "${couponCode}": uses ${currentUses} → ${newUses}`);
+
+  const encoded = btoa(unescape(encodeURIComponent(updatedContent)));
+  const putRes = await fetch(apiBase, {
+    method: 'PUT',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: `chore: incrementa uso do cupom "${couponCode}" (uses: ${newUses}) [automated]`,
+      content: encoded,
+      sha: fileData.sha,
+      branch: GITHUB_BRANCH,
+    }),
+  });
+
+  if (!putRes.ok) {
+    const err = await putRes.text();
+    throw new Error(`GitHub PUT error ${putRes.status} ao atualizar cupom: ${err}`);
+  }
+
+  const putData = await putRes.json();
+  console.log(`[github-coupon] ✅ Cupom "${couponCode}" atualizado. Commit: ${putData.commit?.sha}`);
+}
+
 // ── Handler principal ────────────────────────────────────────────────────────
 
 export async function onRequestPost({ request, env }) {
@@ -256,6 +324,17 @@ export async function onRequestPost({ request, env }) {
           }
         } else {
           console.error('[webhook] ❌ Não foi possível extrair o nome do beat da descrição.');
+        }
+      }
+
+      // 3. Incrementa uso do cupom se houver
+      const couponCode = payment.metadata?.coupon_code || null;
+      if (couponCode) {
+        console.log(`[webhook] Cupom usado: "${couponCode}" — atualizando uses…`);
+        try {
+          await incrementCouponUse({ githubToken: env.GITHUB_TOKEN, couponCode });
+        } catch (cpErr) {
+          console.error('[webhook] Falha ao incrementar cupom no GitHub:', cpErr.message);
         }
       }
     }
