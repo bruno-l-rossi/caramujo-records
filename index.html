@@ -1338,7 +1338,7 @@ document.addEventListener('mousemove',e=>{
 
 /* beats data */
 const BEATS=[
-  {id:1, name:'NUVEM',                   bpm:160,  key:'Am',    genre:'plug',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/nuvem-12'},
+  {id:1, name:'NUVEM',                   bpm:160,  key:'Am',    genre:'plug',     sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/nuvem-12'},
   {id:2, name:'COLA',                    bpm:147,  key:'Ebm',   genre:'hoodtrap', sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/cola-5'},
   {id:3, name:'ORAÇÃO',                  bpm:160,  key:'Em',    genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/oracao-11'},
   {id:4, name:'GRAVIDADE',               bpm:128,  key:'Gm',    genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/gravidade-4'},
@@ -1513,7 +1513,7 @@ function clearCart(){
 const COUPONS = {
   'CARAMUJO25': { pct: 25,  maxUses: 5,        uses: 0 },
   'RIDE20':     { pct: 20,  maxUses: Infinity,  uses: 0 },
-  'PAGUPAGU':   { fixedPrice: 1, maxUses: Infinity, uses: 0 },
+  'PAGUPAGU':   { fixedPrice: 1, maxUses: Infinity, uses: 1 },
 };
 let activeCoupon = null; // { code, pct?, fixedPrice? }
 
