@@ -1151,7 +1151,7 @@ html, body {
       <!-- PIX PENDENTE -->
       <div id="mpPixPending" style="display:none;">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--cream);letter-spacing:.1em;margin-bottom:.5rem;">PAGUE VIA PIX</div>
-        <p style="font-size:.76rem;color:var(--dim);margin-bottom:1.2rem;">Escaneie o QR code ou copie o código abaixo para pagar</p>
+        <p style="font-size:.76rem;color:var(--read);margin-bottom:1.2rem;">Escaneie o QR code ou copie o código abaixo para pagar</p>
 
         <!-- QR Code -->
         <div style="display:inline-block;background:#fff;padding:12px;border-radius:6px;margin-bottom:1rem;">
@@ -1159,7 +1159,7 @@ html, body {
         </div>
 
         <!-- Copia e cola -->
-        <p style="font-size:.68rem;color:var(--dim);margin-bottom:.4rem;letter-spacing:.05em;">OU COPIE O CÓDIGO PIX:</p>
+        <p style="font-size:.68rem;color:var(--read);margin-bottom:.4rem;letter-spacing:.05em;">OU COPIE O CÓDIGO PIX:</p>
         <div style="display:flex;gap:.5rem;align-items:stretch;max-width:420px;margin:0 auto 1.2rem;">
           <input id="mpPixCode" type="text" readonly
             style="flex:1;font-size:.62rem;font-family:monospace;background:var(--mole);border:1px solid var(--wire);color:var(--bone);padding:.5rem .7rem;min-width:0;border-radius:3px 0 0 3px;"/>
@@ -1169,7 +1169,7 @@ html, body {
           </button>
         </div>
 
-        <div id="mpPixStatus" style="font-size:.72rem;color:var(--dim);margin-bottom:1.2rem;">
+        <div id="mpPixStatus" style="font-size:.72rem;color:var(--read);margin-bottom:1.2rem;">
           <span id="mpPixStatusDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--rust);margin-right:.4rem;vertical-align:middle;"></span>
           <span id="mpPixStatusText">Aguardando pagamento…</span>
         </div>
@@ -1191,7 +1191,7 @@ html, body {
           <button class="mp-btn-primary" id="mpContractBtn" style="background:var(--loam);border-color:var(--loam);" onclick="downloadContract()">
             ↓ BAIXAR CONTRATO ASSINADO
           </button>
-          <p style="font-size:.65rem;color:var(--dim);margin-top:.5rem;">Baixe este contrato — ele é a sua garantia e prova do aceite dos termos. Guarde em local seguro.</p>
+          <p style="font-size:.65rem;color:var(--dim);margin-top:.5rem;">Baixe este contrato — ele é a sua garantia e prova do aceite dos termos.<br>Guarde em local seguro.</p>
         </div>
         <button class="mp-btn-primary" onclick="closeCheckout();clearCart();">FECHAR</button>
       </div>
@@ -1315,15 +1315,18 @@ let mp, brickController, contractPdfData = null;
 
 function downloadContract() {
   if (!contractPdfData) return;
-  const name = document.getElementById('mpName').value.trim().replace(/\s+/g,'-') || 'comprador';
+  const name = document.getElementById('mpName').value.trim() || 'comprador';
   const html = decodeURIComponent(escape(atob(contractPdfData)));
-  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = `contrato-caramujo-${name}.html`;
-  a.click();
-  URL.revokeObjectURL(url);
+
+  // Abre em nova aba e aciona diálogo "Salvar como PDF"
+  const win = window.open('', '_blank');
+  if (!win) { alert('Permita pop-ups neste site para baixar o contrato em PDF.'); return; }
+  win.document.write(html);
+  win.document.close();
+  win.onload = function () {
+    win.document.title = 'contrato-caramujo-' + name.replace(/\s+/g, '-');
+    setTimeout(function () { win.focus(); win.print(); }, 400);
+  };
 }
 
 /* cursor */
