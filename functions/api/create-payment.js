@@ -155,40 +155,38 @@ async function sendNotificationEmail({ env, payment, name, email, cpf, itemsList
       <tr><td>Versão</td><td>${termsAcceptance.version}</td></tr>
       <tr><td>Timestamp</td><td>${termsAcceptance.timestamp}</td></tr>
     </table>
-    <p style="font-size:.76rem;color:#c49040;">📋 Contrato completo enviado no próximo email.</p>
+    ${contractHtml ? '<p style="font-size:.76rem;color:#c49040;">📎 Contrato assinado em anexo.</p>' : ''}
   </div>
   <div class="ft">Caramujo Records · São Carlos, SP · @rideblan33</div>
 </div></body></html>`;
 
-  // Email 1 — resumo da venda
+  // Email único — resumo da venda + contrato como anexo
+  const emailPayload = {
+    from: `Caramujo Records <${fromEmail}>`,
+    to: [notifyEmail],
+    subject: `🐌 PAGO R$${amount} — ${itemsList} — ENVIAR ARQUIVOS`,
+    html: notifHtml,
+  };
+
+  // Anexa o contrato como .html se disponível
+  if (contractHtml) {
+    const safeName = name.replace(/[^a-zA-Z0-9\u00C0-\u00FF\s-]/g, '').trim().replace(/\s+/g, '-').slice(0, 60);
+    const fileName = `contrato-${safeName}-ID${payment.id}.html`;
+    emailPayload.attachments = [
+      {
+        filename: fileName,
+        content: btoa(unescape(encodeURIComponent(contractHtml))),
+      },
+    ];
+  }
+
   const r1 = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: `Caramujo Records <${fromEmail}>`,
-      to: [notifyEmail],
-      subject: `🐌 Nova venda R$${amount} — ${itemsList} [${statusLabel}]`,
-      html: notifHtml,
-    }),
+    body: JSON.stringify(emailPayload),
   });
   if (!r1.ok) throw new Error(`Resend error (notif): ${r1.status} — ${await r1.text()}`);
-  console.log(`[email] Notificação enviada para ${notifyEmail} via Resend`);
-
-  // Email 2 — contrato completo
-  if (contractHtml) {
-    const r2 = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: `Caramujo Records <${fromEmail}>`,
-        to: [notifyEmail],
-        subject: `📋 Contrato — ${itemsList} — ${name} (ID ${payment.id})`,
-        html: contractHtml,
-      }),
-    });
-    if (!r2.ok) console.error(`[email] Falha no contrato: ${r2.status}`);
-    else console.log('[email] Contrato enviado via Resend');
-  }
+  console.log(`[email] Notificação enviada para ${notifyEmail} via Resend${contractHtml ? ' (com contrato em anexo)' : ''}`);
 }
 
 // ── Handler principal ─────────────────────────────────────────────────────────
@@ -204,10 +202,11 @@ export async function onRequestPost({ request, env }) {
   try { body = await request.json(); }
   catch { return Response.json({ error: 'Dados inválidos.' }, { status: 400, headers: cors }); }
 
-  const { formData, selectedPaymentMethod, amount, description, email: rawEmail, name: rawName, cpf: rawCpf, items, termsAcceptance } = body;
-  const email = sanitize(rawEmail, 254);
-  const name  = sanitize(rawName, 120);
-  const cpf   = String(rawCpf ?? '').replace(/\D/g, '').slice(0, 11);
+  const { formData, selectedPaymentMethod, amount, description, email: rawEmail, name: rawName, cpf: rawCpf, items, termsAcceptance, couponCode: rawCoupon } = body;
+  const email      = sanitize(rawEmail, 254);
+  const name       = sanitize(rawName, 120);
+  const cpf        = String(rawCpf ?? '').replace(/\D/g, '').slice(0, 11);
+  const couponCode = rawCoupon ? sanitize(rawCoupon, 30).toUpperCase() : null;
 
   if (!amount || isNaN(Number(amount)) || Number(amount) < 1)
     return Response.json({ error: 'Valor inválido.' }, { status: 400, headers: cors });
@@ -242,6 +241,7 @@ export async function onRequestPost({ request, env }) {
     if (formData.token)        mpPayload.token = formData.token;
     if (formData.installments) mpPayload.installments = Number(formData.installments);
     if (formData.issuer_id)    mpPayload.issuer_id = formData.issuer_id;
+    if (couponCode)            mpPayload.metadata = { coupon_code: couponCode };
 
     const mpRes = await fetch('https://api.mercadopago.com/v1/payments', {
       method: 'POST',
@@ -262,7 +262,7 @@ export async function onRequestPost({ request, env }) {
     const itemsList = (Array.isArray(items) ? items : []).map(i => sanitize(i.name, 80)).join(' + ');
     const pixInfo   = payment.point_of_interaction?.transaction_data;
 
-    console.log(JSON.stringify({ event: 'NOVA_VENDA', paymentId: payment.id, status: payment.status, amount, name, email, cpf: cpf.slice(0,3)+'***', items: itemsList }));
+    console.log(JSON.stringify({ event: 'NOVA_VENDA', paymentId: payment.id, status: payment.status, amount, name, email, cpf: cpf.slice(0,3)+'***', items: itemsList, coupon: couponCode || null }));
 
     // Gera contrato HTML
     let contractHtml = null;
