@@ -665,7 +665,7 @@ html, body {
 
   /* Snail interlude */
   .snail-break{height:260px;}
-  .snail-break-img{object-position:center 10%;}
+  .snail-break-img{object-position:center 5%;transform:scaleX(-1) scale(2.2);transform-origin:center 20%;}
   .snail-break-type{white-space:normal;padding:0 1rem;}
 
   /* Footer */
@@ -824,10 +824,6 @@ html, body {
     </p>
   </div>
 
-  <!-- DISPONÍVEL filter bar -->
-  <div class="ftabs-avail" style="display:flex;gap:0;margin-bottom:0;border:1px solid var(--wire);border-bottom:none;border-right:none;">
-    <button class="ft ft-avail on" id="filtAvail" onclick="toggleAvail(this)" style="border-right:1px solid var(--wire);background:var(--ember);color:var(--cream);">✓ DISPONÍVEL</button>
-  </div>
 
   <div class="ftabs">
     <button class="ft on" onclick="filt('todos',this)">Todos</button>
@@ -1377,11 +1373,6 @@ function filt(g,btn){
   btn.classList.add('on'); curFilt=g; curPage=1; renderCards();
 }
 
-function toggleAvail(btn){
-  showAvailOnly=!showAvailOnly;
-  btn.classList.toggle('on',showAvailOnly);
-  curPage=1; renderCards();
-}
 
 const BEATS_PER_PAGE = 6;
 let curPage = 1;
