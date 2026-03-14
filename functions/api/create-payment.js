@@ -448,6 +448,7 @@ export async function onRequestPost({ request, env }) {
       ...(mpPayload.metadata || {}),
       buyer_email: email,
       buyer_name:  name,
+      buyer_cpf:   cpf,
     };
 
     const mpRes = await fetch('https://api.mercadopago.com/v1/payments', {
