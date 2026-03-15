@@ -238,8 +238,10 @@ nav{
 .pg-goto-input{width:3rem;background:var(--mole);border:1px solid var(--wire);color:var(--cream);font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:.28rem .4rem;text-align:center;outline:none;transition:border-color .14s;}
 .pg-goto-input:focus{border-color:var(--ember);}
 .pg-goto-input::-webkit-inner-spin-button,.pg-goto-input::-webkit-outer-spin-button{-webkit-appearance:none;}
-.pg-goto-btn{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.1em;font-weight:700;padding:.28rem .6rem;border:1px solid var(--wire);background:var(--loam);color:var(--cream);cursor:pointer;transition:background .14s;}
-.pg-goto-btn:hover{background:var(--ember);border-color:var(--ember);}
+.pg-search{display:flex;align-items:center;gap:.4rem;}
+.pg-search-input{background:var(--mole);border:1px solid var(--wire);color:var(--cream);font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:.3rem .7rem;outline:none;transition:border-color .14s;width:14rem;max-width:40vw;}
+.pg-search-input::placeholder{color:var(--dim);}
+.pg-search-input:focus{border-color:var(--ember);}
 .bcard{border-bottom:1px solid var(--wire);transition:background .14s;}
 .bcard:last-child{border-bottom:none;}
 .bcard:hover{background:rgba(30,26,18,.5);}
@@ -957,28 +959,24 @@ html, body {
 
   <!-- UNIFIED BEAT CARDS: SC player + tags + buy -->
   <div class="pagination-top" id="paginationTop">
-    <span class="pagination-info" id="pgInfoTop"></span>
+    <div class="pg-search">
+      <input class="pg-search-input" id="beatSearchTop" type="text" placeholder="Buscar beat pelo nome…" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false"/>
+    </div>
     <div class="pagination-btns">
       <button class="pg-btn" id="pgPrevTop" onclick="changePage(-1)">← ANTERIOR</button>
+      <span class="pagination-info" id="pgInfoTop"></span>
       <button class="pg-btn" id="pgNextTop" onclick="changePage(1)">PRÓXIMO →</button>
-      <div class="pg-goto">
-        <span class="pg-goto-label">Ir para</span>
-        <input class="pg-goto-input" id="pgGotoTop" type="number" min="1" placeholder="–" onkeydown="if(event.key==='Enter')goToPage(this.value)"/>
-        <button class="pg-goto-btn" onclick="goToPage(document.getElementById('pgGotoTop').value)">IR</button>
-      </div>
     </div>
   </div>
   <div class="beat-cards" id="beatCards"></div>
   <div class="pagination" id="pagination">
-    <span class="pagination-info" id="pgInfo"></span>
+    <div class="pg-search">
+      <input class="pg-search-input" id="beatSearchBottom" type="text" placeholder="Buscar beat pelo nome…" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false"/>
+    </div>
     <div class="pagination-btns">
       <button class="pg-btn" id="pgPrev" onclick="changePage(-1)">← ANTERIOR</button>
+      <span class="pagination-info" id="pgInfo"></span>
       <button class="pg-btn" id="pgNext" onclick="changePage(1)">PRÓXIMO →</button>
-      <div class="pg-goto">
-        <span class="pg-goto-label">Ir para</span>
-        <input class="pg-goto-input" id="pgGotoBottom" type="number" min="1" placeholder="–" onkeydown="if(event.key==='Enter')goToPage(this.value)"/>
-        <button class="pg-goto-btn" onclick="goToPage(document.getElementById('pgGotoBottom').value)">IR</button>
-      </div>
     </div>
   </div>
 
@@ -1529,21 +1527,34 @@ const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':
 /* ── FILTER & RENDER ─────────────────────────────── */
 function filt(g,btn){
   document.querySelectorAll('.ft:not(#filtAvail)').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on'); curFilt=g; curPage=1; renderCards();
+  btn.classList.add('on'); curFilt=g; curPage=1; beatQuery='';
+  // limpa busca ao trocar filtro
+  const st=document.getElementById('beatSearchTop');
+  const sb=document.getElementById('beatSearchBottom');
+  if(st) st.value='';
+  if(sb) sb.value='';
+  renderCards();
 }
 
 
 const BEATS_PER_PAGE = 6;
 let curPage = 1;
+let beatQuery = '';
 
 function renderCards(){
   const wrap=document.getElementById('beatCards');
   let src=curFilt==='todos'?BEATS:BEATS.filter(b=>b.genre===curFilt);
   if(showAvailOnly) src=src.filter(b=>!b.sold);
+  if(beatQuery) src=src.filter(b=>b.name.toLowerCase().includes(beatQuery));
   if(src.length===0){
     wrap.innerHTML=`<div style="padding:2.5rem;text-align:center;color:var(--dim);font-size:.78rem;">Nenhum beat disponível neste filtro no momento.</div>`;
-    document.getElementById('pagination').style.display='none';
-    document.getElementById('paginationTop').style.display='none';
+    document.getElementById('pagination').style.display='flex';
+    document.getElementById('paginationTop').style.display='flex';
+    ['pgPrev','pgNext','pgPrevTop','pgNextTop'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.style.visibility='hidden';
+    });
+    document.getElementById('pgInfo').style.display='none';
+    document.getElementById('pgInfoTop').style.display='none';
     return;
   }
   const totalPages=Math.ceil(src.length/BEATS_PER_PAGE);
@@ -1585,19 +1596,23 @@ function renderCards(){
     </div>`;
   }).join('');
 
-  // Update pagination bars (top + bottom)
-  const hidden = totalPages <= 1;
-  document.getElementById('pagination').style.display = hidden ? 'none' : 'flex';
-  document.getElementById('paginationTop').style.display = hidden ? 'none' : 'flex';
+  // Barras sempre visíveis (contêm a busca); apenas botões somem com 1 página
+  document.getElementById('pagination').style.display = 'flex';
+  document.getElementById('paginationTop').style.display = 'flex';
+  const hideNav = totalPages <= 1;
+  ['pgPrev','pgNext','pgPrevTop','pgNextTop'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.visibility = hideNav ? 'hidden' : 'visible';
+  });
+  document.getElementById('pgInfo').style.display    = hideNav ? 'none' : '';
+  document.getElementById('pgInfoTop').style.display = hideNav ? 'none' : '';
   const infoText = `PÁGINA ${curPage} DE ${totalPages} · ${src.length} BEAT${src.length!==1?'S':''}`;
   document.getElementById('pgInfo').textContent = infoText;
   document.getElementById('pgInfoTop').textContent = infoText;
-  document.getElementById('pgPrev').disabled = (curPage===1);
-  document.getElementById('pgNext').disabled = (curPage===totalPages);
+  document.getElementById('pgPrev').disabled    = (curPage===1);
+  document.getElementById('pgNext').disabled    = (curPage===totalPages);
   document.getElementById('pgPrevTop').disabled = (curPage===1);
   document.getElementById('pgNextTop').disabled = (curPage===totalPages);
-  document.getElementById('pgGotoTop').value = curPage;
-  document.getElementById('pgGotoBottom').value = curPage;
 }
 
 function changePage(dir){
@@ -1606,14 +1621,15 @@ function changePage(dir){
   document.getElementById('beats').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function goToPage(val){
-  const src = curFilt==='todos' ? BEATS : BEATS.filter(b=>b.genre===curFilt);
-  const filtered = showAvailOnly ? src.filter(b=>!b.sold) : src;
-  const totalPages = Math.ceil(filtered.length/BEATS_PER_PAGE);
-  const n = Math.min(Math.max(parseInt(val)||1, 1), totalPages);
-  curPage = n;
+function searchBeats(query){
+  beatQuery = query.trim().toLowerCase();
+  curPage = 1;
+  // sincroniza os dois campos
+  const top=document.getElementById('beatSearchTop');
+  const bot=document.getElementById('beatSearchBottom');
+  if(top && top.value!==query) top.value=query;
+  if(bot && bot.value!==query) bot.value=query;
   renderCards();
-  document.getElementById('beats').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 /* ── CART ────────────────────────────────────────── */
