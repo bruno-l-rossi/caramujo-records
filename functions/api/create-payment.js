@@ -444,11 +444,16 @@ export async function onRequestPost({ request, env }) {
     if (formData.issuer_id)    mpPayload.issuer_id = formData.issuer_id;
     if (couponCode) mpPayload.metadata = { coupon_code: couponCode };
     // Guarda email e nome do comprador no metadata para uso no webhook (PIX não expõe payer.email)
+    // Guarda também os beats selecionados em pacotes para marcação no webhook
+    const pkgBeatsList = (Array.isArray(items) ? items : [])
+      .filter(i => i.pkgBeats && Array.isArray(i.pkgBeats))
+      .flatMap(i => i.pkgBeats.flat().map(b => b.name));
     mpPayload.metadata = {
       ...(mpPayload.metadata || {}),
       buyer_email: email,
       buyer_name:  name,
       buyer_cpf:   cpf,
+      ...(pkgBeatsList.length > 0 ? { pkg_beats: pkgBeatsList.join('||') } : {}),
     };
 
     const mpRes = await fetch('https://api.mercadopago.com/v1/payments', {
