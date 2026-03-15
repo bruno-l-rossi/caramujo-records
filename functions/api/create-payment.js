@@ -129,7 +129,6 @@ function generateContractHtml({ name, cpf, email, items, category, amount, payme
   <p>O Licenciado receberá, no email informado no pedido, os seguintes arquivos após a confirmação do pagamento:</p>
   <ul><li>Arquivo MP3 em 320kbps</li><li>Arquivo WAV</li><li>Stems separados por instrumento — somente se contratado o pacote Beat + Stems</li><li>Uma via deste contrato assinado pelo Produtor</li></ul>
   <h4>4. Prazos de Entrega</h4>
-  <p>Os arquivos serão entregues dentro dos seguintes prazos, contados a partir da confirmação do pagamento:</p>
   <ul><li>Beat catálogo (disponível no site): até 24 horas</li><li>Beat personalizado (produção sob encomenda): até 2 semanas</li><li>Mixagem, Masterização ou Mix + Master: até 3 semanas</li></ul>
   <p>Em caso de imprevistos que possam impactar os prazos, o Produtor notificará o Licenciado por email com antecedência.</p>
   <h4>5. Crédito Obrigatório</h4>
@@ -137,17 +136,16 @@ function generateContractHtml({ name, cpf, email, items, category, amount, payme
   <ul><li>Plataformas digitais (Spotify, Apple Music, Deezer, etc.): creditar @rideblan33 como artista principal na faixa.</li><li>YouTube: adicionar "(prod. @rideblan33)" no título do vídeo.</li></ul>
   <p>O não cumprimento desta cláusula configura violação contratual e poderá ensejar rescisão da licença.</p>
   <h4>6. Royalties e Divisão de Receitas</h4>
-  <p>Royalties Fonográficos (master): 90% Licenciado / 10% Produtor. O Licenciado deve realizar o split share de 10% ao Produtor no cadastro em distribuidoras digitais.</p>
-  <p>* A divisão dos royalties de composição será definida em adendo específico, conforme contribuição lírica do Licenciado.</p>
+  <p>O Licenciado é obrigado a realizar o split share de 10% dos royalties fonográficos para o Produtor no momento do cadastro da faixa em distribuidoras digitais. O não envio do split configura inadimplência contratual.</p>
   <h4>7. Vedações</h4>
   <p>É expressamente vedado ao Licenciado:</p>
-  <ul><li>Revender, ceder, sublicenciar ou transferir a Obra ou este contrato a terceiros.</li><li>Remover ou alterar créditos do Produtor em qualquer plataforma ou material.</li><li>Utilizar a Obra em mais de uma faixa musical sem novo contrato.</li><li>Registrar a Obra em nome próprio em entidades de gestão coletiva (ECAD, PRO) sem inclusão do Produtor.</li><li>Afirmar autoria exclusiva da composição da Obra.</li></ul>
+  <ul><li>Revender, ceder, sublicenciar ou transferir a Obra ou este contrato a terceiros.</li><li>Remover ou alterar créditos do Produtor em qualquer plataforma ou material.</li><li>Utilizar a Obra em mais de uma faixa musical sem novo contrato.</li><li>Registrar a Obra em nome próprio em entidades de gestão coletiva (ECAD, PRO) sem inclusão do Produtor.</li></ul>
   <h4>8. Vigência</h4>
   <p>Esta licença é concedida por prazo indeterminado a partir da data de emissão, permanecendo válida enquanto o Licenciado cumprir todas as obrigações previstas neste instrumento.</p>
   <h4>9. Rescisão</h4>
   <p>O descumprimento de qualquer cláusula deste contrato, especialmente as relativas a crédito e royalties, confere ao Produtor o direito de rescindir a licença mediante notificação por escrito, sem direito a reembolso ao Licenciado.</p>
   <h4>10. Disposições Gerais</h4>
-  <ul><li>Este contrato representa o acordo integral entre as partes e substitui quaisquer entendimentos anteriores.</li><li>Eventuais alterações somente terão validade se formalizadas por escrito e assinadas por ambas as partes.</li><li>As partes elegem o foro da Comarca de São Carlos/SP para dirimir eventuais litígios.</li></ul>
+  <p>Este contrato representa o acordo integral entre as partes e substitui quaisquer entendimentos anteriores. Eventuais alterações somente terão validade se formalizadas por escrito e assinadas por ambas as partes. As partes elegem o foro da Comarca de São Carlos/SP para dirimir eventuais litígios.</p>
 
   <div class="aceite">
     <b>Registro do Aceite Eletrônico</b>
