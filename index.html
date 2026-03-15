@@ -1800,7 +1800,7 @@ function clearCart(){
 const COUPONS = {
   'CARAMUJO25': { pct: 25,  maxUses: 5,        uses: 0 },
   'RIDE20':     { pct: 20,  maxUses: Infinity,  uses: 0 },
-  'PAGUPAGU':   { fixedPrice: 1, maxUses: 1,        uses: 2 },
+  'PAGUPAGU':   { fixedPrice: 1, maxUses: 1,        uses: 0 },
   'SABER50':    { pct: 50,  maxUses: 1,         uses: 0 },
 };
 let activeCoupon = null; // { code, pct?, fixedPrice? }
@@ -2210,6 +2210,8 @@ function showPixConfirmed() {
   if (activeCoupon && COUPONS[activeCoupon.code]) {
     COUPONS[activeCoupon.code].uses++;
   }
+  // Zera carrinho e cupom automaticamente ao confirmar pagamento
+  clearCart();
   document.getElementById('mpPixPending').style.display = 'none';
   document.getElementById('mpPixConfirmed').style.display = 'block';
   if (contractPdfData) {
