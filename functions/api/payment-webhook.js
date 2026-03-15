@@ -48,29 +48,11 @@ async function sendApprovalEmail({ env, payment }) {
   const dataHora = new Date(payment.date_approved || payment.date_last_updated)
     .toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 
-  // Itens detalhados: combina pkg_beats + items_detail do metadata com a descrição
-  const pkgBeatsRaw  = meta.pkg_beats    || null;
-  const pkgBeatNames = pkgBeatsRaw ? pkgBeatsRaw.split('||').map(n => n.trim()).filter(Boolean) : [];
-  const rawDesc      = (payment.description || '—').replace('Caramujo Records — ', '');
-
-  // Reconstrói lista de itens: beats de pacote + itens não-beat da descrição
-  const descParts = rawDesc.split(' + ').map(s => s.trim());
-  const nonBeatParts = descParts.filter(p =>
-    !p.match(/^\d+ Beats?(\s\+\sStems)?$/) && !p.match(/^1 Beat(\s\+\sStems)?$/)
-  );
-  const itemsDisplay = [...pkgBeatNames, ...nonBeatParts].join(', ') || rawDesc;
-
-  // Categoria: detecta combinações
-  const hasBeat = pkgBeatNames.length > 0 || descParts.some(p => p.match(/^\d+ Beats?/) || p.match(/^1 Beat/));
-  const isSingleBeat = descParts.length === 1 && !descParts[0].match(/^\d+ Beats?/) && !descParts[0].match(/^\d+ Beats?\s\+/);
-  const hasSvc  = rawDesc.includes('Mixagem') || rawDesc.includes('Masterização') || rawDesc.includes('Mix + Master') || rawDesc.includes('Beat Personalizado') || rawDesc.includes('faixa');
-  const isPkg   = rawDesc.includes('2 Beats') || rawDesc.includes('3 Beats') || rawDesc.includes('1 Beat');
-  const cats = [];
-  if (isPkg || (hasBeat && !isSingleBeat)) cats.push('Pacotes promocionais');
-  if (isSingleBeat && !isPkg) cats.push('Catálogo de beats');
-  if (hasSvc) cats.push('Serviços por encomenda');
-  if (cats.length === 0) cats.push('Catálogo de beats');
-  const categoryDisplay = cats.join(', ');
+  // Usa items_display e category_label salvos no metadata durante create-payment
+  // (fallback para description caso o pagamento seja de versão anterior)
+  const rawDesc        = (payment.description || '—').replace('Caramujo Records — ', '');
+  const itemsDisplay   = meta.items_display   || rawDesc;
+  const categoryDisplay = meta.category_label || rawDesc;
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>
   body{font-family:'Courier New',monospace;background:#1a1108;color:#f0e6c8;margin:0;padding:0;}
@@ -266,13 +248,9 @@ async function sendBuyerConfirmationEmail({ env, payment }) {
   const artistName = meta.buyer_artist || meta.buyer_name || name;
   const greeting  = (artistName || '').trim() || name.split(' ')[0] || 'músico';
 
-  // Itens: pkg_beats + partes não-pacote da descrição
-  const pkgBeatsRaw  = meta.pkg_beats || null;
-  const pkgBeatNames = pkgBeatsRaw ? pkgBeatsRaw.split('||').map(n => n.trim()).filter(Boolean) : [];
-  const rawDesc      = (payment.description || '').replace('Caramujo Records — ', '');
-  const descParts    = rawDesc.split(' + ').map(s => s.trim());
-  const nonBeatParts = descParts.filter(p => !p.match(/^\d+ Beats?(\s\+\sStems)?$/) && !p.match(/^1 Beat(\s\+\sStems)?$/));
-  const itemsList    = [...pkgBeatNames, ...nonBeatParts].join(', ') || rawDesc;
+  // Usa items_display salvo no metadata — mesma lógica do email de novo pedido
+  const rawDesc   = (payment.description || '').replace('Caramujo Records — ', '');
+  const itemsList = meta.items_display || rawDesc;
 
   console.log(`[email-buyer] Destinatário: "${email}" | Nome artístico: "${greeting}" | Itens: "${itemsList}"`);
 
