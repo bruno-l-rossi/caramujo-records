@@ -74,7 +74,7 @@ function fmtCpf(cpf) {
 
 // ── Contrato HTML ─────────────────────────────────────────────────────────────
 
-function generateContractHtml({ name, cpf, email, items, category, amount, paymentId, termsTimestamp }) {
+function generateContractHtml({ name, cpf, email, items, category, amount, paymentId, termsTimestamp, artistName }) {
   const data = new Date(termsTimestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>
   body{font-family:'Courier New',monospace;background:#fff;color:#111;margin:0;padding:40px 32px;max-width:700px;}
@@ -114,6 +114,7 @@ function generateContractHtml({ name, cpf, email, items, category, amount, payme
   <div class="row"><b>Email:</b><span>contato@caramujorecords.com.br</span></div>
   <br/>
   <p><b>COMPRADOR (LICENCIADO)</b></p>
+  <div class="row"><b>Nome artístico:</b><span>${artistName || '—'}</span></div>
   <div class="row"><b>Nome completo:</b><span>${name}</span></div>
   <div class="row"><b>CPF:</b><span>${fmtCpf(cpf)}</span></div>
   <div class="row"><b>Email:</b><span>${email}</span></div>
@@ -151,7 +152,7 @@ function generateContractHtml({ name, cpf, email, items, category, amount, payme
     <div class="sig">Produtor — @rideblan33 / Bruno Lanzoni Rossi</div>
   </div>
   <div class="sigs" style="margin-top:24px;">
-    <div class="sig">Licenciado — ${name}</div>
+    <div class="sig">Licenciado — ${artistName ? `${artistName} / ` : ''}${name}</div>
   </div>
   <div class="footer">Caramujo Records · Desde 2018 · caramujorecords.com.br</div>
 </body></html>`;
@@ -159,7 +160,7 @@ function generateContractHtml({ name, cpf, email, items, category, amount, payme
 
 // ── Email via Resend ──────────────────────────────────────────────────────────
 
-async function sendNotificationEmail({ env, payment, name, email, cpf, itemsList, categoryLabel, amount, selectedPaymentMethod, termsAcceptance, contractHtml }) {
+async function sendNotificationEmail({ env, payment, name, artistName, email, cpf, itemsList, categoryLabel, couponCode, amount, selectedPaymentMethod, termsAcceptance, contractHtml }) {
   const resendKey   = env.RESEND_API_KEY;
   const notifyEmail = env.NOTIFY_EMAIL || 'rideblan33@gmail.com';
   const fromEmail   = env.NOTIFY_FROM  || 'rideblan33@caramujorecords.com.br';
@@ -194,7 +195,9 @@ async function sendNotificationEmail({ env, payment, name, email, cpf, itemsList
       <tr><td>Itens</td><td>${itemsList}</td></tr>
       <tr><td>Valor</td><td>R$ ${amount}</td></tr>
       <tr><td>Método</td><td>${selectedPaymentMethod === 'bank_transfer' ? 'PIX' : 'Cartão'}</td></tr>
+      ${couponCode ? `<tr><td>Cupom</td><td>${couponCode}</td></tr>` : ''}
       <tr class="sect"><td colspan="2">CLIENTE</td></tr>
+      <tr><td>Nome artístico</td><td>${artistName || '—'}</td></tr>
       <tr><td>Nome</td><td>${name}</td></tr>
       <tr><td>Email</td><td>${email}</td></tr>
       <tr><td>CPF</td><td>${fmtCpf(cpf)}</td></tr>
@@ -241,7 +244,7 @@ async function sendNotificationEmail({ env, payment, name, email, cpf, itemsList
 
 // ── Email de confirmação de pedido ao comprador ──────────────────────────────
 
-async function sendBuyerConfirmationEmail({ env, name, email, itemsList }) {
+async function sendBuyerConfirmationEmail({ env, name, artistName, email, itemsList }) {
   const resendKey  = env.RESEND_API_KEY;
   const fromEmail  = env.NOTIFY_FROM || 'rideblan33@caramujorecords.com.br';
 
@@ -250,8 +253,8 @@ async function sendBuyerConfirmationEmail({ env, name, email, itemsList }) {
 
   console.log(`[email-buyer] Enviando para: "${email}" | Nome: "${name}" | Itens: "${itemsList}"`);
 
-  // firstName para saudação
-  const firstName = (name || '').split(' ')[0] || 'músico';
+  // Saudação: usa nome artístico se disponível, senão primeiro nome
+  const greeting = (artistName || '').trim() || (name || '').split(' ')[0] || 'músico';
 
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -287,7 +290,7 @@ async function sendBuyerConfirmationEmail({ env, name, email, itemsList }) {
                     font-weight:bold;color:#f5f0e8;letter-spacing:0.05em;
                     text-transform:uppercase;line-height:1.1;">
                     PEDIDO<br/>
-                    <span style="color:#b82c08;">RECEBIDO.</span>
+                    <span style="color:#b82c08;">CONFIRMADO.</span>
                   </div>
                 </td>
               </tr>
@@ -306,7 +309,7 @@ async function sendBuyerConfirmationEmail({ env, name, email, itemsList }) {
 
             <p style="font-family:Georgia,'Times New Roman',serif;font-size:15px;
               color:#c8bfa0;line-height:1.85;margin:0 0 16px;">
-              Olá, ${firstName}.
+              Olá, ${greeting}.
             </p>
 
             <p style="font-family:Georgia,'Times New Roman',serif;font-size:15px;
@@ -425,7 +428,7 @@ async function sendBuyerConfirmationEmail({ env, name, email, itemsList }) {
     body: JSON.stringify({
       from: `Caramujo Records <${fromEmail}>`,
       to: [email],
-      subject: `Caramujo Records — Pedido recebido ✓`,
+      subject: `Caramujo Records — Pedido confirmado ✓`,
       html,
     }),
   });
@@ -450,9 +453,10 @@ export async function onRequestPost({ request, env }) {
   try { body = await request.json(); }
   catch { return Response.json({ error: 'Dados inválidos.' }, { status: 400, headers: cors }); }
 
-  const { formData, selectedPaymentMethod, amount, description, email: rawEmail, name: rawName, cpf: rawCpf, items, termsAcceptance, couponCode: rawCoupon } = body;
+  const { formData, selectedPaymentMethod, amount, description, email: rawEmail, name: rawName, artistName: rawArtist, cpf: rawCpf, items, termsAcceptance, couponCode: rawCoupon } = body;
   const email      = sanitize(rawEmail, 254);
   const name       = sanitize(rawName, 120);
+  const artistName = sanitize(rawArtist || '', 80);
   const cpf        = String(rawCpf ?? '').replace(/\D/g, '').slice(0, 11);
   const couponCode = rawCoupon ? sanitize(rawCoupon, 30).toUpperCase() : null;
 
@@ -508,9 +512,11 @@ export async function onRequestPost({ request, env }) {
       .flatMap(i => i.pkgBeats.flat().map(b => b.name));
     mpPayload.metadata = {
       ...(mpPayload.metadata || {}),
-      buyer_email: email,
-      buyer_name:  name,
-      buyer_cpf:   cpf,
+      buyer_email:  email,
+      buyer_name:   name,
+      buyer_artist: artistName || name,
+      buyer_cpf:    cpf,
+      ...(couponCode ? { coupon_code: couponCode } : {}),
       ...(pkgBeatsList.length > 0 ? { pkg_beats: pkgBeatsList.join('||') } : {}),
     };
 
@@ -556,18 +562,18 @@ export async function onRequestPost({ request, env }) {
     // Gera contrato HTML
     let contractHtml = null;
     try {
-      contractHtml = generateContractHtml({ name, cpf, email, items: itemsForEmail, category: categoryLabel, amount, paymentId: payment.id, termsTimestamp: termsAcceptance.timestamp });
+      contractHtml = generateContractHtml({ name, cpf, email, items: itemsForEmail, category: categoryLabel, amount, paymentId: payment.id, termsTimestamp: termsAcceptance.timestamp, artistName });
     } catch (e) { console.error('[contrato] Erro:', e.message); }
 
     // Envia email de notificação ao dono (com contrato em anexo)
     try {
-      await sendNotificationEmail({ env, payment, name, email, cpf, itemsList: itemsForEmail, categoryLabel, amount, selectedPaymentMethod, termsAcceptance, contractHtml });
+      await sendNotificationEmail({ env, payment, name, artistName, email, cpf, itemsList: itemsForEmail, categoryLabel, couponCode, amount, selectedPaymentMethod, termsAcceptance, contractHtml });
     } catch (e) { console.error('[email] Erro notificação:', e.message); }
 
     // Envia email de confirmação de pedido ao comprador (apenas quando aprovado)
     if (payment.status === 'approved') {
       try {
-        await sendBuyerConfirmationEmail({ env, name, email, itemsList: itemsForEmail });
+        await sendBuyerConfirmationEmail({ env, name, artistName, email, itemsList: itemsForEmail });
       } catch (e) { console.error('[email] Erro confirmação comprador:', e.message); }
     }
 
