@@ -1220,6 +1220,11 @@ html, body {
         <span class="mp-err" id="mpEmailErr"></span>
       </div>
       <div class="mp-field-group">
+        <label class="mp-lbl">Nome artístico</label>
+        <input class="mp-input" id="mpArtist" type="text" placeholder="Como você quer ser chamado"/>
+        <span class="mp-err" id="mpArtistErr"></span>
+      </div>
+      <div class="mp-field-group">
         <label class="mp-lbl">Nome completo</label>
         <input class="mp-input" id="mpName" type="text" placeholder="Seu nome"/>
       </div>
@@ -1347,7 +1352,7 @@ html, body {
 .mp-modal-x:hover{color:var(--cream);}
 
 #mpStep1,#mpStep2,#mpStep3{padding:1.8rem;}
-.mp-field-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.2rem;}
+.mp-field-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.2rem;position:relative;}
 .mp-lbl{
   font-family:'Barlow Condensed',sans-serif;font-size:.6rem;
   font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--clay);
@@ -1358,7 +1363,7 @@ html, body {
   padding:.65rem 1rem;outline:none;transition:border-color .14s;
 }
 .mp-input:focus{border-color:var(--ember);}
-.mp-err{font-size:.62rem;color:var(--fire);font-family:'IBM Plex Mono',monospace;min-height:.9rem;}
+.mp-err{font-size:.62rem;color:var(--fire);font-family:'IBM Plex Mono',monospace;position:absolute;bottom:-1.1rem;left:0;}
 .mp-btn-primary{
   width:100%;padding:1rem;
   font-family:'Bebas Neue',sans-serif;font-size:1rem;
@@ -1447,12 +1452,12 @@ document.addEventListener('mousemove',e=>{
 
 /* beats data */
 const BEATS=[
-  {id:1, name:'NUVEM',                   bpm:160,  key:'Am',    genre:'plug',     sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/nuvem-12'},
-  {id:2, name:'COLA',                    bpm:147,  key:'Ebm',   genre:'hoodtrap', sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/cola-5'},
-  {id:3, name:'ORAÇÃO',                  bpm:160,  key:'Em',    genre:'boombap',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/oracao-11'},
-  {id:4, name:'GRAVIDADE',               bpm:128,  key:'Gm',    genre:'trap',     sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/gravidade-4'},
-  {id:5, name:'LARANJA',                 bpm:132,  key:'Gm',    genre:'boombap',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/laranja-15'},
-  {id:6, name:'HOOD STARS',              bpm:148,  key:'Bbm',   genre:'hoodtrap', sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/hood-stars-10'},
+  {id:1, name:'NUVEM',                   bpm:160,  key:'Am',    genre:'plug',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/nuvem-12'},
+  {id:2, name:'COLA',                    bpm:147,  key:'Ebm',   genre:'hoodtrap', sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/cola-5'},
+  {id:3, name:'ORAÇÃO',                  bpm:160,  key:'Em',    genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/oracao-11'},
+  {id:4, name:'GRAVIDADE',               bpm:128,  key:'Gm',    genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/gravidade-4'},
+  {id:5, name:'LARANJA',                 bpm:132,  key:'Gm',    genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/laranja-15'},
+  {id:6, name:'HOOD STARS',              bpm:148,  key:'Bbm',   genre:'hoodtrap', sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/hood-stars-10'},
   {id:7, name:'REGALIA',                 bpm:140,  key:'Bbm',   genre:'outro',    sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/regalia-16'},
   {id:8, name:'ALOE',                    bpm:125,  key:'Dm',    genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/aloe-2'},
   {id:9, name:'FLASHBACK',               bpm:132,  key:'Cm',    genre:'plug',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/flashback-9'},
@@ -1750,7 +1755,7 @@ function clearCart(){
 const COUPONS = {
   'CARAMUJO25': { pct: 25,  maxUses: 5,        uses: 0 },
   'RIDE20':     { pct: 20,  maxUses: Infinity,  uses: 0 },
-  'PAGUPAGU':   { fixedPrice: 1, maxUses: Infinity, uses: 2 },
+  'PAGUPAGU':   { fixedPrice: 1, maxUses: Infinity, uses: 0 },
   'SABER50':    { pct: 50,  maxUses: 1,         uses: 0 },
 };
 let activeCoupon = null; // { code, pct?, fixedPrice? }
@@ -1859,9 +1864,11 @@ function openCheckout(){
   document.getElementById('mpStep2').style.display='none';
   document.getElementById('mpStep3').style.display='none';
   document.getElementById('mpEmail').value='';
+  document.getElementById('mpArtist').value='';
   document.getElementById('mpName').value='';
   document.getElementById('mpCpf').value='';
   document.getElementById('mpEmailErr').textContent='';
+  document.getElementById('mpArtistErr').textContent='';
   document.getElementById('mpCpfErr').textContent='';
   document.getElementById('mpTermsCheck').checked=false;
   document.getElementById('mpTermsErr').textContent='';
@@ -1920,9 +1927,11 @@ async function goToPayment(){
   const emailOk=mpValidateEmail();
   const cpfOk=mpValidateCpf();
   const name=document.getElementById('mpName').value.trim();
+  const artistName=document.getElementById('mpArtist').value.trim();
   const termsChecked=document.getElementById('mpTermsCheck').checked;
 
   if(!emailOk){document.getElementById('mpEmailErr').textContent='Informe um email válido.';return;}
+  if(!artistName){document.getElementById('mpArtist').focus();document.getElementById('mpArtist').style.borderColor='var(--fire)';setTimeout(()=>{document.getElementById('mpArtist').style.borderColor='';},2000);document.getElementById('mpArtistErr').textContent='Informe seu nome artístico.';return;}
   if(!name){document.getElementById('mpName').focus();document.getElementById('mpName').style.borderColor='var(--fire)';setTimeout(()=>{document.getElementById('mpName').style.borderColor='';},2000);showModalErr('Informe seu nome completo.');return;}
   if(!cpfOk){document.getElementById('mpCpfErr').textContent='Informe o CPF completo.';return;}
   if(!termsChecked){
@@ -2027,7 +2036,7 @@ async function goToPayment(){
                   formData, selectedPaymentMethod,
                   amount: total,
                   description: itemsDesc,
-                  email, name,
+                  email, name, artistName,
                   cpf: document.getElementById('mpCpf').value.replace(/\D/g,''),
                   items: cart.map(c=>({name:c.qty&&c.qty>1?`${c.name} x${c.qty}`:c.name,price:c.price,type:c.type,pkgBeats:c.pkgBeats||null})),
                   termsAcceptance,
