@@ -48,6 +48,17 @@ async function sendApprovalEmail({ env, payment }) {
   const dataHora = new Date(payment.date_approved || payment.date_last_updated)
     .toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 
+  // Itens detalhados: para pacotes usa pkg_beats do metadata
+  const pkgBeatsRaw = payment.metadata?.pkg_beats || null;
+  const pkgBeatNames = pkgBeatsRaw ? pkgBeatsRaw.split('||').map(n => n.trim()).filter(Boolean) : [];
+  const descIsPackage = desc.includes('Beat') && (desc.includes('2 ') || desc.includes('3 '));
+  const itemsDisplay = pkgBeatNames.length > 0 ? pkgBeatNames.join(', ') : desc;
+
+  // Categoria
+  const isSvc = desc.includes('Mixagem') || desc.includes('Masterização') || desc.includes('Mix + Master') || desc.includes('Beat Personalizado') || desc.includes('faixa');
+  const isPkg = desc.includes('2 Beats') || desc.includes('3 Beats') || desc.includes('1 Beat');
+  const categoryDisplay = isSvc ? 'Serviços por encomenda' : isPkg ? 'Pacotes promocionais' : 'Catálogo de beats';
+
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>
   body{font-family:'Courier New',monospace;background:#1a1108;color:#f0e6c8;margin:0;padding:0;}
   .wrap{max-width:560px;margin:0 auto;padding:32px 24px;}
@@ -69,12 +80,13 @@ async function sendApprovalEmail({ env, payment }) {
     <div class="status">✅ APROVADO — R$ ${amount}</div>
     <div class="action"><strong>⚡ Ação necessária</strong>
       Envie os arquivos para <strong style="color:#f0c060">${email}</strong><br/>
-      Itens: <strong style="color:#f0c060">${desc}</strong>
+      Itens: <strong style="color:#f0c060">${itemsDisplay}</strong>
     </div>
     <table>
       <tr class="sect"><td colspan="2">PEDIDO</td></tr>
       <tr><td>ID Pagamento</td><td>${payment.id}</td></tr>
-      <tr><td>Itens</td><td>${desc}</td></tr>
+      <tr><td>Categoria</td><td>${categoryDisplay}</td></tr>
+      <tr><td>Itens</td><td>${itemsDisplay}</td></tr>
       <tr><td>Valor Total</td><td>R$ ${amount}</td></tr>
       <tr><td>Método</td><td>${method}</td></tr>
       <tr class="sect"><td colspan="2">CLIENTE</td></tr>
@@ -95,7 +107,7 @@ async function sendApprovalEmail({ env, payment }) {
     body: JSON.stringify({
       from: `Caramujo Records <${fromEmail}>`,
       to: [notifyEmail],
-      subject: `✅ PAGO R$${amount} — ${desc} — ENVIAR ARQUIVOS`,
+      subject: `✅ PAGO R$${amount} — ${itemsDisplay} — ENVIAR ARQUIVOS`,
       html,
     }),
   });
