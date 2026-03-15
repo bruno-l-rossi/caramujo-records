@@ -1569,6 +1569,15 @@ function toggleBeat(beatId,stems){
   const beat=BEATS.find(b=>b.id===beatId);
   const existing=cart.findIndex(c=>c.beatId===beatId&&c.stems===stems);
   if(existing===-1){
+    // Verifica se o beat já está reservado em algum pacote no carrinho
+    const inPkg=cart
+      .filter(c=>c.type==='Pacote'&&c.pkgBeats)
+      .flatMap(c=>c.pkgBeats.flat())
+      .some(b=>Number(b.id)===Number(beatId));
+    if(inPkg){
+      showToast(`"${beat.name}" já está reservado em um pacote no carrinho.`);
+      return;
+    }
     const otherIdx=cart.findIndex(c=>c.beatId===beatId&&c.stems!==stems);
     if(otherIdx!==-1) cart.splice(otherIdx,1);
     cart.push({id:Date.now(),beatId:beat.id,name:stems?`${beat.name} + Stems`:beat.name,price:stems?PRICE_STEMS:PRICE_BEAT,type:'Beat',stems});
@@ -1597,17 +1606,27 @@ function addPkg(name, price) {
 let _pkgAvailable = []; // beats disponíveis para o modal atual
 
 function openPkgModal() {
-  // IDs já ocupados: beats em pacotes + beats avulsos no carrinho
-  const reservedIds = new Set([
-    ...cart
-      .filter(c => c.type === 'Pacote' && c.pkgBeats)
-      .flatMap(c => c.pkgBeats.flat().map(b => b.id)),
-    ...cart
-      .filter(c => c.type === 'Beat' && c.beatId != null)
-      .map(c => c.beatId),
-  ]);
+  // IDs e nomes já ocupados: beats em pacotes + beats avulsos no carrinho
+  const cartBeatIds = cart
+    .filter(c => c.type === 'Beat' && c.beatId != null)
+    .map(c => Number(c.beatId));
+  const pkgBeatIds = cart
+    .filter(c => c.type === 'Pacote' && c.pkgBeats)
+    .flatMap(c => c.pkgBeats.flat().map(b => Number(b.id)));
+  const reservedIds = new Set([...cartBeatIds, ...pkgBeatIds]);
 
-  _pkgAvailable = BEATS.filter(b => !b.sold && !reservedIds.has(b.id));
+  // Fallback por nome: nomes de beats avulsos no carrinho
+  const cartBeatNames = new Set(
+    cart
+      .filter(c => c.type === 'Beat')
+      .map(c => c.name.replace(' + Stems', '').trim().toUpperCase())
+  );
+
+  _pkgAvailable = BEATS.filter(b =>
+    !b.sold &&
+    !reservedIds.has(Number(b.id)) &&
+    !cartBeatNames.has(b.name.toUpperCase())
+  );
   const p = _pkgPending;
 
   document.getElementById('pkgModalTitle').textContent =
