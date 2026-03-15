@@ -229,10 +229,15 @@ nav{
 .pagination{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--wire);border-top:none;padding:.6rem 1rem;gap:.5rem;}
 .pagination-top{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--wire);border-bottom:none;padding:.6rem 1rem;gap:.5rem;}
 .pagination-info{font-family:'Barlow Condensed',sans-serif;font-size:.88rem;letter-spacing:.1em;color:var(--cream);font-weight:700;}
-.pagination-btns{display:flex;gap:.4rem;}
+.pagination-btns{display:flex;align-items:center;gap:.4rem;}
 .pg-btn{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.1em;font-weight:700;padding:.3rem .8rem;border:1px solid var(--wire);background:transparent;color:var(--cream);cursor:pointer;transition:background .14s,color .14s;}
 .pg-btn:hover:not(:disabled){background:var(--ember);border-color:var(--ember);color:var(--cream);}
 .pg-btn:disabled{opacity:.3;cursor:default;}
+.pg-goto{display:flex;align-items:center;gap:.35rem;margin-left:.4rem;}
+.pg-goto-label{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;}
+.pg-goto-input{width:3rem;background:var(--mole);border:1px solid var(--wire);color:var(--cream);font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:.28rem .4rem;text-align:center;outline:none;transition:border-color .14s;}
+.pg-goto-input:focus{border-color:var(--ember);}
+.pg-goto-input::-webkit-inner-spin-button,.pg-goto-input::-webkit-outer-spin-button{-webkit-appearance:none;}
 .bcard{border-bottom:1px solid var(--wire);transition:background .14s;}
 .bcard:last-child{border-bottom:none;}
 .bcard:hover{background:rgba(30,26,18,.5);}
@@ -954,6 +959,10 @@ html, body {
     <div class="pagination-btns">
       <button class="pg-btn" id="pgPrevTop" onclick="changePage(-1)">← ANTERIOR</button>
       <button class="pg-btn" id="pgNextTop" onclick="changePage(1)">PRÓXIMO →</button>
+      <div class="pg-goto">
+        <span class="pg-goto-label">Ir para</span>
+        <input class="pg-goto-input" id="pgGotoTop" type="number" min="1" placeholder="–" onkeydown="if(event.key==='Enter')goToPage(this.value)"/>
+      </div>
     </div>
   </div>
   <div class="beat-cards" id="beatCards"></div>
@@ -962,6 +971,10 @@ html, body {
     <div class="pagination-btns">
       <button class="pg-btn" id="pgPrev" onclick="changePage(-1)">← ANTERIOR</button>
       <button class="pg-btn" id="pgNext" onclick="changePage(1)">PRÓXIMO →</button>
+      <div class="pg-goto">
+        <span class="pg-goto-label">Ir para</span>
+        <input class="pg-goto-input" id="pgGotoBottom" type="number" min="1" placeholder="–" onkeydown="if(event.key==='Enter')goToPage(this.value)"/>
+      </div>
     </div>
   </div>
 
@@ -1587,6 +1600,21 @@ function changePage(dir){
   document.getElementById('beats').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
+function goToPage(val){
+  const src = curFilt==='todos' ? BEATS : BEATS.filter(b=>b.genre===curFilt);
+  const filtered = showAvailOnly ? src.filter(b=>!b.sold) : src;
+  const totalPages = Math.ceil(filtered.length/BEATS_PER_PAGE);
+  const n = Math.min(Math.max(parseInt(val)||1, 1), totalPages);
+  curPage = n;
+  // limpa os inputs
+  const t=document.getElementById('pgGotoTop');
+  const b=document.getElementById('pgGotoBottom');
+  if(t) t.value='';
+  if(b) b.value='';
+  renderCards();
+  document.getElementById('beats').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 /* ── CART ────────────────────────────────────────── */
 function toggleBeat(beatId,stems){
   const beat=BEATS.find(b=>b.id===beatId);
@@ -1800,7 +1828,7 @@ function clearCart(){
 const COUPONS = {
   'CARAMUJO25': { pct: 25,  maxUses: 5,        uses: 0 },
   'RIDE20':     { pct: 20,  maxUses: Infinity,  uses: 0 },
-  'PAGUPAGU':   { fixedPrice: 1, maxUses: 1,        uses: 1 },
+  'PAGUPAGU':   { fixedPrice: 1, maxUses: 0,        uses: 0 },
   'SABER50':    { pct: 50,  maxUses: 1,         uses: 0 },
 };
 let activeCoupon = null; // { code, pct?, fixedPrice? }
