@@ -109,13 +109,13 @@ async function sendApprovalEmail({ env, payment }) {
 
 // ── Atualiza index.html no GitHub (beat + cupom em UM único commit) ──────────
 
-async function updateIndex({ githubToken, beatName, couponCode }) {
+async function updateIndex({ githubToken, beatNames = [], couponCode }) {
   if (!githubToken) {
     console.error('[github] ❌ GITHUB_TOKEN não está configurado nas variáveis de ambiente do Cloudflare. Acesse Pages → Settings → Environment variables e adicione GITHUB_TOKEN.');
     return;
   }
 
-  const needsBeat   = !!beatName;
+  const needsBeat   = beatNames.length > 0;
   const needsCoupon = !!couponCode;
   if (!needsBeat && !needsCoupon) return;
 
@@ -145,25 +145,27 @@ async function updateIndex({ githubToken, beatName, couponCode }) {
   let content = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
   const commitParts = [];
 
-  // 2a. Aplica mudança do beat (se necessário)
+  // 2a. Aplica mudança dos beats (se necessário) — itera sobre todos os nomes
   if (needsBeat) {
-    const beatNameEscaped = beatName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const beatRegex = new RegExp(
-      `(\\{id:\\d+,\\s*name:'${beatNameEscaped}'[^}]*?)sold:false`,
-      'i'
-    );
+    for (const beatName of beatNames) {
+      const beatNameEscaped = beatName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const beatRegex = new RegExp(
+        `(\\{id:\\d+,\\s*name:'${beatNameEscaped}'[^}]*?)sold:false`,
+        'i'
+      );
 
-    if (!beatRegex.test(content)) {
-      const existsRegex = new RegExp(`name:'${beatNameEscaped}'`, 'i');
-      if (existsRegex.test(content)) {
-        console.warn(`[github] ⚠️ Beat "${beatName}" já está como sold:true — sem alteração.`);
+      if (!beatRegex.test(content)) {
+        const existsRegex = new RegExp(`name:'${beatNameEscaped}'`, 'i');
+        if (existsRegex.test(content)) {
+          console.warn(`[github] ⚠️ Beat "${beatName}" já está como sold:true — sem alteração.`);
+        } else {
+          console.error(`[github] ❌ Beat "${beatName}" não encontrado no arquivo. Nome recebido: "${beatName}"`);
+        }
       } else {
-        console.error(`[github] ❌ Beat "${beatName}" não encontrado no arquivo. Nome recebido: "${beatName}"`);
+        content = content.replace(beatRegex, '$1sold:true');
+        commitParts.push(`beat "${beatName}" vendido`);
+        console.log(`[github] Beat "${beatName}": sold:false → sold:true`);
       }
-    } else {
-      content = content.replace(beatRegex, '$1sold:true');
-      commitParts.push(`beat "${beatName}" vendido`);
-      console.log(`[github] Beat "${beatName}": sold:false → sold:true`);
     }
   }
 
@@ -453,15 +455,22 @@ export async function onRequestPost({ request, env }) {
 
       console.log(`[webhook] isCatalogBeat: ${isCatalogBeat}`);
 
-      const beatName   = isCatalogBeat ? extractBeatName(desc) : null;
+      // Beats de pacote ficam no metadata como "NOME1||NOME2||NOME3"
+      const pkgBeatsRaw = payment.metadata?.pkg_beats || null;
+      const pkgBeatNames = pkgBeatsRaw ? pkgBeatsRaw.split('||').map(n => n.trim()).filter(Boolean) : [];
+
+      const singleBeatName = isCatalogBeat ? extractBeatName(desc) : null;
+      // Unifica: beat avulso + beats de pacote (sem duplicatas)
+      const allBeatNames = [...new Set([...(singleBeatName ? [singleBeatName] : []), ...pkgBeatNames])];
+
       const couponCode = payment.metadata?.coupon_code || null;
 
-      if (beatName)   console.log(`[webhook] Beat extraído da descrição: "${beatName}"`);
-      if (couponCode) console.log(`[webhook] Cupom usado: "${couponCode}"`);
+      if (allBeatNames.length) console.log(`[webhook] Beats a marcar como vendidos: ${allBeatNames.join(', ')}`);
+      if (couponCode)          console.log(`[webhook] Cupom usado: "${couponCode}"`);
 
-      if (beatName || couponCode) {
+      if (allBeatNames.length || couponCode) {
         try {
-          await updateIndex({ githubToken: env.GITHUB_TOKEN, beatName, couponCode });
+          await updateIndex({ githubToken: env.GITHUB_TOKEN, beatNames: allBeatNames, couponCode });
         } catch (ghErr) {
           console.error('[webhook] Falha ao atualizar index.html no GitHub:', ghErr.message);
         }

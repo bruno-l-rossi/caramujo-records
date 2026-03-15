@@ -607,6 +607,95 @@ footer p{
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:8200;display:none;}
 .overlay.on{display:block;}
 
+/* PKG BEAT SELECTOR MODAL */
+.pkg-modal{
+  position:fixed;inset:0;z-index:9000;
+  display:none;align-items:center;justify-content:center;padding:1rem;
+}
+.pkg-modal.open{display:flex;}
+.pkg-modal-inner{
+  background:var(--deep);border:1px solid var(--wire);
+  width:100%;max-width:540px;max-height:90dvh;
+  display:flex;flex-direction:column;
+}
+.pkg-modal-head{
+  padding:1.2rem 1.6rem;border-bottom:1px solid var(--wire);
+  display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;
+}
+.pkg-modal-title{
+  font-family:'Bebas Neue',sans-serif;font-size:1.1rem;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--cream);
+}
+.pkg-modal-sub{
+  font-size:.62rem;color:var(--read);letter-spacing:.08em;margin-top:.2rem;
+}
+.pkg-modal-x{
+  background:none;border:none;color:var(--dim);font-size:1.1rem;
+  cursor:pointer;transition:color .14s;flex-shrink:0;
+}
+.pkg-modal-x:hover{color:var(--cream);}
+.pkg-modal-body{
+  flex:1;overflow-y:auto;padding:0 1.6rem 1rem;
+}
+.pkg-search{
+  position:sticky;top:0;z-index:1;
+  background:var(--deep);padding:.8rem 0 .6rem;
+  border-bottom:1px solid var(--wire);margin-bottom:.2rem;
+}
+.pkg-search-input{
+  width:100%;background:var(--mole);border:1px solid var(--wire);
+  color:var(--cream);font-family:'IBM Plex Mono',monospace;
+  font-size:.72rem;padding:.55rem .8rem;outline:none;
+  transition:border-color .14s;
+}
+.pkg-search-input::placeholder{color:var(--dim);}
+.pkg-search-input:focus{border-color:var(--ember);}
+.pkg-no-results{
+  text-align:center;color:var(--dim);font-size:.72rem;
+  padding:2rem 0;
+}
+.pkg-beat-item{
+  display:flex;align-items:center;gap:.8rem;
+  padding:.75rem 0;border-bottom:1px solid var(--wire);cursor:pointer;
+  transition:background .12s;
+}
+.pkg-beat-item:last-child{border-bottom:none;}
+.pkg-beat-item:hover{background:rgba(255,255,255,.02);}
+.pkg-beat-item.selected{background:rgba(184,44,8,.07);}
+.pkg-beat-cb{
+  width:18px;height:18px;flex-shrink:0;
+  border:1px solid var(--wire);background:var(--mole);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;color:var(--fire);transition:border-color .14s,background .14s;
+}
+.pkg-beat-item.selected .pkg-beat-cb{
+  border-color:var(--ember);background:rgba(184,44,8,.2);
+}
+.pkg-beat-info{flex:1;min-width:0;}
+.pkg-beat-name{
+  font-family:'Bebas Neue',sans-serif;font-size:.95rem;
+  text-transform:uppercase;color:var(--cream);letter-spacing:.06em;
+}
+.pkg-beat-meta{font-size:.58rem;color:var(--dim);letter-spacing:.08em;margin-top:.1rem;}
+.pkg-modal-foot{
+  padding:1rem 1.6rem;border-top:1px solid var(--wire);
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+}
+.pkg-counter{
+  font-family:'Barlow Condensed',sans-serif;font-size:.72rem;
+  font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--read);
+}
+.pkg-counter span{color:var(--fire);}
+.pkg-confirm{
+  background:var(--ember);border:none;color:var(--cream);
+  font-family:'Bebas Neue',sans-serif;font-size:.95rem;
+  letter-spacing:.12em;padding:.65rem 1.8rem;cursor:pointer;
+  transition:background .14s;
+}
+.pkg-confirm:hover{background:var(--fire);}
+.pkg-confirm:disabled{background:var(--loam);cursor:not-allowed;opacity:.6;}
+
 /* REVEAL */
 .rv{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease;}
 .rv.in{opacity:1;transform:none;}
@@ -818,8 +907,8 @@ html, body {
     <span class="s-kicker">// 01 — Catálogo · PRONTA ENTREGA</span>
     <h2 class="s-title">CATÁLOGO DE <span class="r">BEATS</span></h2>
     <p class="s-sub">
-      Todos os beats são entregues em <strong>MP3 320kbps + WAV</strong>.
       Cada beat é vendido com <strong>licença exclusiva</strong> — uma única venda por título, removido do catálogo após a compra.
+      Todos os beats são entregues em <strong>MP3 320kbps + WAV</strong>.
       Opção de <strong>stems</strong> disponível por R$25 a mais.
     </p>
   </div>
@@ -891,10 +980,10 @@ html, body {
       <div class="pack-sep"></div>
       <ul class="pack-ul">
         <li>1 beat do catálogo à sua escolha</li>
-        <li>MP3 (320kbps) + WAV</li>
         <li>Licença exclusiva completa</li>
-        <li><em style="color:var(--clay)">(Opcional)</em> Stems separados por instrumento</li>
+        <li>MP3 (320kbps) + WAV</li>
         <li>Contrato digital incluso</li>
+        <li><em style="color:var(--clay)">(Opcional)</em> Stems separados por instrumento</li>
       </ul>
       <div style="display:flex;gap:0;margin-top:auto;">
         <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('1 Beat',120)">Beat · R$120</button>
@@ -908,10 +997,10 @@ html, body {
       <div class="pack-sep"></div>
       <ul class="pack-ul">
         <li>2 beats do catálogo à sua escolha</li>
-        <li>MP3 (320kbps) + WAV</li>
         <li>Licença exclusiva por beat</li>
-        <li><em style="color:var(--amber)">(Opcional)</em> Stems separados por beat</li>
+        <li>MP3 (320kbps) + WAV</li>
         <li>Contrato digital incluso</li>
+        <li><em style="color:var(--amber)">(Opcional)</em> Stems separados por beat</li>
       </ul>
       <div style="display:flex;gap:0;margin-top:auto;">
         <button class="btn btn-fire" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('2 Beats',220)">Beat · R$220</button>
@@ -925,10 +1014,10 @@ html, body {
       <div class="pack-sep"></div>
       <ul class="pack-ul">
         <li>3 beats do catálogo à sua escolha</li>
-        <li>MP3 (320kbps) + WAV</li>
         <li>Licença exclusiva por beat</li>
-        <li><em style="color:var(--clay)">(Opcional)</em> Stems separados por beat</li>
+        <li>MP3 (320kbps) + WAV</li>
         <li>Contrato digital incluso</li>
+        <li><em style="color:var(--clay)">(Opcional)</em> Stems separados por beat</li>
       </ul>
       <div style="display:flex;gap:0;margin-top:auto;">
         <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('3 Beats',300)">Beat · R$300</button>
@@ -1084,6 +1173,29 @@ html, body {
       <span class="cp-tv" id="cpTot">R$ 0</span>
     </div>
     <button class="cp-ck" id="checkoutBtn" onclick="openCheckout()">FINALIZAR COMPRA →</button>
+  </div>
+</div>
+
+<!-- ═══ PKG BEAT SELECTOR MODAL ══════════════════════ -->
+<div class="pkg-modal" id="pkgModal">
+  <div class="pkg-modal-inner">
+    <div class="pkg-modal-head">
+      <div>
+        <div class="pkg-modal-title" id="pkgModalTitle">Escolha seus beats</div>
+        <div class="pkg-modal-sub" id="pkgModalSub"></div>
+      </div>
+      <button class="pkg-modal-x" onclick="closePkgModal()">✕</button>
+    </div>
+    <div class="pkg-modal-body" id="pkgModalBody">
+      <div class="pkg-search">
+        <input class="pkg-search-input" id="pkgSearchInput" type="text" placeholder="Buscar beat..." oninput="filterPkgBeats(this.value)" autocomplete="off" spellcheck="false"/>
+      </div>
+      <div id="pkgBeatList"></div>
+    </div>
+    <div class="pkg-modal-foot">
+      <div class="pkg-counter">Selecionados: <span id="pkgSelectedCount">0</span> / <span id="pkgRequired">0</span></div>
+      <button class="pkg-confirm" id="pkgConfirmBtn" onclick="confirmPkgSelection()" disabled>CONFIRMAR →</button>
+    </div>
   </div>
 </div>
 
@@ -1465,15 +1577,137 @@ function toggleBeat(beatId,stems){
   cb.style.transform='scale(1.07)';setTimeout(()=>{cb.style.transform='';},200);
 }
 
-function addPkg(name,price){
-  const existing=cart.find(c=>c.name===name&&c.type==='Pacote');
-  if(existing){
-    existing.qty++;
-    existing.price=existing.unitPrice*existing.qty;
-  } else {
-    cart.push({id:Date.now(),name,price,unitPrice:price,type:'Pacote',qty:1,beatId:null,stems:false});
+// ── PKG BEAT SELECTOR ────────────────────────────────
+let _pkgPending = null; // { name, price, unitPrice, stems, qty, required }
+
+function addPkg(name, price) {
+  const stems = name.includes('Stems');
+  const qty = name.startsWith('1') ? 1 : name.startsWith('2') ? 2 : 3;
+  _pkgPending = { name, price, unitPrice: price, stems, qty, required: qty, selectedBeats: [] };
+  openPkgModal();
+}
+
+let _pkgAvailable = []; // beats disponíveis para o modal atual
+
+function openPkgModal() {
+  // Beats já reservados em pacotes que estão no carrinho
+  const reservedIds = new Set(
+    cart
+      .filter(c => c.type === 'Pacote' && c.pkgBeats)
+      .flatMap(c => c.pkgBeats.flat().map(b => b.id))
+  );
+
+  _pkgAvailable = BEATS.filter(b => !b.sold && !reservedIds.has(b.id));
+  const p = _pkgPending;
+
+  document.getElementById('pkgModalTitle').textContent =
+    `Escolha ${p.required} beat${p.required > 1 ? 's' : ''}`;
+  const reservedCount = reservedIds.size;
+  document.getElementById('pkgModalSub').textContent =
+    `Selecione exatamente ${p.required} beat${p.required > 1 ? 's' : ''} do catálogo.${p.stems ? ' Stems incluídos para todos.' : ''}`;
+  document.getElementById('pkgRequired').textContent = p.required;
+  document.getElementById('pkgSelectedCount').textContent = '0';
+  document.getElementById('pkgConfirmBtn').disabled = true;
+  document.getElementById('pkgSearchInput').value = '';
+  p.selectedBeats = [];
+
+  renderPkgBeatList(_pkgAvailable);
+
+  document.getElementById('pkgModal').classList.add('open');
+  document.getElementById('overlay').classList.add('on');
+  // foco na busca após abertura
+  setTimeout(() => document.getElementById('pkgSearchInput').focus(), 80);
+}
+
+function renderPkgBeatList(beats) {
+  const list = document.getElementById('pkgBeatList');
+  if (beats.length === 0) {
+    list.innerHTML = '<div class="pkg-no-results">Nenhum beat encontrado.</div>';
+    return;
   }
-  updateCart();toggleCart();
+  const p = _pkgPending;
+  list.innerHTML = beats.map(b => {
+    const sel = p.selectedBeats.some(s => s.id === b.id);
+    return `
+    <div class="pkg-beat-item${sel ? ' selected' : ''}" id="pbi-${b.id}" onclick="togglePkgBeat(${b.id}, '${b.name.replace(/'/g, "\\'")}')">
+      <div class="pkg-beat-cb" id="pbc-${b.id}">${sel ? '✓' : ''}</div>
+      <div class="pkg-beat-info">
+        <div class="pkg-beat-name">${b.name}</div>
+        <div class="pkg-beat-meta">${b.bpm} BPM · ${b.key} · ${GENRE_LABELS[b.genre] || b.genre}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterPkgBeats(query) {
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? _pkgAvailable.filter(b => b.name.toLowerCase().includes(q) || (GENRE_LABELS[b.genre]||b.genre).toLowerCase().includes(q))
+    : _pkgAvailable;
+  renderPkgBeatList(filtered);
+}
+
+function togglePkgBeat(id, name) {
+  const p = _pkgPending;
+  const idx = p.selectedBeats.findIndex(b => b.id === id);
+  if (idx >= 0) {
+    p.selectedBeats.splice(idx, 1);
+    const el = document.getElementById(`pbi-${id}`);
+    if (el) { el.classList.remove('selected'); document.getElementById(`pbc-${id}`).textContent = ''; }
+  } else {
+    if (p.selectedBeats.length >= p.required) {
+      showToast(`Selecione apenas ${p.required} beat${p.required > 1 ? 's' : ''}.`);
+      return;
+    }
+    p.selectedBeats.push({ id, name });
+    const el = document.getElementById(`pbi-${id}`);
+    if (el) { el.classList.add('selected'); document.getElementById(`pbc-${id}`).textContent = '✓'; }
+  }
+  const count = p.selectedBeats.length;
+  document.getElementById('pkgSelectedCount').textContent = count;
+  document.getElementById('pkgConfirmBtn').disabled = count !== p.required;
+}
+
+function closePkgModal() {
+  document.getElementById('pkgModal').classList.remove('open');
+  document.getElementById('overlay').classList.remove('on');
+  _pkgPending = null;
+}
+
+function confirmPkgSelection() {
+  const p = _pkgPending;
+  if (!p || p.selectedBeats.length !== p.required) return;
+
+  const beatNames = p.selectedBeats.map(b => b.name).join(', ');
+  const label = `${p.name} (${beatNames})`;
+
+  const existing = cart.find(c => c.name === p.name && c.type === 'Pacote');
+  if (existing) {
+    existing.qty++;
+    existing.price = existing.unitPrice * existing.qty;
+    // adiciona seleção desta instância
+    existing.pkgBeats = existing.pkgBeats || [];
+    existing.pkgBeats.push([...p.selectedBeats]);
+  } else {
+    cart.push({
+      id: Date.now(),
+      name: p.name,
+      label,
+      price: p.unitPrice,
+      unitPrice: p.unitPrice,
+      type: 'Pacote',
+      qty: 1,
+      stems: p.stems,
+      beatId: null,
+      pkgBeats: [[...p.selectedBeats]], // array de arrays (uma por instância)
+    });
+  }
+
+  document.getElementById('pkgModal').classList.remove('open');
+  document.getElementById('overlay').classList.remove('on');
+  _pkgPending = null;
+  updateCart();
+  toggleCart();
 }
 
 function addSvc(name,unitPrice){
@@ -1573,10 +1807,10 @@ function updateCart(){
     <div class="ci">
       <div style="flex:1;min-width:0;">
         <div class="ci-n">${(c.type==='Servico'||c.type==='Pacote')&&c.qty>1?`${c.name} ×${c.qty}`:c.name}</div>
-        <div class="ci-t">${c.type}${c.stems?' · Com Stems':''}</div>
+        ${c.type==='Pacote'&&c.pkgBeats?`<div class="ci-t" style="line-height:1.6;">${c.pkgBeats.map((g,i)=>g.map(b=>b.name).join(', ')).join(' · ')}</div>`:`<div class="ci-t">${c.type}${c.stems?' · Com Stems':''}</div>`}
       </div>
       <div style="display:flex;align-items:center">
-        ${c.type==='Servico'||c.type==='Pacote'?`
+        ${c.type==='Servico'?`
           <div class="ci-qty">
             <button class="ci-qty-btn" onclick="changeQty(${c.id},-1)">−</button>
             <div class="ci-qty-n">${c.qty}</div>
@@ -1599,6 +1833,9 @@ function toggleCart(){
 function closeAll(){
   document.getElementById('cartPanel').classList.remove('open');
   document.getElementById('overlay').classList.remove('on');
+  if(document.getElementById('pkgModal').classList.contains('open')){
+    closePkgModal();
+  }
 }
 
 /* ── CHECKOUT FLOW ───────────────────────────────── */
@@ -1790,7 +2027,7 @@ async function goToPayment(){
                   description: itemsDesc,
                   email, name,
                   cpf: document.getElementById('mpCpf').value.replace(/\D/g,''),
-                  items: cart.map(c=>({name:c.qty&&c.qty>1?`${c.name} x${c.qty}`:c.name,price:c.price,type:c.type})),
+                  items: cart.map(c=>({name:c.qty&&c.qty>1?`${c.name} x${c.qty}`:c.name,price:c.price,type:c.type,pkgBeats:c.pkgBeats||null})),
                   termsAcceptance,
                   couponCode: activeCoupon ? activeCoupon.code : null,
                 }),
