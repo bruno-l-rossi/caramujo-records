@@ -84,7 +84,7 @@ nav{
 .nav-logo img{height:36px;width:auto;}
 .nav-links{display:flex;list-style:none;}
 .nav-links a{
-  font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;
+  font-family:'Barlow Condensed',sans-serif;font-size:.76rem;font-weight:700;
   letter-spacing:.22em;text-transform:uppercase;
   color:var(--read);text-decoration:none;
   padding:0 1.1rem;border-left:1px solid var(--wire);
@@ -873,7 +873,7 @@ html, body {
     <li><a href="#services">Serviços</a></li>
     <li><a href="#contact">Contato</a></li>
   </ul>
-  <a class="nav-cta" href="#beats">COMPRAR</a>
+  <button class="nav-cta" onclick="openCheckout()">COMPRAR</button>
 </nav>
 
 <!-- ═══ HERO ══════════════════════════════════════════ -->
@@ -1171,7 +1171,7 @@ html, body {
 
 <!-- ═══ CART ═════════════════════════════════════════ -->
 <button class="cart-btn" onclick="toggleCart()">
-  ● CART <span class="cart-n" id="cartN">0</span>
+  ● CARRINHO <span class="cart-n" id="cartN">0</span>
 </button>
 
 <div class="overlay" id="overlay" onclick="closeAll()"></div>
