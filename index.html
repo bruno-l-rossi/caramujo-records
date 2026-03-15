@@ -914,8 +914,10 @@ html, body {
   </div>
 
 
-  <div class="ftabs">
+  <div class="ftabs" style="margin-bottom:0;">
     <button class="ft on" onclick="filt('todos',this)">Todos</button>
+  </div>
+  <div class="ftabs">
     <button class="ft" onclick="filt('trap',this)">Trap</button>
     <button class="ft" onclick="filt('boombap',this)">Boom Bap</button>
     <button class="ft" onclick="filt('plug',this)">Plug</button>
@@ -1445,8 +1447,8 @@ document.addEventListener('mousemove',e=>{
 
 /* beats data */
 const BEATS=[
-  {id:1, name:'NUVEM',                   bpm:160,  key:'Am',    genre:'plug',     sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/nuvem-12'},
-  {id:2, name:'COLA',                    bpm:147,  key:'Ebm',   genre:'hoodtrap', sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/cola-5'},
+  {id:1, name:'NUVEM',                   bpm:160,  key:'Am',    genre:'plug',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/nuvem-12'},
+  {id:2, name:'COLA',                    bpm:147,  key:'Ebm',   genre:'hoodtrap', sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/cola-5'},
   {id:3, name:'ORAÇÃO',                  bpm:160,  key:'Em',    genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/oracao-11'},
   {id:4, name:'GRAVIDADE',               bpm:128,  key:'Gm',    genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/gravidade-4'},
   {id:5, name:'LARANJA',                 bpm:132,  key:'Gm',    genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/laranja-15'},
@@ -1477,7 +1479,7 @@ const BEATS=[
 
 const PRICE_BEAT=120, PRICE_STEMS=145;
 let cart=[], curFilt='todos', showAvailOnly=true;
-const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','detroit':'Detroit','drumless':'Drumless'};
+const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':'Hood Trap','outro':'Outro','detroit':'Detroit','drumless':'Drumless'};
 
 /* ── FILTER & RENDER ─────────────────────────────── */
 function filt(g,btn){
@@ -1749,7 +1751,7 @@ const COUPONS = {
   'CARAMUJO25': { pct: 25,  maxUses: 5,        uses: 0 },
   'RIDE20':     { pct: 20,  maxUses: Infinity,  uses: 0 },
   'PAGUPAGU':   { fixedPrice: 1, maxUses: Infinity, uses: 0 },
-  'SABER50':    { pct: 50,  maxUses: 2,         uses: 0 },
+  'SABER50':    { pct: 50,  maxUses: 1,         uses: 0 },
 };
 let activeCoupon = null; // { code, pct?, fixedPrice? }
 
