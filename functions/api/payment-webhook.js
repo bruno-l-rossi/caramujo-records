@@ -181,18 +181,25 @@ async function updateIndex({ githubToken, beatNames = [], couponCode }) {
   // 2b. Aplica incremento do cupom (se necessário) — sobre o content já modificado
   if (needsCoupon) {
     const couponEscaped = couponCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Regex específico: captura apenas "uses:" (não "maxUses:")
     const couponRegex = new RegExp(
-      `('${couponEscaped}'\\s*:\\s*\\{[^}]*?uses\\s*:\\s*)(\\d+)`,
+      `('${couponEscaped}'\\s*:\\s*\\{[^}]*?(?<!max)Uses\\s*:\\s*)(\\d+)`,
+      'i'
+    );
+    // Fallback sem lookbehind para engines que não suportam
+    const couponRegexFallback = new RegExp(
+      `('${couponEscaped}'\\s*:\\s*\\{[^}]*?,\\s*uses\\s*:\\s*)(\\d+)`,
       'i'
     );
 
-    const match = content.match(couponRegex);
+    const match = content.match(couponRegex) || content.match(couponRegexFallback);
     if (!match) {
       console.error(`[github-coupon] ❌ Cupom "${couponCode}" não encontrado no código. Verifique se o nome bate exatamente com a chave no objeto COUPONS.`);
     } else {
       const currentUses = parseInt(match[2], 10);
       const newUses = currentUses + 1;
-      content = content.replace(couponRegex, `$1${newUses}`);
+      const usedRegex = match[0].includes('maxUses') ? couponRegexFallback : couponRegex;
+      content = content.replace(usedRegex, `$1${newUses}`);
       commitParts.push(`cupom "${couponCode}" uses: ${currentUses}→${newUses}`);
       console.log(`[github-coupon] Cupom "${couponCode}": uses ${currentUses} → ${newUses}`);
     }
