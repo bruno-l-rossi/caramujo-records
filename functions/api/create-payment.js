@@ -95,7 +95,7 @@ function generateContractHtml({ name, cpf, email, items, category, amount, payme
   .footer{text-align:center;font-size:.68rem;color:#999;margin-top:28px;border-top:1px solid #eee;padding-top:10px;}
 </style></head><body>
   <h1>CARAMUJO RECORDS</h1>
-  <p class="sub">Estúdio popular e Independente · São Carlos, SP</p>
+  <p class="sub">Estúdio popular e independente · São Carlos, SP</p>
   <hr/>
   <h2>CONTRATO DE LICENÇA EXCLUSIVA DE USO</h2>
   <p class="sub">Instrumento Particular de Cessão de Direitos de Uso</p>
@@ -126,18 +126,28 @@ function generateContractHtml({ name, cpf, email, items, category, amount, payme
   <h4>2. Licença Exclusiva</h4>
   <p>A licença concedida é EXCLUSIVA: após a conclusão desta compra, a Obra será removida permanentemente do catálogo da Caramujo Records e não será vendida, licenciada ou disponibilizada a terceiros em nenhuma hipótese.</p>
   <h4>3. Entrega dos Arquivos</h4>
-  <p>O Licenciado receberá no email informado os seguintes arquivos após confirmação do pagamento:</p>
-  <ul><li>Arquivo MP3 em 320kbps</li><li>Arquivo WAV</li><li>Stems separados por instrumento (se contratado Beat + Stems)</li><li>Uma via deste contrato</li></ul>
+  <p>O Licenciado receberá, no email informado no pedido, os seguintes arquivos após a confirmação do pagamento:</p>
+  <ul><li>Arquivo MP3 em 320kbps</li><li>Arquivo WAV</li><li>Stems separados por instrumento — somente se contratado o pacote Beat + Stems</li><li>Uma via deste contrato assinado pelo Produtor</li></ul>
   <h4>4. Prazos de Entrega</h4>
-  <ul><li>Beat catálogo: até 24 horas</li><li>Beat personalizado: até 2 semanas</li><li>Mixagem, Masterização ou Mix + Master: até 3 semanas</li></ul>
+  <p>Os arquivos serão entregues dentro dos seguintes prazos, contados a partir da confirmação do pagamento:</p>
+  <ul><li>Beat catálogo (disponível no site): até 24 horas</li><li>Beat personalizado (produção sob encomenda): até 2 semanas</li><li>Mixagem, Masterização ou Mix + Master: até 3 semanas</li></ul>
+  <p>Em caso de imprevistos que possam impactar os prazos, o Produtor notificará o Licenciado por email com antecedência.</p>
   <h4>5. Crédito Obrigatório</h4>
-  <p>Plataformas digitais: creditar @rideblan33 como artista principal. YouTube: adicionar "(prod. @rideblan33)" no título.</p>
-  <h4>6. Royalties</h4>
+  <p>O uso da Obra em qualquer plataforma digital exige a creditação do Produtor da seguinte forma:</p>
+  <ul><li>Plataformas digitais (Spotify, Apple Music, Deezer, etc.): creditar @rideblan33 como artista principal na faixa.</li><li>YouTube: adicionar "(prod. @rideblan33)" no título do vídeo.</li></ul>
+  <p>O não cumprimento desta cláusula configura violação contratual e poderá ensejar rescisão da licença.</p>
+  <h4>6. Royalties e Divisão de Receitas</h4>
   <p>Royalties Fonográficos (master): 90% Licenciado / 10% Produtor. O Licenciado deve realizar o split share de 10% ao Produtor no cadastro em distribuidoras digitais.</p>
+  <p>* A divisão dos royalties de composição será definida em adendo específico, conforme contribuição lírica do Licenciado.</p>
   <h4>7. Vedações</h4>
-  <ul><li>Revender, ceder ou sublicenciar a Obra a terceiros</li><li>Remover ou alterar créditos do Produtor</li><li>Utilizar a Obra em mais de uma faixa sem novo contrato</li><li>Registrar a Obra em nome próprio no ECAD/PRO sem o Produtor</li></ul>
-  <h4>8. Disposições Gerais</h4>
-  <p>As partes elegem o foro da Comarca de São Carlos/SP. Este contrato representa o acordo integral entre as partes.</p>
+  <p>É expressamente vedado ao Licenciado:</p>
+  <ul><li>Revender, ceder, sublicenciar ou transferir a Obra ou este contrato a terceiros.</li><li>Remover ou alterar créditos do Produtor em qualquer plataforma ou material.</li><li>Utilizar a Obra em mais de uma faixa musical sem novo contrato.</li><li>Registrar a Obra em nome próprio em entidades de gestão coletiva (ECAD, PRO) sem inclusão do Produtor.</li><li>Afirmar autoria exclusiva da composição da Obra.</li></ul>
+  <h4>8. Vigência</h4>
+  <p>Esta licença é concedida por prazo indeterminado a partir da data de emissão, permanecendo válida enquanto o Licenciado cumprir todas as obrigações previstas neste instrumento.</p>
+  <h4>9. Rescisão</h4>
+  <p>O descumprimento de qualquer cláusula deste contrato, especialmente as relativas a crédito e royalties, confere ao Produtor o direito de rescindir a licença mediante notificação por escrito, sem direito a reembolso ao Licenciado.</p>
+  <h4>10. Disposições Gerais</h4>
+  <ul><li>Este contrato representa o acordo integral entre as partes e substitui quaisquer entendimentos anteriores.</li><li>Eventuais alterações somente terão validade se formalizadas por escrito e assinadas por ambas as partes.</li><li>As partes elegem o foro da Comarca de São Carlos/SP para dirimir eventuais litígios.</li></ul>
 
   <div class="aceite">
     <b>Registro do Aceite Eletrônico</b>
