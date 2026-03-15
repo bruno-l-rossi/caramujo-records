@@ -521,6 +521,11 @@ export async function onRequestPost({ request, env }) {
     if (formData.token)        mpPayload.token = formData.token;
     if (formData.installments) mpPayload.installments = Number(formData.installments);
     if (formData.issuer_id)    mpPayload.issuer_id = formData.issuer_id;
+    // Beats avulsos do catálogo (type=Beat)
+    const catalogBeatsList = (Array.isArray(items) ? items : [])
+      .filter(i => i.type === 'Beat')
+      .map(i => sanitize(i.name, 80).replace(' + Stems', '').trim());
+
     if (couponCode) mpPayload.metadata = { coupon_code: couponCode };
     mpPayload.metadata = {
       ...(mpPayload.metadata || {}),
@@ -531,7 +536,8 @@ export async function onRequestPost({ request, env }) {
       items_display:  itemsForEmail,
       category_label: categoryLabel,
       ...(couponCode ? { coupon_code: couponCode } : {}),
-      ...(pkgBeatsList.length > 0 ? { pkg_beats: pkgBeatsList.join('||') } : {}),
+      ...(pkgBeatsList.length > 0    ? { pkg_beats:     pkgBeatsList.join('||')     } : {}),
+      ...(catalogBeatsList.length > 0 ? { catalog_beats: catalogBeatsList.join('||') } : {}),
     };
 
     const mpRes = await fetch('https://api.mercadopago.com/v1/payments', {
