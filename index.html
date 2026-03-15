@@ -1597,12 +1597,15 @@ function addPkg(name, price) {
 let _pkgAvailable = []; // beats disponíveis para o modal atual
 
 function openPkgModal() {
-  // Beats já reservados em pacotes que estão no carrinho
-  const reservedIds = new Set(
-    cart
+  // IDs já ocupados: beats em pacotes + beats avulsos no carrinho
+  const reservedIds = new Set([
+    ...cart
       .filter(c => c.type === 'Pacote' && c.pkgBeats)
-      .flatMap(c => c.pkgBeats.flat().map(b => b.id))
-  );
+      .flatMap(c => c.pkgBeats.flat().map(b => b.id)),
+    ...cart
+      .filter(c => c.type === 'Beat' && c.beatId != null)
+      .map(c => c.beatId),
+  ]);
 
   _pkgAvailable = BEATS.filter(b => !b.sold && !reservedIds.has(b.id));
   const p = _pkgPending;
