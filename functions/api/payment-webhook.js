@@ -451,28 +451,24 @@ export async function onRequestPost({ request, env }) {
         }
       }
 
-      // 2. Atualiza index.html (beat + cupom) em UM único commit
+      // 2. Atualiza index.html (beats + cupom) em UM único commit
       const desc = payment.description || '';
       console.log(`[webhook] Descrição do pagamento: "${desc}"`);
 
-      const isCatalogBeat = desc.includes('Caramujo Records —')
-        && !desc.includes('Beat Personalizado')
-        && !desc.includes('Mixagem')
-        && !desc.includes('Masterização')
-        && !desc.includes('Mix + Master')
-        && !desc.includes('2 Beats')
-        && !desc.includes('3 Beats')
-        && !desc.includes('faixa');
+      // Beats avulsos do catálogo — salvos no metadata pelo create-payment
+      const catalogBeatsRaw = payment.metadata?.catalog_beats || null;
+      const catalogBeatNames = catalogBeatsRaw
+        ? catalogBeatsRaw.split('||').map(n => n.trim()).filter(Boolean)
+        : [];
 
-      console.log(`[webhook] isCatalogBeat: ${isCatalogBeat}`);
+      // Beats de pacote — salvos no metadata como "NOME1||NOME2||NOME3"
+      const pkgBeatsRaw  = payment.metadata?.pkg_beats || null;
+      const pkgBeatNames = pkgBeatsRaw
+        ? pkgBeatsRaw.split('||').map(n => n.trim()).filter(Boolean)
+        : [];
 
-      // Beats de pacote ficam no metadata como "NOME1||NOME2||NOME3"
-      const pkgBeatsRaw = payment.metadata?.pkg_beats || null;
-      const pkgBeatNames = pkgBeatsRaw ? pkgBeatsRaw.split('||').map(n => n.trim()).filter(Boolean) : [];
-
-      const singleBeatName = isCatalogBeat ? extractBeatName(desc) : null;
-      // Unifica: beat avulso + beats de pacote (sem duplicatas)
-      const allBeatNames = [...new Set([...(singleBeatName ? [singleBeatName] : []), ...pkgBeatNames])];
+      // Unifica todos os beats a marcar como vendidos (sem duplicatas)
+      const allBeatNames = [...new Set([...catalogBeatNames, ...pkgBeatNames])];
 
       const couponCode = payment.metadata?.coupon_code || null;
 
