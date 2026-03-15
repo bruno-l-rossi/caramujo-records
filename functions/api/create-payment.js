@@ -512,10 +512,12 @@ export async function onRequestPost({ request, env }) {
       .flatMap(i => i.pkgBeats.flat().map(b => b.name));
     mpPayload.metadata = {
       ...(mpPayload.metadata || {}),
-      buyer_email:  email,
-      buyer_name:   name,
-      buyer_artist: artistName || name,
-      buyer_cpf:    cpf,
+      buyer_email:    email,
+      buyer_name:     name,
+      buyer_artist:   artistName || name,
+      buyer_cpf:      cpf,
+      items_display:  itemsForEmail,
+      category_label: categoryLabel,
       ...(couponCode ? { coupon_code: couponCode } : {}),
       ...(pkgBeatsList.length > 0 ? { pkg_beats: pkgBeatsList.join('||') } : {}),
     };
