@@ -490,6 +490,23 @@ export async function onRequestPost({ request, env }) {
 
   try {
     const idempotencyKey = `caramujo-${Date.now()}-${btoa(email).slice(0, 12)}`;
+
+    // Constrói lista de itens e categorias ANTES do payload (usados no metadata do MP)
+    const itemsList = (Array.isArray(items) ? items : []).map(i => sanitize(i.name, 80)).join(' + ');
+    const itemsDetailed = (Array.isArray(items) ? items : []).map(i => {
+      if (i.type === 'Pacote' && i.pkgBeats && i.pkgBeats.length > 0) {
+        const beatNames = i.pkgBeats.flat().map(b => sanitize(b.name, 80));
+        return { category: 'Pacotes promocionais', names: beatNames, label: i.name };
+      }
+      if (i.type === 'Beat') return { category: 'Catálogo de beats', names: [sanitize(i.name, 80)], label: i.name };
+      return { category: 'Serviços por encomenda', names: [sanitize(i.name, 80)], label: i.name };
+    });
+    const categoryLabel = [...new Set(itemsDetailed.map(i => i.category))].join(', ');
+    const itemsForEmail = itemsDetailed.flatMap(i => i.names).join(', ') || itemsList;
+    const pkgBeatsList  = (Array.isArray(items) ? items : [])
+      .filter(i => i.pkgBeats && Array.isArray(i.pkgBeats))
+      .flatMap(i => i.pkgBeats.flat().map(b => b.name));
+
     const mpPayload = {
       transaction_amount: Number(amount),
       description: `Caramujo Records — ${sanitize(description, 200)}`,
@@ -505,11 +522,6 @@ export async function onRequestPost({ request, env }) {
     if (formData.installments) mpPayload.installments = Number(formData.installments);
     if (formData.issuer_id)    mpPayload.issuer_id = formData.issuer_id;
     if (couponCode) mpPayload.metadata = { coupon_code: couponCode };
-    // Guarda email e nome do comprador no metadata para uso no webhook (PIX não expõe payer.email)
-    // Guarda também os beats selecionados em pacotes para marcação no webhook
-    const pkgBeatsList = (Array.isArray(items) ? items : [])
-      .filter(i => i.pkgBeats && Array.isArray(i.pkgBeats))
-      .flatMap(i => i.pkgBeats.flat().map(b => b.name));
     mpPayload.metadata = {
       ...(mpPayload.metadata || {}),
       buyer_email:    email,
@@ -538,25 +550,6 @@ export async function onRequestPost({ request, env }) {
     if (payment.status === 'rejected')
       return Response.json({ error: `Pagamento recusado: ${payment.status_detail || 'tente outro método.'}` }, { status: 400, headers: cors });
 
-    const itemsList = (Array.isArray(items) ? items : []).map(i => sanitize(i.name, 80)).join(' + ');
-
-    // Lista detalhada para emails e contrato
-    function getCategory(item) {
-      if (item.type === 'Beat') return 'Catálogo de beats';
-      if (item.type === 'Pacote') return 'Pacotes promocionais';
-      return 'Serviços por encomenda';
-    }
-    const itemsDetailed = (Array.isArray(items) ? items : []).map(i => {
-      if (i.type === 'Pacote' && i.pkgBeats && i.pkgBeats.length > 0) {
-        const beatNames = i.pkgBeats.flat().map(b => sanitize(b.name, 80));
-        return { category: 'Pacotes promocionais', names: beatNames, label: i.name };
-      }
-      if (i.type === 'Beat') return { category: 'Catálogo de beats', names: [sanitize(i.name, 80)], label: i.name };
-      return { category: 'Serviços por encomenda', names: [sanitize(i.name, 80)], label: i.name };
-    });
-    const categoryLabel = [...new Set(itemsDetailed.map(i => i.category))].join(', ');
-    const beatsLabel = itemsDetailed.flatMap(i => i.names).join(', ');
-    const itemsForEmail = beatsLabel || itemsList;
     const pixInfo   = payment.point_of_interaction?.transaction_data;
 
     console.log(JSON.stringify({ event: 'NOVA_VENDA', paymentId: payment.id, status: payment.status, amount, name, email, cpf: cpf.slice(0,3)+'***', items: itemsList, coupon: couponCode || null }));
