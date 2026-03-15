@@ -1,7 +1,52 @@
 /**
  * Cloudflare Pages Function: create-payment
- * Variáveis de ambiente: MP_ACCESS_TOKEN, NOTIFY_EMAIL, NOTIFY_FROM, RESEND_API_KEY
+ * Variáveis de ambiente: MP_ACCESS_TOKEN, NOTIFY_EMAIL, NOTIFY_FROM, RESEND_API_KEY, GITHUB_TOKEN
  */
+
+const GITHUB_OWNER  = 'bruno-l-rossi';
+const GITHUB_REPO   = 'caramujo-records';
+const GITHUB_FILE   = 'index.html';
+const GITHUB_BRANCH = 'main';
+
+// ── Valida cupom lendo uses atual direto do GitHub ────────────────────────────
+async function validateCouponFromGitHub(couponCode, githubToken) {
+  if (!couponCode || !githubToken) return { valid: false, reason: 'sem token' };
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_FILE}?ref=${GITHUB_BRANCH}`,
+      {
+        headers: {
+          Authorization: `Bearer ${githubToken}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          'User-Agent': 'caramujo-records-webhook/1.0',
+        },
+      }
+    );
+    if (!res.ok) return { valid: false, reason: 'github error' };
+    const { content } = await res.json();
+    const src = decodeURIComponent(escape(atob(content.replace(/\n/g, ''))));
+
+    const codeEsc = couponCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Extrai uses e maxUses do objeto COUPONS no código
+    const blockRe = new RegExp(`'${codeEsc}'\\s*:\\s*\\{([^}]+)\\}`, 'i');
+    const block = src.match(blockRe);
+    if (!block) return { valid: false, reason: 'not found' };
+
+    const usesMatch    = block[1].match(/uses\s*:\s*(\d+)/);
+    const maxUsesMatch = block[1].match(/maxUses\s*:\s*(\w+)/);
+
+    const uses    = usesMatch    ? parseInt(usesMatch[1], 10)    : 0;
+    const maxUsesRaw = maxUsesMatch ? maxUsesMatch[1] : 'Infinity';
+    const maxUses = maxUsesRaw === 'Infinity' ? Infinity : parseInt(maxUsesRaw, 10);
+
+    if (uses >= maxUses) return { valid: false, reason: 'expired' };
+    return { valid: true };
+  } catch (e) {
+    console.warn('[coupon-check] Falha ao validar cupom via GitHub:', e.message);
+    return { valid: true }; // em caso de falha técnica, não bloqueia o pagamento
+  }
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -29,7 +74,7 @@ function fmtCpf(cpf) {
 
 // ── Contrato HTML ─────────────────────────────────────────────────────────────
 
-function generateContractHtml({ name, cpf, email, items, amount, paymentId, termsTimestamp }) {
+function generateContractHtml({ name, cpf, email, items, category, amount, paymentId, termsTimestamp }) {
   const data = new Date(termsTimestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>
   body{font-family:'Courier New',monospace;background:#fff;color:#111;margin:0;padding:40px 32px;max-width:700px;}
@@ -58,6 +103,7 @@ function generateContractHtml({ name, cpf, email, items, amount, paymentId, term
   <h3>Dados da Transação</h3>
   <div class="row"><b>Data:</b><span>${data}</span></div>
   <div class="row"><b>ID do Pagamento:</b><span>${paymentId}</span></div>
+  <div class="row"><b>Categoria:</b><span>${category || '—'}</span></div>
   <div class="row"><b>Itens:</b><span>${items}</span></div>
   <div class="row"><b>Valor Total:</b><span>R$ ${amount}</span></div>
 
@@ -113,7 +159,7 @@ function generateContractHtml({ name, cpf, email, items, amount, paymentId, term
 
 // ── Email via Resend ──────────────────────────────────────────────────────────
 
-async function sendNotificationEmail({ env, payment, name, email, cpf, itemsList, amount, selectedPaymentMethod, termsAcceptance, contractHtml }) {
+async function sendNotificationEmail({ env, payment, name, email, cpf, itemsList, categoryLabel, amount, selectedPaymentMethod, termsAcceptance, contractHtml }) {
   const resendKey   = env.RESEND_API_KEY;
   const notifyEmail = env.NOTIFY_EMAIL || 'rideblan33@gmail.com';
   const fromEmail   = env.NOTIFY_FROM  || 'rideblan33@caramujorecords.com.br';
@@ -144,6 +190,7 @@ async function sendNotificationEmail({ env, payment, name, email, cpf, itemsList
     <table>
       <tr class="sect"><td colspan="2">PEDIDO</td></tr>
       <tr><td>ID</td><td>${payment.id}</td></tr>
+      <tr><td>Categoria</td><td>${categoryLabel || '—'}</td></tr>
       <tr><td>Itens</td><td>${itemsList}</td></tr>
       <tr><td>Valor</td><td>R$ ${amount}</td></tr>
       <tr><td>Método</td><td>${selectedPaymentMethod === 'bank_transfer' ? 'PIX' : 'Cartão'}</td></tr>
@@ -413,6 +460,17 @@ export async function onRequestPost({ request, env }) {
     return Response.json({ error: 'Valor inválido.' }, { status: 400, headers: cors });
   if (!isValidEmail(email))
     return Response.json({ error: 'Email inválido.' }, { status: 400, headers: cors });
+
+  // Valida cupom no servidor (lê uses atual do GitHub para evitar reuso após expiração)
+  if (couponCode) {
+    const couponCheck = await validateCouponFromGitHub(couponCode, env.GITHUB_TOKEN);
+    if (!couponCheck.valid && couponCheck.reason === 'expired') {
+      return Response.json({ error: 'Cupom expirado ou já utilizado o número máximo de vezes.' }, { status: 400, headers: cors });
+    }
+    if (!couponCheck.valid && couponCheck.reason === 'not found') {
+      return Response.json({ error: 'Cupom inválido.' }, { status: 400, headers: cors });
+    }
+  }
   if (!name || name.length < 3)
     return Response.json({ error: 'Nome inválido.' }, { status: 400, headers: cors });
   if (!isValidCpf(cpf))
@@ -473,6 +531,24 @@ export async function onRequestPost({ request, env }) {
       return Response.json({ error: `Pagamento recusado: ${payment.status_detail || 'tente outro método.'}` }, { status: 400, headers: cors });
 
     const itemsList = (Array.isArray(items) ? items : []).map(i => sanitize(i.name, 80)).join(' + ');
+
+    // Lista detalhada para emails e contrato
+    function getCategory(item) {
+      if (item.type === 'Beat') return 'Catálogo de beats';
+      if (item.type === 'Pacote') return 'Pacotes promocionais';
+      return 'Serviços por encomenda';
+    }
+    const itemsDetailed = (Array.isArray(items) ? items : []).map(i => {
+      if (i.type === 'Pacote' && i.pkgBeats && i.pkgBeats.length > 0) {
+        const beatNames = i.pkgBeats.flat().map(b => sanitize(b.name, 80));
+        return { category: 'Pacotes promocionais', names: beatNames, label: i.name };
+      }
+      if (i.type === 'Beat') return { category: 'Catálogo de beats', names: [sanitize(i.name, 80)], label: i.name };
+      return { category: 'Serviços por encomenda', names: [sanitize(i.name, 80)], label: i.name };
+    });
+    const categoryLabel = [...new Set(itemsDetailed.map(i => i.category))].join(', ');
+    const beatsLabel = itemsDetailed.flatMap(i => i.names).join(', ');
+    const itemsForEmail = beatsLabel || itemsList;
     const pixInfo   = payment.point_of_interaction?.transaction_data;
 
     console.log(JSON.stringify({ event: 'NOVA_VENDA', paymentId: payment.id, status: payment.status, amount, name, email, cpf: cpf.slice(0,3)+'***', items: itemsList, coupon: couponCode || null }));
@@ -480,18 +556,18 @@ export async function onRequestPost({ request, env }) {
     // Gera contrato HTML
     let contractHtml = null;
     try {
-      contractHtml = generateContractHtml({ name, cpf, email, items: itemsList, amount, paymentId: payment.id, termsTimestamp: termsAcceptance.timestamp });
+      contractHtml = generateContractHtml({ name, cpf, email, items: itemsForEmail, category: categoryLabel, amount, paymentId: payment.id, termsTimestamp: termsAcceptance.timestamp });
     } catch (e) { console.error('[contrato] Erro:', e.message); }
 
     // Envia email de notificação ao dono (com contrato em anexo)
     try {
-      await sendNotificationEmail({ env, payment, name, email, cpf, itemsList, amount, selectedPaymentMethod, termsAcceptance, contractHtml });
+      await sendNotificationEmail({ env, payment, name, email, cpf, itemsList: itemsForEmail, categoryLabel, amount, selectedPaymentMethod, termsAcceptance, contractHtml });
     } catch (e) { console.error('[email] Erro notificação:', e.message); }
 
     // Envia email de confirmação de pedido ao comprador (apenas quando aprovado)
     if (payment.status === 'approved') {
       try {
-        await sendBuyerConfirmationEmail({ env, name, email, itemsList });
+        await sendBuyerConfirmationEmail({ env, name, email, itemsList: itemsForEmail });
       } catch (e) { console.error('[email] Erro confirmação comprador:', e.message); }
     }
 
