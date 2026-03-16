@@ -1552,7 +1552,7 @@ function renderCards(){
   const wrap=document.getElementById('beatCards');
   let src=curFilt==='todos'?BEATS:BEATS.filter(b=>b.genre===curFilt);
   if(showAvailOnly) src=src.filter(b=>!b.sold);
-  if(beatQuery) src=src.filter(b=>b.name.toLowerCase().includes(beatQuery));
+  if(beatQuery) src=src.filter(b=>normalizeStr(b.name).includes(beatQuery));
   if(src.length===0){
     wrap.innerHTML=`<div style="padding:2.5rem;text-align:center;color:var(--dim);font-size:.78rem;">Nenhum beat disponível neste filtro no momento.</div>`;
     document.getElementById('pagination').style.display='flex';
@@ -1628,8 +1628,9 @@ function changePage(dir){
   document.getElementById('beats').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
+function normalizeStr(s){ return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
 function searchBeats(query){
-  beatQuery = query.trim().toLowerCase();
+  beatQuery = normalizeStr(query.trim());
   curPage = 1;
   // sincroniza os dois campos
   const top=document.getElementById('beatSearchTop');
@@ -1744,9 +1745,9 @@ function renderPkgBeatList(beats) {
 }
 
 function filterPkgBeats(query) {
-  const q = query.trim().toLowerCase();
+  const q = normalizeStr(query.trim());
   const filtered = q
-    ? _pkgAvailable.filter(b => b.name.toLowerCase().includes(q) || (GENRE_LABELS[b.genre]||b.genre).toLowerCase().includes(q))
+    ? _pkgAvailable.filter(b => normalizeStr(b.name).includes(q) || normalizeStr(GENRE_LABELS[b.genre]||b.genre).includes(q))
     : _pkgAvailable;
   renderPkgBeatList(filtered);
 }
