@@ -1944,15 +1944,7 @@ function updateCart(){
 }
 
 
-function addMoreItems(){
-  // Fecha o carrinho e rola suavemente até o catálogo de beats
-  const panel=document.getElementById('cartPanel');
-  const ov=document.getElementById('overlay');
-  panel.classList.remove('open');
-  ov.classList.remove('on');
-  const target=document.getElementById('beats');
-  if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
-}
+function addMoreItems(){ toggleCart(); }
 
 function toggleCart(){
   const panel=document.getElementById('cartPanel');
