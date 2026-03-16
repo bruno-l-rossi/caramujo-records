@@ -436,6 +436,37 @@ export async function onRequestPost({ request, env }) {
 
     if (payment.status === 'approved') {
 
+      // ── Idempotência: evita processar o mesmo pagamento duas vezes ──────────
+      // O MP dispara o webhook múltiplas vezes para o mesmo evento de pagamento.
+      // Solução: marcamos o pagamento com webhook_processed=true via PUT no MP
+      // antes de executar qualquer ação. Se já estiver marcado, ignoramos.
+      if (payment.metadata?.webhook_processed === 'true') {
+        console.log(`[webhook] Pagamento ${payment.id} já processado anteriormente — ignorando chamada duplicada.`);
+        return new Response('ok', { status: 200 });
+      }
+
+      // Marca como processado ANTES de executar as ações (evita race condition)
+      try {
+        const patchRes = await fetch(`https://api.mercadopago.com/v1/payments/${payment.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${ACCESS_TOKEN}`,
+          },
+          body: JSON.stringify({
+            metadata: { ...payment.metadata, webhook_processed: 'true' },
+          }),
+        });
+        if (!patchRes.ok) {
+          console.warn(`[webhook] PUT metadata falhou (${patchRes.status}) — prosseguindo mesmo assim.`);
+        } else {
+          console.log(`[webhook] Pagamento ${payment.id} marcado como processado.`);
+        }
+      } catch (patchErr) {
+        console.warn(`[webhook] Erro ao marcar pagamento: ${patchErr.message} — prosseguindo.`);
+      }
+      // ── fim idempotência ────────────────────────────────────────────────────
+
       // Emails só são enviados aqui para PIX — cartão já recebe os emails no create-payment
       const isPix = payment.payment_type_id === 'bank_transfer';
       console.log(`[webhook] isPix: ${isPix}`);
