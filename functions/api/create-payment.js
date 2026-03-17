@@ -133,7 +133,7 @@ function generateContractHtml({ name, cpf, email, items, category, amount, payme
   <p>Em caso de imprevistos que possam impactar os prazos, o Produtor notificará o Licenciado por email com antecedência.</p>
   <h4>5. Crédito Obrigatório</h4>
   <p>O uso da Obra em qualquer plataforma digital exige a creditação do Produtor da seguinte forma:</p>
-  <ul><li>Plataformas digitais (Spotify, Apple Music, Deezer, etc.): creditar @rideblan33 como artista principal na faixa.</li><li>YouTube: adicionar "(prod. @rideblan33)" no título do vídeo.</li></ul>
+  <ul><li>Plataformas digitais (Spotify, Apple Music, Deezer, etc.): creditar @rideblan33 como um dos artistas principais ("performer") na faixa.</li><li>YouTube: adicionar "(prod. @rideblan33)" no título do vídeo.</li></ul>
   <p>O não cumprimento desta cláusula configura violação contratual e poderá ensejar rescisão da licença.</p>
   <h4>6. Royalties e Divisão de Receitas</h4>
   <p>O Licenciado é obrigado a realizar o split share de 10% dos royalties fonográficos para o Produtor no momento do cadastro da faixa em distribuidoras digitais. O não envio do split configura inadimplência contratual.</p>
