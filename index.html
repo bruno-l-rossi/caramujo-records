@@ -975,7 +975,13 @@ html, body {
     <button class="ft" onclick="filt('boombap',this)">Boom Bap</button>
     <button class="ft" onclick="filt('plug',this)">Plug</button>
     <button class="ft" onclick="filt('hoodtrap',this)">Hood Trap</button>
-    <button class="ft" onclick="filt('outro',this)">Outro</button>
+    <button class="ft" onclick="filt('experimental',this)">Experimental</button>
+    <button class="ft" onclick="filt('hard',this)">Hard</button>
+    <button class="ft" onclick="filt('detroit',this)">Detroit</button>
+    <button class="ft" onclick="filt('drumless',this)">Drumless</button>
+    <button class="ft" onclick="filt('funk',this)">Funk</button>
+    <button class="ft" onclick="filt('pluggnb',this)">Pluggnb</button>
+    <button class="ft" onclick="filt('bounce',this)">Bounce</button>
   </div>
 
   <!-- UNIFIED BEAT CARDS: SC player + tags + buy -->
@@ -1516,35 +1522,100 @@ const BEATS=[
   {id:2, name:'COLA',                    bpm:147,  key:'Ebm',   genre:'hoodtrap', sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/cola-5'},
   {id:3, name:'ORAÇÃO',                  bpm:160,  key:'Em',    genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/oracao-11'},
   {id:4, name:'GRAVIDADE',               bpm:128,  key:'Gm',    genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/gravidade-4'},
-  {id:5, name:'LARANJA',                 bpm:132,  key:'Gm',    genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/laranja-15'},
+  {id:5, name:'LARANJA',                 bpm:132,  key:'Gm',    genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/laranja-15'},
   {id:6, name:'HOOD STARS',              bpm:148,  key:'Bbm',   genre:'hoodtrap', sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/hood-stars-10'},
-  {id:7, name:'REGALIA',                 bpm:140,  key:'Bbm',   genre:'outro',    sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/regalia-16'},
-  {id:8, name:'ALOE',                    bpm:125,  key:'Dm',    genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/aloe-2'},
-  {id:9, name:'FLASHBACK',               bpm:132,  key:'Cm',    genre:'plug',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/flashback-9'},
-  {id:10,name:'RIDING',                  bpm:160,  key:'Bm',    genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/riding-14'},
+  {id:7, name:'REGALIA',                 bpm:140,  key:'Bbm',   genre:'experimental',    sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/regalia-16'},
+  {id:8, name:'ALOE',                    bpm:125,  key:'Dm',    genre:'experimental',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/aloe-2'},
+  {id:9, name:'FLASHBACK',               bpm:132,  key:'Cm',    genre:'experimental',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/flashback-9'},
+  {id:10,name:'RIDING',                  bpm:160,  key:'Bm',    genre:'experimental',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/riding-14'},
   {id:11,name:'FINO',                    bpm:190,  key:'Gm',    genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/fino-1'},
-  {id:12,name:'PIXEL',                   bpm:124,  key:'Em',    genre:'trap',     sold:false,scUrl:'https%3A//soundcloud.com/rideblan33/pixel-6'},
+  {id:12,name:'PIXEL',                   bpm:124,  key:'Em',    genre:'experimental',     sold:false,scUrl:'https%3A//soundcloud.com/rideblan33/pixel-6'},
   {id:13,name:'IMERSO',                  bpm:160,  key:'Cmaj',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/imerso-9'},
   {id:14,name:'VIGILANTE',               bpm:160,  key:'Cmaj',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/vigilante-13'},
   {id:15,name:'EXPERIÊNCIA',             bpm:160,  key:'Fm',    genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/experiencia-1'},
   {id:16,name:'VIBRAÇÕES',               bpm:142,  key:'Gbm',   genre:'plug',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/vibracoes-7'},
   {id:17,name:'BI',                      bpm:130,  key:'Abm',   genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/bi-3'},
-  {id:18,name:'PENSAMENTOS INTRUSIVOS',  bpm:132,  key:'Ebm',   genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/pensamentos-intrusivos-2'},
+  {id:18,name:'PENSAMENTOS INTRUSIVOS',  bpm:132,  key:'Ebm',   genre:'experimental',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/pensamentos-intrusivos-2'},
   {id:19,name:'VÁRIAS FITA NOIS QUE TÁ',bpm:146,  key:'Amaj',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/varias-fita-nois-que-ta-5'},
   {id:20,name:'RESERVA',                 bpm:174,  key:'Bm',    genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/reserva-11'},
-  {id:21,name:'AR',                      bpm:190,  key:'Abm',   genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/ar-12'},
+  {id:21,name:'AR',                      bpm:190,  key:'Abm',   genre:'experimental',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/ar-12'},
   {id:22,name:'COLHE O QUE PLANTA',      bpm:160,  key:'Cmaj',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/colhe-o-que-planta-4'},
-  {id:23,name:'FLUINDO',                 bpm:150,  key:'Dmaj',  genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/fluindo-5'},
+  {id:23,name:'FLUINDO',                 bpm:150,  key:'Dmaj',  genre:'experimental',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/fluindo-5'},
   {id:24,name:'PÚRPURA',                 bpm:132,  key:'Gm',    genre:'boombap',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/purpura-9'},
-  {id:25,name:'PRESSÃO',                 bpm:186,  key:'Bbm',   genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/pressao-6'},
+  {id:25,name:'PRESSÃO',                 bpm:186,  key:'Bbm',   genre:'hard',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/pressao-6'},
   {id:26,name:'PORTAL',                  bpm:155,  key:'Fmaj',  genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/portal-13'},
   {id:27,name:'ANSIEDADE',               bpm:163,  key:'Ebm',   genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/ansiedade-8'},
   {id:28,name:'PANE NO SISTEMA',         bpm:196,  key:'Gbmaj', genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/pane-no-sistema-2'},
+  {id:29, name:'66',  bpm:104,  key:'Bbm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/66a1'},
+  {id:30, name:'ACHILES',  bpm:130,  key:'Dbm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/achiles-16'},
+  {id:31, name:'ADEMAR',  bpm:158,  key:'Fm',  genre:'plug',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/ademar'},
+  {id:32, name:'ANDARILHO',  bpm:132,  key:'Ebm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/andarilho-1'},
+  {id:33, name:'BLANK',  bpm:178,  key:'Dbm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/blank'},
+  {id:34, name:'CAT',  bpm:160,  key:'Cm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/cat'},
+  {id:35, name:'CISJORDÂNIA',  bpm:190,  key:'Fmaj',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/cisjordania-8'},
+  {id:36, name:'CÓDIGO DE HONRA',  bpm:176,  key:'Cm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/codigo-de-honra-2'},
+  {id:37, name:'CORRE DO DIN',  bpm:112,  key:'Gbm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/corre-do-din'},
+  {id:38, name:'DESVIANDO',  bpm:130,  key:'Fm',  genre:'funk',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/desviando-8'},
+  {id:39, name:'DETROITÃO',  bpm:204,  key:'Dm',  genre:'detroit',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/detroitao'},
+  {id:40, name:'DOMINGÃO',  bpm:165,  key:'Fm',  genre:'plug',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/domingao'},
+  {id:41, name:'ESCADINHA',  bpm:98,  key:'Ebm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/escadinha'},
+  {id:42, name:'EU AMO ESSE MEME',  bpm:140,  key:'Bm',  genre:'plug',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/eu-amo-esse-meme'},
+  {id:43, name:'F1',  bpm:141,  key:'Cm',  genre:'plug',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/formula1'},
+  {id:44, name:'FICOU VAZIO',  bpm:120,  key:'Bm',  genre:'drumless',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/ficou-vazio'},
+  {id:45, name:'FLY ME TO THE MOON',  bpm:124,  key:'Fm',  genre:'drumless',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/fly-me-to-the-moon'},
+  {id:46, name:'JIBOIA',  bpm:176,  key:'Ebm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/jiboia'},
+  {id:47, name:'JOHANESBURGO',  bpm:186,  key:'Cm',  genre:'drumless',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/johanesburgo-14'},
+  {id:48, name:'KILLA',  bpm:131,  key:'Bbm',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/killa'},
+  {id:49, name:'LAGOA',  bpm:115,  key:'Abm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/lagoa'},
+  {id:50, name:'LASER',  bpm:160,  key:'Fmaj',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/laser-9'},
+  {id:51, name:'LOCK',  bpm:176,  key:'Fm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/lock-11'},
+  {id:52, name:'LONG LIVE MEXIKO',  bpm:148,  key:'Abm',  genre:'plug',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/long-live-mexiko'},
+  {id:53, name:'LUIGI',  bpm:200,  key:'Bm',  genre:'detroit',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/luigi'},
+  {id:54, name:'MADRUGADA RJ',  bpm:124,  key:'Bm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/madrugada-rj'},
+  {id:55, name:'MÁFIA',  bpm:210,  key:'Cm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/mafia-5'},
+  {id:56, name:'MARCO POLO',  bpm:170,  key:'Ebm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/marco-polo'},
+  {id:57, name:'MIDI',  bpm:130,  key:'Amaj',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/midi-9'},
+  {id:58, name:'MUDDY',  bpm:145,  key:'Ebm',  genre:'plug',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/lama'},
+  {id:59, name:'NASCAR',  bpm:200,  key:'Ebm',  genre:'detroit',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/nascar'},
+  {id:60, name:'NÚMEROS',  bpm:176,  key:'Gm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/n-meros'},
+  {id:61, name:'ÓBVIO',  bpm:152,  key:'Bbm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/obvio'},
+  {id:62, name:'OK',  bpm:130,  key:'Dbm',  genre:'funk',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/ok-3'},
+  {id:63, name:'PÁSSARO',  bpm:146,  key:'Gbm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/passaro-4'},
+  {id:64, name:'PEGAR OU LARGAR',  bpm:186,  key:'Bm',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/pegar-ou-largar-2'},
+  {id:65, name:'PERDAS',  bpm:113,  key:'Bm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/perdas'},
+  {id:66, name:'PIT STOP',  bpm:182,  key:'Bbm',  genre:'bounce',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/pit-stop'},
+  {id:67, name:'PLUG DO JAZZ',  bpm:142,  key:'Bm',  genre:'pluggnb',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/plug-do-jazz'},
+  {id:68, name:'PONTA',  bpm:150,  key:'Fm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/ponta'},
+  {id:69, name:'PRESENTE',  bpm:130,  key:'Dbm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/presente-11'},
+  {id:70, name:'RELAÇÃO',  bpm:142,  key:'Emaj',  genre:'plug',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/relacao'},
+  {id:71, name:'REP',  bpm:130,  key:'Amaj',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/rep-11'},
+  {id:72, name:'RODA DE FREE',  bpm:178,  key:'Cm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/roda-de-free-7'},
+  {id:73, name:'ROSA',  bpm:90,  key:'Dm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/rosa'},
+  {id:74, name:'SCAR',  bpm:152,  key:'Bm',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/scar-13'},
+  {id:75, name:'SEM MANDAR RECADO',  bpm:156,  key:'Ebm',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/sem-mandar-recado-6'},
+  {id:76, name:'SI',  bpm:186,  key:'Em',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/si'},
+  {id:77, name:'SOZINHO',  bpm:135,  key:'Am',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/sozinho-9'},
+  {id:78, name:'TIRO QUENTE',  bpm:198,  key:'Bm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/tiro-quente-6'},
+  {id:79, name:'TOMADA',  bpm:148,  key:'Gbm',  genre:'pluggnb',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/tomada'},
+  {id:80, name:'TRATO FEITO',  bpm:117,  key:'Dbm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/trato-feito-11'},
+  {id:81, name:'TRAVESSA 7',  bpm:111,  key:'Am',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/travessa-7-3'},
+  {id:82, name:'TUIN',  bpm:192,  key:'Fm',  genre:'detroit',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/tuin-3'},
+  {id:83, name:'TÚNEL',  bpm:155,  key:'Ebm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/t-nel'},
+  {id:84, name:'UFO',  bpm:150,  key:'Bbm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/ufo'},
+  {id:85, name:'VALEU',  bpm:110,  key:'Dbm',  genre:'funk',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/valeu-12'},
+  {id:86, name:'VELOZES',  bpm:174,  key:'Em',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/velozes'},
+  {id:87, name:'VERDADEIRO',  bpm:160,  key:'Ebm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/verdadeiro-5'},
+  {id:88, name:'VIBES',  bpm:170,  key:'Ebm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/vibes'},
+  {id:89, name:'VIDREK',  bpm:146,  key:'Ebm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/vidrek'},
+  {id:90, name:'VOAR',  bpm:106,  key:'Gm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/voar'},
+  {id:91, name:'VOLTA',  bpm:204,  key:'Dm',  genre:'detroit',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/c-meras'},
+  {id:92, name:'WIFI',  bpm:120,  key:'Am',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/wifi'},
+  {id:93, name:'WINNING',  bpm:145,  key:'Dbm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/winning'}
 ];
 
 const PRICE_BEAT=120, PRICE_STEMS=145;
 let cart=[], curFilt='todos', showAvailOnly=true;
-const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':'Hood Trap','outro':'Outro','detroit':'Detroit','drumless':'Drumless'};
+const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':'Hood Trap','experimental':'Experimental','detroit':'Detroit','drumless':'Drumless','hard':'Hard','funk':'Funk','pluggnb':'Pluggnb','drill':'Drill','nomelody':'No Melody','bounce':'Bounce'};
 
 /* ── FILTER & RENDER ─────────────────────────────── */
 function filt(g,btn){
@@ -1866,7 +1937,7 @@ function clearCart(){
 
 /* ── COUPON SYSTEM ───────────────────────────────── */
 const COUPONS = {
-  'CARAMUJO25': { pct: 25,  maxUses: 5,        uses: 2 },
+  'CARAMUJO25': { pct: 25,  maxUses: 10,        uses: 2 },
   'RIDE20':     { pct: 20,  maxUses: Infinity,  uses: 1 },
   'PAGUPAGU':   { fixedPrice: 1, maxUses: 1,        uses: 1 },
   'SABER50':    { pct: 50,  maxUses: 1,         uses: 1 },
