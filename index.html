@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Caramujo Records</title>
+<title>Caramujo Records — Beats exclusivos, mix e master por @rideblan33</title>
 <meta name="description" content="Estúdio popular e independente. Idealizado por @rideblan33. Todos os direitos reservados."/>
 <meta name="robots" content="index, follow"/>
 <meta property="og:title" content="Caramujo Records"/>
@@ -25,6 +25,7 @@
 <link rel="preconnect" href="https://sdk.mercadopago.com"/>
 <link rel="preconnect" href="https://api.mercadopago.com"/>
 <link rel="preconnect" href="https://w.soundcloud.com"/>
+<script src="https://w.soundcloud.com/player/api.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -908,6 +909,33 @@ body{cursor:auto!important;}
 .c-desc{font-family:var(--serif)!important;font-style:italic;font-size:clamp(1.3rem,2.2vw,1.7rem)!important;line-height:1.45!important;color:var(--amber)!important;}
 .cf-sub{background:var(--bone)!important;color:var(--deep)!important;font-family:var(--sans)!important;}
 .cf-sub:hover{background:var(--clay)!important;}
+
+/* ═══ v2 — prova social, licença, vendidos, motion ═══ */
+.hero-proof{display:flex;flex-wrap:wrap;gap:.4rem 1.6rem;margin:0 0 2.4rem;font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--read);}
+.hero-proof b{color:var(--amber);font-weight:400;}
+.lic-toggle{background:none;border:none;color:var(--amber);font:inherit;cursor:pointer;text-decoration:underline dotted;padding:0;}
+.lic-wrap{position:relative;display:inline-block;}
+.lic-box{visibility:hidden;opacity:0;position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 12px);width:360px;max-width:84vw;padding:1rem 1.2rem;background:var(--mole);border:1px solid var(--clay);font-size:.76rem;line-height:1.75;color:var(--read);text-align:left;text-transform:none;letter-spacing:normal;white-space:normal;z-index:700;box-shadow:0 12px 34px rgba(0,0,0,.55);transition:opacity .15s;}
+.lic-box::before{content:'';position:absolute;top:-5.5px;left:50%;transform:translateX(-50%) rotate(45deg);width:10px;height:10px;background:var(--mole);border-left:1px solid var(--clay);border-top:1px solid var(--clay);}
+.lic-wrap:hover .lic-box,.lic-box.open{visibility:visible;opacity:1;}
+.lic-box strong{color:var(--bone);font-weight:400;}
+.pg-controls{display:flex;gap:.4rem;align-items:stretch;}
+.sort-select{background:var(--mole);border:1px solid var(--wire);color:var(--read);font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;padding:.45rem .6rem;cursor:pointer;transition:border-color .14s,color .14s;}
+.sort-select:hover{color:var(--amber);}
+button.sort-select.on{border-color:var(--clay);color:var(--amber);}
+.cp-upsell{margin-top:1rem;padding:.95rem 1rem;border:1px solid var(--clay);border-left:3px solid var(--fire);background:rgba(168,123,74,.09);font-size:.78rem;line-height:1.65;color:var(--bone);}
+.cp-upsell-tag{display:block;font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--fire);margin-bottom:.45rem;}
+.cp-save{background:var(--fire);color:var(--black);font-weight:700;padding:.1rem .45rem;white-space:nowrap;}
+.cp-upsell-link{display:block;margin-top:.55rem;color:var(--amber);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;}
+.cp-upsell-link:hover{color:var(--fire);}
+.bcard-sold{opacity:1;}
+.bcard-sold .bcard-name{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--blood);text-decoration-thickness:1.5px;}
+.bbtn-soldout,.bbtn-soldout:hover{background:var(--blood)!important;color:var(--cream)!important;cursor:not-allowed!important;letter-spacing:.18em;}
+@media(max-width:860px){body::before{animation:none;}}
+@media (prefers-reduced-motion: reduce){
+  body::before{animation:none;}
+  html{scroll-behavior:auto;}
+}
 </style>
 
 <!-- ═══ GA4 ═════════════════════════════════════════
@@ -962,12 +990,12 @@ body{cursor:auto!important;}
     <span class="nav-wm">Caramujo<small>RECORDS</small></span>
   </a>
   <ul class="nav-links">
-    <li><a href="#beats">Beats</a></li>
     <li><a href="#packages">Pacotes</a></li>
+    <li><a href="#beats">Beats</a></li>
     <li><a href="#services">Serviços</a></li>
     <li><a href="#contact">Contato</a></li>
   </ul>
-  <button class="nav-cta" onclick="openCheckout()">COMPRAR</button>
+  <a class="nav-cta" href="#beats">OUVIR BEATS</a>
 </nav>
 
 <!-- ═══ HERO ══════════════════════════════════════════ -->
@@ -996,15 +1024,88 @@ body{cursor:auto!important;}
       Beats exclusivos, mixagem e masterização por <strong>@rideblan33</strong>.
     </p>
 
+    <p class="hero-proof">
+      <span><b>8</b> anos de estúdio</span>
+      <span><b>200+</b> faixas lançadas</span>
+      <span><b>2.500.000+</b> streams</span>
+    </p>
+
     <div class="hero-ctas">
       <a class="btn btn-fire" href="#beats">Ouvir o catálogo</a>
-      <a class="btn btn-ghost" href="#packages">Ver pacotes</a>
+      <a class="btn btn-ghost" href="#services">Mix &amp; master</a>
     </div>
   </div>
 
   <div class="scroll-cue">
     <div class="scroll-line"></div>
     <span>scroll</span>
+  </div>
+</section>
+
+<div class="hr"></div>
+
+<!-- ═══ PACKAGES ════════════════════════════════════ -->
+<section id="packages" class="s s-dark">
+
+  <svg class="snail-svg tr" width="120" height="78" viewBox="0 0 120 78" stroke="#4a3820" stroke-width="1">
+    <ellipse cx="75" cy="46" rx="36" ry="27"/>
+    <ellipse cx="75" cy="46" rx="22" ry="17"/>
+    <ellipse cx="75" cy="46" rx="9" ry="7"/>
+    <path d="M39 46 Q21 46 12 36 Q4 25 17 19 Q30 13 41 25" fill="none"/>
+    <line x1="41" y1="13" x2="39" y2="6"/><line x1="49" y1="11" x2="49" y2="4"/>
+  </svg>
+
+  <div class="s-head">
+    <span class="s-kicker">Pacotes promocionais</span>
+    <h2 class="s-title">Desconto <span class="r">progressivo</span></h2>
+    <p class="s-sub">Todos os pacotes incluem MP3 + WAV + licença exclusiva + contrato digital.</p>
+  </div>
+
+  <div class="packs rv">
+    <div class="pack">
+      <div class="pack-tag">Individual</div>
+      <div class="pack-n">1 Beat</div>
+      <div class="pack-sep"></div>
+      <ul class="pack-ul">
+        <li>1 beat do catálogo à sua escolha</li>
+        <li>Licença exclusiva completa</li>
+        <li>MP3 (320kbps) + WAV</li>
+        <li>Contrato digital incluso</li>
+      </ul>
+      <div style="display:flex;gap:0;margin-top:auto;">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('1 Beat',119)">Adicionar · R$119</button>
+      </div>
+    </div>
+
+    <div class="pack hot">
+      <div class="pack-tag">Mais Popular</div>
+      <div class="pack-n">2 Beats</div>
+      <div class="pack-sep"></div>
+      <ul class="pack-ul">
+        <li>2 beats do catálogo à sua escolha</li>
+        <li>Licença exclusiva por beat</li>
+        <li>MP3 (320kbps) + WAV</li>
+        <li>Contrato digital incluso</li>
+      </ul>
+      <div style="display:flex;gap:0;margin-top:auto;">
+        <button class="btn btn-fire" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('2 Beats',219)">Adicionar · R$219</button>
+      </div>
+    </div>
+
+    <div class="pack">
+      <div class="pack-tag">Melhor Custo</div>
+      <div class="pack-n">3 Beats</div>
+      <div class="pack-sep"></div>
+      <ul class="pack-ul">
+        <li>3 beats do catálogo à sua escolha</li>
+        <li>Licença exclusiva por beat</li>
+        <li>MP3 (320kbps) + WAV</li>
+        <li>Contrato digital incluso</li>
+      </ul>
+      <div style="display:flex;gap:0;margin-top:auto;">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('3 Beats',299)">Adicionar · R$299</button>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -1025,12 +1126,13 @@ body{cursor:auto!important;}
     <span class="s-kicker">Catálogo · pronta entrega</span>
     <h2 class="s-title">Catálogo de <span class="r">beats</span></h2>
     <p class="s-sub">
-      Cada beat é vendido com <strong>licença exclusiva</strong> — uma única venda por título, removido do catálogo após a compra.
+      Cada beat é vendido com <span class="lic-wrap"><button class="lic-toggle" onclick="toggleLic(event)">licença exclusiva&nbsp;ⓘ</button><span class="lic-box" id="licBox">
+        O beat é seu, e só seu — nunca é revendido pra outra pessoa.
+        Você recebe <strong>contrato digital no seu nome</strong>, com <strong>uso comercial liberado</strong>: streaming, shows, clipes e o que mais vier.
+      </span></span> — uma única venda por título, removido do catálogo após a compra.
       Todos os beats são entregues em <strong>MP3 320kbps + WAV</strong>.
-      Opção de <strong>stems</strong> disponível por R$25 a mais.
     </p>
   </div>
-
 
   <div class="ftabs" style="margin-bottom:0;">
     <button class="ft on" onclick="filt('todos',this)">Todos</button>
@@ -1055,6 +1157,13 @@ body{cursor:auto!important;}
   <div class="pagination-top" id="paginationTop">
     <div class="pg-search">
       <input class="pg-search-input" id="beatSearchTop" type="text" placeholder="Buscar beat pelo nome…" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false"/>
+    </div>
+    <div class="pg-controls">
+      <select class="sort-select" id="beatSort" onchange="sortBeats(this.value)">
+        <option value="padrao">Ordem padrão</option>
+        <option value="aleatorio">Ordem aleatória</option>
+      </select>
+      <button class="sort-select" id="filtAvail" onclick="toggleAvail(this)">Esconder vendidos</button>
     </div>
     <div class="pagination-btns">
       <button class="pg-btn" id="pgPrevTop" onclick="changePage(-1)">← ANTERIOR</button>
@@ -1090,79 +1199,6 @@ body{cursor:auto!important;}
 
 <div class="hr"></div>
 
-<!-- ═══ PACKAGES ════════════════════════════════════ -->
-<section id="packages" class="s s-dark">
-
-  <svg class="snail-svg tr" width="120" height="78" viewBox="0 0 120 78" stroke="#4a3820" stroke-width="1">
-    <ellipse cx="75" cy="46" rx="36" ry="27"/>
-    <ellipse cx="75" cy="46" rx="22" ry="17"/>
-    <ellipse cx="75" cy="46" rx="9" ry="7"/>
-    <path d="M39 46 Q21 46 12 36 Q4 25 17 19 Q30 13 41 25" fill="none"/>
-    <line x1="41" y1="13" x2="39" y2="6"/><line x1="49" y1="11" x2="49" y2="4"/>
-  </svg>
-
-  <div class="s-head">
-    <span class="s-kicker">Pacotes promocionais</span>
-    <h2 class="s-title">Desconto <span class="r">progressivo</span></h2>
-    <p class="s-sub">Todos os pacotes incluem MP3 + WAV + licença exclusiva + contrato digital. Escolha com ou sem stems no mesmo pacote.</p>
-  </div>
-
-  <div class="packs rv">
-    <div class="pack">
-      <div class="pack-tag">Individual</div>
-      <div class="pack-n">1 Beat</div>
-      <div class="pack-sep"></div>
-      <ul class="pack-ul">
-        <li>1 beat do catálogo à sua escolha</li>
-        <li>Licença exclusiva completa</li>
-        <li>MP3 (320kbps) + WAV</li>
-        <li>Contrato digital incluso</li>
-        <li><em style="color:var(--clay)">(Opcional)</em> Stems separados por instrumento</li>
-      </ul>
-      <div style="display:flex;gap:0;margin-top:auto;">
-        <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('1 Beat',119)">Beat · R$119</button>
-        <button class="btn btn-wire" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;border-left:none;" onclick="addPkg('1 Beat + Stems',144)">+Stems · R$144</button>
-      </div>
-    </div>
-
-    <div class="pack hot">
-      <div class="pack-tag">Mais Popular</div>
-      <div class="pack-n">2 Beats</div>
-      <div class="pack-sep"></div>
-      <ul class="pack-ul">
-        <li>2 beats do catálogo à sua escolha</li>
-        <li>Licença exclusiva por beat</li>
-        <li>MP3 (320kbps) + WAV</li>
-        <li>Contrato digital incluso</li>
-        <li><em style="color:var(--amber)">(Opcional)</em> Stems separados por beat</li>
-      </ul>
-      <div style="display:flex;gap:0;margin-top:auto;">
-        <button class="btn btn-fire" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('2 Beats',219)">Beat · R$219</button>
-        <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;border-left:none;" onclick="addPkg('2 Beats + Stems',259)">+Stems · R$259</button>
-      </div>
-    </div>
-
-    <div class="pack">
-      <div class="pack-tag">Melhor Custo</div>
-      <div class="pack-n">3 Beats</div>
-      <div class="pack-sep"></div>
-      <ul class="pack-ul">
-        <li>3 beats do catálogo à sua escolha</li>
-        <li>Licença exclusiva por beat</li>
-        <li>MP3 (320kbps) + WAV</li>
-        <li>Contrato digital incluso</li>
-        <li><em style="color:var(--clay)">(Opcional)</em> Stems separados por beat</li>
-      </ul>
-      <div style="display:flex;gap:0;margin-top:auto;">
-        <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('3 Beats',299)">Beat · R$299</button>
-        <button class="btn btn-wire" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;border-left:none;" onclick="addPkg('3 Beats + Stems',349)">+Stems · R$349</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="hr"></div>
-
 <!-- ═══ SERVICES ════════════════════════════════════ -->
 <section id="services" class="s s-earth">
   <div class="s-head">
@@ -1176,12 +1212,9 @@ body{cursor:auto!important;}
     <div class="svc rv" style="background:var(--earth);border-top:2px solid var(--fire);">
       <div class="svc-n" style="color:var(--ember);">01</div>
       <div class="svc-name" style="color:var(--cream);">Beat Personalizado <span style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.55rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--fire);margin-left:.5rem;vertical-align:middle;">● Mais pedido</span></div>
-      <p class="svc-desc">Produção sob encomenda com base na referência de sua escolha. Produção do zero.<br/>Stems disponíveis por R$25 a mais.</p>
-      <div class="svc-price" style="margin-bottom:1.2rem;color:var(--fire);">R$ 149 / beat &nbsp;·&nbsp; R$ 174 / beat + stems</div>
-      <div style="display:flex;gap:0;">
-        <button class="btn btn-fire" style="flex:1;justify-content:center;font-size:.78rem;padding:.55rem .6rem;" onclick="addSvc('Beat Personalizado',149)">Beat · R$149</button>
-        <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.78rem;padding:.55rem .6rem;border-left:none;" onclick="addSvc('Beat Personalizado + Stems',174)">+Stems · R$174</button>
-      </div>
+      <p class="svc-desc">Produção sob encomenda com base na referência de sua escolha. Produção do zero.</p>
+      <div class="svc-price" style="margin-bottom:1.2rem;color:var(--fire);">R$ 149 / beat</div>
+      <button class="btn btn-fire" style="width:100%;justify-content:center;font-size:.78rem;" onclick="addSvc('Beat Personalizado',149)">+ Carrinho</button>
     </div>
 
     <!-- 02 Mixagem -->
@@ -1695,7 +1728,33 @@ const BEATS=[
 ];
 
 const PRICE_BEAT=119, PRICE_STEMS=144;
-let cart=[], curFilt='todos', showAvailOnly=true;
+let cart=[], curFilt='todos', showAvailOnly=false; // vendidos visíveis por padrão (prova social)
+let sortMode='padrao', shuffleOrder=null;
+function toggleAvail(btn){
+  showAvailOnly=!showAvailOnly;
+  btn.classList.toggle('on',showAvailOnly);
+  btn.textContent=showAvailOnly?'Mostrar vendidos':'Esconder vendidos';
+  curPage=1; renderCards();
+}
+function sortBeats(v){
+  sortMode=v;
+  if(v==='aleatorio'){ // embaralha de novo a cada seleção
+    shuffleOrder=BEATS.map(b=>b.id);
+    for(let i=shuffleOrder.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [shuffleOrder[i],shuffleOrder[j]]=[shuffleOrder[j],shuffleOrder[i]];
+    }
+  }
+  curPage=1; renderCards();
+}
+function toggleLic(e){
+  e.stopPropagation();
+  document.getElementById('licBox').classList.toggle('open');
+}
+document.addEventListener('click',ev=>{
+  const box=document.getElementById('licBox');
+  if(box&&box.classList.contains('open')&&!ev.target.closest('.lic-wrap')) box.classList.remove('open');
+});
 const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':'Hood Trap','experimental':'Experimental','detroit':'Detroit','drumless':'Drumless','hard':'Hard','funk':'Funk','pluggnb':'Pluggnb','drill':'Drill','nomelody':'No Melody','bounce':'Bounce'};
 
 /* ── FILTER & RENDER ─────────────────────────────── */
@@ -1711,15 +1770,16 @@ function filt(g,btn){
 }
 
 
-const BEATS_PER_PAGE = 6;
+const BEATS_PER_PAGE = 9;
 let curPage = 1;
 let beatQuery = '';
 
 function renderCards(){
   const wrap=document.getElementById('beatCards');
-  let src=curFilt==='todos'?BEATS:BEATS.filter(b=>b.genre===curFilt);
+  let src=curFilt==='todos'?BEATS.slice():BEATS.filter(b=>b.genre===curFilt);
   if(showAvailOnly) src=src.filter(b=>!b.sold);
   if(beatQuery) src=src.filter(b=>normalizeStr(b.name).includes(beatQuery));
+  if(sortMode==='aleatorio'&&shuffleOrder) src.sort((a,b)=>shuffleOrder.indexOf(a.id)-shuffleOrder.indexOf(b.id));
   if(src.length===0){
     wrap.innerHTML=`<div style="padding:2.5rem;text-align:center;color:var(--dim);font-size:.78rem;">Nenhum beat disponível neste filtro no momento.</div>`;
     document.getElementById('pagination').style.display='flex';
@@ -1739,7 +1799,6 @@ function renderCards(){
   wrap.innerHTML=pageSrc.map((b,i)=>{
     const globalIdx=start+i;
     const inBeat =cart.some(c=>c.beatId===b.id&&c.stems===false);
-    const inStems=cart.some(c=>c.beatId===b.id&&c.stems===true);
     const genreLabel=GENRE_LABELS[b.genre]||b.genre;
     const soldOut=b.sold;
     return `<div class="bcard${soldOut?' bcard-sold':''}">
@@ -1750,21 +1809,18 @@ function renderCards(){
           <span class="chip chip-g">${genreLabel}</span>
           <span class="chip chip-meta">${b.bpm} BPM</span>
           <span class="chip chip-meta">${b.key}</span>
-          ${soldOut?'<span class="chip chip-sold">VENDIDO</span>':''}
         </div>
       </div>
       <iframe title="Player de áudio SoundCloud" width="100%" height="100" scrolling="no" frameborder="no" allow="autoplay" loading="lazy"
         src="https://w.soundcloud.com/player/?url=${b.scUrl}&color=%23A87B4A&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false">
       </iframe>
       <div class="bcard-buybar">
-        ${soldOut?`<div class="bcard-buybar-label">LICENÇA EXCLUSIVA VENDIDA</div>`:''}
         <div class="bcard-btns">
-          <button class="bbtn bbtn-beat ${inBeat?'on':''}" id="bb${b.id}" onclick="toggleBeat(${b.id},false)" ${soldOut?'disabled':''}>
-            <span class="chk">${inBeat?'✓':''}</span> Beat &nbsp; R$${PRICE_BEAT}
-          </button>
-          <button class="bbtn bbtn-stems ${inStems?'on':''}" id="bs${b.id}" onclick="toggleBeat(${b.id},true)" ${soldOut?'disabled':''}>
-            <span class="chk">${inStems?'✓':''}</span> +Stems &nbsp; +R$25
-          </button>
+        ${soldOut
+          ?`<button class="bbtn bbtn-soldout" disabled style="flex:1;">✕ Vendido</button>`
+          :`<button class="bbtn bbtn-beat ${inBeat?'on':''}" id="bb${b.id}" onclick="toggleBeat(${b.id},false)" style="flex:1;">
+            <span class="chk">${inBeat?'✓':''}</span> ${inBeat?'No carrinho':'Adicionar ao carrinho'} &nbsp;·&nbsp; R$${PRICE_BEAT}
+          </button>`}
         </div>
       </div>
     </div>`;
@@ -1787,7 +1843,50 @@ function renderCards(){
   document.getElementById('pgNext').disabled    = (curPage===totalPages);
   document.getElementById('pgPrevTop').disabled = (curPage===1);
   document.getElementById('pgNextTop').disabled = (curPage===totalPages);
+  setTimeout(bindPlayers,800);
 }
+
+// Player contínuo: pausa os outros ao dar play; ao terminar, toca o próximo.
+// No fim da página, avança pra próxima e segue tocando (modo rádio).
+let autoPlayFirst=false;
+function bindPlayers(){
+  if(!window.SC||!SC.Widget) return;
+  const frames=[...document.querySelectorAll('#beatCards iframe')];
+  const widgets=frames.map(f=>SC.Widget(f));
+  widgets.forEach((w,i)=>{
+    w.bind(SC.Widget.Events.PLAY,()=>{widgets.forEach((o,j)=>{if(j!==i)o.pause();});});
+    w.bind(SC.Widget.Events.FINISH,()=>{
+      const n=widgets[i+1];
+      if(n){
+        frames[i+1].scrollIntoView({behavior:'smooth',block:'center'});
+        setTimeout(()=>n.play(),600);
+      }else{
+        const nextBtn=document.getElementById('pgNext');
+        if(nextBtn&&!nextBtn.disabled){ autoPlayFirst=true; changePage(1); }
+      }
+    });
+  });
+  if(autoPlayFirst){
+    autoPlayFirst=false;
+    setTimeout(()=>{
+      if(frames[0]){
+        frames[0].scrollIntoView({behavior:'smooth',block:'center'});
+        widgets[0].play();
+      }
+    },900);
+  }
+}
+
+// Schema.org: catálogo como lista de produtos (SEO)
+(function(){
+  const ld={"@context":"https://schema.org","@type":"ItemList","name":"Catálogo de beats — Caramujo Records",
+    "itemListElement":BEATS.map((b,i)=>({"@type":"ListItem","position":i+1,
+      "item":{"@type":"Product","name":b.name,"brand":{"@type":"Brand","name":"Caramujo Records"},
+        "offers":{"@type":"Offer","priceCurrency":"BRL","price":PRICE_BEAT,
+          "availability":b.sold?"https://schema.org/SoldOut":"https://schema.org/InStock"}}}))};
+  const s=document.createElement('script');s.type='application/ld+json';
+  s.textContent=JSON.stringify(ld);document.head.appendChild(s);
+})();
 
 function changePage(dir){
   curPage+=dir;
@@ -2093,6 +2192,29 @@ function updateCart(){
         <button class="ci-rm" onclick="removeItem(${c.id})">✕</button>
       </div>
     </div>`).join('');
+
+  // Upsell: sempre mostrar o próximo degrau de custo-benefício
+  const loose=cart.filter(c=>c.type==='Beat').length;
+  const pkg1=cart.some(c=>c.type==='Pacote'&&c.name==='1 Beat');
+  const pkg2=cart.some(c=>c.type==='Pacote'&&c.name==='2 Beats');
+  const pkg3=cart.some(c=>c.type==='Pacote'&&c.name==='3 Beats');
+  let up=null;
+  if(pkg3){
+    up=null; // já está no melhor custo-benefício
+  }else if(pkg2){
+    up=`No pacote de 3, o terceiro beat sai por R$80 em vez de R$119 — <span class="cp-save">economize R$39</span>`;
+  }else if(pkg1){
+    up=`No pacote de 2, o segundo beat sai por R$100 em vez de R$119 — <span class="cp-save">economize R$19</span>`;
+  }else if(loose===1){
+    up=`Vai levar mais de um? No pacote, 2 beats saem por R$219 — <span class="cp-save">economize R$19</span>`;
+  }else if(loose===2){
+    up=`Esses 2 beats no pacote saem por R$219 — <span class="cp-save">economize R$19</span>`;
+  }else if(loose>=3){
+    up=`3 beats no pacote saem por R$299 — <span class="cp-save">economize R$58</span>`;
+  }
+  if(up){
+    pb.innerHTML+=`<div class="cp-upsell"><span class="cp-upsell-tag">melhor custo-benefício</span>${up}<a class="cp-upsell-link" href="#packages" onclick="closeAll()">Ver pacotes →</a></div>`;
+  }
 }
 
 
