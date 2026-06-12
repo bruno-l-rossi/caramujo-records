@@ -249,10 +249,10 @@ nav{
 .pg-goto-input{width:3rem;background:var(--mole);border:1px solid var(--wire);color:var(--cream);font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:.28rem .4rem;text-align:center;outline:none;transition:border-color .14s;}
 .pg-goto-input:focus{border-color:var(--ember);}
 .pg-goto-input::-webkit-inner-spin-button,.pg-goto-input::-webkit-outer-spin-button{-webkit-appearance:none;}
-.pg-search{display:flex;align-items:center;gap:.4rem;}
-.pg-search-input{background:var(--mole);border:1px solid var(--wire);color:var(--cream);font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:.3rem .7rem;outline:none;transition:border-color .14s;width:14rem;max-width:40vw;}
-.pg-search-input::placeholder{color:var(--dim);}
-.pg-search-input:focus{border-color:var(--ember);}
+.pg-search{display:flex;align-items:center;gap:.4rem;flex:1;min-width:210px;}
+.pg-search-input{background:var(--mole);border:1px solid var(--clay);color:var(--cream);font-family:'IBM Plex Mono',monospace;font-size:.8rem;padding:.55rem .9rem;outline:none;transition:border-color .14s,box-shadow .14s;width:100%;max-width:none;}
+.pg-search-input::placeholder{color:var(--read);}
+.pg-search-input:focus{border-color:var(--fire);box-shadow:0 0 0 1px var(--fire);}
 .bcard{border-bottom:1px solid var(--wire);transition:background .14s;}
 .bcard:last-child{border-bottom:none;}
 .bcard:hover{background:rgba(30,26,18,.5);}
@@ -754,7 +754,7 @@ html, body {
     gap:0;
   }
   .nav-logo{height:54px;flex-shrink:0;}
-  .nav-cta{flex-shrink:0;}
+  .nav-cta{display:none;} /* CTA já existe no hero; libera espaço no mobile */
   .nav-links{
     display:flex;
     flex:1;
@@ -767,8 +767,8 @@ html, body {
     border-left:1px solid var(--wire);
     border-right:none;
     line-height:54px;
-    font-size:.52rem;
-    padding:0 .55rem;
+    font-size:.6rem;
+    padding:0 .8rem;
     white-space:nowrap;
   }
   .nav-links a:first-child{border-left:none;}
@@ -831,7 +831,9 @@ html, body {
 @media(max-width:480px){
   .s{padding:2.5rem 1rem;}
   .hero-content{padding:6rem 1rem 2.5rem;}
-  nav{padding:0 1rem;}
+  nav{padding:0 .7rem;}
+  .nav-wm{display:none;} /* só o selo no mobile; libera espaço pros links */
+  .nav-links a{font-size:.58rem;padding:0 .65rem;}
   .bcard-header{padding:.6rem 1rem .5rem;}
   .chip{font-size:.5rem;padding:.08rem .3rem;}
   .bbtn{font-size:.85rem;padding:.65rem 1rem;}
