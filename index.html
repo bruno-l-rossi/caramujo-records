@@ -1025,7 +1025,7 @@ button.sort-select.on{border-color:var(--clay);color:var(--amber);}
     </p>
 
     <p class="hero-proof">
-      <span><b>8</b> anos de estúdio</span>
+      <span><b>40+</b> artistas</span>
       <span><b>200+</b> faixas lançadas</span>
       <span><b>2.500.000+</b> streams</span>
     </p>
@@ -2194,27 +2194,34 @@ function updateCart(){
     </div>`).join('');
 
   // Upsell: sempre mostrar o próximo degrau de custo-benefício
+  const ups=[];
+
+  // — beats e pacotes —
   const loose=cart.filter(c=>c.type==='Beat').length;
   const pkg1=cart.some(c=>c.type==='Pacote'&&c.name==='1 Beat');
   const pkg2=cart.some(c=>c.type==='Pacote'&&c.name==='2 Beats');
   const pkg3=cart.some(c=>c.type==='Pacote'&&c.name==='3 Beats');
-  let up=null;
-  if(pkg3){
-    up=null; // já está no melhor custo-benefício
-  }else if(pkg2){
-    up=`No pacote de 3, o terceiro beat sai por R$80 em vez de R$119 — <span class="cp-save">economize R$39</span>`;
-  }else if(pkg1){
-    up=`No pacote de 2, o segundo beat sai por R$100 em vez de R$119 — <span class="cp-save">economize R$19</span>`;
-  }else if(loose===1){
-    up=`Vai levar mais de um? No pacote, 2 beats saem por R$219 — <span class="cp-save">economize R$19</span>`;
-  }else if(loose===2){
-    up=`Esses 2 beats no pacote saem por R$219 — <span class="cp-save">economize R$19</span>`;
-  }else if(loose>=3){
-    up=`3 beats no pacote saem por R$299 — <span class="cp-save">economize R$58</span>`;
+  if(!pkg3){
+    if(pkg2)      ups.push({msg:`No pacote de 3, o terceiro beat sai por R$80 em vez de R$119 — <span class="cp-save">economize R$39</span>`,href:'#packages',cta:'Ver pacotes →'});
+    else if(pkg1) ups.push({msg:`No pacote de 2, o segundo beat sai por R$100 em vez de R$119 — <span class="cp-save">economize R$19</span>`,href:'#packages',cta:'Ver pacotes →'});
+    else if(loose===1) ups.push({msg:`Vai levar mais de um? No pacote, 2 beats saem por R$219 — <span class="cp-save">economize R$19</span>`,href:'#packages',cta:'Ver pacotes →'});
+    else if(loose===2) ups.push({msg:`Leve 3! No pacote, 3 beats saem por R$299 — <span class="cp-save">economize R$58</span>`,href:'#packages',cta:'Ver pacotes →'});
+    else if(loose>=3)  ups.push({msg:`3 beats no pacote saem por R$299 — <span class="cp-save">economize R$58</span>`,href:'#packages',cta:'Ver pacotes →'});
   }
-  if(up){
-    pb.innerHTML+=`<div class="cp-upsell"><span class="cp-upsell-tag">melhor custo-benefício</span>${up}<a class="cp-upsell-link" href="#packages" onclick="closeAll()">Ver pacotes →</a></div>`;
+
+  // — mix / master / combo —
+  const hasMix=cart.some(c=>c.type==='Servico'&&c.name==='Mixagem');
+  const hasMaster=cart.some(c=>c.type==='Servico'&&c.name==='Masterização');
+  const hasCombo=cart.some(c=>c.type==='Servico'&&c.name==='Mix + Master');
+  if(!hasCombo){
+    if(hasMix&&hasMaster) ups.push({msg:`Mix + Master junto sai por R$199 em vez de R$228 — <span class="cp-save">economize R$29</span>`,href:'#services',cta:'Ver Mix + Master →'});
+    else if(hasMix)       ups.push({msg:`Leve o Mix + Master por R$199: o master sai por R$50 em vez de R$79 — <span class="cp-save">economize R$29</span>`,href:'#services',cta:'Ver Mix + Master →'});
+    else if(hasMaster)    ups.push({msg:`Leve o Mix + Master por R$199: a mix sai por R$120 em vez de R$149 — <span class="cp-save">economize R$29</span>`,href:'#services',cta:'Ver Mix + Master →'});
   }
+
+  ups.forEach(u=>{
+    pb.innerHTML+=`<div class="cp-upsell"><span class="cp-upsell-tag">melhor custo-benefício</span>${u.msg}<a class="cp-upsell-link" href="${u.href}" onclick="closeAll()">${u.cta}</a></div>`;
+  });
 }
 
 
