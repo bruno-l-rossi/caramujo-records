@@ -192,7 +192,7 @@ Enviados via **[Resend](https://resend.com)**:
 ## SEO e Compartilhamento
 
 - `<title>` descritivo: "Caramujo Records — Beats exclusivos, mix e master por @rideblan33"
-- **Schema.org (JSON-LD):** o catálogo é injetado como `ItemList` de `Product` com preço e disponibilidade — buscadores entendem o site como loja
+- **Schema.org (JSON-LD):** o catálogo é injetado como `ItemList` de `Product`, cada um com nome, imagem, descrição, marca e oferta (preço, disponibilidade, política de devolução e entrega) — atende os requisitos de Listagens do Comerciante do Google Search Console
 - Meta tags Open Graph no `<head>` para WhatsApp, Instagram e demais redes
 
 Após atualizar o `og-image.png`, forçar releitura em

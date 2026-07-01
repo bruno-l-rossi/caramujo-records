@@ -1,5 +1,15 @@
 # Site otimizado — o que mudou (v7, revisado)
 
+## Rodada 7 — SEO: correção do diagnóstico do Search Console
+
+Google Search Console apontou 2 erros de "Snippets do produto" e 4 de "Listagens do comerciante" no schema.org dos beats.
+
+- **image (crítico):** cada `Product` agora leva `og-image.png` como capa. Beats não têm arte individual; usar a imagem oficial do site resolve o erro sem depender de 121 artes novas.
+- **description:** gerada por beat a partir do gênero, BPM e tom (ex: "Beat trap, 128 BPM, tom Emaj...").
+- **hasMerchantReturnPolicy:** declarado como `MerchantReturnNotPermitted` — condiz com a licença exclusiva e definitiva do contrato (a faixa sai do catálogo na venda).
+- **shippingDetails:** entrega digital, frete R$0, `handlingTime` 0 dia e `transitTime` até 1 dia — alinhado ao prazo de "até 24 horas" pro beat de catálogo no `termos-de-licenca.pdf`.
+- **aggregateRating / review:** não críticos, deixados de fora de propósito. Preencher com nota/depoimento fabricado viola as diretrizes do Google (risco de penalização). Voltar aqui quando houver depoimento real de comprador.
+
 ## Rodada 6 — mobile e busca
 
 - Nav mobile: CTA "OUVIR BEATS" escondido em telas ≤860px (já existe no hero) e, abaixo de 480px, o nome escrito da logo some (fica só o selo). Os 4 links cabem inteiros na tela — verificado com screenshot em 390px.

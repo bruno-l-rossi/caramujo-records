@@ -1894,11 +1894,25 @@ function bindPlayers(){
 
 // Schema.org: catálogo como lista de produtos (SEO)
 (function(){
+  const SITE_IMAGE="https://caramujorecords.com.br/og-image.png";
+  const GENRE_LABEL={trap:'trap',boombap:'boom bap',plug:'plug',hoodtrap:'hood trap',experimental:'experimental',hard:'hard',detroit:'detroit',drumless:'drumless',funk:'funk',pluggnb:'plugg&b',bounce:'bounce',nomelody:'no melody',drill:'drill'};
   const ld={"@context":"https://schema.org","@type":"ItemList","name":"Catálogo de beats — Caramujo Records",
     "itemListElement":BEATS.map((b,i)=>({"@type":"ListItem","position":i+1,
-      "item":{"@type":"Product","name":b.name,"brand":{"@type":"Brand","name":"Caramujo Records"},
+      "item":{"@type":"Product","name":b.name,
+        "image":SITE_IMAGE,
+        "description":`Beat ${GENRE_LABEL[b.genre]||b.genre}, ${b.bpm} BPM, tom ${b.key}. Produzido por @rideblan33 (Caramujo Records). Licença exclusiva: a faixa sai do catálogo assim que é vendida.`,
+        "brand":{"@type":"Brand","name":"Caramujo Records"},
         "offers":{"@type":"Offer","priceCurrency":"BRL","price":PRICE_BEAT,
-          "availability":b.sold?"https://schema.org/SoldOut":"https://schema.org/InStock"}}}))};
+          "availability":b.sold?"https://schema.org/SoldOut":"https://schema.org/InStock",
+          "hasMerchantReturnPolicy":{"@type":"MerchantReturnPolicy",
+            "returnPolicyCategory":"https://schema.org/MerchantReturnNotPermitted",
+            "applicableCountry":"BR"},
+          "shippingDetails":{"@type":"OfferShippingDetails",
+            "shippingRate":{"@type":"MonetaryAmount","value":"0","currency":"BRL"},
+            "shippingDestination":{"@type":"DefinedRegion","addressCountry":"BR"},
+            "deliveryTime":{"@type":"ShippingDeliveryTime",
+              "handlingTime":{"@type":"QuantitativeValue","minValue":0,"maxValue":0,"unitCode":"DAY"},
+              "transitTime":{"@type":"QuantitativeValue","minValue":0,"maxValue":1,"unitCode":"DAY"}}}}}}))};
   const s=document.createElement('script');s.type='application/ld+json';
   s.textContent=JSON.stringify(ld);document.head.appendChild(s);
 })();
