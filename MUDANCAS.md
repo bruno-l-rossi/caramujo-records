@@ -1,4 +1,38 @@
-# Site otimizado — o que mudou (v7, revisado)
+# Site otimizado — o que mudou (v8, revisado)
+
+## Rodada 8 — usabilidade mobile + botão da sorte + cupons no servidor
+
+Baseada no relatório `analise-usabilidade-mobile.md`. Roteiro de teste item a item em `VALIDACAO.md`.
+
+**Mobile (P1)**
+- Links da nav com área de toque de 54px (antes o alvo real tinha 10px de altura; o toque errava 3 de 4 vezes).
+- Botão CARRINHO: escondido com carrinho vazio; no mobile vira círculo de 58px com badge, cobrindo bem menos conteúdo. Seções de serviços e contato ganharam respiro no fim.
+- Inputs, selects e textareas com 16px no mobile: mata o zoom automático do iOS ao focar.
+- Filtros de gênero em linhas com wrap: os 13 gêneros + "Todos" visíveis de uma vez (antes 9 ficavam escondidos num scroll sem indicação).
+
+**Catálogo**
+- Paginação numerada (1 … 6 7 8 … 14): pula direto pra qualquer página, inclusive o fim do catálogo.
+- Botão "✦ Estou com sorte": sorteia um beat disponível respeitando o filtro ativo, rola até o card, destaca e dá play.
+- Chips de gênero/BPM/tom com piso de ~11px (estavam em 8px).
+- Balão da licença no mobile abre como folha fixa no rodapé (não cobre mais a frase que o cliente tava lendo).
+- "Esconder vendidos" com estado ativo preenchido.
+
+**Carrinho e checkout**
+- Painel abre sozinho só na 1ª adição; das seguintes, toast "✓ ... no carrinho" (antes cobria a tela toda a cada item).
+- Campo de cupom colapsado num link "Tem cupom?".
+- Badge conta unidades (pacote de 3 + 2 mixagens = 5).
+- Modo rádio não rouba mais o scroll: só acompanha a música se o catálogo estiver visível na tela.
+
+**Backend (functions)**
+- Cupons saíram do código-fonte da página: agora vivem em `functions/coupons.json` (não é servido publicamente). Validação via novo endpoint `/api/validate-coupon`; incremento de uso pelo webhook direto no JSON.
+- Contrato assinado agora vai em anexo também no email do comprador (cartão no create-payment, PIX no webhook). Antes só o produtor recebia o anexo; se o botão de download falhasse, o cliente ficava sem via.
+
+**Miúdos**
+- Instagram Direct como canal principal de contato (`ig.me/m/rideblan33`), com selo "resposta mais rápida".
+- Seta no select de assunto do formulário (tava invisível).
+- `scroll-padding-top`: âncoras não encostam mais na nav fixa.
+- Pacote "1 Beat" avisa que é o mesmo preço do avulso.
+- Subtítulo dos serviços não repete mais o título.
 
 ## Rodada 7 — SEO: correção do diagnóstico do Search Console
 

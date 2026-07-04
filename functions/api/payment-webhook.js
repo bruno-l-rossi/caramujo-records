@@ -21,6 +21,105 @@ const GITHUB_OWNER  = 'bruno-l-rossi';
 const GITHUB_REPO   = 'caramujo-records';
 const GITHUB_FILE   = 'index.html';
 const GITHUB_BRANCH = 'main';
+const COUPONS_FILE  = 'functions/coupons.json';
+
+// ── Contrato (mesma geração do create-payment; o webhook reconstrói a partir do metadata) ──
+
+function fmtCpfDoc(cpf) {
+  return String(cpf || '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
+function generateContractHtml({ name, cpf, email, items, category, amount, paymentId, termsTimestamp, artistName }) {
+  const data = new Date(termsTimestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>
+  body{font-family:'Courier New',monospace;background:#fff;color:#111;margin:0;padding:40px 32px;max-width:700px;}
+  h1{color:#b82c08;font-size:1.5rem;letter-spacing:.1em;text-align:center;margin-bottom:4px;}
+  .sub{text-align:center;font-size:.75rem;color:#666;margin-bottom:4px;}
+  hr{border:none;border-top:2px solid #b82c08;margin:16px 0;}
+  h2{text-align:center;font-size:1rem;letter-spacing:.06em;margin-bottom:4px;}
+  h3{font-size:.82rem;color:#b82c08;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid #e0c0b0;padding-bottom:4px;margin:20px 0 8px;}
+  .row{display:flex;gap:8px;font-size:.8rem;margin-bottom:5px;}
+  .row b{min-width:160px;color:#333;}
+  h4{font-size:.8rem;color:#b82c08;margin:12px 0 3px;}
+  p,li{font-size:.78rem;line-height:1.7;color:#222;margin:2px 0;}
+  ul{margin:4px 0 4px 18px;}
+  .aceite{background:#fff8f0;border:1px solid #e0c0b0;border-left:4px solid #b82c08;padding:12px 16px;margin:20px 0;}
+  .aceite b{display:block;color:#b82c08;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+  .sigs{display:flex;gap:40px;margin-top:32px;}
+  .sig{flex:1;border-top:1px solid #999;padding-top:8px;font-size:.76rem;color:#444;}
+  .footer{text-align:center;font-size:.68rem;color:#999;margin-top:28px;border-top:1px solid #eee;padding-top:10px;}
+</style></head><body>
+  <h1>CARAMUJO RECORDS</h1>
+  <p class="sub">Estúdio popular e independente · São Carlos, SP</p>
+  <hr/>
+  <h2>CONTRATO DE LICENÇA EXCLUSIVA DE USO</h2>
+  <p class="sub">Instrumento Particular de Cessão de Direitos de Uso</p>
+
+  <h3>Dados da Transação</h3>
+  <div class="row"><b>Data:</b><span>${data}</span></div>
+  <div class="row"><b>ID do Pagamento:</b><span>${paymentId}</span></div>
+  <div class="row"><b>Categoria:</b><span>${category || '—'}</span></div>
+  <div class="row"><b>Itens:</b><span>${items}</span></div>
+  <div class="row"><b>Valor Total:</b><span>R$ ${amount}</span></div>
+
+  <h3>Identificação das Partes</h3>
+  <p><b>PRODUTOR (LICENCIANTE)</b></p>
+  <div class="row"><b>Nome artístico:</b><span>@rideblan33</span></div>
+  <div class="row"><b>Nome completo:</b><span>Bruno Lanzoni Rossi</span></div>
+  <div class="row"><b>Email:</b><span>contato@caramujorecords.com.br</span></div>
+  <br/>
+  <p><b>COMPRADOR (LICENCIADO)</b></p>
+  <div class="row"><b>Nome artístico:</b><span>${artistName || '—'}</span></div>
+  <div class="row"><b>Nome completo:</b><span>${name}</span></div>
+  <div class="row"><b>CPF:</b><span>${fmtCpfDoc(cpf)}</span></div>
+  <div class="row"><b>Email:</b><span>${email}</span></div>
+
+  <hr/>
+  <h3>Termos e Condições</h3>
+  <h4>1. Objeto do Contrato</h4>
+  <p>O presente contrato tem por objeto a cessão, em caráter exclusivo e definitivo, do direito de uso do beat/serviço identificado acima, produzido por @rideblan33, para fins de gravação, distribuição e exploração comercial de uma única faixa musical pelo Licenciado.</p>
+  <h4>2. Licença Exclusiva</h4>
+  <p>A licença concedida é EXCLUSIVA: após a conclusão desta compra, a Obra será removida permanentemente do catálogo da Caramujo Records e não será vendida, licenciada ou disponibilizada a terceiros em nenhuma hipótese.</p>
+  <h4>3. Entrega dos Arquivos</h4>
+  <p>O Licenciado receberá, no email informado no pedido, os seguintes arquivos após a confirmação do pagamento:</p>
+  <ul><li>Arquivo MP3 em 320kbps</li><li>Arquivo WAV</li><li>Stems separados por instrumento — somente se contratado o pacote Beat + Stems</li><li>Uma via deste contrato assinado pelo Produtor</li></ul>
+  <h4>4. Prazos de Entrega</h4>
+  <ul><li>Beat catálogo (disponível no site): até 24 horas</li><li>Beat personalizado (produção sob encomenda): até 2 semanas</li><li>Mixagem, Masterização ou Mix + Master: até 3 semanas</li></ul>
+  <p>Em caso de imprevistos que possam impactar os prazos, o Produtor notificará o Licenciado por email com antecedência.</p>
+  <h4>5. Crédito Obrigatório</h4>
+  <p>O uso da Obra em qualquer plataforma digital exige a creditação do Produtor da seguinte forma:</p>
+  <ul><li>Plataformas digitais (Spotify, Apple Music, Deezer, etc.): creditar @rideblan33 como um dos artistas principais ("performer") na faixa.</li><li>YouTube: adicionar "(prod. @rideblan33)" no título do vídeo.</li></ul>
+  <p>O não cumprimento desta cláusula configura violação contratual e poderá ensejar rescisão da licença.</p>
+  <h4>6. Royalties e Divisão de Receitas</h4>
+  <p>O Licenciado é obrigado a realizar o split share de 10% dos royalties fonográficos para o Produtor no momento do cadastro da faixa em distribuidoras digitais. O não envio do split configura inadimplência contratual.</p>
+  <h4>7. Vedações</h4>
+  <p>É expressamente vedado ao Licenciado:</p>
+  <ul><li>Revender, ceder, sublicenciar ou transferir a Obra ou este contrato a terceiros.</li><li>Remover ou alterar créditos do Produtor em qualquer plataforma ou material.</li><li>Utilizar a Obra em mais de uma faixa musical sem novo contrato.</li><li>Registrar a Obra em nome próprio em entidades de gestão coletiva (ECAD, PRO) sem inclusão do Produtor.</li></ul>
+  <h4>8. Vigência</h4>
+  <p>Esta licença é concedida por prazo indeterminado a partir da data de emissão, permanecendo válida enquanto o Licenciado cumprir todas as obrigações previstas neste instrumento.</p>
+  <h4>9. Rescisão</h4>
+  <p>O descumprimento de qualquer cláusula deste contrato, especialmente as relativas a crédito e royalties, confere ao Produtor o direito de rescindir a licença mediante notificação por escrito, sem direito a reembolso ao Licenciado.</p>
+  <h4>10. Disposições Gerais</h4>
+  <p>Este contrato representa o acordo integral entre as partes e substitui quaisquer entendimentos anteriores. Eventuais alterações somente terão validade se formalizadas por escrito e assinadas por ambas as partes. As partes elegem o foro da Comarca de São Carlos/SP para dirimir eventuais litígios.</p>
+
+  <div class="aceite">
+    <b>Registro do Aceite Eletrônico</b>
+    O Licenciado aceitou eletronicamente os presentes termos antes de efetuar o pagamento. Validade jurídica conforme Art. 107 do Código Civil Brasileiro.<br/><br/>
+    <div class="row"><b>Timestamp:</b><span>${termsTimestamp}</span></div>
+    <div class="row"><b>Versão:</b><span>caramujo-termos-v1-2026</span></div>
+    <div class="row"><b>Email:</b><span>${email}</span></div>
+    <div class="row"><b>CPF:</b><span>${fmtCpfDoc(cpf)}</span></div>
+  </div>
+
+  <div class="sigs">
+    <div class="sig">Produtor — @rideblan33 / Bruno Lanzoni Rossi</div>
+  </div>
+  <div class="sigs" style="margin-top:24px;">
+    <div class="sig">Licenciado — ${artistName ? `${artistName} / ` : ''}${name}</div>
+  </div>
+  <div class="footer">Caramujo Records · Desde 2018 · caramujorecords.com.br</div>
+</body></html>`;
+}
 
 // ── Email de notificação ao dono ─────────────────────────────────────────────
 
@@ -116,17 +215,16 @@ async function sendApprovalEmail({ env, payment }) {
   console.log(`[email] Notificação enviada para ${notifyEmail} via Resend`);
 }
 
-// ── Atualiza index.html no GitHub (beat + cupom em UM único commit) ──────────
+// ── Atualiza index.html no GitHub (beats vendidos) ───────────────────────────
 
-async function updateIndex({ githubToken, beatNames = [], couponCode }) {
+async function updateIndex({ githubToken, beatNames = [] }) {
   if (!githubToken) {
     console.error('[github] ❌ GITHUB_TOKEN não está configurado nas variáveis de ambiente do Cloudflare. Acesse Pages → Settings → Environment variables e adicione GITHUB_TOKEN.');
     return;
   }
 
-  const needsBeat   = beatNames.length > 0;
-  const needsCoupon = !!couponCode;
-  if (!needsBeat && !needsCoupon) return;
+  const needsBeat = beatNames.length > 0;
+  if (!needsBeat) return;
 
   const apiBase = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
   const headers = {
@@ -178,33 +276,6 @@ async function updateIndex({ githubToken, beatNames = [], couponCode }) {
     }
   }
 
-  // 2b. Aplica incremento do cupom (se necessário) — sobre o content já modificado
-  if (needsCoupon) {
-    const couponEscaped = couponCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // Regex específico: captura apenas "uses:" (não "maxUses:")
-    const couponRegex = new RegExp(
-      `('${couponEscaped}'\\s*:\\s*\\{[^}]*?(?<!max)Uses\\s*:\\s*)(\\d+)`,
-      'i'
-    );
-    // Fallback sem lookbehind para engines que não suportam
-    const couponRegexFallback = new RegExp(
-      `('${couponEscaped}'\\s*:\\s*\\{[^}]*?,\\s*uses\\s*:\\s*)(\\d+)`,
-      'i'
-    );
-
-    const match = content.match(couponRegex) || content.match(couponRegexFallback);
-    if (!match) {
-      console.error(`[github-coupon] ❌ Cupom "${couponCode}" não encontrado no código. Verifique se o nome bate exatamente com a chave no objeto COUPONS.`);
-    } else {
-      const currentUses = parseInt(match[2], 10);
-      const newUses = currentUses + 1;
-      const usedRegex = match[0].includes('maxUses') ? couponRegexFallback : couponRegex;
-      content = content.replace(usedRegex, `$1${newUses}`);
-      commitParts.push(`cupom "${couponCode}" uses: ${currentUses}→${newUses}`);
-      console.log(`[github-coupon] Cupom "${couponCode}": uses ${currentUses} → ${newUses}`);
-    }
-  }
-
   // 3. Se não houve nenhuma alteração real, não commita
   if (commitParts.length === 0) {
     console.log('[github] Nenhuma alteração necessária — commit ignorado.');
@@ -240,6 +311,48 @@ async function updateIndex({ githubToken, beatNames = [], couponCode }) {
   console.log(`[github] ✅ Commit realizado: ${putData.commit?.sha} — Redeploy iniciado no Cloudflare Pages.`);
 }
 
+// ── Incrementa uses do cupom em functions/coupons.json ───────────────────────
+
+async function updateCouponUses({ githubToken, couponCode }) {
+  if (!githubToken || !couponCode) return;
+
+  const apiBase = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${COUPONS_FILE}`;
+  const headers = {
+    Authorization: `Bearer ${githubToken}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    'User-Agent': 'caramujo-records-webhook/1.0',
+  };
+
+  const getRes = await fetch(`${apiBase}?ref=${GITHUB_BRANCH}`, { headers });
+  if (!getRes.ok) throw new Error(`GitHub GET coupons.json error: ${getRes.status} — ${await getRes.text()}`);
+
+  const fileData = await getRes.json();
+  const coupons = JSON.parse(decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, '')))));
+
+  if (!coupons[couponCode]) {
+    console.error(`[github-coupon] ❌ Cupom "${couponCode}" não encontrado em ${COUPONS_FILE}.`);
+    return;
+  }
+
+  const currentUses = coupons[couponCode].uses || 0;
+  coupons[couponCode].uses = currentUses + 1;
+
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(coupons, null, 2) + '\n')));
+  const putRes = await fetch(apiBase, {
+    method: 'PUT',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: `chore: cupom "${couponCode}" uses: ${currentUses}→${currentUses + 1} [automated]`,
+      content: encoded,
+      sha: fileData.sha,
+      branch: GITHUB_BRANCH,
+    }),
+  });
+  if (!putRes.ok) throw new Error(`GitHub PUT coupons.json error: ${putRes.status} — ${await putRes.text()}`);
+  console.log(`[github-coupon] ✅ Cupom "${couponCode}": uses ${currentUses} → ${currentUses + 1}`);
+}
+
 // ── Email de confirmação de pedido ao comprador ──────────────────────────────
 
 async function sendBuyerConfirmationEmail({ env, payment }) {
@@ -262,6 +375,26 @@ async function sendBuyerConfirmationEmail({ env, payment }) {
   console.log(`[email-buyer] Destinatário: "${email}" | Nome artístico: "${greeting}" | Itens: "${itemsList}"`);
 
   if (!email) { console.warn('[email-buyer] Email do comprador ausente no objeto payment.payer — skip.'); return; }
+
+  // Reconstrói o contrato a partir do metadata salvo no create-payment
+  // (o comprador precisa da via dele mesmo se o botão de download falhar)
+  let contractHtml = null;
+  try {
+    const cpfRaw = String(meta.buyer_cpf || payer.identification?.number || '').replace(/\D/g, '');
+    if (name && cpfRaw) {
+      contractHtml = generateContractHtml({
+        name,
+        cpf: cpfRaw,
+        email,
+        items: itemsList,
+        category: meta.category_label || itemsList,
+        amount: payment.transaction_amount,
+        paymentId: payment.id,
+        termsTimestamp: meta.terms_ts || payment.date_approved || payment.date_created,
+        artistName,
+      });
+    }
+  } catch (e) { console.error('[email-buyer] Erro ao gerar contrato:', e.message); }
 
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -332,6 +465,11 @@ async function sendBuyerConfirmationEmail({ env, payment }) {
               </table>
             </td></tr>
           </table>
+          ${contractHtml ? `<p style="font-family:Georgia,'Times New Roman',serif;font-size:13px;
+            color:#c49040;line-height:1.8;margin:0 0 20px;">
+            &#128206; Seu contrato de licen&ccedil;a assinado est&aacute; em anexo neste email.
+            Ele &eacute; a sua garantia e prova do aceite dos termos — guarde em local seguro.
+          </p>` : ''}
           <p style="font-family:Georgia,'Times New Roman',serif;font-size:14px;
             color:#8a8070;line-height:1.85;margin:0 0 8px;">
             Qualquer dúvida, estamos aqui.
@@ -380,22 +518,34 @@ async function sendBuyerConfirmationEmail({ env, payment }) {
 </body>
 </html>`;
 
+  const emailPayload = {
+    from: `Caramujo Records <${fromEmail}>`,
+    to: [email],
+    subject: `Caramujo Records — Pedido confirmado ✓`,
+    html,
+  };
+
+  if (contractHtml) {
+    const safeName = (name || 'comprador').replace(/[^a-zA-Z0-9À-ÿ\s-]/g, '').trim().replace(/\s+/g, '-').slice(0, 60);
+    emailPayload.attachments = [
+      {
+        filename: `contrato-caramujo-${safeName}.html`,
+        content: btoa(unescape(encodeURIComponent(contractHtml))),
+      },
+    ];
+  }
+
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: `Caramujo Records <${fromEmail}>`,
-      to: [email],
-      subject: `Caramujo Records — Pedido confirmado ✓`,
-      html,
-    }),
+    body: JSON.stringify(emailPayload),
   });
 
   if (!res.ok) {
     const err = await res.text();
     throw new Error(`Resend buyer email error ${res.status}: ${err}`);
   }
-  console.log(`[email-buyer] ✅ Confirmação enviada para ${email}`);
+  console.log(`[email-buyer] ✅ Confirmação enviada para ${email}${contractHtml ? ' (com contrato em anexo)' : ''}`);
 }
 
 // ── Extrai nome do beat da descrição ────────────────────────────────────────
@@ -513,11 +663,20 @@ export async function onRequestPost({ request, env }) {
       if (allBeatNames.length) console.log(`[webhook] Beats a marcar como vendidos: ${allBeatNames.join(', ')}`);
       if (couponCode)          console.log(`[webhook] Cupom usado: "${couponCode}"`);
 
-      if (allBeatNames.length || couponCode) {
+      if (allBeatNames.length) {
         try {
-          await updateIndex({ githubToken: env.GITHUB_TOKEN, beatNames: allBeatNames, couponCode });
+          await updateIndex({ githubToken: env.GITHUB_TOKEN, beatNames: allBeatNames });
         } catch (ghErr) {
           console.error('[webhook] Falha ao atualizar index.html no GitHub:', ghErr.message);
+        }
+      }
+
+      // 3. Incrementa uses do cupom em functions/coupons.json (commit separado)
+      if (couponCode) {
+        try {
+          await updateCouponUses({ githubToken: env.GITHUB_TOKEN, couponCode });
+        } catch (cpErr) {
+          console.error('[webhook] Falha ao atualizar coupons.json no GitHub:', cpErr.message);
         }
       }
     }

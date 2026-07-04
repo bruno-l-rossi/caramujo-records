@@ -99,7 +99,8 @@ nav{
   letter-spacing:.22em;text-transform:uppercase;
   color:var(--read);text-decoration:none;
   padding:0 1.1rem;border-left:1px solid var(--wire);
-  line-height:54px;transition:color .15s,background .15s;
+  display:flex;align-items:center;height:54px; /* área de toque = barra inteira (não só o texto) */
+  transition:color .15s,background .15s;
 }
 .nav-links a:hover{color:var(--fire);background:rgba(232,76,24,.05);}
 .nav-cta{
@@ -238,7 +239,13 @@ nav{
 /* ═══ BEAT CARDS (merged SC + buy) ══════ */
 .beat-cards{display:flex;flex-direction:column;gap:0;border:1px solid var(--wire);}
 .pagination{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--wire);border-top:none;padding:.6rem 1rem;gap:.5rem;}
-.pagination-top{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--wire);border-bottom:none;padding:.6rem 1rem;gap:.5rem;}
+.pagination-top{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--wire);border-top:none;border-bottom:none;padding:.6rem 1rem;gap:.5rem;flex-wrap:wrap;}
+/* Paginação numerada: acesso direto a qualquer página */
+.pg-nums{display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;}
+.pg-num{font-family:'IBM Plex Mono',monospace;font-size:.72rem;min-width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid var(--wire);background:transparent;color:var(--read);cursor:pointer;transition:background .14s,color .14s;}
+.pg-num:hover{border-color:var(--ember);color:var(--cream);}
+.pg-num.pg-cur{background:var(--ember);border-color:var(--ember);color:var(--cream);cursor:default;}
+.pg-dots{color:var(--dim);font-size:.72rem;padding:0 .15rem;}
 .pagination-info{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.88rem;letter-spacing:.1em;color:var(--cream);font-weight:700;}
 .pagination-btns{display:flex;align-items:center;gap:.4rem;}
 .pg-btn{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.72rem;letter-spacing:.1em;font-weight:700;padding:.3rem .8rem;border:1px solid var(--wire);background:transparent;color:var(--cream);cursor:pointer;transition:background .14s,color .14s;}
@@ -303,13 +310,14 @@ nav{
 .bbtn .chk{font-size:.75rem;}
 
 /* filter tabs — full width, flush above cards */
-.ftabs{display:flex;gap:0;margin-bottom:0;border:1px solid var(--wire);border-bottom:none;overflow-x:auto;}
+/* Chips de gênero: wrap em várias linhas — todos visíveis, sem scroll escondido */
+.ftabs{display:flex;flex-wrap:wrap;gap:0;margin-bottom:0;border:1px solid var(--wire);border-bottom:none;}
 .ft{
   font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
   font-size:.65rem;font-weight:700;
   letter-spacing:.2em;text-transform:uppercase;
   padding:.55rem 1.3rem;background:transparent;
-  border:none;border-right:1px solid var(--wire);
+  border:none;border-right:1px solid var(--wire);border-bottom:1px solid var(--wire);
   color:var(--dim);cursor:pointer;transition:all .15s;
   white-space:nowrap;flex-shrink:0;
 }
@@ -317,17 +325,6 @@ nav{
 .ft.on,.ft:hover{background:var(--ember);color:var(--cream);}
 
 /* ═══ BEATS TABLE ════════════════════════ */
-.ftabs{display:flex;gap:0;margin-bottom:2rem;border:1px solid var(--wire);width:fit-content;}
-.ft{
-  font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.65rem;font-weight:700;
-  letter-spacing:.2em;text-transform:uppercase;
-  padding:.5rem 1.3rem;background:transparent;
-  border:none;border-right:1px solid var(--wire);
-  color:var(--dim);cursor:pointer;transition:all .15s;
-}
-.ft:last-child{border-right:none;}
-.ft.on,.ft:hover{background:var(--ember);color:var(--cream);}
-
 .btable{border:1px solid var(--wire);}
 .brow{
   display:grid;
@@ -526,6 +523,11 @@ nav{
   resize:none;appearance:none;transition:background .12s;
 }
 .cf-f:focus-within{background:var(--mole);}
+/* Seta no select (appearance:none tinha removido; sem ela ninguém sabe que é dropdown) */
+.cf-f select{
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M1 1l4 4 4-4' stroke='%23a87b4a' stroke-width='1.5' fill='none'/></svg>");
+  background-repeat:no-repeat;background-position:right 1.2rem center;padding-right:2.6rem;cursor:pointer;
+}
 .cf-sub{
   font-family:'Cormorant Garamond',sans-serif;font-size:1rem;
   letter-spacing:.15em;text-transform:uppercase;
@@ -553,10 +555,12 @@ footer p{
   padding:.7rem 1.4rem;cursor:pointer;
   font-family:'Cormorant Garamond',sans-serif;font-size:.95rem;
   letter-spacing:.12em;text-transform:uppercase;
-  display:flex;align-items:center;gap:.6rem;
+  display:none;align-items:center;gap:.6rem;
   transition:background .14s;
   box-shadow:0 6px 30px rgba(184,44,8,.4);
 }
+.cart-btn.has-items{display:flex;} /* só aparece quando tem item */
+.cart-ico{display:block;flex-shrink:0;}
 .cart-btn:hover{background:var(--fire);}
 .cart-n{
   background:var(--cream);color:var(--ember);
@@ -735,6 +739,8 @@ html, body {
   overflow-x: hidden;
   max-width: 100%;
 }
+/* Âncoras (#beats etc.) param abaixo da nav fixa de 54px */
+html { scroll-padding-top: 70px; }
 * { max-width: 100%; }
 
 /* Hero title: allow wrapping on small screens */
@@ -777,7 +783,7 @@ html, body {
   .hero-title{white-space:normal;font-size:clamp(3rem,14vw,8rem);}
 
   /* Catalog */
-  .ftabs{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;}
+  .ftabs{width:100%;}
   .bcard-header{flex-wrap:wrap;gap:.5rem;}
   .bcard-chips{flex-wrap:wrap;}
   .bcard-btns{flex-direction:column;width:100%;}
@@ -814,7 +820,20 @@ html, body {
 
   /* Cart */
   .cart-panel{width:100%;max-width:100vw;}
-  .cart-btn{bottom:1rem;right:1rem;}
+  /* No mobile o botão vira círculo compacto: cobre menos conteúdo */
+  .cart-btn{bottom:1rem;right:1rem;width:58px;height:58px;border-radius:50%;padding:0;justify-content:center;}
+  .cart-btn .cart-label{display:none;}
+  .cart-btn .cart-n{position:absolute;top:-5px;right:-5px;border:1px solid var(--ember);}
+  /* Respiro no fim das seções pro círculo não cobrir CTA */
+  #contact{padding-bottom:8rem;}
+  #services{padding-bottom:6rem;}
+  /* Inputs com 16px: impede o zoom automático do iOS ao focar */
+  input,select,textarea{font-size:16px!important;}
+  /* Piso de legibilidade pra textos miúdos */
+  .pkg-beat-meta,.ci-t,.pack-tag,.cp-upsell-tag,.s-kicker{font-size:.66rem;}
+  .hero-proof{font-size:.7rem;}
+  footer p{font-size:.63rem;}
+  .mp-lbl,.cf-lbl{font-size:.66rem;}
 
   /* Coupon */
   .cp-coupon-row{flex-wrap:nowrap;}
@@ -835,7 +854,7 @@ html, body {
   .nav-wm{display:none;} /* só o selo no mobile; libera espaço pros links */
   .nav-links a{font-size:.58rem;padding:0 .65rem;}
   .bcard-header{padding:.6rem 1rem .5rem;}
-  .chip{font-size:.5rem;padding:.08rem .3rem;}
+  .chip{font-size:.7rem;padding:.14rem .42rem;} /* piso de legibilidade: ~11px */
   .bbtn{font-size:.85rem;padding:.65rem 1rem;}
   .hero-desc{font-size:.68rem;}
   .s-title{font-size:clamp(2rem,10vw,4rem);}
@@ -924,7 +943,12 @@ body{cursor:auto!important;}
 .pg-controls{display:flex;gap:.4rem;align-items:stretch;}
 .sort-select{background:var(--mole);border:1px solid var(--wire);color:var(--read);font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;padding:.45rem .6rem;cursor:pointer;transition:border-color .14s,color .14s;}
 .sort-select:hover{color:var(--amber);}
-button.sort-select.on{border-color:var(--clay);color:var(--amber);}
+button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(--black);} /* estado ativo preenchido: dá pra ver que tá ligado */
+.lucky-btn{color:var(--amber);border-color:var(--clay);}
+.lucky-btn:hover{background:var(--clay);color:var(--black);}
+.bcard.lucky-hit{outline:2px solid var(--fire);outline-offset:-2px;}
+.cp-coupon-toggle{background:none;border:none;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.08em;text-decoration:underline dotted;cursor:pointer;padding:0;}
+.cp-coupon-toggle:hover{color:var(--amber);}
 .cp-upsell{margin-top:1rem;padding:.95rem 1rem;border:1px solid var(--clay);border-left:3px solid var(--fire);background:rgba(168,123,74,.09);font-size:.78rem;line-height:1.65;color:var(--bone);}
 .cp-upsell-tag{display:block;font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--fire);margin-bottom:.45rem;}
 .cp-save{background:var(--fire);color:var(--black);font-weight:700;padding:.1rem .45rem;white-space:nowrap;}
@@ -933,7 +957,12 @@ button.sort-select.on{border-color:var(--clay);color:var(--amber);}
 .bcard-sold{opacity:1;}
 .bcard-sold .bcard-name{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--blood);text-decoration-thickness:1.5px;}
 .bbtn-soldout,.bbtn-soldout:hover{background:var(--blood)!important;color:var(--cream)!important;cursor:not-allowed!important;letter-spacing:.18em;}
-@media(max-width:860px){body::before{animation:none;}}
+@media(max-width:860px){
+  body::before{animation:none;}
+  /* Balão da licença vira folha fixa no rodapé da tela (não cobre o texto que o cliente tá lendo) */
+  .lic-box{position:fixed;left:.8rem;right:.8rem;bottom:.8rem;top:auto;transform:none;width:auto;max-width:none;}
+  .lic-box::before{display:none;}
+}
 @media (prefers-reduced-motion: reduce){
   body::before{animation:none;}
   html{scroll-behavior:auto;}
@@ -1074,6 +1103,7 @@ button.sort-select.on{border-color:var(--clay);color:var(--amber);}
         <li>MP3 (320kbps) + WAV</li>
         <li>Contrato digital incluso</li>
       </ul>
+      <div class="pack-eco" style="color:var(--dim);margin-bottom:.6rem;">= mesmo preço do beat avulso no catálogo</div>
       <div style="display:flex;gap:0;margin-top:auto;">
         <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('1 Beat',119)">Adicionar · R$119</button>
       </div>
@@ -1136,10 +1166,8 @@ button.sort-select.on{border-color:var(--clay);color:var(--amber);}
     </p>
   </div>
 
-  <div class="ftabs" style="margin-bottom:0;">
-    <button class="ft on" onclick="filt('todos',this)">Todos</button>
-  </div>
   <div class="ftabs">
+    <button class="ft on" onclick="filt('todos',this)">Todos</button>
     <button class="ft" onclick="filt('trap',this)">Trap</button>
     <button class="ft" onclick="filt('boombap',this)">Boom Bap</button>
     <button class="ft" onclick="filt('plug',this)">Plug</button>
@@ -1166,11 +1194,13 @@ button.sort-select.on{border-color:var(--clay);color:var(--amber);}
         <option value="aleatorio">Ordem aleatória</option>
       </select>
       <button class="sort-select" id="filtAvail" onclick="toggleAvail(this)">Esconder vendidos</button>
+      <button class="sort-select lucky-btn" id="luckyBtn" onclick="feelingLucky()">✦ Estou com sorte</button>
     </div>
     <div class="pagination-btns">
-      <button class="pg-btn" id="pgPrevTop" onclick="changePage(-1)">← ANTERIOR</button>
+      <button class="pg-btn" id="pgPrevTop" onclick="changePage(-1)">←</button>
+      <span class="pg-nums" id="pgNumsTop"></span>
+      <button class="pg-btn" id="pgNextTop" onclick="changePage(1)">→</button>
       <span class="pagination-info" id="pgInfoTop"></span>
-      <button class="pg-btn" id="pgNextTop" onclick="changePage(1)">PRÓXIMO →</button>
     </div>
   </div>
   <div class="beat-cards" id="beatCards"></div>
@@ -1179,9 +1209,10 @@ button.sort-select.on{border-color:var(--clay);color:var(--amber);}
       <input class="pg-search-input" id="beatSearchBottom" type="text" placeholder="Buscar beat pelo nome…" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false"/>
     </div>
     <div class="pagination-btns">
-      <button class="pg-btn" id="pgPrev" onclick="changePage(-1)">← ANTERIOR</button>
+      <button class="pg-btn" id="pgPrev" onclick="changePage(-1)">←</button>
+      <span class="pg-nums" id="pgNums"></span>
+      <button class="pg-btn" id="pgNext" onclick="changePage(1)">→</button>
       <span class="pagination-info" id="pgInfo"></span>
-      <button class="pg-btn" id="pgNext" onclick="changePage(1)">PRÓXIMO →</button>
     </div>
   </div>
 
@@ -1206,7 +1237,7 @@ button.sort-select.on{border-color:var(--clay);color:var(--amber);}
   <div class="s-head">
     <span class="s-kicker">Serviços · encomenda</span>
     <h2 class="s-title">Do beat <span class="r">ao lançamento</span></h2>
-    <p class="s-sub">Do beat ao lançamento. Finalização profissional para artistas independentes.</p>
+    <p class="s-sub">Finalização profissional para artistas independentes: do vocal bruto à faixa pronta pra distribuir.</p>
   </div>
 
   <div class="svcs">
@@ -1263,11 +1294,14 @@ button.sort-select.on{border-color:var(--clay);color:var(--amber);}
         A Caramujo nasceu pra abrir portas pra artistas locais.<br/>Trabalhe conosco.
       </p>
       <div class="c-links">
+        <a class="c-link" href="https://ig.me/m/rideblan33" target="_blank" rel="noopener" style="color:var(--bone);border-color:var(--clay);">
+          <span class="c-ico" style="background:var(--earth);color:var(--amber);">▲</span> Chamar no Direct — @rideblan33 <span style="margin-left:auto;color:var(--fire);font-size:.6rem;letter-spacing:.1em;">RESPOSTA MAIS RÁPIDA</span>
+        </a>
+        <a class="c-link" href="https://instagram.com/rideblan33" target="_blank" rel="noopener" style="color:var(--bone);">
+          <span class="c-ico" style="background:var(--earth);color:var(--amber);">▲</span> @rideblan33 — Instagram
+        </a>
         <a class="c-link" href="mailto:contato@caramujorecords.com.br" style="color:var(--bone);">
           <span class="c-ico" style="background:var(--earth);color:var(--amber);">@</span> contato@caramujorecords.com.br
-        </a>
-        <a class="c-link" href="https://instagram.com/rideblan33" target="_blank" style="color:var(--bone);">
-          <span class="c-ico" style="background:var(--earth);color:var(--amber);">▲</span> @rideblan33 — Instagram
         </a>
       </div>
     </div>
@@ -1313,8 +1347,9 @@ button.sort-select.on{border-color:var(--clay);color:var(--amber);}
 </footer>
 
 <!-- ═══ CART ═════════════════════════════════════════ -->
-<button class="cart-btn" onclick="toggleCart()">
-  ● CARRINHO <span class="cart-n" id="cartN">0</span>
+<button class="cart-btn" id="cartBtn" onclick="toggleCart()" aria-label="Abrir carrinho">
+  <svg class="cart-ico" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.4 11.5h11.2L21 7H6"/></svg>
+  <span class="cart-label">CARRINHO</span> <span class="cart-n" id="cartN">0</span>
 </button>
 
 <div class="overlay" id="overlay" onclick="closeAll()"></div>
@@ -1330,11 +1365,14 @@ button.sort-select.on{border-color:var(--clay);color:var(--amber);}
   <div class="cp-foot">
     <p class="cp-note">Pagamento via PIX ou cartão de crédito. Após confirmação, os arquivos serão entregues seguindo os prazos estipulados no contrato.</p>
     <div class="cp-coupon" id="cpCouponArea">
-      <div class="cp-coupon-row">
-        <input class="cp-coupon-input" id="cpCouponInput" type="text" placeholder="CUPOM DE DESCONTO" maxlength="20" autocomplete="off" spellcheck="false"/>
-        <button class="cp-coupon-btn" onclick="applyCoupon()">APLICAR</button>
+      <button class="cp-coupon-toggle" id="cpCouponToggle" onclick="toggleCouponField()">Tem cupom?</button>
+      <div id="cpCouponBox" style="display:none;">
+        <div class="cp-coupon-row">
+          <input class="cp-coupon-input" id="cpCouponInput" type="text" placeholder="CUPOM DE DESCONTO" maxlength="20" autocomplete="off" spellcheck="false"/>
+          <button class="cp-coupon-btn" id="cpCouponBtn" onclick="applyCoupon()">APLICAR</button>
+        </div>
+        <div class="cp-coupon-msg" id="cpCouponMsg"></div>
       </div>
-      <div class="cp-coupon-msg" id="cpCouponMsg"></div>
     </div>
     <div class="cp-tot">
       <span>Total</span>
@@ -1804,6 +1842,8 @@ function renderCards(){
     });
     document.getElementById('pgInfo').style.display='none';
     document.getElementById('pgInfoTop').style.display='none';
+    document.getElementById('pgNums').innerHTML='';
+    document.getElementById('pgNumsTop').innerHTML='';
     return;
   }
   const totalPages=Math.ceil(src.length/BEATS_PER_PAGE);
@@ -1826,7 +1866,7 @@ function renderCards(){
           <span class="chip chip-meta">${b.key}</span>
         </div>
       </div>
-      <iframe title="Player de áudio SoundCloud" width="100%" height="100" scrolling="no" frameborder="no" allow="autoplay" loading="lazy"
+      <iframe title="Player de áudio SoundCloud" width="100%" height="100" scrolling="no" frameborder="no" allow="autoplay" loading="lazy" data-bid="${b.id}"
         src="https://w.soundcloud.com/player/?url=${b.scUrl}&color=%23A87B4A&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false">
       </iframe>
       <div class="bcard-buybar">
@@ -1851,9 +1891,10 @@ function renderCards(){
   });
   document.getElementById('pgInfo').style.display    = hideNav ? 'none' : '';
   document.getElementById('pgInfoTop').style.display = hideNav ? 'none' : '';
-  const infoText = `PÁGINA ${curPage} DE ${totalPages} · ${src.length} BEAT${src.length!==1?'S':''}`;
+  const infoText = `${src.length} BEAT${src.length!==1?'S':''}`;
   document.getElementById('pgInfo').textContent = infoText;
   document.getElementById('pgInfoTop').textContent = infoText;
+  renderPageNums(totalPages);
   document.getElementById('pgPrev').disabled    = (curPage===1);
   document.getElementById('pgNext').disabled    = (curPage===totalPages);
   document.getElementById('pgPrevTop').disabled = (curPage===1);
@@ -1861,9 +1902,48 @@ function renderCards(){
   setTimeout(bindPlayers,800);
 }
 
+// Paginação numerada: 1 … 6 [7] 8 … 14 — acesso direto a qualquer página
+function renderPageNums(totalPages){
+  const build=()=>{
+    if(totalPages<=1) return '';
+    let pages=[];
+    if(totalPages<=7){ pages=Array.from({length:totalPages},(_,i)=>i+1); }
+    else{
+      pages=[1];
+      if(curPage>3) pages.push('…');
+      for(let p=Math.max(2,curPage-1);p<=Math.min(totalPages-1,curPage+1);p++) pages.push(p);
+      if(curPage<totalPages-2) pages.push('…');
+      pages.push(totalPages);
+    }
+    return pages.map(p=>p==='…'
+      ?`<span class="pg-dots">…</span>`
+      :`<button class="pg-num${p===curPage?' pg-cur':''}" onclick="gotoPage(${p})" aria-label="Página ${p}">${p}</button>`
+    ).join('');
+  };
+  const html=build();
+  document.getElementById('pgNums').innerHTML=html;
+  document.getElementById('pgNumsTop').innerHTML=html;
+}
+
+function gotoPage(p){
+  if(p===curPage) return;
+  curPage=p;
+  renderCards();
+  document.getElementById('beats').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 // Player contínuo: pausa os outros ao dar play; ao terminar, toca o próximo.
 // No fim da página, avança pra próxima e segue tocando (modo rádio).
+// O scroll automático só acontece se o catálogo estiver visível: se o usuário
+// estiver lendo outra seção (ou digitando no formulário), a página não pula.
+function catalogVisible(){
+  const el=document.getElementById('beats');
+  if(!el) return false;
+  const r=el.getBoundingClientRect();
+  return r.top<window.innerHeight && r.bottom>0;
+}
 let autoPlayFirst=false;
+let luckyPlayId=null; // beat sorteado pelo "Estou com sorte"
 function bindPlayers(){
   if(!window.SC||!SC.Widget) return;
   const frames=[...document.querySelectorAll('#beatCards iframe')];
@@ -1873,11 +1953,11 @@ function bindPlayers(){
     w.bind(SC.Widget.Events.FINISH,()=>{
       const n=widgets[i+1];
       if(n){
-        frames[i+1].scrollIntoView({behavior:'smooth',block:'center'});
+        if(catalogVisible()) frames[i+1].scrollIntoView({behavior:'smooth',block:'center'});
         setTimeout(()=>n.play(),600);
       }else{
         const nextBtn=document.getElementById('pgNext');
-        if(nextBtn&&!nextBtn.disabled){ autoPlayFirst=true; changePage(1); }
+        if(nextBtn&&!nextBtn.disabled){ autoPlayFirst=true; changePage(1,catalogVisible()); }
       }
     });
   });
@@ -1885,11 +1965,48 @@ function bindPlayers(){
     autoPlayFirst=false;
     setTimeout(()=>{
       if(frames[0]){
-        frames[0].scrollIntoView({behavior:'smooth',block:'center'});
+        if(catalogVisible()) frames[0].scrollIntoView({behavior:'smooth',block:'center'});
         widgets[0].play();
       }
     },900);
   }
+  // "Estou com sorte": dá play no beat sorteado (scroll/destaque já rolaram no feelingLucky)
+  if(luckyPlayId!==null){
+    const idx=frames.findIndex(f=>Number(f.dataset.bid)===Number(luckyPlayId));
+    luckyPlayId=null;
+    if(idx>=0) setTimeout(()=>widgets[idx].play(),400);
+  }
+}
+
+// Sorteia um beat disponível (respeita o filtro de gênero ativo) e toca
+function feelingLucky(){
+  const pool=(curFilt==='todos'?BEATS:BEATS.filter(b=>b.genre===curFilt)).filter(b=>!b.sold);
+  if(pool.length===0){ showToast('Nenhum beat disponível neste filtro.'); return; }
+  const pick=pool[Math.floor(Math.random()*pool.length)];
+  // limpa a busca pra garantir que o sorteado esteja na lista
+  beatQuery='';
+  const st=document.getElementById('beatSearchTop');
+  const sb=document.getElementById('beatSearchBottom');
+  if(st) st.value=''; if(sb) sb.value='';
+  // recalcula a lista na mesma ordem do renderCards pra achar a página do sorteado
+  let src=curFilt==='todos'?BEATS.slice():BEATS.filter(b=>b.genre===curFilt);
+  if(showAvailOnly) src=src.filter(b=>!b.sold);
+  if(sortMode==='aleatorio'&&shuffleOrder) src.sort((a,b)=>shuffleOrder.indexOf(a.id)-shuffleOrder.indexOf(b.id));
+  const idx=src.findIndex(b=>b.id===pick.id);
+  curPage=Math.floor(idx/BEATS_PER_PAGE)+1;
+  luckyPlayId=pick.id;
+  renderCards();
+  // Scroll + destaque imediatos (independem do player carregar; o play vem no bindPlayers)
+  setTimeout(()=>{
+    const frame=document.querySelector(`#beatCards iframe[data-bid="${pick.id}"]`);
+    const card=frame?frame.closest('.bcard'):null;
+    if(card){
+      card.scrollIntoView({behavior:'smooth',block:'center'});
+      card.classList.add('lucky-hit');
+      setTimeout(()=>card.classList.remove('lucky-hit'),2800);
+    }
+  },120);
+  showToast(`✦ Na sorte: "${pick.name}"`);
 }
 
 // Schema.org: catálogo como lista de produtos (SEO)
@@ -1917,10 +2034,10 @@ function bindPlayers(){
   s.textContent=JSON.stringify(ld);document.head.appendChild(s);
 })();
 
-function changePage(dir){
+function changePage(dir,doScroll=true){
   curPage+=dir;
   renderCards();
-  document.getElementById('beats').scrollIntoView({behavior:'smooth',block:'start'});
+  if(doScroll) document.getElementById('beats').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function normalizeStr(s){ return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
@@ -1936,6 +2053,20 @@ function searchBeats(query){
 }
 
 /* ── CART ────────────────────────────────────────── */
+let cartOpenedOnce=false; // abre o painel só na 1ª adição; depois, toast
+
+function openCart(){
+  document.getElementById('cartPanel').classList.add('open');
+  document.getElementById('overlay').classList.add('on');
+}
+
+// 1ª adição: abre o carrinho (confirma que funcionou e mostra o upsell).
+// Das seguintes em diante: toast + pulso no botão, sem sequestrar a tela.
+function confirmAdd(label){
+  if(!cartOpenedOnce){ cartOpenedOnce=true; openCart(); }
+  else showToast(`✓ ${label} no carrinho`);
+}
+
 function toggleBeat(beatId,stems){
   const beat=BEATS.find(b=>b.id===beatId);
   const existing=cart.findIndex(c=>c.beatId===beatId&&c.stems===stems);
@@ -1953,9 +2084,7 @@ function toggleBeat(beatId,stems){
     if(otherIdx!==-1) cart.splice(otherIdx,1);
     cart.push({id:Date.now(),beatId:beat.id,name:stems?`${beat.name} + Stems`:beat.name,price:stems?PRICE_STEMS:PRICE_BEAT,type:'Beat',stems});
     updateCart(); renderCards();
-    // Abre o carrinho automaticamente ao adicionar
-    document.getElementById('cartPanel').classList.add('open');
-    document.getElementById('overlay').classList.add('on');
+    confirmAdd(`"${beat.name}"`);
   } else {
     cart.splice(existing,1);
     updateCart(); renderCards();
@@ -2105,9 +2234,11 @@ function confirmPkgSelection() {
 
   document.getElementById('pkgModal').classList.remove('open');
   document.getElementById('overlay').classList.remove('on');
+  const pkgLabel=p.name;
   _pkgPending = null;
   updateCart();
-  toggleCart();
+  cartOpenedOnce=true;
+  openCart(); // pacote: fluxo terminou num modal, mostrar o carrinho é o passo natural
 }
 
 function addSvc(name,unitPrice){
@@ -2118,7 +2249,8 @@ function addSvc(name,unitPrice){
   } else {
     cart.push({id:Date.now(),name,price:unitPrice,unitPrice,type:'Servico',qty:1,beatId:null,stems:false});
   }
-  updateCart();toggleCart();
+  updateCart();
+  confirmAdd(name);
 }
 
 function changeQty(id,delta){
@@ -2145,32 +2277,51 @@ function clearCart(){
 }
 
 /* ── COUPON SYSTEM ───────────────────────────────── */
-const COUPONS = {
-  'CARAMUJO25': { pct: 25,  maxUses: 10,        uses: 2 },
-  'RIDE20':     { pct: 20,  maxUses: Infinity,  uses: 1 },
-  'PAGUPAGU':   { fixedPrice: 1, maxUses: 1,        uses: 1 },
-  'SABER50':    { pct: 50,  maxUses: 1,         uses: 1 },
-};
+// Os códigos e limites vivem no servidor (functions/coupons.json).
+// O front só envia o código digitado pra /api/validate-coupon.
 let activeCoupon = null; // { code, pct?, fixedPrice? }
+
+function toggleCouponField(){
+  const box=document.getElementById('cpCouponBox');
+  const open=box.style.display!=='none';
+  box.style.display=open?'none':'block';
+  if(!open) setTimeout(()=>document.getElementById('cpCouponInput').focus(),60);
+}
 
 function calcDiscount(subtotal) {
   if (!activeCoupon) return 0;
-  if (activeCoupon.fixedPrice !== undefined) return Math.max(0, subtotal - activeCoupon.fixedPrice);
+  if (activeCoupon.fixedPrice !== undefined && activeCoupon.fixedPrice !== null) return Math.max(0, subtotal - activeCoupon.fixedPrice);
   return Math.round(subtotal * activeCoupon.pct / 100);
 }
 
-function applyCoupon() {
+async function applyCoupon() {
   const input = document.getElementById('cpCouponInput');
-  const msg = document.getElementById('cpCouponMsg');
+  const btn = document.getElementById('cpCouponBtn');
   const code = input.value.trim().toUpperCase();
   if (!code) { showCouponMsg('Digite um cupom.', false); return; }
-  const c = COUPONS[code];
-  if (!c) { showCouponMsg('Cupom inválido.', false); return; }
-  if (c.uses >= c.maxUses) { showCouponMsg('Cupom expirado.', false); return; }
-  activeCoupon = { code, pct: c.pct, fixedPrice: c.fixedPrice };
-  const label = c.fixedPrice !== undefined ? `preço fixo R$${c.fixedPrice}!` : `${c.pct}% de desconto!`;
-  showCouponMsg(`✓ ${code} aplicado — ${label}`, true);
-  updateCart();
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const r = await fetch('/api/validate-coupon', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
+    const d = await r.json();
+    if (!d.valid) {
+      activeCoupon = null;
+      showCouponMsg(d.reason === 'expired' ? 'Cupom expirado.' : 'Cupom inválido.', false);
+      updateCart();
+      return;
+    }
+    activeCoupon = { code, pct: d.pct, fixedPrice: d.fixedPrice };
+    const label = (d.fixedPrice !== undefined && d.fixedPrice !== null) ? `preço fixo R$${d.fixedPrice}!` : `${d.pct}% de desconto!`;
+    showCouponMsg(`✓ ${code} aplicado — ${label}`, true);
+    updateCart();
+  } catch (e) {
+    showCouponMsg('Não deu pra validar agora. Tenta de novo em instantes.', false);
+  } finally {
+    btn.disabled = false; btn.textContent = 'APLICAR';
+  }
 }
 
 function removeCoupon() {
@@ -2188,7 +2339,10 @@ function showCouponMsg(text, ok) {
 }
 
 function updateCart(){
-  document.getElementById('cartN').textContent=cart.length;
+  // Badge conta unidades (pacote de 3 + 2 mixagens = 5), não linhas do carrinho
+  const units=cart.reduce((s,c)=>s+(c.qty||1),0);
+  document.getElementById('cartN').textContent=units;
+  document.getElementById('cartBtn').classList.toggle('has-items',cart.length>0);
   const subtotal=cart.reduce((s,c)=>s+c.price,0);
   const discount=calcDiscount(subtotal);
   const total=subtotal - discount;
@@ -2274,18 +2428,16 @@ function closeAll(){
 /* ── CHECKOUT FLOW ───────────────────────────────── */
 function openCheckout(){
   if(cart.length===0){
-    const cb=document.querySelector('.cart-btn');
-    cb.style.outline='2px solid var(--fire)';cb.style.outlineOffset='2px';
-    setTimeout(()=>{cb.style.outline='';cb.style.outlineOffset='';},1800);
     showToast('Adicione pelo menos um item ao carrinho.');
     return;
   }
   const subtotal=cart.reduce((s,c)=>s+c.price,0);
   const discount=calcDiscount(subtotal);
   const total=subtotal - discount;
+  const unitsCk=cart.reduce((s,c)=>s+(c.qty||1),0);
   const items=cart.map(c=>c.qty&&c.qty>1?`${c.name} x${c.qty}`:c.name).join(', ');
-  const discountStr=discount>0?` (${activeCoupon.code} ${activeCoupon.fixedPrice!==undefined?`→ R$${activeCoupon.fixedPrice}`:`-${activeCoupon.pct}%`})`:'';
-  document.getElementById('mpModalSub').textContent=`${cart.length} item(s) · R$ ${total}${discountStr}`;
+  const discountStr=discount>0?` (${activeCoupon.code} ${(activeCoupon.fixedPrice!==undefined&&activeCoupon.fixedPrice!==null)?`→ R$${activeCoupon.fixedPrice}`:`-${activeCoupon.pct}%`})`:'';
+  document.getElementById('mpModalSub').textContent=`${unitsCk} ite${unitsCk===1?'m':'ns'} · R$ ${total}${discountStr}`;
   document.getElementById('mpStep1').style.display='block';
   document.getElementById('mpStep2').style.display='none';
   document.getElementById('mpStep3').style.display='none';
@@ -2587,10 +2739,7 @@ function copyPixCode() {
 
 function showPixConfirmed() {
   if (pixPollingTimer) { clearTimeout(pixPollingTimer); pixPollingTimer = null; }
-  // Register coupon use
-  if (activeCoupon && COUPONS[activeCoupon.code]) {
-    COUPONS[activeCoupon.code].uses++;
-  }
+  // O incremento de uso do cupom é feito no servidor (payment-webhook)
   // Zera carrinho e cupom automaticamente ao confirmar pagamento
   clearCart();
   document.getElementById('mpPixPending').style.display = 'none';

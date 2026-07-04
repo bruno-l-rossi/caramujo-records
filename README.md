@@ -27,9 +27,11 @@ Jornada do site: **hero → pacotes → catálogo de beats → serviços → con
 ├── email-pedido.html              # Template de email — notificação de novo pedido (ao dono)
 ├── email-entrega.html             # Template de email — confirmação de pedido (ao comprador)
 └── functions/
+    ├── coupons.json               # Cupons de desconto (fora dos assets estáticos — não é servido publicamente)
     └── api/
         ├── create-payment.js      # Cria pagamento no Mercado Pago
         ├── check-payment.js       # Consulta status de um pagamento
+        ├── validate-coupon.js     # Valida cupom digitado no carrinho (lê coupons.json via GitHub API)
         └── payment-webhook.js     # Webhook: processa aprovação e dispara ações pós-pagamento
 ```
 
@@ -91,9 +93,9 @@ Comprador preenche dados → create-payment.js → Mercado Pago
                            Email ao comprador              Email ao produtor
                            (confirmação + prazos)          (resumo + contrato em anexo)
                                     ↓
-                           GitHub API: commit automático
-                           — beat marcado como sold:true
-                           — uses do cupom incrementado
+                           GitHub API: commits automáticos
+                           — index.html: beat marcado como sold:true
+                           — functions/coupons.json: uses do cupom +1
                                     ↓
                            Cloudflare Pages: redeploy automático
                            (catálogo atualizado em produção)
@@ -158,12 +160,12 @@ Os beats são definidos diretamente no `index.html`, no array `BEATS`:
 
 ## Cupons de Desconto
 
-Definidos no objeto `COUPONS` no `index.html`:
+Definidos em `functions/coupons.json` (os códigos não aparecem no código-fonte da página; o front valida via `POST /api/validate-coupon`):
 
-```js
-const COUPONS = {
-  'CODIGO':  { pct: 20, maxUses: 10, uses: 0 },        // 20% de desconto
-  'FIXO':    { fixedPrice: 99, maxUses: 1, uses: 0 },  // preço final fixo em R$99
+```json
+{
+  "CODIGO": { "pct": 20, "maxUses": 10, "uses": 0 },
+  "FIXO":   { "fixedPrice": 99, "maxUses": 1, "uses": 0 }
 }
 ```
 
@@ -171,8 +173,10 @@ const COUPONS = {
 |---|---|
 | `pct` | Desconto percentual sobre o subtotal |
 | `fixedPrice` | Alternativa ao `pct`: trava o total no valor definido |
-| `uses` | Usos atuais (atualizado automaticamente via webhook) |
-| `maxUses` | Limite de usos (`Infinity` para ilimitado) |
+| `uses` | Usos atuais (atualizado automaticamente via webhook, em commit próprio) |
+| `maxUses` | Limite de usos (`null` para ilimitado) |
+
+> O arquivo fica dentro de `functions/` de propósito: o Cloudflare Pages não serve essa pasta como asset estático, então os códigos não vazam pela URL. Depois de qualquer deploy, conferir que `caramujorecords.com.br/functions/coupons.json` responde 404.
 
 ---
 
@@ -184,8 +188,8 @@ Enviados via **[Resend](https://resend.com)**:
 |---|---|---|
 | Novo pedido (cartão) | Produtor | Resumo da venda + contrato em anexo |
 | Pagamento aprovado (PIX) | Produtor | Resumo da venda + contrato em anexo |
-| Pedido confirmado (cartão) | Comprador | Confirmação + prazos de entrega |
-| Pagamento aprovado (PIX) | Comprador | Confirmação + prazos de entrega |
+| Pedido confirmado (cartão) | Comprador | Confirmação + prazos + contrato em anexo |
+| Pagamento aprovado (PIX) | Comprador | Confirmação + prazos + contrato em anexo |
 
 ---
 

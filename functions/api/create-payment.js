@@ -5,15 +5,15 @@
 
 const GITHUB_OWNER  = 'bruno-l-rossi';
 const GITHUB_REPO   = 'caramujo-records';
-const GITHUB_FILE   = 'index.html';
 const GITHUB_BRANCH = 'main';
+const COUPONS_FILE  = 'functions/coupons.json'; // fora dos assets estáticos: não é servido publicamente
 
-// ── Valida cupom lendo uses atual direto do GitHub ────────────────────────────
+// ── Valida cupom lendo functions/coupons.json direto do GitHub ────────────────
 async function validateCouponFromGitHub(couponCode, githubToken) {
   if (!couponCode || !githubToken) return { valid: false, reason: 'sem token' };
   try {
     const res = await fetch(
-      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_FILE}?ref=${GITHUB_BRANCH}`,
+      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${COUPONS_FILE}?ref=${GITHUB_BRANCH}`,
       {
         headers: {
           Authorization: `Bearer ${githubToken}`,
@@ -25,22 +25,13 @@ async function validateCouponFromGitHub(couponCode, githubToken) {
     );
     if (!res.ok) return { valid: false, reason: 'github error' };
     const { content } = await res.json();
-    const src = decodeURIComponent(escape(atob(content.replace(/\n/g, ''))));
+    const coupons = JSON.parse(decodeURIComponent(escape(atob(content.replace(/\n/g, '')))));
 
-    const codeEsc = couponCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // Extrai uses e maxUses do objeto COUPONS no código
-    const blockRe = new RegExp(`'${codeEsc}'\\s*:\\s*\\{([^}]+)\\}`, 'i');
-    const block = src.match(blockRe);
-    if (!block) return { valid: false, reason: 'not found' };
+    const c = coupons[couponCode];
+    if (!c) return { valid: false, reason: 'not found' };
 
-    const usesMatch    = block[1].match(/uses\s*:\s*(\d+)/);
-    const maxUsesMatch = block[1].match(/maxUses\s*:\s*(\w+)/);
-
-    const uses    = usesMatch    ? parseInt(usesMatch[1], 10)    : 0;
-    const maxUsesRaw = maxUsesMatch ? maxUsesMatch[1] : 'Infinity';
-    const maxUses = maxUsesRaw === 'Infinity' ? Infinity : parseInt(maxUsesRaw, 10);
-
-    if (uses >= maxUses) return { valid: false, reason: 'expired' };
+    const maxUses = (c.maxUses === null || c.maxUses === undefined) ? Infinity : c.maxUses;
+    if ((c.uses || 0) >= maxUses) return { valid: false, reason: 'expired' };
     return { valid: true };
   } catch (e) {
     console.warn('[coupon-check] Falha ao validar cupom via GitHub:', e.message);
@@ -252,7 +243,7 @@ async function sendNotificationEmail({ env, payment, name, artistName, email, cp
 
 // ── Email de confirmação de pedido ao comprador ──────────────────────────────
 
-async function sendBuyerConfirmationEmail({ env, name, artistName, email, itemsList }) {
+async function sendBuyerConfirmationEmail({ env, name, artistName, email, itemsList, contractHtml }) {
   const resendKey  = env.RESEND_API_KEY;
   const fromEmail  = env.NOTIFY_FROM || 'rideblan33@caramujorecords.com.br';
 
@@ -358,6 +349,12 @@ async function sendBuyerConfirmationEmail({ env, name, artistName, email, itemsL
               </tr>
             </table>
 
+            ${contractHtml ? `<p style="font-family:Georgia,'Times New Roman',serif;font-size:13px;
+              color:#c49040;line-height:1.8;margin:0 0 20px;">
+              &#128206; Seu contrato de licen&ccedil;a assinado est&aacute; em anexo neste email.
+              Ele &eacute; a sua garantia e prova do aceite dos termos — guarde em local seguro.
+            </p>` : ''}
+
             <p style="font-family:Georgia,'Times New Roman',serif;font-size:14px;
               color:#8a8070;line-height:1.85;margin:0 0 8px;">
               Qualquer dúvida, estamos aqui.
@@ -430,22 +427,35 @@ async function sendBuyerConfirmationEmail({ env, name, artistName, email, itemsL
 </body>
 </html>`;
 
+  const emailPayload = {
+    from: `Caramujo Records <${fromEmail}>`,
+    to: [email],
+    subject: `Caramujo Records — Pedido confirmado ✓`,
+    html,
+  };
+
+  // Anexa o contrato: o comprador precisa ter a via dele mesmo se o download na tela falhar
+  if (contractHtml) {
+    const safeName = (name || 'comprador').replace(/[^a-zA-Z0-9À-ÿ\s-]/g, '').trim().replace(/\s+/g, '-').slice(0, 60);
+    emailPayload.attachments = [
+      {
+        filename: `contrato-caramujo-${safeName}.html`,
+        content: btoa(unescape(encodeURIComponent(contractHtml))),
+      },
+    ];
+  }
+
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: `Caramujo Records <${fromEmail}>`,
-      to: [email],
-      subject: `Caramujo Records — Pedido confirmado ✓`,
-      html,
-    }),
+    body: JSON.stringify(emailPayload),
   });
 
   if (!res.ok) {
     const err = await res.text();
     throw new Error(`Resend buyer email error ${res.status}: ${err}`);
   }
-  console.log(`[email-buyer] ✅ Confirmação enviada para ${email}`);
+  console.log(`[email-buyer] ✅ Confirmação enviada para ${email}${contractHtml ? ' (com contrato em anexo)' : ''}`);
 }
 
 // ── Handler principal ─────────────────────────────────────────────────────────
@@ -543,6 +553,7 @@ export async function onRequestPost({ request, env }) {
       buyer_cpf:      cpf,
       items_display:  itemsForEmail,
       category_label: categoryLabel,
+      terms_ts:       termsAcceptance.timestamp, // permite ao webhook gerar o contrato do comprador (PIX)
       ...(couponCode ? { coupon_code: couponCode } : {}),
       ...(pkgBeatsList.length > 0    ? { pkg_beats:     pkgBeatsList.join('||')     } : {}),
       ...(catalogBeatsList.length > 0 ? { catalog_beats: catalogBeatsList.join('||') } : {}),
@@ -582,7 +593,7 @@ export async function onRequestPost({ request, env }) {
     // Envia email de confirmação de pedido ao comprador (apenas quando aprovado)
     if (payment.status === 'approved') {
       try {
-        await sendBuyerConfirmationEmail({ env, name, artistName, email, itemsList: itemsForEmail });
+        await sendBuyerConfirmationEmail({ env, name, artistName, email, itemsList: itemsForEmail, contractHtml });
       } catch (e) { console.error('[email] Erro confirmação comprador:', e.message); }
     }
 
