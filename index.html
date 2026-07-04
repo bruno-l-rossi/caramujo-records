@@ -1631,18 +1631,25 @@ let mp, brickController, contractPdfData = null;
 
 function downloadContract() {
   if (!contractPdfData) return;
-  const name = document.getElementById('mpName').value.trim() || 'comprador';
+  const name = (document.getElementById('mpName').value.trim() || 'comprador').replace(/\s+/g, '-');
   const html = decodeURIComponent(escape(atob(contractPdfData)));
 
-  // Abre em nova aba e aciona diálogo "Salvar como PDF"
-  const win = window.open('', '_blank');
-  if (!win) { showToast('Pop-up bloqueado. Sem estresse: o contrato também foi enviado no seu email.', 5000); return; }
-  win.document.write(html);
-  win.document.close();
-  win.onload = function () {
-    win.document.title = 'contrato-caramujo-' + name.replace(/\s+/g, '-');
-    setTimeout(function () { win.focus(); win.print(); }, 400);
-  };
+  // Download direto via Blob: sem pop-up, sem diálogo de impressão.
+  // Funciona no celular, onde window.open costumava ser bloqueado.
+  try {
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `contrato-caramujo-${name}.html`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    showToast('Contrato baixado. Ele também está no seu email.', 5000);
+  } catch (e) {
+    showToast('Não deu pra baixar por aqui, mas o contrato foi enviado no seu email.', 5000);
+  }
 }
 
 /* cursor */

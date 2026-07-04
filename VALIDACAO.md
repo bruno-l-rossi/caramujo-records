@@ -1,94 +1,112 @@
-# Roteiro de validação — Rodada 8
+# Relatório da rodada 8 — o que mudou e como validar
 
-Como testar cada mudança, uma a uma. Divide em 3 blocos: o que dá pra ver **antes do push** (arquivo local no navegador), o que precisa do **site no ar**, e o que precisa de **uma compra de verdade**.
+Todos os 18 itens do `analise-usabilidade-mobile.md` estão implementados, mais o botão "Estou com sorte" e os selos de % OFF que você pediu depois. Commits: `2f8750b` (rodada 8), `99cc214` (8.1) e o desta rodada. Este arquivo lista cada mudança com o teste correspondente.
 
-Pra testar como celular no desktop: Chrome → F12 → ícone de celular (Ctrl+Shift+M) → escolhe "iPhone 12 Pro" ou similar. Mas o teste que vale é no teu celular mesmo, depois do deploy.
+Pra testar como celular no desktop: Chrome → F12 → ícone de celular (Ctrl+Shift+M) → "iPhone 12 Pro". Mas o teste que vale é no teu iPhone depois do deploy.
 
 ---
 
-## Bloco A — dá pra validar já, abrindo o index.html local (ou no site após deploy)
+## Bloco A — dá pra validar já, no arquivo local ou no site após deploy
 
-**1. Menu clica em qualquer altura da barra**
-No celular, toque nos links Pacotes / Beats / Serviços / Contato mirando de propósito um pouco acima e um pouco abaixo do texto. Todos os toques devem funcionar. Antes, só o toque exato em cima do texto (10px) pegava.
+**1. Menu com área de toque cheia**
+Mudança: os links da nav eram alvo de 10px de altura; agora ocupam os 54px da barra.
+Teste: no celular, toque em Pacotes/Beats/Serviços/Contato mirando de propósito acima e abaixo do texto. Todo toque funciona.
 
-**2. Botão do carrinho some quando vazio e vira círculo no mobile**
-Abra o site: sem item no carrinho, não existe botão flutuante. Adicione um beat: aparece um círculo com ícone de carrinho e o número. Confira que ele não cobre mais o "ENVIAR MENSAGEM" do contato nem os botões dos pacotes (as seções ganharam respiro no fim).
+**2. Botão do carrinho some vazio e vira círculo no mobile**
+Mudança: antes era um botão de 188px sempre visível cobrindo CTAs; agora só existe com item dentro, e no mobile é um círculo de 58px com badge.
+Teste: abre o site: sem botão flutuante. Adiciona um beat: círculo aparece. Rola até o fim do contato e dos serviços: nada importante fica embaixo dele.
 
-**3. Campo de texto sem zoom forçado (iPhone)**
-No teu iPhone, toque na busca do catálogo e depois nos campos do checkout. A tela não deve mais dar zoom sozinha. (No Android e no desktop nunca deu; esse teste só faz sentido no iOS.)
+**3. Sem zoom forçado nos campos (iPhone)**
+Mudança: inputs tinham 12-13px e o iOS dava zoom ao focar; agora 16px no mobile.
+Teste: no iPhone, toca na busca do catálogo e nos campos do checkout. A tela não dá zoom sozinha.
 
 **4. Todos os 13 gêneros visíveis**
-Na seção de beats, os filtros agora quebram em linhas. Confere que Drill, No Melody, Bounce e cia aparecem sem precisar arrastar nada, e que "Todos" tá na mesma grade.
+Mudança: 9 filtros ficavam escondidos num scroll horizontal sem indicação; agora quebram em linhas, com "Todos" na mesma grade.
+Teste: na seção de beats, confere Drill, No Melody, Bounce e cia visíveis sem arrastar nada.
 
 **5. Paginação numerada**
-Abaixo da busca: ← 1 2 … 14 →. Toca no 14: vai direto pro fim do catálogo. Navega pro meio (página 7): deve mostrar "1 … 6 7 8 … 14" com a atual preenchida em vermelho.
+Mudança: "anterior/próximo" viraram ← 1 2 … 14 →, com acesso direto a qualquer página.
+Teste: toca no 14: fim do catálogo em 1 toque. Na página 7 deve mostrar "1 … 6 7 8 … 14" com a atual preenchida em vermelho.
 
 **6. Chips legíveis**
-Os chips TRAP / 128 BPM / EMAJ nos cards devem estar legíveis no celular (~11px). Antes tinham 8px.
+Mudança: TRAP / BPM / tom estavam em 8px; agora ~11px no celular.
+Teste: leitura confortável dos chips nos cards em tela pequena.
 
-**7. Balão da licença**
-No celular, toca em "licença exclusiva ⓘ". O balão deve abrir fixo no rodapé da tela, sem cobrir a frase. Toca fora dele pra fechar.
+**7. Balão da licença sem cobrir o texto**
+Mudança: o balão abria em cima da própria frase; no mobile agora abre como folha fixa no rodapé da tela.
+Teste: no celular, toca em "licença exclusiva ⓘ": balão aparece embaixo, texto continua legível. Toca fora pra fechar.
 
 **8. "Esconder vendidos" com estado visível**
-Toca no botão: ele fica preenchido (fundo caramelo) e o texto muda pra "Mostrar vendidos". Toca de novo: volta ao normal e os vendidos reaparecem.
+Mudança: o estado ativo só mudava a cor da borda; agora preenche o botão e troca o texto.
+Teste: toca: fica caramelo com "Mostrar vendidos". Toca de novo: volta e os vendidos reaparecem.
 
 **9. ✦ Estou com sorte**
-Toca no botão ao lado dos filtros. Deve: pular pra página do beat sorteado, rolar até o card, acender uma borda vermelha por ~3s, mostrar o toast com o nome e dar play sozinho. Testa também com um filtro ativo (ex: Boom Bap): o sorteio respeita o gênero. Obs: o play automático depende do player do SoundCloud já ter carregado; em conexão lenta pode só destacar sem tocar, aí é dar o play manual.
+Mudança: botão novo nos controles do catálogo. Sorteia um beat disponível respeitando o filtro de gênero ativo, pula pra página dele, rola até o card, acende borda vermelha por ~3s, mostra toast com o nome e dá play.
+Teste: toca algumas vezes, com e sem filtro de gênero ativo. Obs: o play automático depende do player do SoundCloud já ter carregado; em conexão lenta pode só destacar, aí é dar o play manual.
 
 **10. Carrinho abre 1 vez só**
-Adiciona um beat: painel abre (upsell aparece). Fecha. Adiciona outro beat: agora só um toast "✓ ... no carrinho" e o número do círculo sobe. O badge conta unidades: pacote de 3 beats marca 3, não 1.
+Mudança: o painel (tela cheia no mobile) abria a cada item adicionado; agora só na primeira adição, depois toast "✓ ... no carrinho".
+Teste: adiciona um beat: painel abre com o upsell. Fecha, adiciona outro: só o toast, e o número do círculo sobe. O badge conta unidades: pacote de 3 beats marca 3.
 
 **11. Selos de % OFF**
-Nos pacotes: "8% OFF" no 2 Beats e "16% OFF" no 3 Beats (canto superior direito do card). No Mix + Master: "13% OFF". Os números vêm da comparação com o preço avulso (2 avulsos R$238 vs R$219; 3 avulsos R$357 vs R$299; mix R$149 + master R$79 = R$228 vs R$199).
+Mudança: badge no canto superior direito comparando com o preço avulso: 8% OFF no 2 Beats (R$238 → R$219), 16% OFF no 3 Beats (R$357 → R$299), 13% OFF no Mix + Master (R$228 → R$199).
+Teste: visual, nas seções de pacotes e serviços. Se mudar preço no futuro, recalcular os selos (estão fixos no HTML, com comentário da conta do lado).
 
-**12. Modo rádio sem roubo de scroll**
-Dá play num beat, rola até o formulário de contato e espera a faixa acabar. A próxima deve começar a tocar sem a página pular de volta pro catálogo. Se você estiver com o catálogo na tela, aí sim ele acompanha (rola até o próximo card).
+**12. Modo rádio sem roubar o scroll**
+Mudança: quando a faixa acabava, a página rolava sozinha pro catálogo mesmo se você estivesse noutra seção.
+Teste: dá play num beat, rola até o formulário de contato e espera a faixa acabar. A próxima toca sem a página pular. Com o catálogo na tela, ele acompanha normal.
 
-**13. Miúdos**
-Select de "Assunto" no contato tem setinha ▾. O primeiro contato é "Chamar no Direct" (abre teu DM do Instagram). Tocar num link do menu para a seção logo abaixo da nav, sem esconder o título. O pacote 1 Beat avisa "= mesmo preço do beat avulso".
+**13. Download do contrato sem pop-up**
+Mudança: o botão "Baixar contrato assinado" usava pop-up + diálogo de impressão (falhava no celular). Agora baixa o arquivo `contrato-caramujo-SEUNOME.html` direto, com toast lembrando que o contrato também foi pro email.
+Teste: só numa compra real (bloco C), ou confia no teste automatizado daqui que baixou o arquivo com nome e conteúdo certos.
+
+**14. Miúdos**
+Mudanças: seta ▾ no select de assunto do contato; "Chamar no Direct" como canal principal (card único de Instagram + email); âncoras do menu param abaixo da nav fixa; pacote 1 Beat avisa "= mesmo preço do beat avulso"; subtítulo dos serviços não repete mais o título; campo de cupom visível direto no carrinho (como você pediu).
+Teste: visual, cada um na sua seção.
 
 ---
 
 ## Bloco B — precisa do site no ar (após o push)
 
-**14. Cupom validando no servidor**
-No carrinho, digita `RIDE20` no campo de cupom → APLICAR. Deve aplicar 20% (esse cupom é ilimitado). Digita um código inventado: "Cupom inválido". Digita `SABER50` (já esgotado): "Cupom expirado".
-Depois confirma que os códigos sumiram do fonte: no site, Ctrl+U (ver código-fonte) e busca por "CARAMUJO25". Não pode aparecer.
+**15. Cupom validando no servidor**
+Mudança: os códigos saíram do código-fonte da página. Agora vivem em `functions/coupons.json` e o front valida via `POST /api/validate-coupon` (usa o `GITHUB_TOKEN` que já existe no Cloudflare; nada novo pra configurar).
+Teste: aplica `RIDE20` (deve dar 20%, é ilimitado), um código inventado ("Cupom inválido") e `SABER50` ("Cupom expirado"). Depois Ctrl+U no site e busca "CARAMUJO25": não pode aparecer.
 
-**15. coupons.json não é público**
-Acessa `caramujorecords.com.br/functions/coupons.json` no navegador. Tem que dar 404. Se por algum motivo abrir o arquivo, me avisa que a gente muda a abordagem (o arquivo estaria vazando).
+**16. coupons.json não é público**
+Teste: acessa `caramujorecords.com.br/functions/coupons.json`. Tem que dar 404. Se abrir o arquivo, me avisa que mudamos a abordagem.
 
-**16. Variável de ambiente**
-Nada novo pra configurar: o `validate-coupon` usa o mesmo `GITHUB_TOKEN` que já existe no painel do Cloudflare.
+**Gerenciar cupons daqui pra frente:** editar `functions/coupons.json` no GitHub (lápis → commit). Adicionar = nova linha (`"CODIGO": { "pct": 30, "maxUses": 5, "uses": 0 }` ou `"fixedPrice"` pra preço travado; `"maxUses": null` = ilimitado). Remover = apagar a linha. Vale na hora do commit, sem esperar deploy.
 
 ---
 
 ## Bloco C — precisa de uma compra real (custa R$1)
 
-A forma mais barata de validar o fluxo inteiro: cria um cupom de teste antes do push. Em `functions/coupons.json`, adiciona:
+Antes do push, adiciona um cupom de teste em `functions/coupons.json`:
 
 ```json
 "TESTE1": { "fixedPrice": 1, "maxUses": 1, "uses": 0 }
 ```
 
-Aí faz uma compra PIX de um beat qualquer com esse cupom (total: R$1) e confere, nesta ordem:
+Compra um beat via PIX com esse cupom (total R$1) usando um email teu de teste, e confere na ordem:
 
 **17. Contrato no email do comprador**
-Usa um email teu de teste como comprador. Após pagar o PIX, o email "Pedido confirmado" deve chegar com o contrato `.html` em anexo e o aviso "Seu contrato de licença assinado está em anexo". Abre o anexo: dados do comprador, itens e timestamp do aceite preenchidos.
+Mudança: antes só você recebia o contrato em anexo; agora o comprador também (cartão e PIX).
+Teste: o email "Pedido confirmado" chega com o `.html` do contrato em anexo e o aviso no corpo. Abre o anexo: dados, itens e timestamp do aceite preenchidos.
 
 **18. Emails do produtor seguem chegando**
-Teu email de notificação chega igual antes, com contrato em anexo.
+Teste: tua notificação chega igual antes, com contrato em anexo.
 
 **19. Webhook: beat vendido + cupom incrementado**
-Alguns minutos após o pagamento, o repositório deve ter 2 commits automáticos: um marcando o beat como `sold:true` no index.html, outro com `"uses": 1` no TESTE1 do coupons.json. Confere no histórico do GitHub.
+Mudança: o incremento de cupom saiu do index.html e vai num commit próprio no coupons.json.
+Teste: minutos após o pagamento, o repositório deve ter 2 commits automáticos: `sold:true` do beat no index.html e `"uses": 1` do TESTE1 no coupons.json.
 
 **20. Cupom esgotado bloqueia**
-Tenta aplicar TESTE1 de novo no site: "Cupom expirado". Depois pode apagar o cupom de teste do JSON.
+Teste: tenta aplicar TESTE1 de novo: "Cupom expirado". Depois apaga o cupom de teste do JSON.
 
-Se qualquer um dos itens 17-20 falhar, me traz o print do log do Cloudflare (Pages → o projeto → Functions → Logs) que eu corrijo.
+Se algo dos itens 17-20 falhar, me traz o log do Cloudflare (Pages → projeto → Functions → Logs) que eu corrijo.
 
 ---
 
 ## O que os testes automáticos daqui já cobriram
 
-Rodei o site em navegador headless com viewport de iPhone (390×844) e medi: área de toque da nav = 54px em qualquer ponto; carrinho oculto com 0 itens e círculo de 58px com item; inputs a 16px; filtros com largura total visível (sem scroll escondido); paginação numerada com página atual destacada; balão da licença fixo no rodapé; sorte destacando card e trocando de página; carrinho abrindo só na 1ª adição; badge somando unidades; toggle de vendidos preenchido. Sintaxe das 4 functions e do JSON validada. O que sobra pra você é o que depende de iOS real, SoundCloud carregado e pagamento de verdade.
+Rodei o site em navegador headless com viewport de iPhone (390×844) e medi: área de toque da nav em 54px; carrinho oculto com 0 itens e círculo de 58px com item; inputs a 16px; 14 filtros visíveis sem scroll escondido; paginação numerada com a atual destacada (1 … 6 7 8 … 14); balão da licença fixo no rodapé; sorte trocando de página e destacando o card; carrinho abrindo só na 1ª adição; badge somando unidades; toggle preenchido; selos de 8/16/13% visíveis; download do contrato gerando o arquivo com nome e conteúdo corretos; card único de Instagram. Sintaxe das 4 functions e do coupons.json validada, zero erros de JavaScript no console. O que sobra pra você é o que depende de iPhone real, SoundCloud carregado e pagamento de verdade.
