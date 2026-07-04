@@ -19,9 +19,10 @@ Baseada no relatório `analise-usabilidade-mobile.md`. Roteiro de teste item a i
 
 **Carrinho e checkout**
 - Painel abre sozinho só na 1ª adição; das seguintes, toast "✓ ... no carrinho" (antes cobria a tela toda a cada item).
-- Campo de cupom colapsado num link "Tem cupom?".
 - Badge conta unidades (pacote de 3 + 2 mixagens = 5).
 - Modo rádio não rouba mais o scroll: só acompanha a música se o catálogo estiver visível na tela.
+- Selos de desconto real vs avulso: 8% OFF no pacote 2 Beats, 16% OFF no 3 Beats, 13% OFF no Mix + Master.
+- Pop-up do contrato bloqueado agora mostra toast avisando que o contrato foi por email (antes era um alert pedindo pra liberar pop-up).
 
 **Backend (functions)**
 - Cupons saíram do código-fonte da página: agora vivem em `functions/coupons.json` (não é servido publicamente). Validação via novo endpoint `/api/validate-coupon`; incremento de uso pelo webhook direto no JSON.

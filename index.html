@@ -947,8 +947,8 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .lucky-btn{color:var(--amber);border-color:var(--clay);}
 .lucky-btn:hover{background:var(--clay);color:var(--black);}
 .bcard.lucky-hit{outline:2px solid var(--fire);outline-offset:-2px;}
-.cp-coupon-toggle{background:none;border:none;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.08em;text-decoration:underline dotted;cursor:pointer;padding:0;}
-.cp-coupon-toggle:hover{color:var(--amber);}
+/* Selo de desconto real (vs preço avulso) nos pacotes e no Mix + Master */
+.off-badge{position:absolute;top:0;right:0;z-index:2;background:var(--fire);color:var(--black);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.14em;padding:.32rem .65rem;}
 .cp-upsell{margin-top:1rem;padding:.95rem 1rem;border:1px solid var(--clay);border-left:3px solid var(--fire);background:rgba(168,123,74,.09);font-size:.78rem;line-height:1.65;color:var(--bone);}
 .cp-upsell-tag{display:block;font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--fire);margin-bottom:.45rem;}
 .cp-save{background:var(--fire);color:var(--black);font-weight:700;padding:.1rem .45rem;white-space:nowrap;}
@@ -1110,6 +1110,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
     </div>
 
     <div class="pack hot">
+      <span class="off-badge">8% OFF</span><!-- 2 avulsos R$238 → pacote R$219 -->
       <div class="pack-tag">Mais Popular</div>
       <div class="pack-n">2 Beats</div>
       <div class="pack-sep"></div>
@@ -1125,6 +1126,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
     </div>
 
     <div class="pack">
+      <span class="off-badge">16% OFF</span><!-- 3 avulsos R$357 → pacote R$299 -->
       <div class="pack-tag">Melhor Custo</div>
       <div class="pack-n">3 Beats</div>
       <div class="pack-sep"></div>
@@ -1269,7 +1271,8 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
     </div>
 
     <!-- 04 Mix + Master — DESTAQUE (fundo amber sutil) -->
-    <div class="svc rv" style="background:var(--earth);border-top:2px solid var(--amber);">
+    <div class="svc rv" style="background:var(--earth);border-top:2px solid var(--amber);position:relative;">
+      <span class="off-badge">13% OFF</span><!-- Mix R$149 + Master R$79 = R$228 → combo R$199 -->
       <div class="svc-n" style="color:var(--amber);">04</div>
       <div class="svc-name" style="color:var(--cream);">Mix + Master <span style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.55rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);margin-left:.5rem;vertical-align:middle;">● Mais popular</span></div>
       <p class="svc-desc">Pacote completo: mixagem e masterização.<br/>Do vocal bruto à faixa finalizada e pronta para lançar.</p>
@@ -1296,9 +1299,6 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
       <div class="c-links">
         <a class="c-link" href="https://ig.me/m/rideblan33" target="_blank" rel="noopener" style="color:var(--bone);border-color:var(--clay);">
           <span class="c-ico" style="background:var(--earth);color:var(--amber);">▲</span> Chamar no Direct — @rideblan33 <span style="margin-left:auto;color:var(--fire);font-size:.6rem;letter-spacing:.1em;">RESPOSTA MAIS RÁPIDA</span>
-        </a>
-        <a class="c-link" href="https://instagram.com/rideblan33" target="_blank" rel="noopener" style="color:var(--bone);">
-          <span class="c-ico" style="background:var(--earth);color:var(--amber);">▲</span> @rideblan33 — Instagram
         </a>
         <a class="c-link" href="mailto:contato@caramujorecords.com.br" style="color:var(--bone);">
           <span class="c-ico" style="background:var(--earth);color:var(--amber);">@</span> contato@caramujorecords.com.br
@@ -1365,14 +1365,11 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
   <div class="cp-foot">
     <p class="cp-note">Pagamento via PIX ou cartão de crédito. Após confirmação, os arquivos serão entregues seguindo os prazos estipulados no contrato.</p>
     <div class="cp-coupon" id="cpCouponArea">
-      <button class="cp-coupon-toggle" id="cpCouponToggle" onclick="toggleCouponField()">Tem cupom?</button>
-      <div id="cpCouponBox" style="display:none;">
-        <div class="cp-coupon-row">
-          <input class="cp-coupon-input" id="cpCouponInput" type="text" placeholder="CUPOM DE DESCONTO" maxlength="20" autocomplete="off" spellcheck="false"/>
-          <button class="cp-coupon-btn" id="cpCouponBtn" onclick="applyCoupon()">APLICAR</button>
-        </div>
-        <div class="cp-coupon-msg" id="cpCouponMsg"></div>
+      <div class="cp-coupon-row">
+        <input class="cp-coupon-input" id="cpCouponInput" type="text" placeholder="CUPOM DE DESCONTO" maxlength="20" autocomplete="off" spellcheck="false"/>
+        <button class="cp-coupon-btn" id="cpCouponBtn" onclick="applyCoupon()">APLICAR</button>
       </div>
+      <div class="cp-coupon-msg" id="cpCouponMsg"></div>
     </div>
     <div class="cp-tot">
       <span>Total</span>
@@ -1510,7 +1507,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
           <button class="mp-btn-primary" id="mpContractBtn" style="background:var(--loam);border-color:var(--loam);" onclick="downloadContract()">
             ↓ BAIXAR CONTRATO ASSINADO
           </button>
-          <p style="font-size:.65rem;color:var(--dim);margin-top:.5rem;">Baixe este contrato — ele é a sua garantia e prova do aceite dos termos.<br>Guarde em local seguro.</p>
+          <p style="font-size:.65rem;color:var(--dim);margin-top:.5rem;">Este contrato é a sua garantia e prova do aceite dos termos.<br>Ele também foi enviado em anexo no seu email de confirmação.</p>
         </div>
         <button class="mp-btn-primary" onclick="closeCheckout();clearCart();">FECHAR</button>
       </div>
@@ -1639,7 +1636,7 @@ function downloadContract() {
 
   // Abre em nova aba e aciona diálogo "Salvar como PDF"
   const win = window.open('', '_blank');
-  if (!win) { alert('Permita pop-ups neste site para baixar o contrato em PDF.'); return; }
+  if (!win) { showToast('Pop-up bloqueado. Sem estresse: o contrato também foi enviado no seu email.', 5000); return; }
   win.document.write(html);
   win.document.close();
   win.onload = function () {
@@ -2280,13 +2277,6 @@ function clearCart(){
 // Os códigos e limites vivem no servidor (functions/coupons.json).
 // O front só envia o código digitado pra /api/validate-coupon.
 let activeCoupon = null; // { code, pct?, fixedPrice? }
-
-function toggleCouponField(){
-  const box=document.getElementById('cpCouponBox');
-  const open=box.style.display!=='none';
-  box.style.display=open?'none':'block';
-  if(!open) setTimeout(()=>document.getElementById('cpCouponInput').focus(),60);
-}
 
 function calcDiscount(subtotal) {
   if (!activeCoupon) return 0;

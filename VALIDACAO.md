@@ -38,8 +38,8 @@ Toca no botão ao lado dos filtros. Deve: pular pra página do beat sorteado, ro
 **10. Carrinho abre 1 vez só**
 Adiciona um beat: painel abre (upsell aparece). Fecha. Adiciona outro beat: agora só um toast "✓ ... no carrinho" e o número do círculo sobe. O badge conta unidades: pacote de 3 beats marca 3, não 1.
 
-**11. Cupom colapsado**
-No carrinho, o campo de cupom virou o link "Tem cupom?". Toca: campo abre com foco.
+**11. Selos de % OFF**
+Nos pacotes: "8% OFF" no 2 Beats e "16% OFF" no 3 Beats (canto superior direito do card). No Mix + Master: "13% OFF". Os números vêm da comparação com o preço avulso (2 avulsos R$238 vs R$219; 3 avulsos R$357 vs R$299; mix R$149 + master R$79 = R$228 vs R$199).
 
 **12. Modo rádio sem roubo de scroll**
 Dá play num beat, rola até o formulário de contato e espera a faixa acabar. A próxima deve começar a tocar sem a página pular de volta pro catálogo. Se você estiver com o catálogo na tela, aí sim ele acompanha (rola até o próximo card).
@@ -52,7 +52,7 @@ Select de "Assunto" no contato tem setinha ▾. O primeiro contato é "Chamar no
 ## Bloco B — precisa do site no ar (após o push)
 
 **14. Cupom validando no servidor**
-No carrinho, "Tem cupom?" → digita `RIDE20` → APLICAR. Deve aplicar 20% (esse cupom é ilimitado). Digita um código inventado: "Cupom inválido". Digita `SABER50` (já esgotado): "Cupom expirado".
+No carrinho, digita `RIDE20` no campo de cupom → APLICAR. Deve aplicar 20% (esse cupom é ilimitado). Digita um código inventado: "Cupom inválido". Digita `SABER50` (já esgotado): "Cupom expirado".
 Depois confirma que os códigos sumiram do fonte: no site, Ctrl+U (ver código-fonte) e busca por "CARAMUJO25". Não pode aparecer.
 
 **15. coupons.json não é público**
