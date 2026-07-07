@@ -16,24 +16,58 @@ Jornada do site: **hero → pacotes → catálogo de beats → serviços → con
 
 ## Estrutura do Projeto
 
+Arquivos na **raiz** são os que o Cloudflare Pages publica (o site e o que ele referencia). Documentação, previews e material de apoio ficam em subpastas, fora do que vai pro ar.
+
 ```
 /
-├── index.html                     # Aplicação completa (HTML + CSS + JS inline)
-├── og-image.png                   # Thumbnail para compartilhamento (WhatsApp, redes sociais)
-├── termos-de-licenca.pdf          # Termos de licença disponíveis para download
-├── Caramujo_Records.png           # Logo do estúdio
-├── selo-creme.svg / selo-sepia.svg# Selos da marca (favicon, hero, footer)
+├── index.html                     # Site (HTML + CSS + JS inline) — arquivo único que vai pro ar
+├── og-image.png                   # Thumbnail de compartilhamento (fica na raiz: URL absoluta + cache das redes)
 ├── _headers                       # Headers HTTP do Cloudflare (CSP, segurança)
-├── email-pedido.html              # Template de email — notificação de novo pedido (ao dono)
-├── email-entrega.html             # Template de email — confirmação de pedido (ao comprador)
-└── functions/
-    ├── coupons.json               # Cupons de desconto (fora dos assets estáticos — não é servido publicamente)
-    └── api/
-        ├── create-payment.js      # Cria pagamento no Mercado Pago
-        ├── check-payment.js       # Consulta status de um pagamento
-        ├── validate-coupon.js     # Valida cupom digitado no carrinho (lê coupons.json via GitHub API)
-        └── payment-webhook.js     # Webhook: processa aprovação e dispara ações pós-pagamento
+├── .gitignore                     # Ignora .DS_Store, .claude/, .obsidian/
+├── README.md
+│
+├── assets/                        # Tudo que o site referencia, além do og-image
+│   ├── brand/                     # selo-creme.svg · selo-sepia.svg · Caramujo_Records.png
+│   ├── termos-de-licenca.pdf      # Termos de licença (download no checkout)
+│   └── (mídia do "Por dentro do estúdio": studio-hero.jpg, depo-*, sessao.mp4, posters)
+│
+├── functions/                     # Backend (Cloudflare Pages Functions) — GERA os e-mails e o contrato
+│   ├── coupons.json               # Cupons de desconto (não é servido publicamente)
+│   └── api/
+│       ├── create-payment.js      # Pagamento (cartão) + e-mails "compra recebida" e do comprador + contrato
+│       ├── check-payment.js       # Consulta status de um pagamento
+│       ├── validate-coupon.js     # Valida cupom digitado no carrinho (lê coupons.json via GitHub API)
+│       └── payment-webhook.js     # Webhook: aprovação (PIX) + e-mails "compra confirmada" e do comprador
+│
+├── docs/                          # Documentação do projeto
+│   ├── DESIGN.md                  # Sistema de marca (paleta, tipografia, tom)
+│   ├── contexto-continuidade-compilado.md  # Contexto pra IA retomar o projeto
+│   └── analise-usabilidade-mobile.md
+│
+├── previews/                      # Abrir no navegador pra conferir (fora do deploy)
+│   ├── preview-mobile.html        # Site dentro de molduras de celular (iframe)
+│   ├── preview-comprador.html     # E-mail do comprador (detalhes + prazos)
+│   ├── preview-compra-recebida.html   # E-mail interno: compra criada (pode não estar paga)
+│   ├── preview-compra-confirmada.html # E-mail interno: pagamento aprovado
+│   └── preview-contrato.html
+│
+└── mockups-antigos/               # Referências antigas
+    ├── email-entrega.html         # E-mail de ENTREGA dos arquivos (enviado manualmente — AINDA usado)
+    └── email-pedido.html          # Mockup antigo (não disparado por código)
 ```
+
+> **Deploy:** só a raiz vai pro ar (Cloudflare Pages publica a pasta inteira, então `assets/brand/…` e `assets/termos-de-licenca.pdf` funcionam nas URLs). As subpastas `docs/`, `previews/` e `mockups-antigos/` são material de trabalho e não atrapalham o site. A `og-image.png` fica na raiz de propósito (URL absoluta nas meta tags + cache das redes sociais). Os e-mails reais são gerados nos `functions/`, não nos arquivos de `mockups-antigos/`. Pra conferir o layout mobile antes de publicar, abra `previews/preview-mobile.html`.
+
+### Os 4 e-mails (nomes amigáveis)
+
+| Nome | Quem recebe | Quando | Onde é gerado |
+|---|---|---|---|
+| **Compra recebida** | Dono (@rideblan33) | Compra criada (pode não estar paga, ex.: PIX pendente) | `create-payment.js` |
+| **Compra confirmada** | Dono (@rideblan33) | Pagamento aprovado | `payment-webhook.js` |
+| **Comprador** | Cliente | Logo após finalizar a compra (detalhes + prazos) | `create-payment.js` / `payment-webhook.js` |
+| **Entrega** | Cliente | Envio manual dos arquivos finais | `mockups-antigos/email-entrega.html` |
+
+Os 3 primeiros + o contrato seguem a identidade do site (paleta do `docs/DESIGN.md`). O e-mail do comprador e o de entrega trazem o selo do caramujo (PNG) no canto superior direito.
 
 ---
 
@@ -184,12 +218,14 @@ Definidos em `functions/coupons.json` (os códigos não aparecem no código-font
 
 Enviados via **[Resend](https://resend.com)**:
 
-| Evento | Destinatário | Conteúdo |
-|---|---|---|
-| Novo pedido (cartão) | Produtor | Resumo da venda + contrato em anexo |
-| Pagamento aprovado (PIX) | Produtor | Resumo da venda + contrato em anexo |
-| Pedido confirmado (cartão) | Comprador | Confirmação + prazos + contrato em anexo |
-| Pagamento aprovado (PIX) | Comprador | Confirmação + prazos + contrato em anexo |
+| E-mail | Destinatário | Quando | Conteúdo |
+|---|---|---|---|
+| **Compra recebida** | Produtor | Compra criada (cartão, ou PIX pendente) | Resumo da venda + contrato em anexo |
+| **Compra confirmada** | Produtor | Pagamento aprovado | Resumo da venda + ação necessária |
+| **Comprador** | Comprador | Após finalizar a compra | Confirmação + prazos + contrato em anexo |
+| **Entrega** (manual) | Comprador | Envio dos arquivos finais | Arquivos + mensagem (mockups-antigos/email-entrega.html) |
+
+Os 3 primeiros e o contrato seguem a identidade visual do site (paleta do `docs/DESIGN.md`: fundos terrosos, acento terracota `#b98f5e`, cream/bone no texto). O contrato é mantido em fundo claro pra impressão, com o selo do caramujo no cabeçalho e acento `#8C3B2E`. O e-mail do comprador e o de entrega trazem o selo (PNG) no canto superior direito. Fontes Georgia/Courier por compatibilidade de e-mail. Pra conferir o visual, abra os arquivos em `previews/` (e o de entrega em `mockups-antigos/`).
 
 ---
 

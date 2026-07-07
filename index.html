@@ -19,7 +19,7 @@
 <meta name="twitter:description" content="Estúdio popular e independente. Idealizado por @rideblan33. Todos os direitos reservados."/>
 <meta name="twitter:image" content="https://caramujorecords.com.br/og-image.png"/>
 <meta name="theme-color" content="#050403"/>
-<link rel="icon" type="image/svg+xml" href="selo-creme.svg"/>
+<link rel="icon" type="image/svg+xml" href="assets/brand/selo-creme.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="preconnect" href="https://sdk.mercadopago.com"/>
@@ -819,7 +819,7 @@ html { scroll-padding-top: 70px; }
   footer{flex-direction:column;align-items:flex-start;padding:1.2rem;}
 
   /* Cart */
-  .cart-panel{width:100%;max-width:100vw;}
+  .cart-panel{width:100%;max-width:100%;}
   /* No mobile o botão vira círculo compacto: cobre menos conteúdo */
   .cart-btn{bottom:1rem;right:1rem;width:58px;height:58px;border-radius:50%;padding:0;justify-content:center;}
   .cart-btn .cart-label{display:none;}
@@ -890,7 +890,7 @@ body{cursor:auto!important;}
 .hero-content{position:relative;z-index:3;}
 .hero-title{font-family:var(--serif)!important;font-weight:500!important;text-transform:none!important;letter-spacing:.01em!important;line-height:.94!important;font-size:clamp(3.4rem,9vw,7.4rem)!important;text-shadow:none!important;}
 .hero-title .sub{display:block;font-family:var(--sans)!important;font-weight:700!important;font-size:.14em!important;letter-spacing:.6em!important;color:var(--clay)!important;margin-top:1.1rem;-webkit-text-fill-color:var(--clay)!important;}
-.hero-lede{font-family:var(--serif);font-style:italic;font-size:clamp(1.3rem,2.4vw,1.9rem);line-height:1.4;color:var(--amber);max-width:30ch;margin:1.8rem 0 2.6rem;display:block;}
+.hero-lede{font-family:var(--serif);font-style:italic;font-size:clamp(1.3rem,2.4vw,1.9rem);line-height:1.45;color:var(--amber);max-width:27ch;letter-spacing:.01em;margin:1.8rem 0 2.6rem;display:block;}
 .hero-desc{margin-top:0!important;}
 .hero-desc{font-family:var(--sans)!important;color:var(--read)!important;}
 .hero-eyebrow{color:var(--clay)!important;font-family:var(--sans)!important;}
@@ -967,6 +967,233 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
   body::before{animation:none;}
   html{scroll-behavior:auto;}
 }
+
+/* ═══ NOVO: BEAT DA SEMANA (hero) ═══ */
+.hero-week{margin-top:1.6rem;width:100%;max-width:380px;border:1px solid var(--clay);background:rgba(34,30,24,.72);backdrop-filter:blur(4px);padding:1rem;}
+.hw-head{display:flex;justify-content:space-between;align-items:center;}
+.hw-kick{font-size:.6rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--fire);}
+.hw-num{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--fire);line-height:1;}
+.hw-name{font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--cream);margin-top:.2rem;}
+.hw-meta{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.14em;color:var(--label);margin-top:.15rem;}
+.hero-week iframe{width:100%;height:100px;margin-top:.7rem;border:0;display:block;}
+.hw-add{width:100%;justify-content:center;margin-top:.7rem;font-size:.76rem;}
+
+/* ═══ NOVO: COMO FUNCIONA ═══ */
+.hiw{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;max-width:1100px;margin:0 auto;}
+.hiw-cell{border:1px solid var(--wire);background:var(--mole);padding:1.3rem 1.1rem;}
+.hiw-n{font-family:'Cormorant Garamond',serif;font-size:2.4rem;color:var(--fire);line-height:1;}
+.hiw-t{font-size:.9rem;font-weight:700;color:var(--cream);letter-spacing:.02em;margin-top:.5rem;}
+.hiw-d{font-size:.78rem;color:var(--read);margin-top:.4rem;line-height:1.5;}
+@media(max-width:760px){.hiw{grid-template-columns:1fr 1fr;}}
+@media(max-width:460px){.hiw{grid-template-columns:1fr;}}
+
+/* ═══ NOVO: NO ESTÚDIO ═══ */
+.studio-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;max-width:1100px;margin:0 auto;}
+.studio-ph{aspect-ratio:1;border:1px solid var(--wire);background:repeating-linear-gradient(45deg,#211d17,#211d17 7px,#1c1813 7px,#1c1813 14px);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.08em;color:var(--dim);text-align:center;padding:.5rem;}
+.testi{max-width:720px;margin:2rem auto 0;text-align:center;border-top:1px solid var(--wire);padding-top:1.6rem;}
+.testi-q{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.4rem;color:var(--bone);line-height:1.35;}
+.testi-who{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.12em;color:var(--label);margin-top:.8rem;text-transform:uppercase;}
+@media(max-width:760px){.studio-strip{grid-template-columns:1fr 1fr;}}
+
+/* ═══ NOVO: BARRA TOCANDO AGORA ═══ */
+.np-bar{position:fixed;left:50%;bottom:1.1rem;transform:translateX(-50%) translateY(160%);z-index:7000;display:flex;flex-direction:column;align-items:stretch;gap:.5rem;background:rgba(26,24,21,.96);border:1px solid var(--clay);padding:.6rem .9rem;min-width:300px;max-width:min(92vw,460px);backdrop-filter:blur(8px);box-shadow:0 8px 30px rgba(0,0,0,.5);transition:transform .3s cubic-bezier(.4,0,.2,1);}
+.np-bar.on{transform:translateX(-50%) translateY(0);}
+.np-eq{display:flex;align-items:flex-end;gap:2px;height:18px;flex:0 0 auto;}
+.np-eq span{width:3px;background:var(--fire);height:5px;animation:npeq .9s ease-in-out infinite;}
+.np-eq span:nth-child(2){animation-delay:.2s;}
+.np-eq span:nth-child(3){animation-delay:.4s;}
+@keyframes npeq{0%,100%{height:5px;}50%{height:18px;}}
+.np-info{min-width:0;flex:1;}
+.np-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;}
+.np-meta{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.1em;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.np-time{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--read);flex:0 0 auto;}
+.np-cta{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:var(--fire);color:var(--black);border:none;padding:.5rem .7rem;cursor:pointer;flex:0 0 auto;}
+@media(max-width:600px){.np-bar{left:0;right:0;bottom:0;transform:translateY(160%);max-width:none;min-width:0;border-left:0;border-right:0;padding-right:.9rem;}.np-bar.on{transform:translateY(0);}.np-cta{display:none;}}
+
+/* ═══ AJUSTES v2 ═══ */
+.hero-week{position:absolute;right:4rem;top:52%;transform:translateY(-50%);z-index:4;width:min(430px,42vw);max-width:none;margin:0;padding:1.4rem;background:rgba(20,17,13,.72);border:1px solid var(--clay);backdrop-filter:blur(6px);}
+.hero-week .hw-name{font-size:2.4rem;}
+.hw-chips{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem;}
+.hw-chip{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);border:1px solid var(--wire);padding:.28rem .5rem;}
+.hero-week iframe{height:100px;margin-top:.9rem;}
+.hw-add{margin-top:.9rem;}
+@media(max-width:900px){.hero-week{position:static;transform:none;width:100%;max-width:430px;margin:1.8rem 0 0;}.hero-week .hw-name{font-size:2rem;}}
+
+.hiw-strip{background:var(--deep);border-top:1px solid var(--wire);border-bottom:1px solid var(--wire);padding:.85rem 1.4rem;}
+.hiw-strip-inner{max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .9rem;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.64rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--read);}
+.hiw-s b{color:var(--fire);margin-right:.4rem;}
+.hiw-arw{color:var(--loam);}
+.hiw-note{color:var(--dim);letter-spacing:.09em;}
+@media(max-width:600px){.hiw-strip-inner{font-size:.56rem;gap:.4rem .55rem;}.hiw-note{width:100%;}}
+
+.off-badge{font-size:.74rem!important;padding:.42rem .8rem!important;box-shadow:0 4px 16px rgba(185,143,94,.45);letter-spacing:.12em!important;}
+.svc-flag{display:inline-block;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.55rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:.26rem .55rem;margin-left:.5rem;vertical-align:middle;color:var(--black);}
+.svc-flag-fire{background:var(--fire);}
+.svc-flag-amber{background:var(--amber);}
+
+.np-ctls{display:flex;gap:.35rem;flex:0 0 auto;}
+.np-ctl{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.8rem;line-height:1;background:transparent;color:var(--bone);border:1px solid var(--wire);width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;padding:0;transition:border-color .15s,color .15s;}
+.np-ctl:hover{border-color:var(--fire);color:var(--fire);}
+.np-ctl.np-play{background:var(--fire);color:var(--black);border-color:var(--fire);}
+@media(max-width:600px){.np-ctl{width:34px;height:34px;}}
+
+/* ═══ AJUSTES v3 ═══ */
+.hero-logo-wrap{justify-content:flex-start;padding-left:1vw;}
+.hero-week{right:auto;left:50%;top:46%;transform:translate(-50%,-50%);width:min(440px,46vw);}
+.hiw-strip{padding:1.4rem 1.4rem;}
+.hiw-strip-inner{max-width:1400px;justify-content:space-between;align-items:flex-start;gap:1.6rem;text-transform:none;font-weight:400;letter-spacing:.01em;font-size:.74rem;color:var(--read);}
+.hiw-s{flex:1;line-height:1.55;color:var(--read);}
+.hiw-n{display:block;font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--fire);line-height:1;margin-bottom:.35rem;}
+.disc-pill{display:inline-block;background:var(--fire);color:var(--black);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.1em;padding:.2rem .5rem;vertical-align:middle;margin-left:.4rem;box-shadow:0 2px 10px rgba(185,143,94,.4);}
+.np-ctl svg{display:block;}
+.ic-pause{display:none;}
+.np-ctl.is-playing .ic-play{display:none;}
+.np-ctl.is-playing .ic-pause{display:block;}
+@media(max-width:900px){.hero-week{position:static;left:auto;top:auto;transform:none;width:100%;max-width:430px;margin:1.8rem 0 0;}.hero-logo-wrap{justify-content:center;padding-left:0;}}
+@media(max-width:680px){.hiw-strip-inner{flex-direction:column;gap:.9rem;font-size:.72rem;}}
+
+/* ═══ AJUSTES v4 (mobile + refinamentos) ═══ */
+.hiw-strip{padding:.85rem 1.2rem;}
+.hiw-strip-inner{max-width:1300px;margin:0 auto;display:flex;flex-wrap:nowrap;align-items:center;justify-content:center;gap:.85rem;white-space:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;text-transform:none;font-weight:600;letter-spacing:.02em;font-size:.7rem;color:var(--read);flex-direction:row;}
+.hiw-strip-inner::-webkit-scrollbar{display:none;}
+.hiw-s{flex:0 0 auto;color:var(--read);line-height:1.2;}
+.hiw-n{display:inline;font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;color:var(--fire);margin:0 .3rem 0 0;}
+.hiw-arw{flex:0 0 auto;color:var(--loam);}
+@media(max-width:600px){.hiw-strip-inner{justify-content:flex-start;font-size:.66rem;gap:.7rem;}}
+
+.svc-flag{display:inline-block;background:none;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.58rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;padding:0;margin-left:.55rem;vertical-align:middle;}
+.svc-flag-fire{color:var(--fire);background:none;}
+.svc-flag-amber{color:var(--amber);background:none;}
+
+@media(max-width:600px){
+  .np-bar{padding-right:.9rem;gap:.55rem;}
+  .np-ctl{width:40px;height:40px;}
+  .np-bar.on ~ .cart-btn{bottom:5.4rem;}
+  .np-time{font-size:.6rem;}
+  .np-name{font-size:1rem;}
+}
+@media(max-width:600px){
+  .nav-links{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;justify-content:flex-start;}
+  .nav-links::-webkit-scrollbar{display:none;}
+}
+#hero,#como-funciona,#beats,#packages,#services,#estudio,#contact{scroll-margin-top:60px;}
+@media(max-width:860px){ body::before{display:none!important;} }
+@media(max-width:860px){ .ft{min-height:40px;} .np-ctl{width:44px;height:44px;} }
+
+/* ═══ MENU HAMBÚRGUER (variante) ═══ */
+.nav-right{display:flex;align-items:center;gap:.2rem;}
+.nav-ig{display:flex;align-items:center;justify-content:center;width:44px;height:44px;color:var(--bone);text-decoration:none;transition:color .15s;}
+.nav-ig:hover{color:var(--fire);}
+.nav-ig svg{width:22px;height:22px;display:block;}
+
+/* v12: sem scroll lateral + filtros/controles/paginação compactos no mobile */
+html,body{overflow-x:hidden;}
+@media(max-width:600px){
+  .pg-controls{flex-wrap:wrap;width:100%;}
+  .pg-controls>*{flex:1 1 auto;text-align:center;}
+  .pagination-info{white-space:nowrap;}
+  .pg-nums{flex-wrap:nowrap;}
+  .pagination-btns{flex-wrap:wrap;row-gap:.5rem;align-items:center;}
+  .ft{padding:.4rem .6rem;font-size:.56rem;min-height:32px;letter-spacing:.08em;}
+  .bcard-chips{flex-basis:100%;flex-wrap:nowrap;gap:.3rem;margin-top:.15rem;}
+  .chip{font-size:.58rem;padding:.12rem .32rem;letter-spacing:.05em;white-space:nowrap;}
+  .hero-lede{margin-bottom:1.5rem;}
+}
+
+/* v13: filtros recolhíveis no mobile */
+.filters-toggle{display:none;}
+.filters-row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;border:1px solid var(--wire);border-top:none;padding:.6rem 1rem;}
+.filters-row .pg-search{flex:1;min-width:200px;}
+@media(max-width:600px){
+  .filters-toggle{display:flex;align-items:center;justify-content:space-between;gap:.5rem;width:100%;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:700;font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--cream);background:var(--mole);border:1px solid var(--wire);padding:.8rem 1rem;cursor:pointer;margin-bottom:.5rem;}
+  .filters-toggle .ft-sub{font-size:.52rem;letter-spacing:.06em;color:var(--dim);text-transform:none;font-weight:400;margin-left:.55rem;margin-right:auto;}
+  .filters-toggle .ft-caret{transition:transform .25s;font-size:.7rem;}
+  .filters-toggle[aria-expanded="true"] .ft-caret{transform:rotate(180deg);}
+  .filters-panel{max-height:0;overflow:hidden;transition:max-height .35s ease;}
+  .filters-panel.open{max-height:1600px;}
+  .filters-row{flex-direction:column;align-items:stretch;}
+  .filters-row .pg-search{min-width:0;}
+  .pagination .pg-search{display:none;}
+}
+
+/* v13: setas do carrossel do estúdio (só mobile) */
+.studio-carousel{position:relative;}
+.studio-nav{display:none;}
+@media(max-width:760px){
+  .studio-nav{display:flex;align-items:center;justify-content:center;position:absolute;top:140px;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:rgba(20,17,13,.82);border:1px solid var(--clay);color:var(--cream);font-size:1.35rem;line-height:1;cursor:pointer;z-index:3;padding:0;}
+  .studio-nav.prev{left:2px;}
+  .studio-nav.next{right:2px;}
+}
+.nav-burger{display:none;background:none;border:none;cursor:pointer;width:44px;height:44px;flex-direction:column;justify-content:center;align-items:center;gap:5px;padding:0;flex-shrink:0;}
+.nav-burger span{display:block;width:22px;height:2px;background:var(--bone);transition:transform .22s,opacity .2s;}
+.nav-burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.nav-burger.open span:nth-child(2){opacity:0;}
+.nav-burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+@media(max-width:600px){
+  .nav-burger{display:flex;}
+  .nav-cta{display:none!important;}
+  .nav-links{position:fixed!important;top:54px;left:0;right:0;flex-direction:column!important;background:rgba(5,4,3,.98);border-bottom:1px solid var(--wire);overflow:hidden!important;max-height:0;transition:max-height .3s ease;justify-content:flex-start!important;}
+  .nav-links.open{max-height:82vh;border-bottom:1px solid var(--wire);}
+  .nav-links a{width:100%;height:54px;line-height:54px;border-left:none!important;border-right:none!important;border-bottom:1px solid var(--wire);padding:0 1.4rem!important;font-size:.74rem!important;justify-content:flex-start;}
+}
+/* ── NOVO v5: mídia real do Sobre nós — altura igual, largura variável, sem bordas laterais + legenda ── */
+.studio-strip{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:1.1rem;max-width:1120px;}
+.studio-ph{margin:0;padding:0;border:none;background:none;display:flex;flex-direction:column;align-items:center;width:auto;aspect-ratio:auto;}
+.studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb>img{height:400px;width:auto;max-width:100%;display:block;border:1px solid var(--wire);border-radius:4px;background:var(--black);}
+.studio-ph figcaption{margin-top:.6rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;text-align:center;}
+/* destaque do depoimento @sxnxstro */
+.testi{max-width:1180px;padding-top:2.2rem;}
+.testi-q{font-size:clamp(1.4rem,2.5vw,1.85rem);line-height:1.3;}
+.testi-who{color:var(--amber);font-size:.72rem;}
+
+/* ── NOVO v6: quote em 1 linha, play badge, lightbox, carrossel mobile, FAB Instagram ── */
+@media(min-width:761px){.testi-q{white-space:nowrap;}}
+
+.studio-ph{cursor:zoom-in;outline-offset:3px;}
+.vid-thumb{position:relative;display:flex;line-height:0;}
+.play-badge{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:66px;height:66px;border-radius:50%;background:rgba(8,6,4,.55);border:2px solid var(--bone);color:var(--bone);display:flex;align-items:center;justify-content:center;font-size:1.4rem;padding-left:5px;pointer-events:none;transition:transform .16s,background .16s;box-shadow:0 4px 18px rgba(0,0,0,.5);}
+.studio-vid:hover .play-badge,.studio-vid:focus .play-badge{background:var(--ember);transform:translate(-50%,-50%) scale(1.08);}
+
+.lb{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(8,6,4,.94);padding:5vh 4vw;cursor:zoom-out;}
+.lb.on{display:flex;}
+.lb-inner{max-width:96vw;max-height:90vh;display:flex;align-items:center;justify-content:center;cursor:auto;}
+.lb-inner>img,.lb-inner>video{max-width:96vw;max-height:90vh;width:auto;height:auto;display:block;border:1px solid var(--wire);border-radius:4px;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.lb-x{position:absolute;top:16px;right:18px;width:46px;height:46px;border:1px solid var(--wire);background:rgba(0,0,0,.55);color:var(--bone);font-size:1.05rem;border-radius:50%;cursor:pointer;z-index:2;}
+.lb-x:hover{background:var(--ember);}
+
+.studio-hint{display:none;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;margin-top:.9rem;}
+
+
+/* desktop: 4 mídias na MESMA linha, altura igual, largura proporcional ao aspect-ratio */
+@media(min-width:761px){
+  .studio-strip{flex-wrap:nowrap;gap:1rem;max-width:1260px;align-items:flex-start;}
+  .studio-ph{flex-basis:0;flex-shrink:1;flex-grow:1;min-width:0;}
+  .studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb,.studio-ph .vid-thumb>img{height:auto;width:100%;}
+  .sp-1{flex-grow:1;} .sp-2{flex-grow:.6957;} .sp-3{flex-grow:.5322;} .sp-4{flex-grow:.7826;}
+}
+
+/* slider de volume na barra "tocando agora" */
+.np-row{display:flex;align-items:center;gap:.7rem;width:100%;}
+.np-seek{position:relative;height:8px;background:var(--wire);border-radius:4px;cursor:pointer;flex:0 0 auto;touch-action:none;}
+.np-seek-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--fire);border-radius:3px;pointer-events:none;}
+.np-seek-knob{position:absolute;top:50%;left:0;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:var(--fire);pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 1px 4px rgba(0,0,0,.5);}
+.np-seek:hover .np-seek-knob,.np-seek:focus-visible .np-seek-knob{opacity:1;}
+.np-vol-wrap{position:relative;display:flex;align-items:center;flex:0 0 auto;}
+.np-vol-btn{background:none;border:none;color:var(--bone);cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;}
+.np-vol-btn:hover{color:var(--fire);}
+.np-vol-btn svg{width:16px;height:16px;display:block;}
+.np-vol-pop{position:absolute;bottom:calc(100% + 12px);left:50%;transform:translateX(-50%);background:rgba(26,24,21,.98);border:1px solid var(--clay);padding:12px 10px;border-radius:6px;display:none;box-shadow:0 8px 24px rgba(0,0,0,.55);z-index:5;}
+.np-vol-wrap:hover .np-vol-pop,.np-vol-wrap.open .np-vol-pop{display:block;}
+.np-vol-slider{-webkit-appearance:none;appearance:none;writing-mode:vertical-lr;direction:rtl;width:6px;height:96px;background:var(--wire);border-radius:3px;outline:none;cursor:pointer;padding:0;margin:0;}
+.np-vol-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;background:var(--fire);border:none;cursor:pointer;}
+.np-vol-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--fire);border:none;cursor:pointer;}
+
+@media(max-width:760px){
+  .studio-strip{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:.9rem;padding:0 9vw .4rem;justify-content:flex-start;scrollbar-width:none;}
+  .studio-strip::-webkit-scrollbar{display:none;}
+  .studio-ph{scroll-snap-align:center;flex:0 0 82vw;max-width:340px;}
+  .studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb,.studio-ph .vid-thumb>img{width:100%;height:auto;max-height:none;}
+}
 </style>
 
 <!-- ═══ GA4 ═════════════════════════════════════════
@@ -1007,7 +1234,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 </script>
 
 <link rel="canonical" href="https://caramujorecords.com.br"/>
-<link rel="icon" type="image/png" href="/Caramujo_Records.png"/>
+<link rel="icon" type="image/png" href="/assets/brand/Caramujo_Records.png"/>
 </head>
 <body>
 
@@ -1017,23 +1244,27 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 <!-- NAV -->
 <nav>
   <a class="nav-logo" href="#">
-    <img width="34" height="34" src="selo-creme.svg" alt="Caramujo Records"/>
+    <img width="34" height="34" src="assets/brand/selo-creme.svg" alt="Caramujo Records"/>
     <span class="nav-wm">Caramujo<small>RECORDS</small></span>
   </a>
   <ul class="nav-links">
-    <li><a href="#packages">Pacotes</a></li>
     <li><a href="#beats">Beats</a></li>
+    <li><a href="#packages">Pacotes</a></li>
     <li><a href="#services">Serviços</a></li>
+    <li><a href="#estudio">Sobre nós</a></li>
     <li><a href="#contact">Contato</a></li>
   </ul>
-  <a class="nav-cta" href="#beats">OUVIR BEATS</a>
+  <div class="nav-right">
+    <a class="nav-ig" href="https://ig.me/m/rideblan33" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg></a>
+    <button class="nav-burger" id="navBurger" onclick="toggleMenu()" aria-label="Abrir menu"><span></span><span></span><span></span></button>
+  </div>
 </nav>
 
 <!-- ═══ HERO ══════════════════════════════════════════ -->
 <section id="hero">
   <div class="hero-glow"></div>
   <div class="hero-logo-wrap">
-    <img class="hero-mark" width="400" height="400" src="selo-sepia.svg" alt=""/>
+    <img class="hero-mark" width="400" height="400" src="assets/brand/selo-sepia.svg" alt=""/>
   </div>
   <div class="hero-edge"></div>
 
@@ -1048,7 +1279,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
       <span class="sub">R E C O R D S</span>
     </h1>
 
-    <p class="hero-lede">Rideblan, que isso? Mão de ouro pra fazer esse instrumental incrível.</p>
+    <p class="hero-lede">Atenção! Você está ouvindo um beat do Rideblan</p>
 
     <p class="hero-desc">
       Estúdio popular e independente.<br/>
@@ -1067,10 +1298,114 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
     </div>
   </div>
 
+  <div class="hero-week" id="heroWeek">
+    <div class="hw-head">
+      <span class="hw-kick">Beat em destaque</span>
+    </div>
+    <div class="hw-name" id="hwName">—</div>
+    <div class="hw-chips" id="hwChips"></div>
+    <iframe id="heroBeatFrame" title="Beat em destaque" width="100%" height="100" scrolling="no" frameborder="no" allow="autoplay" loading="lazy" data-bid="" src=""></iframe>
+    <button class="btn btn-fire hw-add" id="hwAdd" onclick="npAddFeatured()">Adicionar ao carrinho · R$119</button>
+  </div>
+
   <div class="scroll-cue">
     <div class="scroll-line"></div>
     <span>scroll</span>
   </div>
+</section>
+
+<div class="hr"></div>
+
+<!-- ═══ COMO FUNCIONA (strip) ═══════════════════ -->
+<section id="como-funciona" class="hiw-strip">
+  <div class="hiw-strip-inner">
+    <span class="hiw-s"><span class="hiw-n">01</span> Ouça</span>
+    <span class="hiw-arw">→</span>
+    <span class="hiw-s"><span class="hiw-n">02</span> Escolha beats, pacotes ou mix &amp; master</span>
+    <span class="hiw-arw">→</span>
+    <span class="hiw-s"><span class="hiw-n">03</span> Pague no PIX ou cartão</span>
+    <span class="hiw-arw">→</span>
+    <span class="hiw-s"><span class="hiw-n">04</span> Receba com licença exclusiva</span>
+  </div>
+</section>
+
+<!-- ═══ BEATS DISPONÍVEIS (merged) ══════════════════ -->
+<section id="beats" class="s s-earth">
+
+  <svg class="snail-svg tl" width="110" height="70" viewBox="0 0 110 70" stroke="#7a5c30" stroke-width="1">
+    <ellipse cx="68" cy="42" rx="32" ry="24"/>
+    <ellipse cx="68" cy="42" rx="20" ry="15"/>
+    <ellipse cx="68" cy="42" rx="8" ry="6"/>
+    <path d="M36 42 Q20 42 12 33 Q5 23 16 18 Q28 12 37 23" fill="none"/>
+    <line x1="37" y1="11" x2="35" y2="5"/><line x1="44" y1="10" x2="44" y2="3"/>
+  </svg>
+
+  <div class="s-head">
+    <span class="s-kicker">Catálogo · pronta entrega</span>
+    <h2 class="s-title">Catálogo de <span class="r">beats</span></h2>
+    <p class="s-sub">
+      Cada beat é vendido com <span class="lic-wrap"><button class="lic-toggle" onclick="toggleLic(event)">licença exclusiva&nbsp;ⓘ</button><span class="lic-box" id="licBox">
+        O beat é seu, e só seu — nunca é revendido pra outra pessoa.
+        Você recebe <strong>contrato digital no seu nome</strong>, com <strong>uso comercial liberado</strong>: streaming, shows, clipes e o que mais vier.
+      </span></span> — uma única venda por título, removido do catálogo após a compra.
+      Todos os beats são entregues em <strong>MP3 320kbps + WAV</strong>.
+    </p>
+  </div>
+
+  <button class="filters-toggle" id="filtersToggle" type="button" onclick="toggleFilters()" aria-expanded="false" aria-controls="filtersPanel"><span>Filtros</span><span class="ft-sub">gênero, nome, ordem</span><span class="ft-caret" aria-hidden="true">▾</span></button>
+  <div class="filters-panel" id="filtersPanel">
+  <div class="ftabs">
+    <button class="ft on" onclick="filt('todos',this)">Todos</button>
+    <button class="ft" onclick="filt('trap',this)">Trap</button>
+    <button class="ft" onclick="filt('boombap',this)">Boom Bap</button>
+    <button class="ft" onclick="filt('plug',this)">Plug</button>
+    <button class="ft" onclick="filt('hoodtrap',this)">Hood Trap</button>
+    <button class="ft" onclick="filt('experimental',this)">Experimental</button>
+    <button class="ft" onclick="filt('hard',this)">Hard</button>
+    <button class="ft" onclick="filt('detroit',this)">Detroit</button>
+    <button class="ft" onclick="filt('drumless',this)">Drumless</button>
+    <button class="ft" onclick="filt('funk',this)">Funk</button>
+    <button class="ft" onclick="filt('pluggnb',this)">Pluggnb</button>
+    <button class="ft" onclick="filt('bounce',this)">Bounce</button>
+    <button class="ft" onclick="filt('nomelody',this)">No Melody</button>
+    <button class="ft" onclick="filt('drill',this)">Drill</button>
+  </div>
+  <div class="filters-row">
+    <div class="pg-search">
+      <input class="pg-search-input" id="beatSearchTop" type="text" placeholder="Buscar beat pelo nome…" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false"/>
+    </div>
+    <div class="pg-controls">
+      <select class="sort-select" id="beatSort" onchange="sortBeats(this.value)">
+        <option value="padrao">Ordem padrão</option>
+        <option value="aleatorio">Ordem aleatória</option>
+      </select>
+      <button class="sort-select" id="filtAvail" onclick="toggleAvail(this)">Esconder vendidos</button>
+      <button class="sort-select lucky-btn" id="luckyBtn" onclick="feelingLucky()">✦ Estou com sorte</button>
+    </div>
+  </div>
+  </div>
+
+  <div class="pagination-top" id="paginationTop">
+    <div class="pagination-btns">
+      <button class="pg-btn" id="pgPrevTop" onclick="changePage(-1)">←</button>
+      <span class="pg-nums" id="pgNumsTop"></span>
+      <button class="pg-btn" id="pgNextTop" onclick="changePage(1)">→</button>
+      <span class="pagination-info" id="pgInfoTop"></span>
+    </div>
+  </div>
+  <div class="beat-cards" id="beatCards"></div>
+  <div class="pagination" id="pagination">
+    <div class="pg-search">
+      <input class="pg-search-input" id="beatSearchBottom" type="text" placeholder="Buscar beat pelo nome…" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false"/>
+    </div>
+    <div class="pagination-btns">
+      <button class="pg-btn" id="pgPrev" onclick="changePage(-1)">←</button>
+      <span class="pg-nums" id="pgNums"></span>
+      <button class="pg-btn" id="pgNext" onclick="changePage(1)">→</button>
+      <span class="pagination-info" id="pgInfo"></span>
+    </div>
+  </div>
+
 </section>
 
 <div class="hr"></div>
@@ -1110,9 +1445,9 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
     </div>
 
     <div class="pack hot">
-      <span class="off-badge">8% OFF</span><!-- 2 avulsos R$238 → pacote R$219 -->
+      <!-- 2 avulsos R$238 → pacote R$219 -->
       <div class="pack-tag">Mais Popular</div>
-      <div class="pack-n">2 Beats</div>
+      <div class="pack-n">2 Beats <span class="disc-pill">8% OFF</span></div>
       <div class="pack-sep"></div>
       <ul class="pack-ul">
         <li>2 beats do catálogo à sua escolha</li>
@@ -1126,9 +1461,9 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
     </div>
 
     <div class="pack">
-      <span class="off-badge">16% OFF</span><!-- 3 avulsos R$357 → pacote R$299 -->
+      <!-- 3 avulsos R$357 → pacote R$299 -->
       <div class="pack-tag">Melhor Custo</div>
-      <div class="pack-n">3 Beats</div>
+      <div class="pack-n">3 Beats <span class="disc-pill">16% OFF</span></div>
       <div class="pack-sep"></div>
       <ul class="pack-ul">
         <li>3 beats do catálogo à sua escolha</li>
@@ -1145,108 +1480,21 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 
 <div class="hr"></div>
 
-<!-- ═══ BEATS DISPONÍVEIS (merged) ══════════════════ -->
-<section id="beats" class="s s-earth">
-
-  <svg class="snail-svg tl" width="110" height="70" viewBox="0 0 110 70" stroke="#7a5c30" stroke-width="1">
-    <ellipse cx="68" cy="42" rx="32" ry="24"/>
-    <ellipse cx="68" cy="42" rx="20" ry="15"/>
-    <ellipse cx="68" cy="42" rx="8" ry="6"/>
-    <path d="M36 42 Q20 42 12 33 Q5 23 16 18 Q28 12 37 23" fill="none"/>
-    <line x1="37" y1="11" x2="35" y2="5"/><line x1="44" y1="10" x2="44" y2="3"/>
-  </svg>
-
-  <div class="s-head">
-    <span class="s-kicker">Catálogo · pronta entrega</span>
-    <h2 class="s-title">Catálogo de <span class="r">beats</span></h2>
-    <p class="s-sub">
-      Cada beat é vendido com <span class="lic-wrap"><button class="lic-toggle" onclick="toggleLic(event)">licença exclusiva&nbsp;ⓘ</button><span class="lic-box" id="licBox">
-        O beat é seu, e só seu — nunca é revendido pra outra pessoa.
-        Você recebe <strong>contrato digital no seu nome</strong>, com <strong>uso comercial liberado</strong>: streaming, shows, clipes e o que mais vier.
-      </span></span> — uma única venda por título, removido do catálogo após a compra.
-      Todos os beats são entregues em <strong>MP3 320kbps + WAV</strong>.
-    </p>
-  </div>
-
-  <div class="ftabs">
-    <button class="ft on" onclick="filt('todos',this)">Todos</button>
-    <button class="ft" onclick="filt('trap',this)">Trap</button>
-    <button class="ft" onclick="filt('boombap',this)">Boom Bap</button>
-    <button class="ft" onclick="filt('plug',this)">Plug</button>
-    <button class="ft" onclick="filt('hoodtrap',this)">Hood Trap</button>
-    <button class="ft" onclick="filt('experimental',this)">Experimental</button>
-    <button class="ft" onclick="filt('hard',this)">Hard</button>
-    <button class="ft" onclick="filt('detroit',this)">Detroit</button>
-    <button class="ft" onclick="filt('drumless',this)">Drumless</button>
-    <button class="ft" onclick="filt('funk',this)">Funk</button>
-    <button class="ft" onclick="filt('pluggnb',this)">Pluggnb</button>
-    <button class="ft" onclick="filt('bounce',this)">Bounce</button>
-    <button class="ft" onclick="filt('nomelody',this)">No Melody</button>
-    <button class="ft" onclick="filt('drill',this)">Drill</button>
-  </div>
-
-  <!-- UNIFIED BEAT CARDS: SC player + tags + buy -->
-  <div class="pagination-top" id="paginationTop">
-    <div class="pg-search">
-      <input class="pg-search-input" id="beatSearchTop" type="text" placeholder="Buscar beat pelo nome…" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false"/>
-    </div>
-    <div class="pg-controls">
-      <select class="sort-select" id="beatSort" onchange="sortBeats(this.value)">
-        <option value="padrao">Ordem padrão</option>
-        <option value="aleatorio">Ordem aleatória</option>
-      </select>
-      <button class="sort-select" id="filtAvail" onclick="toggleAvail(this)">Esconder vendidos</button>
-      <button class="sort-select lucky-btn" id="luckyBtn" onclick="feelingLucky()">✦ Estou com sorte</button>
-    </div>
-    <div class="pagination-btns">
-      <button class="pg-btn" id="pgPrevTop" onclick="changePage(-1)">←</button>
-      <span class="pg-nums" id="pgNumsTop"></span>
-      <button class="pg-btn" id="pgNextTop" onclick="changePage(1)">→</button>
-      <span class="pagination-info" id="pgInfoTop"></span>
-    </div>
-  </div>
-  <div class="beat-cards" id="beatCards"></div>
-  <div class="pagination" id="pagination">
-    <div class="pg-search">
-      <input class="pg-search-input" id="beatSearchBottom" type="text" placeholder="Buscar beat pelo nome…" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false"/>
-    </div>
-    <div class="pagination-btns">
-      <button class="pg-btn" id="pgPrev" onclick="changePage(-1)">←</button>
-      <span class="pg-nums" id="pgNums"></span>
-      <button class="pg-btn" id="pgNext" onclick="changePage(1)">→</button>
-      <span class="pagination-info" id="pgInfo"></span>
-    </div>
-  </div>
-
-</section>
-
-<div class="hr"></div>
-
-<!-- ═══ SNAIL INTERLUDE ═════════════════════════════ -->
-<div class="snail-break">
-  <img loading="lazy" width="400" height="400" class="snail-break-img" src="selo-sepia.svg" alt=""/>
-  <div class="snail-break-type" style="font-size:clamp(1.4rem,4vw,4.5rem);letter-spacing:.04em;">
-    <span>ATENÇÃO! VOCÊ ESTÁ</span>
-    <span>OUVINDO UM BEAT DO</span>
-    <span class="hl">RIDEBLAN</span>
-  </div>
-</div>
-
-<div class="hr"></div>
+<!-- interlude escondido a pedido -->
 
 <!-- ═══ SERVICES ════════════════════════════════════ -->
 <section id="services" class="s s-earth">
   <div class="s-head">
     <span class="s-kicker">Serviços · encomenda</span>
-    <h2 class="s-title">Do beat <span class="r">ao lançamento</span></h2>
-    <p class="s-sub">Finalização profissional para artistas independentes: do vocal bruto à faixa pronta pra distribuir.</p>
+    <h2 class="s-title">Produção <span class="r">completa</span></h2>
+    <p class="s-sub">Do beat ao lançamento. Finalização profissional para artistas independentes.</p>
   </div>
 
   <div class="svcs">
     <!-- 01 Beat Personalizado — DESTAQUE (fundo ember) -->
     <div class="svc rv" style="background:var(--earth);border-top:2px solid var(--fire);">
       <div class="svc-n" style="color:var(--ember);">01</div>
-      <div class="svc-name" style="color:var(--cream);">Beat Personalizado <span style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.55rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--fire);margin-left:.5rem;vertical-align:middle;">● Mais pedido</span></div>
+      <div class="svc-name" style="color:var(--cream);">Beat Personalizado <span class="svc-flag svc-flag-fire">Mais pedido</span></div>
       <p class="svc-desc">Produção sob encomenda com base na referência de sua escolha. Produção do zero.</p>
       <div class="svc-price" style="margin-bottom:1.2rem;color:var(--fire);">R$ 149 / beat</div>
       <button class="btn btn-fire" style="width:100%;justify-content:center;font-size:.78rem;" onclick="addSvc('Beat Personalizado',149)">+ Carrinho</button>
@@ -1272,13 +1520,55 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 
     <!-- 04 Mix + Master — DESTAQUE (fundo amber sutil) -->
     <div class="svc rv" style="background:var(--earth);border-top:2px solid var(--amber);position:relative;">
-      <span class="off-badge">13% OFF</span><!-- Mix R$149 + Master R$79 = R$228 → combo R$199 -->
+      <!-- Mix R$149 + Master R$79 = R$228 → combo R$199 -->
       <div class="svc-n" style="color:var(--amber);">04</div>
-      <div class="svc-name" style="color:var(--cream);">Mix + Master <span style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.55rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);margin-left:.5rem;vertical-align:middle;">● Mais popular</span></div>
+      <div class="svc-name" style="color:var(--cream);">Mix + Master <span class="disc-pill">13% OFF</span> <span class="svc-flag svc-flag-amber">Mais popular</span></div>
       <p class="svc-desc">Pacote completo: mixagem e masterização.<br/>Do vocal bruto à faixa finalizada e pronta para lançar.</p>
       <div class="svc-price" style="margin-bottom:1.2rem;color:var(--amber);">R$ 199 / faixa</div>
       <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:.8rem;border-color:var(--amber);color:var(--amber);" onmouseover="this.style.background='var(--amber)';this.style.color='var(--black)'" onmouseout="this.style.background='';this.style.color='var(--amber)'" onclick="addSvc('Mix + Master',199)">+ Carrinho</button>
     </div>
+  </div>
+</section>
+
+<div class="hr"></div>
+
+<!-- ═══ NO ESTÚDIO (placeholder: trocar por fotos/quote reais) ══ -->
+<section id="estudio" class="s s-earth">
+  <div class="s-head">
+    <span class="s-kicker">Sobre nós</span>
+    <h2 class="s-title">Por dentro do <span class="r">estúdio</span></h2>
+    <p class="s-sub">Desde 2018 no corre, fazendo a cena girar e deixando rastros.</p>
+  </div>
+  <div class="studio-carousel">
+    <button class="studio-nav prev" type="button" onclick="studioScroll(-1)" aria-label="Anterior">‹</button>
+  <div class="studio-strip">
+    <figure class="studio-ph sp-1" tabindex="0" role="button" aria-label="Ampliar foto do estúdio" onclick="openLB('img','assets/studio-hero.jpg')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLB('img','assets/studio-hero.jpg');}">
+      <img src="assets/studio-hero.jpg" alt="rideblan no estúdio, produzindo no FL Studio" loading="lazy">
+      <figcaption>Onde tudo acontece</figcaption>
+    </figure>
+    <figure class="studio-ph studio-vid sp-2" tabindex="0" role="button" aria-label="Assistir retorno do Fab" onclick="openLB('video-audio','assets/depo-fab.mp4')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLB('video-audio','assets/depo-fab.mp4');}">
+      <div class="vid-thumb">
+        <img src="assets/depo-fab-poster.jpg" alt="Retorno do Fab pelo WhatsApp" loading="lazy">
+        <span class="play-badge" aria-hidden="true">▶</span>
+      </div>
+      <figcaption>Colaboração fatal</figcaption>
+    </figure>
+    <figure class="studio-ph sp-3" tabindex="0" role="button" aria-label="Ampliar direct do Candy" onclick="openLB('img','assets/depo-candy.jpg')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLB('img','assets/depo-candy.jpg');}">
+      <img src="assets/depo-candy.jpg" alt="Depoimento de Candyboi sobre a mixagem" loading="lazy">
+      <figcaption>Parcerias de destaque</figcaption>
+    </figure>
+    <figure class="studio-ph sp-4" tabindex="0" role="button" aria-label="Ampliar sessão ao vivo" onclick="openLB('video-loop','assets/sessao.mp4')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLB('video-loop','assets/sessao.mp4');}">
+      <video autoplay loop muted playsinline preload="metadata" poster="assets/sessao-poster.jpg">
+        <source src="assets/sessao.mp4" type="video/mp4">
+      </video>
+      <figcaption>Sessão de studio</figcaption>
+    </figure>
+  </div>
+    <button class="studio-nav next" type="button" onclick="studioScroll(1)" aria-label="Próxima">›</button>
+  </div>
+  <div class="testi">
+    <p class="testi-q">"Rideblan, que isso? Mão de ouro pra fazer esse instrumental incrível."</p>
+    <p class="testi-who">@sxnxstro</p>
   </div>
 </section>
 
@@ -1341,10 +1631,32 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 
 <!-- FOOTER -->
 <footer>
-  <img loading="lazy" width="400" height="400" src="selo-creme.svg" alt="Caramujo Records"/>
+  <img loading="lazy" width="400" height="400" src="assets/brand/selo-creme.svg" alt="Caramujo Records"/>
   <p>© 2026 Caramujo Records — São Carlos, SP</p>
   <p>@rideblan33 · Todos os direitos reservados</p>
 </footer>
+
+<!-- ═══ NOVO: BARRA TOCANDO AGORA ═══ -->
+<div class="np-bar" id="npBar" data-bid="">
+  <div class="np-seek" id="npSeek" role="slider" aria-label="Avançar ou voltar na faixa" aria-valuemin="0" aria-valuemax="100" tabindex="0"><div class="np-seek-fill" id="npSeekFill"></div><div class="np-seek-knob" id="npSeekKnob"></div></div>
+  <div class="np-row">
+    <div class="np-ctls">
+    <button class="np-ctl" id="npPrev" onclick="npPrev()" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M7 6h2v12H7z"/><path d="M20 6v12l-9-6z"/></svg></button>
+    <button class="np-ctl np-play is-playing" id="npPlay" onclick="npToggle()" aria-label="Play/pause"><svg class="ic-play" viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M7 5v14l12-7z"/></svg><svg class="ic-pause" viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M7 5h3.2v14H7zM13.8 5H17v14h-3.2z"/></svg></button>
+    <button class="np-ctl" id="npNext" onclick="npNext()" aria-label="Próxima"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M15 6h2v12h-2z"/><path d="M4 6l9 6-9 6z"/></svg></button>
+    <button class="np-ctl" id="npShuffle" onclick="feelingLucky()" aria-label="Faixa aleatória"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg></button>
+  </div>
+  <div class="np-info">
+    <div class="np-name" id="npName">—</div>
+    <div class="np-meta" id="npMeta"></div>
+  </div>
+    <div class="np-vol-wrap" id="npVolWrap">
+      <button class="np-vol-btn" id="npVolBtn" type="button" onclick="npVolToggle(event)" aria-label="Volume"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16.5 12a3.5 3.5 0 0 0-2-3.15v6.3A3.5 3.5 0 0 0 16.5 12z"/></svg></button>
+      <div class="np-vol-pop"><input type="range" id="npVol" class="np-vol-slider" min="0" max="100" value="100" step="1" aria-label="Volume" oninput="npSetVolume(this.value)"></div>
+    </div>
+    <div class="np-time" id="npTime">0:00 / 0:00</div>
+  </div>
+</div>
 
 <!-- ═══ CART ═════════════════════════════════════════ -->
 <button class="cart-btn" id="cartBtn" onclick="toggleCart()" aria-label="Abrir carrinho">
@@ -1445,7 +1757,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
           </span>
           <span class="mp-terms-text">
             Li e concordo com os
-            <a href="/termos-de-licenca.pdf" target="_blank" class="mp-terms-link">Termos de Licença da Caramujo Records</a>.
+            <a href="/assets/termos-de-licenca.pdf" target="_blank" class="mp-terms-link">Termos de Licença da Caramujo Records</a>.
             Estou ciente de que este aceite tem validade jurídica.
           </span>
         </label>
@@ -1953,7 +2265,7 @@ function bindPlayers(){
   const frames=[...document.querySelectorAll('#beatCards iframe')];
   const widgets=frames.map(f=>SC.Widget(f));
   widgets.forEach((w,i)=>{
-    w.bind(SC.Widget.Events.PLAY,()=>{widgets.forEach((o,j)=>{if(j!==i)o.pause();});});
+    w.bind(SC.Widget.Events.PLAY,()=>{widgets.forEach((o,j)=>{if(j!==i)o.pause();});if(window.__heroWidget){try{window.__heroWidget.pause();}catch(_){}}if(window.npSet){window.npSet(w,frames[i].dataset.bid);}});
     w.bind(SC.Widget.Events.FINISH,()=>{
       const n=widgets[i+1];
       if(n){
@@ -2871,6 +3183,148 @@ const ro=new IntersectionObserver(entries=>{
 document.querySelectorAll('.rv').forEach(el=>ro.observe(el));
 renderCards();
 setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200);
+</script>
+<script>
+(function(){
+  const FEATURED_BEAT_ID=116; /* troca só este id pra mudar o beat em destaque */
+  function fmt(ms){ms=ms||0;if(ms<0)ms=0;var s=Math.floor(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+  function frameList(){return [].slice.call(document.querySelectorAll('#beatCards iframe'));}
+  window.npShow=function(name,meta,bid){var bar=document.getElementById('npBar');if(!bar)return;document.getElementById('npName').textContent=name;document.getElementById('npMeta').textContent=meta;bar.dataset.bid=(bid==null?'':String(bid));bar.classList.add('on');};
+  window.npFromBid=function(bid){try{var b=BEATS.find(function(x){return String(x.id)===String(bid);});if(!b)return;var gl=(typeof GENRE_LABELS!=='undefined'&&GENRE_LABELS[b.genre])||b.genre;window.npShow(b.name,gl+' · '+b.bpm+' BPM · '+b.key,b.id);}catch(_){}};
+  window.npBindProgress=function(w){if(w.__npBound)return;w.__npBound=true;w.bind(SC.Widget.Events.PLAY_PROGRESS,function(e){if(window.__npCurrent&&window.__npCurrent.widget!==w)return;if(!window.__npSeeking){var pct=Math.max(0,Math.min(100,(e.relativePosition||0)*100));var f=document.getElementById('npSeekFill');if(f)f.style.width=pct+'%';var k=document.getElementById('npSeekKnob');if(k)k.style.left=pct+'%';}var t=document.getElementById('npTime');if(t)w.getDuration(function(d){t.textContent=fmt(e.currentPosition)+' / '+fmt(d);});});};
+  function npMark(p){var b=document.getElementById('npPlay');if(b)b.classList.toggle('is-playing',p);}
+  window.__npCurrent={widget:null,bid:null};
+  if(typeof window.__npVol!=='number')window.__npVol=100;
+  window.npSetVolume=function(v){v=Math.max(0,Math.min(100,Math.round(Number(v)||0)));window.__npVol=v;var c=window.__npCurrent;if(c&&c.widget){try{c.widget.setVolume(v);}catch(_){}}var s=document.getElementById('npVol');if(s&&String(s.value)!==String(v))s.value=v;};
+  window.npSet=function(w,bid){window.__npCurrent={widget:w,bid:bid};npFromBid(bid);npBindProgress(w);npMark(true);try{w.setVolume(window.__npVol);}catch(_){}if(!w.__npPause){w.__npPause=true;w.bind(SC.Widget.Events.PAUSE,function(){if(window.__npCurrent.widget===w)npMark(false);});}};
+  window.npToggle=function(){var c=window.__npCurrent;if(!c||!c.widget)return;c.widget.isPaused(function(p){if(p)c.widget.play();else c.widget.pause();});};
+  window.npVolToggle=function(e){var w=document.getElementById('npVolWrap');if(w)w.classList.toggle('open');if(e){e.stopPropagation();}};
+  window.toggleFilters=function(){var p=document.getElementById('filtersPanel'),b=document.getElementById('filtersToggle');if(!p)return;var open=p.classList.toggle('open');if(b)b.setAttribute('aria-expanded',open?'true':'false');};
+  window.studioScroll=function(dir){var st=document.querySelector('.studio-strip');if(!st)return;var it=st.querySelector('.studio-ph');var w=it?it.getBoundingClientRect().width+16:st.clientWidth*0.8;st.scrollBy({left:dir*w,behavior:'smooth'});};
+  (function(){var st=document.querySelector('.studio-strip');if(!st||!('IntersectionObserver'in window))return;var figs=st.querySelectorAll('.studio-ph');if(figs.length<2)return;var first=figs[0],last=figs[figs.length-1];var pv=document.querySelector('.studio-nav.prev'),nx=document.querySelector('.studio-nav.next');var io=new IntersectionObserver(function(ents){ents.forEach(function(en){if(en.target===first&&pv)pv.style.display=en.isIntersecting?'none':'';if(en.target===last&&nx)nx.style.display=en.isIntersecting?'none':'';});},{root:st,threshold:0.6});io.observe(first);io.observe(last);})();
+  document.addEventListener('click',function(e){var w=document.getElementById('npVolWrap');if(w&&!w.contains(e.target))w.classList.remove('open');});
+  (function(){var seek=document.getElementById('npSeek');if(!seek)return;function at(x){var c=window.__npCurrent;if(!c||!c.widget)return;var r=seek.getBoundingClientRect();var f=Math.max(0,Math.min(1,(x-r.left)/r.width));var fl=document.getElementById('npSeekFill');if(fl)fl.style.width=(f*100)+'%';var k=document.getElementById('npSeekKnob');if(k)k.style.left=(f*100)+'%';c.widget.getDuration(function(d){try{c.widget.seekTo(Math.floor(f*d));}catch(_){}});}var drag=false;seek.addEventListener('pointerdown',function(e){drag=true;window.__npSeeking=true;try{seek.setPointerCapture(e.pointerId);}catch(_){}at(e.clientX);e.preventDefault();});seek.addEventListener('pointermove',function(e){if(drag)at(e.clientX);});seek.addEventListener('pointerup',function(e){if(drag){drag=false;window.__npSeeking=false;at(e.clientX);}});seek.addEventListener('pointercancel',function(){drag=false;window.__npSeeking=false;});})();
+  function playFrame(f){if(!f)return;try{var w=SC.Widget(f);if(typeof catalogVisible==='function'&&catalogVisible())f.scrollIntoView({behavior:'smooth',block:'center'});w.play();}catch(_){}}
+  window.npNext=function(){var fs=frameList();if(!fs.length)return;var bid=(window.__npCurrent&&window.__npCurrent.bid);var idx=fs.map(function(f){return String(f.dataset.bid);}).indexOf(String(bid));playFrame(fs[idx+1]||fs[0]);};
+  window.npPrev=function(){var fs=frameList();if(!fs.length)return;var bid=(window.__npCurrent&&window.__npCurrent.bid);var idx=fs.map(function(f){return String(f.dataset.bid);}).indexOf(String(bid));playFrame(idx>0?fs[idx-1]:fs[fs.length-1]);};
+  window.npAddCurrent=function(){var bid=document.getElementById('npBar').dataset.bid;if(bid){try{toggleBeat(Number(bid),false);}catch(_){}}};
+  window.npAddFeatured=function(){try{toggleBeat(FEATURED_BEAT_ID,false);}catch(_){}};
+  window.pauseCatalog=function(){document.querySelectorAll('#beatCards iframe').forEach(function(f){try{SC.Widget(f).pause();}catch(_){}});};
+  function renderFeatured(){try{var b=BEATS.find(function(x){return x.id===FEATURED_BEAT_ID;});if(!b)return;var gl=(typeof GENRE_LABELS!=='undefined'&&GENRE_LABELS[b.genre])||b.genre;var nm=document.getElementById('hwName');if(nm)nm.textContent=b.name;var ch=document.getElementById('hwChips');if(ch)ch.innerHTML='<span class="hw-chip">'+gl+'</span><span class="hw-chip">'+b.bpm+' BPM</span><span class="hw-chip">'+b.key+'</span>';var f=document.getElementById('heroBeatFrame');if(f){f.dataset.bid=b.id;f.src='https://w.soundcloud.com/player/?url='+b.scUrl+'&color=%23A87B4A&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false';}var ad=document.getElementById('hwAdd');if(ad)ad.textContent='Adicionar ao carrinho · R$'+PRICE_BEAT;}catch(_){}}
+  function initHero(){if(!window.SC||!SC.Widget){return setTimeout(initHero,500);}var f=document.getElementById('heroBeatFrame');if(!f||!f.src)return setTimeout(initHero,500);var w=SC.Widget(f);window.__heroWidget=w;w.bind(SC.Widget.Events.READY,function(){w.bind(SC.Widget.Events.PLAY,function(){window.pauseCatalog();window.npSet(w,FEATURED_BEAT_ID);});});}
+  function initStudioVideos(){document.querySelectorAll('#estudio video.has-audio').forEach(function(v){v.addEventListener('play',function(){var c=window.__npCurrent;if(c&&c.widget){c.widget.isPaused(function(p){if(!p){window.__npResume=c.widget;try{c.widget.pause();}catch(_){}}});}});function resume(){if(window.__npResume){try{window.__npResume.play();}catch(_){}window.__npResume=null;}}v.addEventListener('pause',resume);v.addEventListener('ended',resume);});}
+  function boot(){renderFeatured();initStudioVideos();setTimeout(initHero,300);}
+  if(document.readyState!=='loading')boot();else document.addEventListener('DOMContentLoaded',boot);
+})();
+</script>
+<script>
+function toggleMenu(){var b=document.getElementById('navBurger');var l=document.querySelector('.nav-links');if(!b||!l)return;var open=l.classList.toggle('open');b.classList.toggle('open',open);}
+document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener('click',function(){var l=document.querySelector('.nav-links');var b=document.getElementById('navBurger');if(l)l.classList.remove('open');if(b)b.classList.remove('open');});});
+</script>
+<script>
+/* ── DEEP-LINK POR BEAT (#beat=slug) ─────────────────────────────
+   Abre o site direto num beat: acha pelo nome, mostra, rola e toca.
+   Ao tocar qualquer beat, atualiza a URL (link compartilhável). */
+(function(){
+  function slugify(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');}
+  function beatSlug(b){return slugify(b&&b.name);}
+
+  // espera o SoundCloud carregar e o card existir, aí toca (mesma lógica do "Estou com sorte")
+  function deepLinkPlay(id){
+    var start=Date.now();
+    (function wait(){
+      if(window.SC&&window.SC.Widget&&document.querySelector('#beatCards iframe[data-bid="'+id+'"]')){
+        try{ luckyPlayId=id; bindPlayers(); }catch(_){}
+        return;
+      }
+      if(Date.now()-start<15000) setTimeout(wait,250);
+    })();
+  }
+
+  function openBeatFromHash(){
+    var m=(location.hash||'').match(/^#beat=(.+)$/i);
+    if(!m) return;
+    var target=slugify(decodeURIComponent(m[1]));
+    if(!target) return;
+    var b=BEATS.find(function(x){return beatSlug(x)===target;});
+    if(!b) return;
+    // reseta filtros pra garantir que o beat apareça
+    curFilt='todos'; showAvailOnly=false; beatQuery='';
+    var st=document.getElementById('beatSearchTop'); if(st)st.value='';
+    var sb=document.getElementById('beatSearchBottom'); if(sb)sb.value='';
+    document.querySelectorAll('.ft:not(#filtAvail)').forEach(function(x){var oc=x.getAttribute('onclick')||'';x.classList.toggle('on',oc.indexOf("'todos'")>-1);});
+    var fa=document.getElementById('filtAvail'); if(fa){fa.classList.remove('on');fa.textContent='Esconder vendidos';}
+    // acha a página na mesma ordenação do renderCards
+    var src=BEATS.slice();
+    if(typeof sortMode!=='undefined'&&sortMode==='aleatorio'&&typeof shuffleOrder!=='undefined'&&shuffleOrder) src.sort(function(a,c){return shuffleOrder.indexOf(a.id)-shuffleOrder.indexOf(c.id);});
+    var idx=src.findIndex(function(x){return x.id===b.id;});
+    if(idx>=0) curPage=Math.floor(idx/BEATS_PER_PAGE)+1;
+    renderCards();
+    // rola até o card e destaca
+    setTimeout(function(){
+      var f=document.querySelector('#beatCards iframe[data-bid="'+b.id+'"]');
+      var card=f?f.closest('.bcard'):null;
+      if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.classList.add('lucky-hit');setTimeout(function(){card.classList.remove('lucky-hit');},2800);}
+    },220);
+    if(!b.sold) deepLinkPlay(b.id);
+  }
+
+  // ao tocar um beat, grava #beat=slug na URL (sem recarregar nem re-disparar o deep-link)
+  var _npSet=window.npSet;
+  if(typeof _npSet==='function'){
+    window.npSet=function(w,bid){
+      _npSet(w,bid);
+      try{var b=BEATS.find(function(x){return String(x.id)===String(bid);});if(b&&history.replaceState)history.replaceState(null,'','#beat='+beatSlug(b));}catch(_){}
+    };
+  }
+
+  window.addEventListener('hashchange',function(){ if(/^#beat=/i.test(location.hash)) openBeatFromHash(); });
+  if(/^#beat=/i.test(location.hash)){
+    if(document.readyState!=='loading') openBeatFromHash();
+    else document.addEventListener('DOMContentLoaded',openBeatFromHash);
+  }
+})();
+</script>
+
+<!-- ═══ Lightbox (ampliar mídia do estúdio) + FAB Instagram ═══ -->
+<div id="mediaLB" class="lb" role="dialog" aria-modal="true" aria-label="Mídia ampliada" aria-hidden="true">
+  <button class="lb-x" type="button" aria-label="Fechar" onclick="closeLB()">✕</button>
+  <div class="lb-inner" id="lbInner"></div>
+</div>
+<script>
+(function(){
+  window.openLB=function(kind,src){
+    var lb=document.getElementById('mediaLB'), inner=document.getElementById('lbInner');
+    if(!lb||!inner)return;
+    inner.innerHTML='';
+    if(kind==='img'){
+      var im=document.createElement('img'); im.src=src; im.alt=''; inner.appendChild(im);
+    } else {
+      var v=document.createElement('video'); v.src=src; v.setAttribute('playsinline',''); v.playsInline=true; v.controls=true; v.autoplay=true;
+      if(kind==='video-loop'){ v.loop=true; v.muted=true; }
+      else {
+        var c=window.__npCurrent;
+        if(c&&c.widget){ try{ c.widget.isPaused(function(p){ if(!p){ window.__npResume=c.widget; try{c.widget.pause();}catch(_){} } }); }catch(_){} }
+      }
+      inner.appendChild(v);
+      try{ v.play(); }catch(_){}
+    }
+    lb.classList.add('on'); lb.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+  };
+  window.closeLB=function(){
+    var lb=document.getElementById('mediaLB'), inner=document.getElementById('lbInner');
+    if(!lb||!inner)return;
+    var vid=inner.querySelector('video'); if(vid){ try{vid.pause();}catch(_){} }
+    inner.innerHTML='';
+    lb.classList.remove('on'); lb.setAttribute('aria-hidden','true');
+    document.body.style.overflow='';
+    if(window.__npResume){ try{window.__npResume.play();}catch(_){} window.__npResume=null; }
+  };
+  var lb=document.getElementById('mediaLB');
+  if(lb) lb.addEventListener('click',function(e){ if(e.target===lb) window.closeLB(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') window.closeLB(); });
+})();
 </script>
 </body>
 </html>

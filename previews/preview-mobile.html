@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Preview mobile — Caramujo Records</title>
+<style>
+  :root{--bg:#14110d;--panel:#1A1815;--wire:#332c22;--fire:#b98f5e;--cream:#f2ecdf;--read:#b89e72;--dim:#6f6757;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--cream);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;min-height:100vh;}
+  header{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--wire);position:sticky;top:0;background:var(--bg);z-index:2;}
+  .brand{font-size:.7rem;letter-spacing:.28em;text-transform:uppercase;color:var(--fire);}
+  .ctrls{display:flex;gap:6px;flex-wrap:wrap;}
+  button{font:inherit;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:.5rem .8rem;background:transparent;color:var(--read);border:1px solid var(--wire);cursor:pointer;transition:.15s;}
+  button:hover{border-color:var(--fire);color:var(--cream);}
+  button.on{background:var(--fire);color:#14110d;border-color:var(--fire);}
+  .meta{margin-left:auto;font-size:.62rem;letter-spacing:.06em;color:var(--dim);}
+  .stage{display:flex;justify-content:center;padding:28px 16px 60px;}
+  .device{background:#000;border:10px solid #000;border-radius:34px;box-shadow:0 20px 60px rgba(0,0,0,.6);overflow:hidden;transition:width .2s,height .2s;position:relative;}
+  .device::before{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);width:34%;height:16px;background:#000;border-radius:0 0 12px 12px;z-index:2;}
+  iframe{border:0;display:block;width:100%;height:100%;background:#14110d;}
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">// Preview mobile</span>
+  <div class="ctrls" id="sizes"></div>
+  <button id="rotate">↻ Girar</button>
+  <span class="meta" id="dims">—</span>
+</header>
+<div class="stage">
+  <div class="device" id="device">
+    <iframe id="frame" src="../index.html" title="Site"></iframe>
+  </div>
+</div>
+<script>
+  var presets=[
+    {n:'iPhone SE',w:375,h:667},
+    {n:'iPhone 14',w:390,h:844},
+    {n:'iPhone 14 Pro Max',w:430,h:932},
+    {n:'Galaxy S',w:360,h:800},
+    {n:'iPad mini',w:768,h:1024}
+  ];
+  var cur=1, landscape=false;
+  var dev=document.getElementById('device'), dims=document.getElementById('dims');
+  function apply(){
+    var p=presets[cur], w=landscape?p.h:p.w, h=landscape?p.w:p.h;
+    // limita a altura pra caber na tela
+    var maxH=window.innerHeight-150;
+    var scale=Math.min(1,maxH/h);
+    dev.style.width=(w)+'px'; dev.style.height=(h)+'px';
+    dev.style.transform='scale('+scale+')'; dev.style.transformOrigin='top center';
+    dims.textContent=p.n+' · '+w+'×'+h+(scale<1?' (zoom '+Math.round(scale*100)+'%)':'');
+  }
+  var box=document.getElementById('sizes');
+  presets.forEach(function(p,i){
+    var b=document.createElement('button'); b.textContent=p.n; if(i===cur)b.className='on';
+    b.onclick=function(){cur=i;[].forEach.call(box.children,function(c){c.classList.remove('on');});b.classList.add('on');apply();};
+    box.appendChild(b);
+  });
+  document.getElementById('rotate').onclick=function(){landscape=!landscape;apply();};
+  window.addEventListener('resize',apply);
+  apply();
+</script>
+</body>
+</html>
