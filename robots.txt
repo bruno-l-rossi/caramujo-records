@@ -1,0 +1,14 @@
+# Caramujo Records: acesso liberado pra busca, agentes e treinamento.
+# Política completa: docs/politica-crawlers-ia.md (pasta local do projeto)
+# Obs 1: enquanto o robots.txt gerenciado do Cloudflare estiver ligado no painel,
+# ele é concatenado antes deste bloco e os Disallow dele continuam valendo.
+# Obs 2: /docs/ e /previews/ não sobem mais no deploy (404); as regras ficam
+# por defesa em profundidade.
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /docs/
+Disallow: /previews/
+Disallow: /mockups-antigos/
+Disallow: /README.md

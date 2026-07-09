@@ -16,13 +16,19 @@ Jornada do site: **hero → pacotes → catálogo de beats → serviços → con
 
 ## Estrutura do Projeto
 
-Arquivos na **raiz** são os que o Cloudflare Pages publica (o site e o que ele referencia). Documentação, previews e material de apoio ficam em subpastas, fora do que vai pro ar.
+O GitHub (e portanto o deploy do Pages, que publica o repositório inteiro) recebe **só o que o site e o backend usam**, mais 3 exceções deliberadas: este `README.md`, o `docs/DESIGN.md` e o `previews/preview-email-entrega.html` (backup do e-mail de entrega, disparo manual). O resto do apoio fica nesta pasta local, segurado pelo `.gitignore`.
+
+**No GitHub/deploy:** `index.html`, `og-image.png`, `_headers`, `robots.txt`, `llms.txt`, `.gitignore`, `assets/` (10 arquivos, todos referenciados pelo site), `functions/` (4 endpoints + `coupons.json`, que a validação de cupom e o webhook leem/gravam via GitHub API), `README.md`, `docs/DESIGN.md` e `previews/preview-email-entrega.html`.
+
+**Só local (apoio):** o resto de `docs/` (análises, política de crawlers, planos, contexto de continuidade), o resto de `previews/` e `mockups-antigos/`.
 
 ```
 /
 ├── index.html                     # Site (HTML + CSS + JS inline) — arquivo único que vai pro ar
 ├── og-image.png                   # Thumbnail de compartilhamento (fica na raiz: URL absoluta + cache das redes)
-├── _headers                       # Headers HTTP do Cloudflare (CSP, segurança)
+├── _headers                       # Headers HTTP do Cloudflare (CSP, segurança, noindex das pastas internas)
+├── robots.txt                     # Crawlers: busca/IA/agentes liberados; /api e pastas internas bloqueados
+├── llms.txt                       # Resumo do estúdio pra agentes de IA (preços, links, contato)
 ├── .gitignore                     # Ignora .DS_Store, .claude/, .obsidian/
 ├── README.md
 │
@@ -51,12 +57,12 @@ Arquivos na **raiz** são os que o Cloudflare Pages publica (o site e o que ele 
 │   ├── preview-compra-confirmada.html # E-mail interno: pagamento aprovado
 │   └── preview-contrato.html
 │
-└── mockups-antigos/               # Referências antigas
-    ├── email-entrega.html         # E-mail de ENTREGA dos arquivos (enviado manualmente — AINDA usado)
+└── mockups-antigos/               # Referências antigas (só local)
+    ├── (o e-mail de entrega virou previews/preview-email-entrega.html — AINDA usado no disparo manual)
     └── email-pedido.html          # Mockup antigo (não disparado por código)
 ```
 
-> **Deploy:** só a raiz vai pro ar (Cloudflare Pages publica a pasta inteira, então `assets/brand/…` e `assets/termos-de-licenca.pdf` funcionam nas URLs). As subpastas `docs/`, `previews/` e `mockups-antigos/` são material de trabalho e não atrapalham o site. A `og-image.png` fica na raiz de propósito (URL absoluta nas meta tags + cache das redes sociais). Os e-mails reais são gerados nos `functions/`, não nos arquivos de `mockups-antigos/`. Pra conferir o layout mobile antes de publicar, abra `previews/preview-mobile.html`.
+> **Deploy:** o Cloudflare Pages publica o repositório inteiro (por isso `assets/brand/…` e `assets/termos-de-licenca.pdf` funcionam nas URLs). O apoio que não sobe passa a responder 404 em produção após o push. As 3 exceções que sobem (README, DESIGN, preview-email-entrega) têm URL pública, cobertas pelo noindex do `_headers` e pelos Disallow do `robots.txt`. A `og-image.png` fica na raiz de propósito (URL absoluta nas meta tags + cache das redes sociais). Os e-mails reais são gerados nos `functions/`, não nos arquivos de `mockups-antigos/`. Pra conferir o layout mobile antes de publicar, abra `previews/preview-mobile.html`.
 
 ### Os 4 e-mails (nomes amigáveis)
 
@@ -65,7 +71,7 @@ Arquivos na **raiz** são os que o Cloudflare Pages publica (o site e o que ele 
 | **Compra recebida** | Dono (@rideblan33) | Compra criada (pode não estar paga, ex.: PIX pendente) | `create-payment.js` |
 | **Compra confirmada** | Dono (@rideblan33) | Pagamento aprovado | `payment-webhook.js` |
 | **Comprador** | Cliente | Logo após finalizar a compra (detalhes + prazos) | `create-payment.js` / `payment-webhook.js` |
-| **Entrega** | Cliente | Envio manual dos arquivos finais | `mockups-antigos/email-entrega.html` |
+| **Entrega** | Cliente | Envio manual dos arquivos finais | `previews/preview-email-entrega.html` |
 
 Os 3 primeiros + o contrato seguem a identidade do site (paleta do `docs/DESIGN.md`). O e-mail do comprador e o de entrega trazem o selo do caramujo (PNG) no canto superior direito.
 
@@ -76,10 +82,12 @@ Os 3 primeiros + o contrato seguem a identidade do site (paleta do `docs/DESIGN.
 ### Hero
 - Prova social: 40+ artistas · 200+ faixas lançadas · 2.500.000+ streams
 - CTAs: "Ouvir o catálogo" (#beats) e "Mix & master" (#services)
+- Beat em destaque com **rodízio semanal automático** (1 por semana, catálogo inteiro, pula vendidos). Pra fixar um beat manualmente: `FEATURED_OVERRIDE_ID` (id do beat) e `FEATURED_OVERRIDE_ATE` ('AAAA-MM-DD', opcional) no index.html — vencido o prazo, o rodízio volta sozinho
 
 ### Catálogo de Beats
 - Listagem paginada (9 por página) com player SoundCloud integrado
 - **Player contínuo / modo rádio:** dar play num beat pausa os demais; quando um beat termina, o próximo toca automaticamente — inclusive virando de página sozinho até o fim do catálogo
+- Adicionar/tirar do carrinho **não interrompe o beat tocando** (os botões dos cards sincronizam sem re-renderizar os players)
 - Filtro por gênero (Trap, Boom Bap, Plug, Hood Trap, Drill, etc.)
 - Ordenação: padrão ou aleatória (reembaralha a cada seleção)
 - Busca por nome — sem distinção de maiúsculas/minúsculas nem de acentos
@@ -223,17 +231,20 @@ Enviados via **[Resend](https://resend.com)**:
 | **Compra recebida** | Produtor | Compra criada (cartão, ou PIX pendente) | Resumo da venda + contrato em anexo |
 | **Compra confirmada** | Produtor | Pagamento aprovado | Resumo da venda + ação necessária |
 | **Comprador** | Comprador | Após finalizar a compra | Confirmação + prazos + contrato em anexo |
-| **Entrega** (manual) | Comprador | Envio dos arquivos finais | Arquivos + mensagem (mockups-antigos/email-entrega.html) |
+| **Entrega** (manual) | Comprador | Envio dos arquivos finais | Arquivos + mensagem (previews/preview-email-entrega.html) |
 
-Os 3 primeiros e o contrato seguem a identidade visual do site (paleta do `docs/DESIGN.md`: fundos terrosos, acento terracota `#b98f5e`, cream/bone no texto). O contrato é mantido em fundo claro pra impressão, com o selo do caramujo no cabeçalho e acento `#8C3B2E`. O e-mail do comprador e o de entrega trazem o selo (PNG) no canto superior direito. Fontes Georgia/Courier por compatibilidade de e-mail. Pra conferir o visual, abra os arquivos em `previews/` (e o de entrega em `mockups-antigos/`).
+Os 3 primeiros e o contrato seguem a identidade visual do site (paleta do `docs/DESIGN.md`: fundos terrosos, acento terracota `#b98f5e`, cream/bone no texto). O contrato é mantido em fundo claro pra impressão, com o selo do caramujo no cabeçalho e acento `#8C3B2E`. O e-mail do comprador e o de entrega trazem o selo (PNG) no canto superior direito. Fontes Georgia/Courier por compatibilidade de e-mail. Pra conferir o visual, abra os arquivos em `previews/` (o de entrega é o `preview-email-entrega.html`).
 
 ---
 
-## SEO e Compartilhamento
+## SEO, Crawlers e Compartilhamento
 
 - `<title>` descritivo: "Caramujo Records — Beats exclusivos, mix e master por @rideblan33"
-- **Schema.org (JSON-LD):** o catálogo é injetado como `ItemList` de `Product`, cada um com nome, imagem, descrição, marca e oferta (preço, disponibilidade, política de devolução e entrega) — atende os requisitos de Listagens do Comerciante do Google Search Console
-- Meta tags Open Graph no `<head>` para WhatsApp, Instagram e demais redes
+- Meta description vendedora (preço, serviços, cidade, tamanho do catálogo) — é o texto que aparece no Google e que as IAs leem primeiro
+- **Schema.org (JSON-LD), 2 blocos:** um `ProfessionalService` **estático** no `<head>` (negócio, preços, contato, sameAs — visível pra bots de IA que não executam JS) e o catálogo como `ItemList` de `Product` injetado via JS (Googlebot renderiza; atende as Listagens do Comerciante do GSC)
+- **robots.txt:** busca, agentes e treinamento de IA liberados; `/api/` e pastas internas bloqueados. **Pendência:** desligar o robots.txt gerenciado do Cloudflare no painel, senão ele continua prefixando bloqueios de IA (política completa em `docs/politica-crawlers-ia.md`)
+- **llms.txt** na raiz: resumo do estúdio pra agentes de IA
+- Meta tags Open Graph no `<head>` para WhatsApp, Instagram e demais redes (og-image comprimida: 111 KB)
 
 Após atualizar o `og-image.png`, forçar releitura em
 **[developers.facebook.com/tools/debug](https://developers.facebook.com/tools/debug)** → Scrape Again.

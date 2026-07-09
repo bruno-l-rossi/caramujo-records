@@ -1,3 +1,18 @@
+# Apoio fora do índice dos buscadores. O que não sobe no deploy responde 404;
+# o que sobe como exceção (README, docs/DESIGN.md, previews/preview-email-
+# entrega.html) fica coberto por estas regras.
+/docs/*
+  X-Robots-Tag: noindex
+
+/previews/*
+  X-Robots-Tag: noindex
+
+/mockups-antigos/*
+  X-Robots-Tag: noindex
+
+/README.md
+  X-Robots-Tag: noindex
+
 /*
   X-Frame-Options: SAMEORIGIN
   X-Content-Type-Options: nosniff

@@ -4,10 +4,10 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Caramujo Records — Beats exclusivos, mix e master por @rideblan33</title>
-<meta name="description" content="Estúdio popular e independente. Idealizado por @rideblan33. Todos os direitos reservados."/>
+<meta name="description" content="Beats exclusivos a partir de R$119, mixagem e masterização por @rideblan33. Estúdio de rap/hip hop popular e independente em São Carlos, SP. Mais de 100 beats no catálogo."/>
 <meta name="robots" content="index, follow"/>
 <meta property="og:title" content="Caramujo Records"/>
-<meta property="og:description" content="Estúdio popular e independente. Idealizado por @rideblan33. Todos os direitos reservados."/>
+<meta property="og:description" content="Beats exclusivos a partir de R$119, mixagem e masterização por @rideblan33. Estúdio de rap/hip hop popular e independente em São Carlos, SP. Mais de 100 beats no catálogo."/>
 <meta property="og:image" content="https://caramujorecords.com.br/og-image.png"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
@@ -16,7 +16,7 @@
 <meta property="og:site_name" content="Caramujo Records"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="Caramujo Records"/>
-<meta name="twitter:description" content="Estúdio popular e independente. Idealizado por @rideblan33. Todos os direitos reservados."/>
+<meta name="twitter:description" content="Beats exclusivos a partir de R$119, mixagem e masterização por @rideblan33. Estúdio de rap/hip hop popular e independente em São Carlos, SP. Mais de 100 beats no catálogo."/>
 <meta name="twitter:image" content="https://caramujorecords.com.br/og-image.png"/>
 <meta name="theme-color" content="#050403"/>
 <link rel="icon" type="image/svg+xml" href="assets/brand/selo-creme.svg"/>
@@ -1234,6 +1234,9 @@ html,body{overflow-x:hidden;}
 </script>
 
 <link rel="canonical" href="https://caramujorecords.com.br"/>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"ProfessionalService","name":"Caramujo Records","url":"https://caramujorecords.com.br","logo":"https://caramujorecords.com.br/assets/brand/Caramujo_Records.png","image":"https://caramujorecords.com.br/og-image.png","description":"Estúdio de rap/hip hop popular e independente. Beats exclusivos, mixagem e masterização por @rideblan33. São Carlos, SP, desde 2018.","email":"contato@caramujorecords.com.br","foundingDate":"2018","founder":{"@type":"Person","name":"rideblan","alternateName":"@rideblan33"},"address":{"@type":"PostalAddress","addressLocality":"São Carlos","addressRegion":"SP","addressCountry":"BR"},"sameAs":["https://soundcloud.com/rideblan33","https://www.instagram.com/rideblan33"],"priceRange":"R$79-R$299","makesOffer":[{"@type":"Offer","priceCurrency":"BRL","price":"119","itemOffered":{"@type":"Service","name":"Beat exclusivo do catálogo","description":"Licença exclusiva, MP3 320kbps + WAV, contrato digital. O beat sai do catálogo após a venda."}},{"@type":"Offer","priceCurrency":"BRL","price":"219","itemOffered":{"@type":"Service","name":"Pacote 2 beats"}},{"@type":"Offer","priceCurrency":"BRL","price":"299","itemOffered":{"@type":"Service","name":"Pacote 3 beats"}},{"@type":"Offer","priceCurrency":"BRL","price":"149","itemOffered":{"@type":"Service","name":"Beat personalizado"}},{"@type":"Offer","priceCurrency":"BRL","price":"149","itemOffered":{"@type":"Service","name":"Mixagem"}},{"@type":"Offer","priceCurrency":"BRL","price":"79","itemOffered":{"@type":"Service","name":"Masterização"}},{"@type":"Offer","priceCurrency":"BRL","price":"199","itemOffered":{"@type":"Service","name":"Mix + Master"}}]}
+</script>
 <link rel="icon" type="image/png" href="/assets/brand/Caramujo_Records.png"/>
 </head>
 <body>
@@ -2248,6 +2251,18 @@ function gotoPage(p){
   document.getElementById('beats').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
+// Sincroniza os botões dos cards sem re-render: adicionar/tirar do carrinho
+// não recria os iframes, então o beat que estiver tocando segue tocando.
+function syncBeatButtons(){
+  document.querySelectorAll('#beatCards .bbtn-beat').forEach(btn=>{
+    const m=(btn.id||'').match(/^bb(\d+)$/); if(!m) return;
+    const id=Number(m[1]);
+    const inBeat=cart.some(c=>c.beatId===id&&c.stems===false);
+    btn.classList.toggle('on',inBeat);
+    btn.innerHTML=`<span class="chk">${inBeat?'✓':''}</span> ${inBeat?'No carrinho':'Adicionar ao carrinho'} &nbsp;·&nbsp; R$${PRICE_BEAT}`;
+  });
+}
+
 // Player contínuo: pausa os outros ao dar play; ao terminar, toca o próximo.
 // No fim da página, avança pra próxima e segue tocando (modo rádio).
 // O scroll automático só acontece se o catálogo estiver visível: se o usuário
@@ -2399,11 +2414,11 @@ function toggleBeat(beatId,stems){
     const otherIdx=cart.findIndex(c=>c.beatId===beatId&&c.stems!==stems);
     if(otherIdx!==-1) cart.splice(otherIdx,1);
     cart.push({id:Date.now(),beatId:beat.id,name:stems?`${beat.name} + Stems`:beat.name,price:stems?PRICE_STEMS:PRICE_BEAT,type:'Beat',stems});
-    updateCart(); renderCards();
+    updateCart(); syncBeatButtons();
     confirmAdd(`"${beat.name}"`);
   } else {
     cart.splice(existing,1);
-    updateCart(); renderCards();
+    updateCart(); syncBeatButtons();
   }
   const cb=document.querySelector('.cart-btn');
   cb.style.transform='scale(1.07)';setTimeout(()=>{cb.style.transform='';},200);
@@ -3186,7 +3201,25 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
 </script>
 <script>
 (function(){
-  const FEATURED_BEAT_ID=116; /* troca só este id pra mudar o beat em destaque */
+  /* ── BEAT EM DESTAQUE ─────────────────────────────────────────────
+     Rodízio automático: 1 beat por semana, do catálogo inteiro (pula vendidos).
+     Destaque manual: preencha FEATURED_OVERRIDE_ID com o id do beat (procure
+     o nome no array BEATS) e, se quiser prazo, FEATURED_OVERRIDE_ATE com
+     'AAAA-MM-DD' (vale até o fim desse dia). Vencido o prazo, com o campo
+     vazio (null) ou com o beat vendido, o rodízio volta sozinho. */
+  const FEATURED_OVERRIDE_ID=null;
+  const FEATURED_OVERRIDE_ATE='';
+  const FEATURED_BEAT_ID=(function(){
+    if(FEATURED_OVERRIDE_ID){
+      var ob=BEATS.find(function(x){return x.id===FEATURED_OVERRIDE_ID;});
+      var noPrazo=!FEATURED_OVERRIDE_ATE||new Date()<=new Date(FEATURED_OVERRIDE_ATE+'T23:59:59');
+      if(ob&&!ob.sold&&noPrazo) return FEATURED_OVERRIDE_ID;
+    }
+    var pool=BEATS.filter(function(b){return !b.sold;}).map(function(b){return b.id;});
+    if(!pool.length) pool=[BEATS[0].id];
+    var wk=Math.floor(Date.now()/6048e5); // nº da semana; troca 1x por semana
+    return pool[wk%pool.length];
+  })();
   function fmt(ms){ms=ms||0;if(ms<0)ms=0;var s=Math.floor(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
   function frameList(){return [].slice.call(document.querySelectorAll('#beatCards iframe'));}
   window.npShow=function(name,meta,bid){var bar=document.getElementById('npBar');if(!bar)return;document.getElementById('npName').textContent=name;document.getElementById('npMeta').textContent=meta;bar.dataset.bid=(bid==null?'':String(bid));bar.classList.add('on');};
