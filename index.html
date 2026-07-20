@@ -1976,6 +1976,19 @@ document.addEventListener('mousemove',e=>{
 
 /* beats data */
 const BEATS=[
+  {id:122, name:'ARREPIO',  bpm:125,  key:'Gbm',  genre:'experimental',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/arrepio-1'},
+  {id:123, name:'LEGO',  bpm:135,  key:'Gm',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/lego-2'},
+  {id:124, name:'FUNDO DO FUNDO',  bpm:152,  key:'Dm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/fundo-do-fundo-4'},
+  {id:125, name:'ONÇA LIMPA',  bpm:128,  key:'Bm',  genre:'funk',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/onca-limpa-5'},
+  {id:126, name:'BLUES',  bpm:120,  key:'Dbm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/blues-6'},
+  {id:127, name:'PABLO FREESTYLE 2',  bpm:144,  key:'Gbm',  genre:'trap',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/pablo-freestyle-2-7'},
+  {id:128, name:'VAI NA FÉ',  bpm:162,  key:'Bm',  genre:'funk',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/vai-na-fe-8'},
+  {id:129, name:'TIRO',  bpm:192,  key:'Dbm',  genre:'detroit',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/tiro-9'},
+  {id:130, name:'SCOOBY DOO',  bpm:130,  key:'Dm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/scooby-doo-10'},
+  {id:131, name:'CAIXA',  bpm:120,  key:'Gbm',  genre:'nomelody',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/caixa-11'},
+  {id:132, name:'GRUTA',  bpm:110,  key:'Dbm',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/gruta-12'},
+  {id:133, name:'DÍGITOS',  bpm:132,  key:'Abmaj',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/digitos-13'},
+  {id:134, name:'FUGA',  bpm:170,  key:'Dm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/fuga-14'},
   {id:114, name:'NEGO EU SIGO MOVIMENTANDO',  bpm:128,  key:'Emaj',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/nego-eu-sigo-movimentando-1'},
   {id:117, name:'MEC',  bpm:148,  key:'Bm',  genre:'pluggnb',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/mec-2'},
   {id:116, name:'BAZUCA',  bpm:150,  key:'Abm',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/bazuca-3'},
@@ -3207,7 +3220,7 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
      o nome no array BEATS) e, se quiser prazo, FEATURED_OVERRIDE_ATE com
      'AAAA-MM-DD' (vale até o fim desse dia). Vencido o prazo, com o campo
      vazio (null) ou com o beat vendido, o rodízio volta sozinho. */
-  const FEATURED_OVERRIDE_ID=null;
+  const FEATURED_OVERRIDE_ID=123;
   const FEATURED_OVERRIDE_ATE='';
   const FEATURED_BEAT_ID=(function(){
     if(FEATURED_OVERRIDE_ID){
