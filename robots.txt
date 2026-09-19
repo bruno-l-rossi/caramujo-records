@@ -8,6 +8,11 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /catalogo/
+Disallow: /f/
+Disallow: /p/
+Disallow: /dl/
+Disallow: /audio/
 Disallow: /docs/
 Disallow: /previews/
 Disallow: /mockups-antigos/

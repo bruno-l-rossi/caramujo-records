@@ -1,0 +1,37 @@
+name: Catálogo dos artistas
+
+on:
+  workflow_dispatch:
+    inputs:
+      artistas:
+        description: 'Artistas separados por vírgula. Vazio converte todos.'
+        required: false
+        default: ''
+  schedule:
+    # 3h da manhã em São Paulo
+    - cron: '0 6 * * *'
+
+concurrency:
+  group: catalogo
+  cancel-in-progress: false
+
+jobs:
+  converter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Garantir ffmpeg
+        run: ffmpeg -version >/dev/null 2>&1 || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+
+      - name: Converter e entregar
+        env:
+          GDRIVE_SA_JSON: ${{ secrets.GDRIVE_SA_JSON }}
+          INGEST_TOKEN: ${{ secrets.INGEST_TOKEN }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://caramujorecords.com.br' }}
+        run: node scripts/sync.mjs "${{ github.event.inputs.artistas }}"

@@ -7,6 +7,7 @@
 # (backup do e-mail de entrega, disparo manual).
 docs/*
 !docs/DESIGN.md
+!docs/DESIGN-catalogo.md
 previews/*
 !previews/preview-email-entrega.html
 mockups-antigos/
