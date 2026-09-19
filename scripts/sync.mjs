@@ -144,8 +144,8 @@ function add(lista, f, kind, grp, tag) {
 /* ---------- conversão ---------- */
 
 async function converter(faixa, dir) {
-  const bruto = path.join(dir, faixa.id + path.extname(faixa.fileName));
-  const leve = path.join(dir, faixa.id + '.mp3');
+  const bruto = path.join(dir, faixa.id + '.fonte' + (path.extname(faixa.fileName) || '.wav'));
+  const leve = path.join(dir, faixa.id + '.leve.mp3');
 
   const r = await fetch(`https://www.googleapis.com/drive/v3/files/${faixa.id}?alt=media&supportsAllDrives=true`, {
     headers: { authorization: 'Bearer ' + (await gtoken()) }
