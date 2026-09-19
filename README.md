@@ -269,6 +269,79 @@ Após atualizar o `og-image.png`, forçar releitura em
 
 ---
 
+## Catálogo dos artistas
+
+Camada de envio por cima do Google Drive: cada artista tem um link privado
+(`caramujorecords.com.br/[artista]/[codigo]`) que toca os beats e as músicas dele no
+celular, sem conta e sem app. O Drive continua sendo a fonte da verdade; o site nunca
+escreve nada lá.
+
+### Como funciona, de ponta a ponta
+
+```
+Drive (WAV, pastas do rideblan33)
+   │
+   │  GitHub Actions (.github/workflows/catalogo.yml)
+   │  scripts/sync.mjs: lê as pastas, converte o que mudou (ffmpeg, MP3 192k)
+   ▼
+POST /api/ingest   (protegido por INGEST_TOKEN)
+   ├── MP3 vai pro R2 (binding AUDIO), chave mp3/<id do arquivo no Drive>.mp3
+   └── metadados vão pro D1 (binding DB): artists, tracks, links, events
+   │
+   ▼
+/[artista]/[codigo]  →  catalogo/app.html + dados injetados
+/audio/<id>.mp3      →  toca do R2, com Range pra pular trecho
+/dl/<id>?f=mp3|wav   →  MP3 do R2; WAV direto do Drive, se a pasta permitir
+/f/<codigo>          →  link de uma faixa só
+/p/<codigo>          →  link de uma seleção
+```
+
+### As pastas do Drive e o que cada uma vira
+
+| Pasta | Aba | Grupo na lista | Tag |
+|---|---|---|---|
+| `Beats/` | Beats | (topo) | — |
+| `Beats/Já gravados/` | Beats | JÁ GRAVADOS | — |
+| `Sons/` | Músicas | (topo) | mastered |
+| `Sons/Guias/` | Músicas | GUIAS | demo |
+| `Sons/Já lançados/` | Músicas | JÁ LANÇADAS | mastered |
+
+`Shows/`, `Vídeos/` e `Sessão de stu/` são ignoradas. O nome do arquivo vira título, BPM
+e tom (`scripts/parse.mjs`): o sufixo técnico (`(mastered -12 lufs) prod. @rideblan33`) é
+descartado, inclusive truncado. Arquivo fora do padrão aparece com o nome limpo, sem tag.
+
+### Bindings e variáveis
+
+| Nome | Onde | Pra quê |
+|---|---|---|
+| `AUDIO` | Pages → Bindings → R2 | bucket `caramujo-audio`, a prateleira do MP3 |
+| `DB` | Pages → Bindings → D1 | banco `caramujo`, catálogo e atividade |
+| `INGEST_TOKEN` | Pages (secret) e GitHub (secret) | senha entre o conversor e o site |
+| `GDRIVE_SA_JSON` | Pages (secret) e GitHub (secret) | conta de serviço com leitura em `Projetos` |
+
+### Custo e limites
+
+Só o R2 pode virar cobrança. O plano gratuito dá 10 GB; o catálogo inteiro cabe em 3 a 4 GB,
+e `functions/api/ingest.js` recusa faixa nova a partir de 8 GB (`TETO_BYTES`). D1 (5 M de
+linhas lidas por dia) e Workers (100 mil visitas por dia) param quando estouram, sem cobrar.
+Actions é ilimitado em repositório público.
+
+### Rodar a conversão
+
+- Sozinha, toda madrugada às 3h (cron no workflow).
+- Na mão: GitHub → Actions → "Catálogo dos artistas" → Run workflow. O campo aceita nomes
+  separados por vírgula (`nico2b, PUMA`); vazio converte todos.
+
+### Cuidados
+
+- `_routes.json` mantém a home e os assets fora das Functions: menos gasto de cota e o site
+  de vendas continua estático.
+- A pasta `functions/_lib/` começa com `_` de propósito: o Pages não transforma em página.
+- Antes de subir mudança em `functions/`, vale compilar com esbuild; o build do Pages
+  rejeita o deploy inteiro por um erro de sintaxe em um arquivo só.
+
+---
+
 ## Contato
 
 **@rideblan33** · [contato@caramujorecords.com.br](mailto:contato@caramujorecords.com.br) · São Carlos, SP — Desde 2018

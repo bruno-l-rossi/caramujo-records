@@ -1,9 +1,16 @@
 // Monta a página do catálogo: pega o molde em /catalogo/app.html e injeta os dados.
 
-const ESC = { '&': '\\u0026', '<': '\\u003c', '>': '\\u003e', ' ': '\\u2028', ' ': '\\u2029' };
+// JSON que entra dentro de <script> precisa fugir de < > & e dos dois
+// separadores de linha invisíveis do Unicode, senão a página quebra.
+const ESC = { '&': '\\u0026', '<': '\\u003c', '>': '\\u003e' };
+const LS = String.fromCharCode(0x2028);
+const PS = String.fromCharCode(0x2029);
 
 export function dados(obj) {
-  return JSON.stringify(obj).replace(/[&<>  ]/g, (c) => ESC[c]);
+  return JSON.stringify(obj)
+    .replace(/[&<>]/g, (c) => ESC[c])
+    .split(LS).join('\\u2028')
+    .split(PS).join('\\u2029');
 }
 
 export function metas({ titulo, descricao, url, capa }) {
