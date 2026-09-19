@@ -1,6 +1,6 @@
 // Cria o link avulso de uma faixa ou de uma seleção. Vale pra sempre.
 
-import { db, now, code, json } from '../lib/db.js';
+import { db, now, code, json } from '../_lib/db.js';
 
 export async function onRequestPost({ request, env }) {
   let body;

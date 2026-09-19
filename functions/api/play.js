@@ -1,7 +1,7 @@
 // Registra que alguém abriu ou tocou algo. Uma linha por audição.
 // O cliente só chama uma vez por faixa, pra não gastar escrita à toa.
 
-import { db, now, who, json } from '../lib/db.js';
+import { db, now, who, json } from '../_lib/db.js';
 
 export async function onRequestPost({ request, env }) {
   let body;

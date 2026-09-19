@@ -2,7 +2,7 @@
 // diz quais faixas faltam converter, guarda o MP3 no R2 e fecha a sincronia.
 // Protegido pelo token INGEST_TOKEN.
 
-import { db, now, slugify, code, json } from '../lib/db.js';
+import { db, now, slugify, code, json } from '../_lib/db.js';
 
 // Teto de segurança da prateleira. O plano gratuito do R2 vai até 10 GB;
 // paramos em 8 pra nunca virar cobrança. A conta cheia do catálogo dá ~3 GB.

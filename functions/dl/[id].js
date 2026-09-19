@@ -1,8 +1,8 @@
 // Download de uma faixa. MP3 sai da prateleira, WAV sai direto do Drive.
 // Só entrega se a pasta daquela faixa estiver liberada pra baixar.
 
-import { db, now, who } from '../lib/db.js';
-import { driveFile } from '../lib/drive.js';
+import { db, now, who } from '../_lib/db.js';
+import { driveFile } from '../_lib/drive.js';
 
 export async function onRequestGet({ params, request, env }) {
   const id = String(params.id || '');

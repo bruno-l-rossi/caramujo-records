@@ -1,7 +1,7 @@
 // A página do artista: caramujorecords.com.br/nome-do-artista/codigo
 
-import { db } from '../lib/db.js';
-import { pagina, faixa } from '../lib/page.js';
+import { db } from '../_lib/db.js';
+import { pagina, faixa } from '../_lib/page.js';
 
 // caminhos do site que não são artista
 const RESERVADO = new Set(['api', 'audio', 'assets', 'docs', 'previews', 'functions',
