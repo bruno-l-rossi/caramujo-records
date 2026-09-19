@@ -59,7 +59,7 @@ __META__
 
   .art{padding:0;display:flex;justify-content:center}
   .cover{
-    position:relative;width:min(100%,52vh);aspect-ratio:1/1;max-width:100%;
+    position:relative;width:100%;height:min(100vw,42vh);max-width:100%;
     background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;
   }
   .cover .logo{width:62%;aspect-ratio:403/250}
@@ -94,7 +94,7 @@ __META__
     font-size:14px;color:var(--ink-2);cursor:pointer;white-space:nowrap}
   .tabsbar-line{height:1px;background:rgba(255,255,255,.07)}
 
-  .list{padding-top:4px;min-height:120px;padding-bottom:124px}
+  .list{padding-top:4px;min-height:120px;padding-bottom:118px}
   .group{padding:15px 0 3px;font-size:10.5px;font-weight:600;letter-spacing:.2em;color:var(--ink-5)}
   .row{width:100%;display:flex;align-items:center;gap:13px;padding:9px 0;
     background:transparent;border:0;text-align:left;cursor:pointer}
@@ -253,7 +253,7 @@ __META__
       gap:56px;padding:40px 40px;max-width:1500px;margin:0 auto;width:100%}
     .art{flex:0 0 clamp(280px,32vw,420px)}
     .cover{box-shadow:0 30px 80px rgba(0,0,0,.6)}
-    .list{padding-bottom:16px}
+    .list{padding-bottom:16px;min-height:120px}
     .panel{
       flex:0 1 700px;max-height:min(74vh,860px);overflow-y:auto;
       background:var(--panel);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);
@@ -275,7 +275,7 @@ __META__
     .sub{margin-top:4px;font-size:13px}
     .dur{font-size:13px}
     .group{padding:20px 0 6px}
-    .cover{width:100%}
+    .cover{width:100%;height:auto;aspect-ratio:1/1}
     .dock-in{padding:10px 24px 12px}
     .pl-art{width:44px;height:44px}
     .dock-in{padding:12px 24px 14px}

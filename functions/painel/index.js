@@ -67,7 +67,14 @@ const BASE = `
   .so{font-size:12px;color:var(--ink4)}
   h1{margin:22px 0 4px;font-size:34px;font-weight:700;letter-spacing:-.02em}
   .sub{font-size:14px;color:var(--ink4)}
-  .barra{display:flex;gap:10px;margin:18px 0 6px}
+  .barra{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
+  .barra .pill{flex:0 0 auto}
+  @media (max-width:560px){
+    .campo{flex:1 1 100%}
+    .barra .pill{margin-left:auto}
+    h1{font-size:30px}
+    .wrap{padding:0 16px 120px}
+  }
   .campo{flex:1;display:flex;align-items:center;gap:10px;background:var(--campo);
     border:1px solid var(--borda);border-radius:12px;padding:11px 14px}
   .campo input{flex:1;min-width:0;background:transparent;border:0;outline:none;font-size:15px}
@@ -76,10 +83,14 @@ const BASE = `
     border:1px solid var(--borda);background:#181818;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap}
   .pill.solid{background:#fff;color:#000;border-color:#fff}
   .pill:disabled{opacity:.45;cursor:default}
-  .linha{display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid var(--linha);
-    background:transparent;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;cursor:pointer}
-  .nome{font-size:16px;font-weight:600}
-  .meta{margin-top:4px;font-size:12.5px;color:var(--ink3)}
+  .linha{display:flex;align-items:center;gap:14px;padding:14px 0;border:0;min-width:0;
+    background:transparent;width:100%;text-align:left;cursor:pointer}
+  .item{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--linha)}
+  .item .linha{flex:1;min-width:0}
+  .nome{display:block;font-size:16px;font-weight:600;line-height:1.25;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .meta{display:block;margin-top:4px;font-size:12.5px;color:var(--ink3);line-height:1.3;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .copiar{width:42px;height:42px;flex-shrink:0;border-radius:11px;border:1px solid var(--borda);
     background:#141414;display:flex;align-items:center;justify-content:center;cursor:pointer}
   .vazio{padding:40px 0;color:#5a5a5a;font-size:14px}
@@ -88,7 +99,7 @@ const BASE = `
   .card{width:100%;max-width:560px;background:#141414;border:1px solid var(--borda);
     border-radius:20px 20px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom,0px));
     max-height:86vh;overflow-y:auto}
-  .card h2{margin:0 0 3px;font-size:20px;font-weight:700}
+  .card h2{margin:0 0 3px;font-size:20px;font-weight:700;overflow-wrap:anywhere}
   .card .end{font-size:13px;color:var(--ink4);word-break:break-all}
   .bloco{margin-top:20px}
   .rot{font-size:11px;letter-spacing:.2em;color:var(--ink4);margin-bottom:10px}
@@ -171,14 +182,17 @@ function pagina() {
     var m=Math.floor(dias/30);
     return 'aberto há '+m+(m===1?' mês':' meses');
   }
-  function gb(b){return (b/1073741824).toFixed(1).replace('.',',')+' GB'}
+  function gb(b){
+    if(b < 1073741824) return Math.round(b/1048576)+' MB';
+    return (b/1073741824).toFixed(1).replace('.',',')+' GB';
+  }
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]})}
 
   function carregar(){
     fetch('/api/painel?op=artistas').then(function(r){return r.json()}).then(function(j){
       artistas=j.artistas||[];
       $('resumo').textContent = artistas.length+(artistas.length===1?' artista no ar':' artistas no ar')+
-        ' · prateleira '+gb(j.prateleira.usado)+' de '+gb(j.prateleira.teto);
+        ' · prateleira '+gb(j.prateleira.usado)+' de 8 GB';
       desenhar();
     }).catch(function(){ $('lista').innerHTML='<div class="vazio">Não consegui carregar. Recarrega a página.</div>' });
   }
@@ -191,9 +205,9 @@ function pagina() {
     $('lista').innerHTML='';
     alvo.forEach(function(a){
       var row=document.createElement('div');
-      row.style.display='flex';row.style.alignItems='center';row.style.gap='12px';
+      row.className='item';
       var b=document.createElement('button');
-      b.type='button';b.className='linha';b.style.borderBottom='0';
+      b.type='button';b.className='linha';
       b.innerHTML='<span style="flex:1;min-width:0"><span class="nome">'+esc(a.name)+'</span>'+
         '<span class="meta">'+conta(a)+' · '+tempo(a.visto)+'</span></span>';
       b.addEventListener('click',function(){abrir(a)});
@@ -202,7 +216,6 @@ function pagina() {
       c.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b7b7b7" stroke-width="1.7"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a1 1 0 011-1h9"/></svg>';
       c.addEventListener('click',function(e){e.stopPropagation();copiar(a)});
       row.appendChild(b);row.appendChild(c);
-      row.style.borderBottom='1px solid var(--linha)';
       $('lista').appendChild(row);
     });
   }
