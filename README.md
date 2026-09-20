@@ -310,6 +310,14 @@ POST /api/ingest   (protegido por INGEST_TOKEN)
 e tom (`scripts/parse.mjs`): o sufixo técnico (`(mastered -12 lufs) prod. @rideblan33`) é
 descartado, inclusive truncado. Arquivo fora do padrão aparece com o nome limpo, sem tag.
 
+### A capa do catálogo
+
+Qualquer imagem solta na pasta do artista (`Projetos > [artista] > capa.jpg`, o nome não
+importa) vira a capa. Se houver mais de uma, vale a mais recente. O conversor recorta num
+quadrado de 1000×1000 e guarda em `capa/<id do arquivo>.jpg` no R2; a página serve por
+`/capa/<id>`. Sem imagem na pasta, aparece o logo vertical da Caramujo. A mesma arte vira o
+borrão do fundo no computador e a mini-capa do player.
+
 ### Bindings e variáveis
 
 | Nome | Onde | Pra quê |
@@ -328,9 +336,13 @@ Actions é ilimitado em repositório público.
 
 ### Rodar a conversão
 
-- Sozinha, toda madrugada às 3h (cron no workflow).
-- Na mão: GitHub → Actions → "Catálogo dos artistas" → Run workflow. O campo aceita nomes
-  separados por vírgula (`nico2b, PUMA`); vazio converte todos.
+- Sozinha, toda madrugada às 3h (cron no workflow). Pega tudo que mudou no Drive desde a
+  última passada, artista por artista.
+- Na mão, pelo painel: "Converter agora" no artista, ou "Converter tudo". O painel mostra
+  uma barra com o andamento (`job_estado`, `job_total`, `job_feitos` na tabela `artists`,
+  atualizados pelo próprio conversor a cada faixa).
+- Na mão, pelo GitHub: Actions → "Catálogo dos artistas" → Run workflow. O campo aceita
+  nomes separados por vírgula (`nico2b, PUMA`); vazio converte todos.
 
 ### Cuidados
 

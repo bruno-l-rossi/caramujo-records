@@ -22,6 +22,7 @@ const PROJETOS = process.env.PROJETOS_FOLDER_ID || '1wbIR0daNpWvZu5o6NiyrTkEJJkg
 const SITE = (process.env.SITE_URL || 'https://caramujorecords.com.br').replace(/\/$/, '');
 const TOKEN = process.env.INGEST_TOKEN;
 const AUDIO = /\.(wav|aiff?|flac|mp3|m4a)$/i;
+const IMAGEM = /^image\/(jpeg|png|webp|heic|heif)$/i;
 const IGNORAR = new Set(['shows', 'vídeos', 'videos', 'sessão de stu', 'sessao de stu']);
 
 const alvo = (process.argv[2] || '').split(',').map((s) => s.trim()).filter(Boolean);
@@ -104,6 +105,11 @@ async function catalogo(artista) {
   const faixas = [];
   const raiz = await filhos(artista.id);
 
+  // a capa é a imagem mais recente solta na pasta do artista
+  const capa = raiz
+    .filter((f) => IMAGEM.test(f.mimeType || ''))
+    .sort((a, b) => (a.modifiedTime < b.modifiedTime ? 1 : -1))[0] || null;
+
   for (const pasta of raiz) {
     if (pasta.mimeType !== 'application/vnd.google-apps.folder') continue;
     const nome = pasta.name.toLowerCase();
@@ -125,7 +131,7 @@ async function catalogo(artista) {
       }
     }
   }
-  return faixas;
+  return { faixas, capa };
 }
 
 function add(lista, f, kind, grp, tag) {
@@ -166,6 +172,26 @@ async function converter(faixa, dir) {
   return { buf, dur: Number(stdout.trim()) || 0, bytes };
 }
 
+async function capinha(arquivo, dir) {
+  const bruto = path.join(dir, arquivo.id + '.fonte');
+  const quadrado = path.join(dir, arquivo.id + '.capa.jpg');
+
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${arquivo.id}?alt=media&supportsAllDrives=true`, {
+    headers: { authorization: 'Bearer ' + (await gtoken()) }
+  });
+  if (!r.ok) throw new Error('download da capa falhou (' + r.status + ')');
+  await fs.promises.writeFile(bruto, Buffer.from(await r.arrayBuffer()));
+
+  await run('ffmpeg', ['-y', '-loglevel', 'error', '-i', bruto,
+    '-vf', 'scale=1000:1000:force_original_aspect_ratio=increase,crop=1000:1000',
+    '-q:v', '4', quadrado]);
+
+  const buf = await fs.promises.readFile(quadrado);
+  await fs.promises.rm(bruto, { force: true });
+  await fs.promises.rm(quadrado, { force: true });
+  return buf;
+}
+
 /* ---------- conversa com o site ---------- */
 
 async function ingest(op, params, body, binario = false) {
@@ -174,7 +200,7 @@ async function ingest(op, params, body, binario = false) {
     method: 'POST',
     headers: {
       'x-ingest-token': TOKEN,
-      'content-type': binario ? 'audio/mpeg' : 'application/json'
+      'content-type': binario ? (op === 'capa' ? 'image/jpeg' : 'audio/mpeg') : 'application/json'
     },
     body: binario ? body : JSON.stringify(body)
   });
@@ -198,7 +224,7 @@ async function main() {
   console.log(`${artistas.length} pasta(s) de artista`);
 
   for (const artista of artistas) {
-    const faixas = await catalogo(artista);
+    const { faixas, capa } = await catalogo(artista);
     if (!faixas.length) { console.log(`- ${artista.name}: sem faixa, pulei`); continue; }
 
     const p = await ingest('plan', {}, { folderId: artista.id, name: artista.name, tracks: faixas });
@@ -212,6 +238,17 @@ async function main() {
         console.log(`    ok  ${faixa.title}  ${Math.round(dur)}s  ${(bytes / 1048576).toFixed(1)} MB`);
       } catch (e) {
         console.log(`    falhou  ${faixa.title}: ${e.message}`);
+      }
+    }
+
+    if (capa) {
+      const chave = capa.id;
+      try {
+        const buf = await capinha(capa, dir);
+        await ingest('capa', { folderId: artista.id, chave }, buf, true);
+        console.log(`    capa: ${capa.name}`);
+      } catch (e) {
+        console.log(`    capa falhou (${capa.name}): ${e.message}`);
       }
     }
 

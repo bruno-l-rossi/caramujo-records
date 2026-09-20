@@ -19,13 +19,14 @@ export async function onRequest({ request, env }) {
 
   const body = await request.json().catch(() => ({}));
   if (op === 'perm') return perm(d, body);
-  if (op === 'sync') return sync(env, body);
+  if (op === 'sync') return sync(env, d, body);
   return json({ erro: 'op desconhecida' }, 400);
 }
 
 async function artistas(d) {
   const { results } = await d.prepare(
     `SELECT a.id, a.slug, a.name, a.code, a.dl_beats, a.dl_sons, a.synced_at,
+            a.job_estado, a.job_total, a.job_feitos, a.job_at,
             (SELECT COUNT(*) FROM tracks t WHERE t.artist_id = a.id AND t.ready = 1 AND t.kind = 'beat') AS nb,
             (SELECT COUNT(*) FROM tracks t WHERE t.artist_id = a.id AND t.ready = 1 AND t.kind = 'son') AS ns,
             (SELECT MAX(at) FROM events e WHERE e.artist_id = a.id) AS visto
@@ -61,7 +62,7 @@ async function perm(d, body) {
   return json({ ok: true });
 }
 
-async function sync(env, body) {
+async function sync(env, d, body) {
   if (!env.GITHUB_TOKEN) return json({ erro: 'falta a chave do GitHub' }, 500);
 
   const r = await fetch(
@@ -78,7 +79,19 @@ async function sync(env, body) {
     }
   );
 
-  if (r.status === 204) return json({ ok: true });
+  if (r.status === 204) {
+    const marca = new Date().toISOString();
+    if (body.artista) {
+      await d.prepare(
+        "UPDATE artists SET job_estado = 'na fila', job_total = 0, job_feitos = 0, job_at = ? WHERE name = ?"
+      ).bind(marca, String(body.artista)).run();
+    } else {
+      await d.prepare(
+        "UPDATE artists SET job_estado = 'na fila', job_total = 0, job_feitos = 0, job_at = ?"
+      ).bind(marca).run();
+    }
+    return json({ ok: true });
+  }
   if (r.status === 403 || r.status === 404) {
     return json({ erro: 'a chave do GitHub precisa de permissão em Actions' }, 403);
   }

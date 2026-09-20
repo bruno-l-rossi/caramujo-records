@@ -30,7 +30,7 @@ export async function onRequestGet({ params, request, env }) {
 
   const tracks = (results || []).map(faixa);
   const url = new URL(request.url);
-  const capa = artist.cover_key ? `${url.origin}/audio/capa/${artist.cover_key}` : `${url.origin}/og-image.png`;
+  const capa = artist.cover_key ? `${url.origin}/capa/${artist.cover_key}` : `${url.origin}/og-image.png`;
 
   return pagina(request, env, {
     titulo: `${artist.name} · Caramujo Records`,
@@ -39,8 +39,8 @@ export async function onRequestGet({ params, request, env }) {
     capa,
     cat: {
       artist: {
-        id: artist.id, name: artist.name, who: 'rideblan33',
-        cover: artist.cover_key ? `/audio/capa/${artist.cover_key}` : null
+        id: artist.id, name: artist.name, who: '@rideblan33',
+        cover: artist.cover_key ? `/capa/${artist.cover_key}` : null
       },
       code: artist.code,
       owner: false,

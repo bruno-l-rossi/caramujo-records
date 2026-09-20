@@ -26,7 +26,9 @@ export async function onRequestPost(context) {
 
   if (op === 'plan') return plan(d, await request.json());
   if (op === 'track') return track(d, env, url, request);
+  if (op === 'capa') return capa(d, env, url, request);
   if (op === 'done') return done(d, url, await request.json());
+  if (op === 'fila') return fila(d, await request.json());
   return json({ erro: 'op desconhecida' }, 400);
 }
 
@@ -81,6 +83,10 @@ async function plan(d, body) {
 
   if (rows.length) await d.batch(rows);
 
+  await d.prepare(
+    "UPDATE artists SET job_estado = 'convertendo', job_total = ?, job_feitos = 0, job_at = ? WHERE id = ?"
+  ).bind(need.length, stamp, artist.id).run();
+
   const usadoBytes = await usado(d);
   return json({
     artistId: artist.id, slug: artist.slug, code: artist.code, need,
@@ -114,6 +120,11 @@ async function track(d, env, url, request) {
     'UPDATE tracks SET mp3_bytes = ?, dur = ?, ready = 1 WHERE id = ?'
   ).bind(body.byteLength, Math.round(dur), id).run();
 
+  await d.prepare(
+    `UPDATE artists SET job_feitos = job_feitos + 1, job_at = ?
+     WHERE id = (SELECT artist_id FROM tracks WHERE id = ?)`
+  ).bind(now(), id).run();
+
   return json({ ok: true, bytes: body.byteLength });
 }
 
@@ -128,7 +139,9 @@ async function done(d, url, body) {
   if (gone.length) {
     await d.batch(gone.map((id) => d.prepare('DELETE FROM tracks WHERE id = ?').bind(id)));
   }
-  await d.prepare('UPDATE artists SET synced_at = ? WHERE id = ?').bind(now(), artist.id).run();
+  await d.prepare(
+    "UPDATE artists SET synced_at = ?, job_estado = 'pronto', job_at = ? WHERE id = ?"
+  ).bind(now(), now(), artist.id).run();
 
   const count = await d.prepare(
     "SELECT kind, COUNT(*) n FROM tracks WHERE artist_id = ? AND ready = 1 GROUP BY kind"
@@ -140,4 +153,42 @@ async function done(d, url, body) {
     removidas: gone.length,
     prontas: count.results || []
   });
+}
+
+// A capa do catálogo: a imagem que estiver na pasta do artista.
+async function capa(d, env, url, request) {
+  const folderId = url.searchParams.get('folderId');
+  const chave = url.searchParams.get('chave');
+  if (!folderId || !chave) return json({ erro: 'faltou dado' }, 400);
+
+  const artist = await d.prepare('SELECT id, cover_key FROM artists WHERE folder_id = ?').bind(folderId).first();
+  if (!artist) return json({ erro: 'artista nao encontrado' }, 404);
+
+  const body = await request.arrayBuffer();
+  if (!body.byteLength) return json({ erro: 'imagem vazia' }, 400);
+
+  await env.AUDIO.put(`capa/${chave}.jpg`, body, {
+    httpMetadata: { contentType: 'image/jpeg', cacheControl: 'public, max-age=31536000, immutable' }
+  });
+
+  if (artist.cover_key && artist.cover_key !== chave) {
+    await env.AUDIO.delete(`capa/${artist.cover_key}.jpg`).catch(() => {});
+  }
+  await d.prepare('UPDATE artists SET cover_key = ? WHERE id = ?').bind(chave, artist.id).run();
+
+  return json({ ok: true, chave });
+}
+
+// O painel marca o artista como "na fila" assim que manda converter.
+async function fila(d, body) {
+  if (body.artista) {
+    await d.prepare(
+      "UPDATE artists SET job_estado = 'na fila', job_total = 0, job_feitos = 0, job_at = ? WHERE name = ?"
+    ).bind(now(), String(body.artista)).run();
+  } else {
+    await d.prepare(
+      "UPDATE artists SET job_estado = 'na fila', job_total = 0, job_feitos = 0, job_at = ?"
+    ).bind(now()).run();
+  }
+  return json({ ok: true });
 }

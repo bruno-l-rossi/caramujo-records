@@ -11,8 +11,17 @@ const SCHEMA = [
      dl_beats INTEGER NOT NULL DEFAULT 0,
      dl_sons INTEGER NOT NULL DEFAULT 0,
      cover_key TEXT,
-     synced_at TEXT
+     synced_at TEXT,
+     job_estado TEXT,
+     job_total INTEGER NOT NULL DEFAULT 0,
+     job_feitos INTEGER NOT NULL DEFAULT 0,
+     job_at TEXT
    )`,
+  // bancos criados antes da barra de andamento
+  `ALTER TABLE artists ADD COLUMN job_estado TEXT`,
+  `ALTER TABLE artists ADD COLUMN job_total INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE artists ADD COLUMN job_feitos INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE artists ADD COLUMN job_at TEXT`,
   `CREATE TABLE IF NOT EXISTS tracks (
      id TEXT PRIMARY KEY,
      artist_id INTEGER NOT NULL,
@@ -54,7 +63,10 @@ let ready = false;
 export async function db(env) {
   if (!env.DB) throw new Error('D1 nao esta ligado (binding DB)');
   if (!ready) {
-    await env.DB.batch(SCHEMA.map((q) => env.DB.prepare(q)));
+    for (const q of SCHEMA) {
+      try { await env.DB.prepare(q).run(); }
+      catch (e) { if (!/duplicate column/i.test(String(e))) throw e; }
+    }
     ready = true;
   }
   return env.DB;

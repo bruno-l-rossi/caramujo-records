@@ -66,8 +66,8 @@ __META__
 
   .art{padding:0;display:flex;justify-content:center}
   .cover{
-    position:relative;width:100%;height:min(100vw,42vh);max-width:100%;
-    background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;
+    position:relative;width:min(100%,52vh);aspect-ratio:1/1;max-width:100%;
+    background:#000 center/cover no-repeat;display:flex;align-items:center;justify-content:center;overflow:hidden;
   }
   .cover .logo{width:62%;aspect-ratio:403/250}
 
@@ -282,7 +282,7 @@ __META__
     .sub{margin-top:4px;font-size:13px}
     .dur{font-size:13px}
     .group{padding:20px 0 6px}
-    .cover{width:100%;height:auto;aspect-ratio:1/1}
+    .cover{width:100%;aspect-ratio:1/1}
     .dock-in{padding:10px 24px 12px}
     .pl-art{width:44px;height:44px}
     .dock-in{padding:12px 24px 14px}
@@ -322,7 +322,7 @@ __META__
             <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#e6e6e6" stroke-width="1.9" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg>
           </button>
         </div>
-        <div class="who" id="who">rideblan33</div>
+        <div class="who" id="who">@rideblan33</div>
         <div class="count" id="count">—</div>
 
         <div class="searchbox" id="searchbox" hidden>
@@ -429,7 +429,7 @@ __META__
   <div class="single-body">
     <div class="cover" style="width:100%"><span class="logo logo-v" role="img" aria-label="Caramujo Records"></span></div>
     <h2 id="sName">—</h2>
-    <div class="who2" id="sWho">prod. rideblan33</div>
+    <div class="who2" id="sWho">prod. @rideblan33</div>
     <div class="tagline" id="sTag">—</div>
     <div class="single-player">
       <div class="scrub">
@@ -464,7 +464,7 @@ __META__
 <!--DADOS-->
 <script>
 (function(){
-  var CAT = window.__CAT__ || { artist:{ name:'', who:'rideblan33', code:'' }, tracks:[], perm:{}, preview:null };
+  var CAT = window.__CAT__ || { artist:{ name:'', who:'@rideblan33', code:'' }, tracks:[], perm:{}, preview:null };
   var MB = 1048576;
 
   var BEATS = CAT.tracks.filter(function(t){ return t.kind === 'beat' });
@@ -883,18 +883,31 @@ __META__
 
   function inicio(){
     $('nome').textContent=CAT.artist.name||'';
-    $('who').textContent=CAT.artist.who||'rideblan33';
+    $('who').textContent=CAT.artist.who||'@rideblan33';
     $('count').textContent=contagem();
     document.title=(CAT.artist.name||'Catálogo')+' · Caramujo Records';
 
     if(CAT.artist.cover){
+      var arte="url('"+CAT.artist.cover+"')";
       var c=$('capa');
       c.innerHTML='';
-      c.style.backgroundImage="url('"+CAT.artist.cover+"')";
-      c.style.backgroundSize='cover';
-      c.style.backgroundPosition='center';
+      c.style.backgroundImage=arte;
       var bg=document.querySelector('.bg');
-      if(bg){ bg.style.backgroundImage="url('"+CAT.artist.cover+"')"; bg.style.backgroundSize='cover'; bg.style.backgroundPosition='center'; }
+      if(bg){
+        bg.style.backgroundImage=arte;
+        bg.style.backgroundSize='cover';
+        bg.style.backgroundPosition='center';
+        bg.style.filter='blur(60px) saturate(1.1)';
+      }
+      var mini=document.querySelector('.pl-art');
+      if(mini){
+        mini.innerHTML='';
+        mini.style.backgroundImage=arte;
+        mini.style.backgroundSize='cover';
+        mini.style.backgroundPosition='center';
+      }
+      var sc=document.querySelector('#single .cover');
+      if(sc){ sc.innerHTML=''; sc.style.backgroundImage=arte; }
     }
 
     if(!SONS.length){ $('tabSons').hidden=true; }

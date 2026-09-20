@@ -31,11 +31,11 @@ export async function avulso(kind, { params, request, env }) {
       ? `${tracks[0].title}, produzido pelo rideblan33. Toca direto, sem baixar nada.`
       : `${tracks.length} faixas de ${artist.name} com o rideblan33.`,
     url: url.origin + url.pathname,
-    capa: artist.cover_key ? `${url.origin}/audio/capa/${artist.cover_key}` : `${url.origin}/og-image.png`,
+    capa: artist.cover_key ? `${url.origin}/capa/${artist.cover_key}` : `${url.origin}/og-image.png`,
     cat: {
       artist: {
-        id: artist.id, name: artist.name, who: 'rideblan33',
-        cover: artist.cover_key ? `/audio/capa/${artist.cover_key}` : null
+        id: artist.id, name: artist.name, who: '@rideblan33',
+        cover: artist.cover_key ? `/capa/${artist.cover_key}` : null
       },
       code: link.code,
       preview: true,

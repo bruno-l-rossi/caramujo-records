@@ -94,6 +94,13 @@ const BASE = `
   .copiar{width:42px;height:42px;flex-shrink:0;border-radius:11px;border:1px solid var(--borda);
     background:#141414;display:flex;align-items:center;justify-content:center;cursor:pointer}
   .vazio{padding:40px 0;color:#5a5a5a;font-size:14px}
+  .andamento{display:flex;align-items:center;gap:10px;margin-top:8px}
+  .trilho{flex:1;height:4px;border-radius:3px;background:#242424;overflow:hidden}
+  .trilho i{display:block;height:4px;background:#fff;width:0;transition:width .4s ease}
+  .trilho.indef i{width:35%;animation:vaivem 1.1s ease-in-out infinite}
+  @keyframes vaivem{0%{margin-left:-35%}100%{margin-left:100%}}
+  .andamento small{font-size:11.5px;color:var(--ink3);white-space:nowrap;font-variant-numeric:tabular-nums}
+  @media (prefers-reduced-motion:reduce){.trilho.indef i{animation:none;width:100%;opacity:.4}}
   .veil{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center}
   .veil[hidden]{display:none}
   .card{width:100%;max-width:560px;background:#141414;border:1px solid var(--borda);
@@ -188,13 +195,25 @@ function pagina() {
   }
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]})}
 
-  function carregar(){
+  var relogio=null;
+  function acompanhar(){
+    var ativo = artistas.some(rodando);
+    if(ativo && !relogio) relogio=setInterval(function(){carregar(true)}, 3000);
+    if(!ativo && relogio){ clearInterval(relogio); relogio=null; }
+  }
+
+  function carregar(silencioso){
     fetch('/api/painel?op=artistas').then(function(r){return r.json()}).then(function(j){
+      var antes=artistas.filter(rodando).length;
       artistas=j.artistas||[];
       $('resumo').textContent = artistas.length+(artistas.length===1?' artista no ar':' artistas no ar')+
         ' · prateleira '+gb(j.prateleira.usado)+' de 8 GB';
       desenhar();
-    }).catch(function(){ $('lista').innerHTML='<div class="vazio">Não consegui carregar. Recarrega a página.</div>' });
+      acompanhar();
+      if(silencioso && antes && !artistas.filter(rodando).length) flash('Conversão terminou.');
+    }).catch(function(){
+      if(!silencioso) $('lista').innerHTML='<div class="vazio">Não consegui carregar. Recarrega a página.</div>';
+    });
   }
 
   function desenhar(){
@@ -209,7 +228,7 @@ function pagina() {
       var b=document.createElement('button');
       b.type='button';b.className='linha';
       b.innerHTML='<span style="flex:1;min-width:0"><span class="nome">'+esc(a.name)+'</span>'+
-        '<span class="meta">'+conta(a)+' · '+tempo(a.visto)+'</span></span>';
+        (rodando(a) ? barra(a) : '<span class="meta">'+conta(a)+' · '+tempo(a.visto)+'</span>')+'</span>';
       b.addEventListener('click',function(){abrir(a)});
       var c=document.createElement('button');
       c.type='button';c.className='copiar';c.setAttribute('aria-label','Copiar link de '+a.name);
@@ -226,6 +245,21 @@ function pagina() {
     return p.join(', ')||'sem faixa pronta';
   }
   function link(a){ return location.origin+'/'+a.slug+'/'+a.code }
+
+  function rodando(a){
+    if(a.job_estado!=='na fila' && a.job_estado!=='convertendo') return false;
+    // some sozinho se algo travar no meio do caminho
+    return !a.job_at || (Date.now() - new Date(a.job_at).getTime()) < 40*60*1000;
+  }
+  function barra(a){
+    var total=a.job_total||0, feitos=a.job_feitos||0;
+    var pct = total ? Math.round(feitos/total*100) : 0;
+    var texto = a.job_estado==='na fila' ? 'na fila'
+      : (total ? feitos+' de '+total : 'lendo a pasta');
+    var indef = (a.job_estado==='na fila' || !total);
+    return '<span class="andamento"><span class="trilho'+(indef?' indef':'')+'"><i style="width:'+pct+'%"></i></span>'+
+      '<small>'+texto+'</small></span>';
+  }
 
   function copiar(a){
     var u=link(a);
@@ -257,8 +291,11 @@ function pagina() {
     c.querySelector('[data-act=sync]').addEventListener('click',function(e){
       var b=e.currentTarget;b.disabled=true;b.textContent='Mandando…';
       acao('sync',{artista:a.name}).then(function(j){
-        flash(j.ok?'Conversão do '+a.name+' começou. Leva uns minutos.':(j.erro||'Não consegui disparar.'));
         b.disabled=false;b.textContent='Converter agora';
+        if(!j.ok){ flash(j.erro||'Não consegui disparar.'); return; }
+        flash('Conversão do '+a.name+' começou.');
+        a.job_estado='na fila';a.job_total=0;a.job_feitos=0;a.job_at=new Date().toISOString();
+        fechar();acompanhar();carregar(true);
       });
     });
     c.querySelectorAll('.toggle').forEach(function(t){
@@ -307,8 +344,11 @@ function pagina() {
   $('syncTudo').addEventListener('click',function(e){
     var b=e.currentTarget;b.disabled=true;b.textContent='Mandando…';
     acao('sync',{}).then(function(j){
-      flash(j.ok?'Conversão de todo mundo começou.':(j.erro||'Não consegui disparar.'));
       b.disabled=false;b.textContent='Converter tudo';
+      if(!j.ok){ flash(j.erro||'Não consegui disparar.'); return; }
+      flash('Conversão de todo mundo começou.');
+      artistas.forEach(function(x){ x.job_estado='na fila';x.job_total=0;x.job_feitos=0;x.job_at=new Date().toISOString() });
+      desenhar();acompanhar();carregar(true);
     });
   });
 
