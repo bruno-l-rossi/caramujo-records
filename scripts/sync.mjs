@@ -161,7 +161,17 @@ async function catalogo(artista) {
         const regra = SUB[base.nome]?.[f.name.toLowerCase()];
         if (!regra) continue;
         for (const g of await filhos(f.id)) {
-          if (g.mimeType === 'application/vnd.google-apps.folder') continue;
+          if (g.mimeType === 'application/vnd.google-apps.folder') {
+            // pasta de álbum dentro de "Já lançados" / "Já gravados" / "Guias".
+            // Entra um nível só: o que está solto ali é a faixa; o que está mais
+            // fundo (Remastered, Artes) fica de fora.
+            if (IGNORAR.has(g.name.trim().toLowerCase())) continue;
+            for (const h of await filhos(g.id)) {
+              if (h.mimeType === 'application/vnd.google-apps.folder') continue;
+              add(faixas, h, base.kind, regra.grp, regra.tag, true);
+            }
+            continue;
+          }
           add(faixas, g, base.kind, regra.grp, regra.tag);
         }
       } else {
@@ -169,7 +179,19 @@ async function catalogo(artista) {
       }
     }
   }
-  return { faixas, capa };
+  return { faixas: semRepetir(faixas), capa };
+}
+
+// Mesma faixa solta e dentro da pasta do álbum: fica a solta.
+function semRepetir(faixas) {
+  const visto = new Map();
+  for (const f of faixas) {
+    const chave = f.kind + '|' + f.grp + '|' +
+      String(f.title).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const antes = visto.get(chave);
+    if (!antes || (antes.doAlbum && !f.doAlbum)) visto.set(chave, f);
+  }
+  return [...visto.values()];
 }
 
 /* ---------- o portfólio do @rideblan33 ---------- */
@@ -227,11 +249,11 @@ async function mandarExclusivos(pasta) {
   console.log(`Exclusivos: ${beats.length} beat(s) à venda`);
 }
 
-function add(lista, f, kind, grp, tag) {
+function add(lista, f, kind, grp, tag, doAlbum = false) {
   if (!AUDIO.test(f.name)) return;
   const { title, bpm, key } = parseName(f.name);
   lista.push({
-    id: f.id, title, kind, grp, tag,
+    id: f.id, title, kind, grp, tag, doAlbum,
     bpm: kind === 'beat' ? bpm : null,
     key: kind === 'beat' ? key : null,
     wavBytes: Number(f.size || 0),

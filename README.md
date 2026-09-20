@@ -306,6 +306,11 @@ POST /api/ingest   (protegido por INGEST_TOKEN)
 | `Sons/Guias/` | Músicas | GUIAS | demo |
 | `Sons/Já lançados/` | Músicas | JÁ LANÇADAS | mastered |
 
+Dentro de `Já gravados/`, `Já lançados/` e `Guias/`, uma pasta de álbum (`MK Jr > Sons >
+Já lançados > O Mais Pesado de Sanka`) também entra: o conversor desce **um nível** e trata
+as faixas como se estivessem soltas ali. Um nível só — o que está mais fundo (`Remastered`,
+`Artes`) fica de fora. Se a mesma faixa aparece solta e dentro do álbum, fica a solta.
+
 `Shows/`, `Vídeos/` e `Sessão de stu/` são ignoradas. O nome do arquivo vira título, BPM
 e tom (`scripts/parse.mjs`): o sufixo técnico é descartado em qualquer das formas que
 aparecem no Drive — `(mastered -12 lufs) prod. @rideblan33`, `prod. @rideblan33` solto,
