@@ -30,7 +30,8 @@ export function parseName(fileName) {
   let bpm = null;
   let key = null;
 
-  const mBpm = s.match(/\s(\d{2,3})\s*bpm\b/i);
+  // aceita "150bpm" e "120.400bpm" (o Ableton às vezes exporta com casa decimal)
+  const mBpm = s.match(/\s(\d{2,3})(?:[.,]\d+)?\s*bpm\b/i);
   if (mBpm) {
     bpm = Number(mBpm[1]);
     s = (s.slice(0, mBpm.index) + s.slice(mBpm.index + mBpm[0].length)).trim();

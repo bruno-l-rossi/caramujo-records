@@ -120,6 +120,8 @@ const BASE = `
   .desc:focus{border-color:#3a3a3a}
   .desc-baixo{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
   .desc-baixo small{font-size:11.5px;color:var(--ink4);font-variant-numeric:tabular-nums}
+  .aviso{border:0;background:transparent;padding:0;font-size:14px;color:#e0b155;
+    text-decoration:underline;text-underline-offset:3px;cursor:pointer}
   .seta{flex:none;color:var(--ink4);font-size:20px;line-height:1}
   .revisar{border:1px solid #3a2f18;background:#16120a;border-radius:14px;padding:14px 16px;margin:6px 0 14px}
   .revisar b{display:block;font-size:14.5px;font-weight:600}
@@ -240,13 +242,11 @@ function pagina() {
       var todos=j.artistas||[];
       artistas=todos.filter(function(a){return a.tipo!=='tape'});
       tapes=todos.filter(function(a){return a.tipo==='tape'});
-      $('resumo').textContent = artistas.length+(artistas.length===1?' artista no ar':' artistas no ar')+
-        (tapes.length?' · '+tapes.length+(tapes.length===1?' beat tape':' beat tapes'):'')+
-        ' · prateleira '+gb(j.prateleira.usado)+' de 8 GB';
+      pintarResumo(j.prateleira.usado);
       desenhar();
       acompanhar();
       if(tapes.length) fetch('/api/painel?op=revisar').then(function(r){return r.json()})
-        .then(function(x){ revisar=x.faixas||[]; desenhar(); }).catch(function(){});
+        .then(function(x){ revisar=x.faixas||[]; pintarResumo(j.prateleira.usado); desenhar(); }).catch(function(){});
       if(silencioso && antes && !artistas.filter(rodando).length) flash('Conversão terminou.');
     }).catch(function(){
       if(!silencioso) $('lista').innerHTML='<div class="vazio">Não consegui carregar. Recarrega a página.</div>';
@@ -296,6 +296,24 @@ function pagina() {
       $('lista').appendChild(row);
     });
   }
+  function pintarResumo(usado){
+    var r=$('resumo');
+    r.textContent = artistas.length+(artistas.length===1?' artista no ar':' artistas no ar')+
+      (tapes.length?' · '+tapes.length+(tapes.length===1?' beat tape':' beat tapes'):'')+
+      ' · prateleira '+gb(usado)+' de 8 GB';
+    if(!revisar.length) return;
+    var a=document.createElement('button');
+    a.type='button'; a.className='aviso';
+    a.textContent=revisar.length+(revisar.length===1?' beat pra revisar':' beats pra revisar');
+    a.addEventListener('click',function(){
+      vista='tapes'; filtro=''; $('q').value=''; $('q').placeholder='Buscar beat tape';
+      desenhar();
+      var b=document.querySelector('.revisar'); if(b) b.scrollIntoView({block:'center'});
+    });
+    r.appendChild(document.createTextNode(' · '));
+    r.appendChild(a);
+  }
+
   // @rideblan33 mora fixo no topo e leva pro portfólio
   function fixo(){
     var row=document.createElement('div'); row.className='item';

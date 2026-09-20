@@ -367,9 +367,10 @@ O que casa é o título limpo; quando os dois lados têm BPM ou tom, eles també
 (senão dois `intro` viravam a mesma faixa). Acento não atrapalha: `dígitos` casa com
 `digitos`.
 
-A lista de revisão aparece no topo do portfólio, no painel, com o motivo de cada caso. Ela
-existe porque o cruzamento não decide sozinho nesses dois casos — quem decide é o Bruno,
-mexendo nas pastas do Drive.
+A lista de revisão aparece em dois lugares no painel: o total vira um link âmbar na linha
+de cima (ao lado da prateleira), e o bloco completo, com o motivo de cada caso, fica no topo
+do portfólio. Ela existe porque o cruzamento não decide sozinho nesses dois casos — quem
+decide é o Bruno, mexendo nas pastas do Drive.
 
 Na carga geral, as seis frentes rodam ao mesmo tempo e uma tape pode ser lida antes de o
 artista dela entrar no banco. Por isso o workflow fecha com um job `tapes`, que roda depois

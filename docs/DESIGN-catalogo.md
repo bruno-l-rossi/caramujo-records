@@ -81,10 +81,16 @@ Na faixa tocando, o número vira um equalizador de três barras.
 
 ## O fundo
 
-A capa vira o fundo da tela, ampliada 1,28x e desfocada em 34px, com saturação levemente
-alta. Por cima, duas camadas escuras: um radial que deixa o miolo em 42% de preto e as
-bordas em 88%, mais um linear de apoio. O desfoque tem que deixar a forma da arte visível
-(é assim no Offtop); borrão liso demais vira névoa cinza e perde a graça.
+A capa vira o fundo da tela, ampliada só 1,06x e desfocada em 26px, com saturação alta e
+um toque de contraste. A ampliação é pequena de propósito: aparece quase a imagem inteira,
+então capa clara dá tela clara e capa escura dá tela escura — a arte muda o clima da página,
+que é o ponto (é assim no Offtop). Borrão liso e zoom grande viram névoa cinza igual pra
+todo mundo.
+
+Por cima, três camadas: uma faixa escura só nos 130px de cima, que segura o logo; um radial
+de 14% no miolo até 62% nas bordas; e um linear leve de apoio. O escuro global é o mínimo
+possível — quem garante a leitura é o degradê do `.panel` no celular (preto sólido a partir
+de 260px abaixo da capa) e o cartão do `.lista` no computador (`--panel` em 82%).
 
 Sem arte, o mesmo tratamento cai sobre três manchas claras, que é o fundo neutro da casa.
 
@@ -143,11 +149,15 @@ o painel aperta sozinho. Sem recado, nada aparece.
 
 ## Beat tape
 
-Mesmo desenho do catálogo do artista, com três diferenças: só a aba Beats (a de Músicas
-some sozinha quando não tem som), a capa não é clicável — a arte é minha, vem da pasta da
-tape — e cada beat carrega, na linha de baixo junto do BPM e do tom, **disponível** ou
-**vendido**. Beat que o cruzamento não resolveu sai sem tag nenhuma: melhor não dizer nada
-do que dizer errado.
+Mesmo desenho do catálogo do artista, com quatro diferenças:
+
+- Só a aba Beats — a de Músicas some sozinha quando não tem som.
+- A capa não é clicável: a arte é minha, vem da pasta da tape.
+- **ENVIAR copia o link da tape inteira.** Não abre seleção de faixa, e o `...` da faixa
+  perde o "Enviar só essa faixa". Tape se manda inteira, na ordem.
+- Cada beat carrega uma pastilha antes do BPM: **DISPONÍVEL** em creme `#E4DAC7` sobre
+  texto preto, **VENDIDO** em cinza translúcido com aro. Beat que o cruzamento não resolveu
+  sai sem pastilha nenhuma: melhor não dizer nada do que dizer errado.
 
 No painel, `@rideblan33` fica fixo no topo da lista, acima de qualquer ordenação, e abre a
 lista das tapes. Lá dentro, antes das tapes, aparece o bloco âmbar de revisão quando tem
