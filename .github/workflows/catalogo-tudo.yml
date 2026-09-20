@@ -1,0 +1,43 @@
+name: Catálogo — carga geral
+
+# A primeira leva do catálogo inteiro: 6 frentes ao mesmo tempo, cada uma
+# pegando um pedaço das pastas. Quem já está convertido é pulado, então
+# rodar de novo depois de uma falha continua de onde parou.
+
+on:
+  workflow_dispatch:
+    inputs:
+      frentes:
+        description: 'Quantas frentes ao mesmo tempo (1 a 8)'
+        required: false
+        default: '6'
+
+concurrency:
+  group: catalogo
+  cancel-in-progress: false
+
+jobs:
+  converter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        parte: [1, 2, 3, 4, 5, 6]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Garantir ffmpeg
+        run: ffmpeg -version >/dev/null 2>&1 || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+
+      - name: Converter a parte ${{ matrix.parte }}
+        env:
+          GDRIVE_SA_JSON: ${{ secrets.GDRIVE_SA_JSON }}
+          INGEST_TOKEN: ${{ secrets.INGEST_TOKEN }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://caramujorecords.com.br' }}
+        run: node scripts/sync.mjs "" "${{ matrix.parte }}/${{ github.event.inputs.frentes || 6 }}"

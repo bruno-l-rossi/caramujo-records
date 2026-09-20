@@ -27,6 +27,15 @@ const IGNORAR = new Set(['shows', 'vídeos', 'videos', 'sessão de stu', 'sessao
 
 const alvo = (process.argv[2] || '').split(',').map((s) => s.trim()).filter(Boolean);
 
+// "3/6" = terceiro lote de seis. Serve pra dividir a carga geral em vários
+// jobs que rodam ao mesmo tempo, sem um passar por cima do outro.
+const lote = (function () {
+  const m = String(process.argv[3] || '').match(/^(\d+)\s*\/\s*(\d+)$/);
+  if (!m) return null;
+  const parte = Number(m[1]), total = Number(m[2]);
+  return parte >= 1 && total >= 1 && parte <= total ? { parte, total } : null;
+})();
+
 /* ---------- Google: token da conta de serviço ---------- */
 
 let cache = { token: null, exp: 0 };
@@ -221,9 +230,16 @@ async function main() {
     .filter((f) => !alvo.length || alvo.some((a) => a.toLowerCase() === f.name.toLowerCase()));
 
   if (alvo.length && !artistas.length) throw new Error('nenhum artista bateu com: ' + alvo.join(', '));
-  console.log(`${artistas.length} pasta(s) de artista`);
 
-  for (const artista of artistas) {
+  let fila = artistas;
+  if (lote) {
+    fila = artistas.filter((_, i) => i % lote.total === lote.parte - 1);
+    console.log(`lote ${lote.parte} de ${lote.total}: ${fila.length} de ${artistas.length} pastas`);
+  } else {
+    console.log(`${artistas.length} pasta(s) de artista`);
+  }
+
+  for (const artista of fila) {
     const { faixas, capa } = await catalogo(artista);
     if (!faixas.length) { console.log(`- ${artista.name}: sem faixa, pulei`); continue; }
 
@@ -241,18 +257,24 @@ async function main() {
       }
     }
 
+    let capaChave = null;
     if (capa) {
-      const chave = capa.id;
       try {
         const buf = await capinha(capa, dir);
-        await ingest('capa', { folderId: artista.id, chave }, buf, true);
+        await ingest('capa', { folderId: artista.id, chave: capa.id }, buf, true);
+        capaChave = capa.id;
         console.log(`    capa: ${capa.name}`);
       } catch (e) {
         console.log(`    capa falhou (${capa.name}): ${e.message}`);
       }
+    } else {
+      console.log('    sem imagem na pasta, fica o logo da Caramujo');
     }
 
-    const fim = await ingest('done', { folderId: artista.id }, { ids: faixas.map((f) => f.id) });
+    const fim = await ingest('done', { folderId: artista.id }, {
+      ids: faixas.map((f) => f.id),
+      capa: capaChave
+    });
     console.log(`    link: ${SITE}${fim.link}`);
   }
 

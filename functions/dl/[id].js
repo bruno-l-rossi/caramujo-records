@@ -21,8 +21,7 @@ export async function onRequestGet({ params, request, env }) {
   const liberado = t.kind === 'beat' ? t.dl_beats : t.dl_sons;
   if (!liberado) return new Response('essa pasta esta so pra ouvir', { status: 403 });
 
-  const nome = `${t.title} prod. rideblan33.${fmt}`
-    .replace(/[\\/:*?"<>|]/g, '-');
+  const nome = nomeArquivo(t, fmt).replace(/[\\/:*?"<>|]/g, '-');
   const disp = `attachment; filename*=UTF-8''${encodeURIComponent(nome)}`;
 
   await d.prepare(
@@ -54,4 +53,19 @@ export async function onRequestGet({ params, request, env }) {
   if (len) h.set('content-length', len);
   if (cr) h.set('content-range', cr);
   return new Response(r.body, { status: r.status, headers: h });
+}
+
+// Como o arquivo chega no computador de quem baixa:
+//   beat   → buraco negro Abm 150bpm (prod. @rideblan33).wav
+//   som    → ice candy (mastered) prod. @rideblan33.wav
+//   guia   → ice candy (demo) prod. @rideblan33.wav
+function nomeArquivo(t, fmt) {
+  if (t.kind === 'beat') {
+    const bits = [t.title];
+    if (t.mkey) bits.push(t.mkey);
+    if (t.bpm) bits.push(t.bpm + 'bpm');
+    return `${bits.join(' ')} (prod. @rideblan33).${fmt}`;
+  }
+  const tag = t.tag === 'demo' ? '(demo)' : '(mastered)';
+  return `${t.title} ${tag} prod. @rideblan33.${fmt}`;
 }

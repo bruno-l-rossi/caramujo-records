@@ -27,7 +27,7 @@ export async function onRequestPost(context) {
   if (op === 'plan') return plan(d, await request.json());
   if (op === 'track') return track(d, env, url, request);
   if (op === 'capa') return capa(d, env, url, request);
-  if (op === 'done') return done(d, url, await request.json());
+  if (op === 'done') return done(d, env, url, await request.json());
   if (op === 'fila') return fila(d, await request.json());
   return json({ erro: 'op desconhecida' }, 400);
 }
@@ -128,11 +128,18 @@ async function track(d, env, url, request) {
   return json({ ok: true, bytes: body.byteLength });
 }
 
-async function done(d, url, body) {
+async function done(d, env, url, body) {
   const folderId = url.searchParams.get('folderId');
   const keep = new Set(body.ids || []);
   const artist = await d.prepare('SELECT * FROM artists WHERE folder_id = ?').bind(folderId).first();
   if (!artist) return json({ erro: 'artista nao encontrado' }, 404);
+
+  // a capa saiu da pasta do Drive: some daqui também, e volta o logo da casa
+  const capaAgora = body.capa || null;
+  if (!capaAgora && artist.cover_key) {
+    await env.AUDIO.delete(`capa/${artist.cover_key}.jpg`).catch(() => {});
+    await d.prepare('UPDATE artists SET cover_key = NULL WHERE id = ?').bind(artist.id).run();
+  }
 
   const have = await d.prepare('SELECT id FROM tracks WHERE artist_id = ?').bind(artist.id).all();
   const gone = (have.results || []).map((r) => r.id).filter((id) => !keep.has(id));

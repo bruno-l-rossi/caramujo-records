@@ -77,7 +77,7 @@ Na faixa tocando, o número vira um equalizador de três barras.
   de baixo mostra Cancelar à esquerda e o botão da ação à direita, com a contagem.
 - **Baixar** abre duas opções, com o tamanho de cada uma: `MP3 · pra ouvir` e `WAV · pra estúdio`.
 - **Enviar** mostra o link com o botão Copiar e a prévia "Ver como a pessoa vê".
-- `...` da faixa: Tocar, Enviar só essa faixa, Baixar.
+- `...` da faixa: Enviar só essa faixa, Baixar. Tocar sai dali: o toque na linha já toca.
 
 ## O fundo
 
@@ -120,8 +120,9 @@ embutidas na página como WebP.
 
 ## Capa
 
-Sem arte, é preto com o logo vertical no centro, ocupando 62% da largura. Quando houver
-imagem na pasta do artista, ela vira a capa e o borrão do fundo no computador.
+Sem arte, é preto com o logo vertical no centro. Qualquer imagem solta na pasta do artista
+vira a capa, recortada num quadrado de 1000×1000. Tirar a imagem do Drive e converter de
+novo devolve o logo: a sincronia apaga a capa órfã da prateleira.
 
 ## Nunca
 

@@ -683,14 +683,11 @@ __META__
 
   function trackSheet(t){
     var linhas =
-      item('play','<path d="M7 4l12 8-12 8z"/>','Tocar',true) +
       (CAT.owner || (!preview && !CAT.preview) ? item('send',ICON_SEND,'Enviar só essa faixa') : '') +
       (podeBaixar() ? item('down',ICON_DOWN,'Baixar') : '');
+    if(!linhas){ flash('Essa faixa está só pra ouvir.'); return; }
     open('<h2 id="cardTitle">'+esc(t.title)+'</h2><p>'+esc(sub(t,false)||'faixa')+' · '+mmss(t.dur)+'</p>'+
       '<div class="card-list">'+linhas+'</div><button class="card-close" data-close>Fechar</button>');
-    card.querySelector('[data-act=play]').addEventListener('click',function(){
-      close();var i=rows.findIndex(function(x){return x.id===t.id});if(i>-1)pick(i);
-    });
     var s1=card.querySelector('[data-act=send]');
     if(s1) s1.addEventListener('click',function(){sendSheet([t])});
     var s2=card.querySelector('[data-act=down]');

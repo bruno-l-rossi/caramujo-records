@@ -318,6 +318,17 @@ quadrado de 1000×1000 e guarda em `capa/<id do arquivo>.jpg` no R2; a página s
 `/capa/<id>`. Sem imagem na pasta, aparece o logo vertical da Caramujo. A mesma arte vira o
 borrão do fundo no computador e a mini-capa do player.
 
+### Nome do arquivo baixado
+
+| Tipo | Como chega no computador de quem baixa |
+|---|---|
+| Beat | `buraco negro Abm 150bpm (prod. @rideblan33).wav` |
+| Música | `ice candy (mastered) prod. @rideblan33.wav` |
+| Guia | `metade maquina metade animal (demo) prod. @rideblan33.wav` |
+
+Beat sem tom sai só com o BPM. O nome vem do título limpo, nunca do arquivo original do
+Drive (que pode estar truncado).
+
 ### Bindings e variáveis
 
 | Nome | Onde | Pra quê |
@@ -343,6 +354,9 @@ Actions é ilimitado em repositório público.
   atualizados pelo próprio conversor a cada faixa).
 - Na mão, pelo GitHub: Actions → "Catálogo dos artistas" → Run workflow. O campo aceita
   nomes separados por vírgula (`nico2b, PUMA`); vazio converte todos.
+- Carga geral: Actions → "Catálogo — carga geral" → Run workflow. Divide as pastas em 6
+  frentes que rodam ao mesmo tempo (`scripts/sync.mjs "" 3/6`). Quem já está pronto é
+  pulado, então repetir depois de uma falha continua de onde parou.
 
 ### Cuidados
 
