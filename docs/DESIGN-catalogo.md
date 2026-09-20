@@ -138,7 +138,8 @@ convite passa a ser a própria capa: tocar nela abre trocar a imagem ou voltar p
 ## Recado
 
 Um parágrafo curto embaixo da contagem de faixas, escrito só por mim no painel, teto de 280
-caracteres. Sem recado, nada aparece.
+caracteres. Aceita quebra de linha — no máximo uma linha em branco entre parágrafos, o resto
+o painel aperta sozinho. Sem recado, nada aparece.
 
 ## Nunca
 

@@ -95,7 +95,12 @@ async function perm(d, body) {
 async function descricao(d, body) {
   const id = Number(body.id);
   if (!id) return json({ erro: 'sem artista' }, 400);
-  const texto = String(body.texto || '').trim().slice(0, 280);
+  const texto = String(body.texto || '')
+    .replace(/\r\n?/g, '\n')      // Windows e Mac velho escrevem a quebra de outro jeito
+    .replace(/[ \t]+$/gm, '')      // espaço sobrando no fim da linha
+    .replace(/\n{3,}/g, '\n\n')    // no máximo uma linha em branco entre parágrafos
+    .slice(0, 280)
+    .trim();
   await d.prepare('UPDATE artists SET descricao = ? WHERE id = ?')
     .bind(texto || null, id).run();
   return json({ ok: true, texto: texto || null });

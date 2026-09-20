@@ -60,7 +60,7 @@ const BASE = `
   body{margin:0;background:#0a0a0a;color:var(--ink);
     font-family:"Schibsted Grotesk",-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased}
-  button,input{font-family:inherit;color:inherit}
+  button,input,textarea,select{font-family:inherit;color:inherit}
   a{color:#fff}
   :focus-visible{outline:2px solid #fff;outline-offset:2px}
   .wrap{max-width:760px;margin:0 auto;padding:0 18px 120px}
@@ -113,8 +113,10 @@ const BASE = `
   .card .end{font-size:13px;color:var(--ink4);word-break:break-all}
   .bloco{margin-top:20px}
   .rot{font-size:11px;letter-spacing:.2em;color:var(--ink4);margin-bottom:10px}
-  .desc{width:100%;min-height:76px;resize:vertical;background:var(--campo);border:1px solid var(--borda);
-    border-radius:12px;padding:12px 14px;font-size:14.5px;line-height:1.45;outline:none}
+  .desc{width:100%;min-height:104px;resize:vertical;background:var(--campo);border:1px solid var(--borda);
+    border-radius:12px;padding:12px 14px;font-size:14.5px;line-height:1.5;outline:none;
+    color:var(--ink);caret-color:var(--ink)}
+  .desc::placeholder{color:#5a5a5a}
   .desc:focus{border-color:#3a3a3a}
   .desc-baixo{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
   .desc-baixo small{font-size:11.5px;color:var(--ink4);font-variant-numeric:tabular-nums}
@@ -309,7 +311,7 @@ function pagina() {
       '</div>'+
       '<div class="bloco"><div class="rot">DESCRIÇÃO DO CATÁLOGO</div>'+
         '<label for="desc" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Descrição</label>'+
-        '<textarea class="desc" id="desc" maxlength="280" placeholder="Um recado que aparece embaixo da contagem de faixas. Só você escreve.">'+esc(a.descricao||'')+'</textarea>'+
+        '<textarea class="desc" id="desc" maxlength="280" placeholder="Um recado que aparece embaixo da contagem de faixas. Só você escreve — pode quebrar linha.">'+esc(a.descricao||'')+'</textarea>'+
         '<div class="desc-baixo"><small id="descConta"></small>'+
         '<button class="pill" data-act="salvardesc" type="button">Salvar</button></div>'+
       '</div>'+
