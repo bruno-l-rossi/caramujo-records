@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       artistas:
-        description: 'Artistas separados por vírgula. Vazio converte todos.'
+        description: 'Artistas ou beat tapes separados por vírgula. "tapes" converte só as beat tapes. Vazio converte tudo.'
         required: false
         default: ''
   schedule:

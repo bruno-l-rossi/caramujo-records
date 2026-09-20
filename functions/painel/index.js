@@ -120,6 +120,13 @@ const BASE = `
   .desc:focus{border-color:#3a3a3a}
   .desc-baixo{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
   .desc-baixo small{font-size:11.5px;color:var(--ink4);font-variant-numeric:tabular-nums}
+  .seta{flex:none;color:var(--ink4);font-size:20px;line-height:1}
+  .revisar{border:1px solid #3a2f18;background:#16120a;border-radius:14px;padding:14px 16px;margin:6px 0 14px}
+  .revisar b{display:block;font-size:14.5px;font-weight:600}
+  .revisar>small{display:block;color:var(--ink3);font-size:12.5px;line-height:1.45;margin-top:4px}
+  .revisar ul{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:9px}
+  .revisar li span{display:block;font-size:14px}
+  .revisar li small{display:block;color:var(--ink4);font-size:12px;line-height:1.4}
   .sw{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;border-bottom:1px solid var(--linha)}
   .sw b{font-size:15px;font-weight:500}
   .sw small{display:block;margin-top:3px;font-size:12px;color:var(--ink4)}
@@ -200,7 +207,7 @@ function pagina() {
 <script>
 (function(){
   var $=function(i){return document.getElementById(i)};
-  var artistas=[], filtro='', ordem='atividade';
+  var artistas=[], tapes=[], revisar=[], vista='artistas', filtro='', ordem='atividade';
   var ORDENS={atividade:'Atividade', az:'A a Z', faixas:'Mais faixas'};
 
   function tempo(iso){
@@ -230,11 +237,16 @@ function pagina() {
   function carregar(silencioso){
     fetch('/api/painel?op=artistas').then(function(r){return r.json()}).then(function(j){
       var antes=artistas.filter(rodando).length;
-      artistas=j.artistas||[];
+      var todos=j.artistas||[];
+      artistas=todos.filter(function(a){return a.tipo!=='tape'});
+      tapes=todos.filter(function(a){return a.tipo==='tape'});
       $('resumo').textContent = artistas.length+(artistas.length===1?' artista no ar':' artistas no ar')+
+        (tapes.length?' · '+tapes.length+(tapes.length===1?' beat tape':' beat tapes'):'')+
         ' · prateleira '+gb(j.prateleira.usado)+' de 8 GB';
       desenhar();
       acompanhar();
+      if(tapes.length) fetch('/api/painel?op=revisar').then(function(r){return r.json()})
+        .then(function(x){ revisar=x.faixas||[]; desenhar(); }).catch(function(){});
       if(silencioso && antes && !artistas.filter(rodando).length) flash('Conversão terminou.');
     }).catch(function(){
       if(!silencioso) $('lista').innerHTML='<div class="vazio">Não consegui carregar. Recarrega a página.</div>';
@@ -242,7 +254,8 @@ function pagina() {
   }
 
   function desenhar(){
-    var alvo=artistas.filter(function(a){
+    var fonte = vista==='tapes' ? tapes : artistas;
+    var alvo=fonte.filter(function(a){
       return !filtro || a.name.toLowerCase().indexOf(filtro)>-1;
     });
     alvo.sort(function(a,b){
@@ -254,8 +267,19 @@ function pagina() {
       if(!b.visto) return -1;
       return a.visto < b.visto ? 1 : -1;
     });
-    if(!alvo.length){ $('lista').innerHTML='<div class="vazio">Nenhum artista com esse nome.</div>'; return }
     $('lista').innerHTML='';
+
+    if(vista==='tapes'){ $('lista').appendChild(voltar()); cartaoRevisar(); }
+    else if(tapes.length && !filtro) $('lista').appendChild(fixo());
+
+    if(!alvo.length){
+      var v=document.createElement('div'); v.className='vazio';
+      v.textContent = vista==='tapes'
+        ? (filtro?'Nenhuma tape com esse nome.':'Nenhuma beat tape convertida ainda.')
+        : 'Nenhum artista com esse nome.';
+      $('lista').appendChild(v);
+      return;
+    }
     alvo.forEach(function(a){
       var row=document.createElement('div');
       row.className='item';
@@ -272,6 +296,49 @@ function pagina() {
       $('lista').appendChild(row);
     });
   }
+  // @rideblan33 mora fixo no topo e leva pro portfólio
+  function fixo(){
+    var row=document.createElement('div'); row.className='item';
+    var b=document.createElement('button');
+    b.type='button'; b.className='linha';
+    b.innerHTML='<span style="flex:1;min-width:0"><span class="nome">@rideblan33</span>'+
+      '<span class="meta">'+tapes.length+(tapes.length===1?' beat tape':' beat tapes')+
+      (revisar.length?' · '+revisar.length+' pra revisar':'')+'</span></span>'+
+      '<span class="seta">›</span>';
+    b.addEventListener('click',function(){
+      vista='tapes'; filtro=''; $('q').value=''; $('q').placeholder='Buscar beat tape'; desenhar();
+    });
+    row.appendChild(b);
+    return row;
+  }
+
+  function voltar(){
+    var row=document.createElement('div'); row.className='item';
+    var b=document.createElement('button');
+    b.type='button'; b.className='linha';
+    b.innerHTML='<span class="seta" style="transform:rotate(180deg)">›</span>'+
+      '<span style="flex:1;min-width:0"><span class="nome">Beat tapes</span>'+
+      '<span class="meta">@rideblan33 · voltar pros artistas</span></span>';
+    b.addEventListener('click',function(){
+      vista='artistas'; filtro=''; $('q').value=''; $('q').placeholder='Buscar artista'; desenhar();
+    });
+    row.appendChild(b);
+    return row;
+  }
+
+  function cartaoRevisar(){
+    if(!revisar.length) return;
+    var d=document.createElement('div');
+    d.className='revisar';
+    d.innerHTML='<b>'+revisar.length+(revisar.length===1?' beat pra revisar':' beats pra revisar')+'</b>'+
+      '<small>Caíram em Exclusivos e na pasta de um artista ao mesmo tempo, ou em nenhum dos dois. '+
+      'Saem sem tag no catálogo até você resolver no Drive.</small>'+
+      '<ul>'+revisar.map(function(f){
+        return '<li><span>'+esc(f.title)+'</span><small>'+esc(f.tape)+' — '+esc(f.revisar)+'</small></li>';
+      }).join('')+'</ul>';
+    $('lista').appendChild(d);
+  }
+
   function conta(a){
     var p=[];
     if(a.nb) p.push(a.nb+(a.nb===1?' beat':' beats'));
@@ -316,10 +383,12 @@ function pagina() {
         '<button class="pill" data-act="salvardesc" type="button">Salvar</button></div>'+
       '</div>'+
       '<div class="bloco"><div class="rot">PODE BAIXAR</div>'+
-        sw('beats','Beats','os beats reservados e os já gravados',a.dl_beats)+
-        sw('sons','Músicas','os sons prontos, lançados e as guias',a.dl_sons)+
+        (a.tipo==='tape'
+          ? sw('beats','Beats','os beats desta tape',a.dl_beats)
+          : sw('beats','Beats','os beats reservados e os já gravados',a.dl_beats)+
+            sw('sons','Músicas','os sons prontos, lançados e as guias',a.dl_sons))+
       '</div>'+
-      (a.cover_origem==='artista'
+      (a.tipo!=='tape' && a.cover_origem==='artista'
         ? '<div class="bloco"><div class="rot">CAPA</div>'+
           '<div class="sw"><span><b>O artista trocou a capa</b>'+
           '<small>a imagem do Drive não sobrescreve enquanto ela estiver aqui</small></span>'+

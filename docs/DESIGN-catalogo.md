@@ -141,6 +141,18 @@ Um parágrafo curto embaixo da contagem de faixas, escrito só por mim no painel
 caracteres. Aceita quebra de linha — no máximo uma linha em branco entre parágrafos, o resto
 o painel aperta sozinho. Sem recado, nada aparece.
 
+## Beat tape
+
+Mesmo desenho do catálogo do artista, com três diferenças: só a aba Beats (a de Músicas
+some sozinha quando não tem som), a capa não é clicável — a arte é minha, vem da pasta da
+tape — e cada beat carrega, na linha de baixo junto do BPM e do tom, **disponível** ou
+**vendido**. Beat que o cruzamento não resolveu sai sem tag nenhuma: melhor não dizer nada
+do que dizer errado.
+
+No painel, `@rideblan33` fica fixo no topo da lista, acima de qualquer ordenação, e abre a
+lista das tapes. Lá dentro, antes das tapes, aparece o bloco âmbar de revisão quando tem
+beat indefinido.
+
 ## Nunca
 
 - Trazer a paleta terrosa, o Cormorant ou o selo espiral para dentro da ferramenta.

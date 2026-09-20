@@ -2,8 +2,9 @@
 // e entrega ao site (functions/api/ingest.js), que guarda no R2 e no D1.
 // Roda no GitHub Actions, nunca no navegador.
 //
-//   node scripts/sync.mjs                 -> todos os artistas
+//   node scripts/sync.mjs                 -> todos os artistas + as beat tapes
 //   node scripts/sync.mjs "nico2b,PUMA"   -> só esses
+//   node scripts/sync.mjs "tapes"         -> só as beat tapes do @rideblan33
 //
 // Precisa de: GDRIVE_SA_JSON, INGEST_TOKEN, SITE_URL
 // Opcional: PROJETOS_FOLDER_ID (padrão: a pasta Projetos do rideblan33)
@@ -171,6 +172,61 @@ async function catalogo(artista) {
   return { faixas, capa };
 }
 
+/* ---------- o portfólio do @rideblan33 ---------- */
+
+// Beat tape: pasta chapada, a capa dentro dela e os beats soltos.
+// Sem subpasta, sem aba de músicas, sem tag vinda da pasta: quem decide
+// se é "disponível" ou "vendido" é o site, cruzando com Exclusivos e com
+// as pastas dos artistas.
+async function catalogoTape(tape) {
+  const dentro = await filhos(tape.id);
+  const capa = dentro
+    .filter((f) => IMAGEM.test(f.mimeType || ''))
+    .sort((a, b) => (a.modifiedTime < b.modifiedTime ? 1 : -1))[0] || null;
+
+  const faixas = [];
+  for (const f of dentro) {
+    if (f.mimeType === 'application/vnd.google-apps.folder') continue;
+    add(faixas, f, 'beat', 'res', null);
+  }
+  return { faixas, capa };
+}
+
+// Acha "Beat tapes" e "Beats disponíveis > Exclusivos" dentro do @rideblan33.
+async function portfolio() {
+  const ride = (await filhos(PROJETOS))
+    .find((f) => f.name.trim().toLowerCase() === '@rideblan33');
+  if (!ride) return { tapes: [], exclusivos: null };
+
+  const dentro = await filhos(ride.id);
+  const eh = (f, ...nomes) => nomes.includes(f.name.trim().toLowerCase());
+  const pastaTapes = dentro.find((f) => eh(f, 'beat tapes'));
+  const pastaDisp = dentro.find((f) => eh(f, 'beats disponíveis', 'beats disponiveis'));
+
+  const tapes = pastaTapes
+    ? (await filhos(pastaTapes.id))
+        .filter((f) => f.mimeType === 'application/vnd.google-apps.folder')
+    : [];
+
+  const exclusivos = pastaDisp
+    ? (await filhos(pastaDisp.id)).find((f) => eh(f, 'exclusivos')) || null
+    : null;
+
+  return { tapes, exclusivos };
+}
+
+// A lista do que ainda está à venda. Vai pro site uma vez por rodada.
+async function mandarExclusivos(pasta) {
+  const beats = [];
+  for (const f of await filhos(pasta.id)) {
+    if (!AUDIO.test(f.name)) continue;
+    const { title, bpm, key } = parseName(f.name);
+    beats.push({ title, bpm, key });
+  }
+  await ingest('exclusivos', {}, { beats });
+  console.log(`Exclusivos: ${beats.length} beat(s) à venda`);
+}
+
 function add(lista, f, kind, grp, tag) {
   if (!AUDIO.test(f.name)) return;
   const { title, bpm, key } = parseName(f.name);
@@ -253,30 +309,50 @@ async function main() {
   if (!process.env.GDRIVE_SA_JSON) throw new Error('falta GDRIVE_SA_JSON');
 
   const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'caramujo-'));
-  const artistas = (await filhos(PROJETOS))
+
+  // "tapes" sozinho no pedido = só o portfólio; o resto casa por nome.
+  const soTapes = alvo.length === 1 && alvo[0].toLowerCase() === 'tapes';
+  const pedido = (nome) => alvo.some((a) => a.toLowerCase() === nome.trim().toLowerCase());
+
+  const artistas = soTapes ? [] : (await filhos(PROJETOS))
     .filter((f) => f.mimeType === 'application/vnd.google-apps.folder')
-    .filter((f) => alvo.length
-      ? alvo.some((a) => a.toLowerCase() === f.name.toLowerCase())
-      : !FORA_DA_GERAL.has(f.name.trim().toLowerCase()));
+    .filter((f) => alvo.length ? pedido(f.name) : !FORA_DA_GERAL.has(f.name.trim().toLowerCase()))
+    .map((f) => ({ ...f, tipo: 'artista' }));
 
-  if (alvo.length && !artistas.length) throw new Error('nenhum artista bateu com: ' + alvo.join(', '));
+  const { tapes: todasTapes, exclusivos } = await portfolio();
+  const tapes = todasTapes
+    .filter((f) => (alvo.length && !soTapes) ? pedido(f.name) : true)
+    .map((f) => ({ ...f, tipo: 'tape' }));
 
-  let fila = artistas;
+  const pastas = [...artistas, ...tapes];
+  if (alvo.length && !pastas.length) throw new Error('nada bateu com: ' + alvo.join(', '));
+
+  let fila = pastas;
   if (lote) {
-    fila = artistas.filter((_, i) => i % lote.total === lote.parte - 1);
-    console.log(`lote ${lote.parte} de ${lote.total}: ${fila.length} de ${artistas.length} pastas`);
+    fila = pastas.filter((_, i) => i % lote.total === lote.parte - 1);
+    console.log(`lote ${lote.parte} de ${lote.total}: ${fila.length} de ${pastas.length} pastas`);
   } else {
-    console.log(`${artistas.length} pasta(s) de artista`);
+    console.log(`${artistas.length} pasta(s) de artista e ${tapes.length} beat tape(s)`);
+  }
+
+  // O site precisa da lista de Exclusivos pra saber o que ainda está à venda.
+  if (fila.some((f) => f.tipo === 'tape')) {
+    if (exclusivos) {
+      try { await mandarExclusivos(exclusivos); }
+      catch (e) { console.log(`- Exclusivos: não consegui ler (${e.message}). As tapes vão pra revisão.`); }
+    } else {
+      console.log('- não achei a pasta Exclusivos; as tapes vão pra revisão.');
+    }
   }
 
   const tropecos = [];
 
-  for (const artista of fila) {
+  for (const pasta of fila) {
     try {
-      await umArtista(artista, dir);
+      await umaPasta(pasta, dir);
     } catch (e) {
-      tropecos.push(`${artista.name}: ${e.message}`);
-      console.log(`- ${artista.name}: parou no meio (${e.message}). Sigo com os outros.`);
+      tropecos.push(`${pasta.name}: ${e.message}`);
+      console.log(`- ${pasta.name}: parou no meio (${e.message}). Sigo com os outros.`);
     }
   }
 
@@ -292,45 +368,54 @@ async function main() {
   }
 }
 
-async function umArtista(artista, dir) {
-  {
-    const { faixas, capa } = await catalogo(artista);
-    if (!faixas.length) { console.log(`- ${artista.name}: sem faixa, pulei`); return; }
+async function umaPasta(pasta, dir) {
+  const tape = pasta.tipo === 'tape';
+  const { faixas, capa } = tape ? await catalogoTape(pasta) : await catalogo(pasta);
+  const rotulo = tape ? `tape ${pasta.name}` : pasta.name;
 
-    const p = await ingest('plan', {}, { folderId: artista.id, name: artista.name, tracks: faixas });
-    console.log(`- ${artista.name}: ${faixas.length} faixa(s), ${p.need.length} pra converter`);
+  if (!faixas.length) { console.log(`- ${rotulo}: sem faixa, pulei`); return; }
 
-    for (const id of p.need) {
-      const faixa = faixas.find((f) => f.id === id);
-      try {
-        const { buf, dur, bytes } = await converter(faixa, dir);
-        await ingest('track', { id, dur: String(dur) }, buf, true);
-        console.log(`    ok  ${faixa.title}  ${Math.round(dur)}s  ${(bytes / 1048576).toFixed(1)} MB`);
-      } catch (e) {
-        console.log(`    falhou  ${faixa.title}: ${e.message}`);
-      }
-    }
+  const p = await ingest('plan', {}, {
+    folderId: pasta.id, name: pasta.name, tipo: pasta.tipo || 'artista', tracks: faixas
+  });
+  console.log(`- ${rotulo}: ${faixas.length} faixa(s), ${p.need.length} pra converter`);
 
-    let capaChave = null;
-    if (capa) {
-      try {
-        const buf = await capinha(capa, dir);
-        await ingest('capa', { folderId: artista.id, chave: capa.id }, buf, true);
-        capaChave = capa.id;
-        console.log(`    capa: ${capa.name}`);
-      } catch (e) {
-        console.log(`    capa falhou (${capa.name}): ${e.message}`);
-      }
-    } else {
-      console.log('    sem imagem na pasta, fica o logo da Caramujo');
-    }
-
-    const fim = await ingest('done', { folderId: artista.id }, {
-      ids: faixas.map((f) => f.id),
-      capa: capaChave
-    });
-    console.log(`    link: ${SITE}${fim.link}`);
+  if (tape && p.venda) {
+    console.log(`    ${p.venda.disponivel} disponível(is), ${p.venda.vendido} vendido(s), ${p.venda.revisar} pra revisar`);
   }
+
+  for (const id of p.need) {
+    const faixa = faixas.find((f) => f.id === id);
+    try {
+      const { buf, dur, bytes } = await converter(faixa, dir);
+      await ingest('track', { id, dur: String(dur) }, buf, true);
+      console.log(`    ok  ${faixa.title}  ${Math.round(dur)}s  ${(bytes / 1048576).toFixed(1)} MB`);
+    } catch (e) {
+      console.log(`    falhou  ${faixa.title}: ${e.message}`);
+    }
+  }
+
+  let capaChave = null;
+  if (capa && capa.id === p.capaAtual) {
+    capaChave = capa.id;                       // já está na prateleira, não baixa de novo
+  } else if (capa) {
+    try {
+      const buf = await capinha(capa, dir);
+      await ingest('capa', { folderId: pasta.id, chave: capa.id }, buf, true);
+      capaChave = capa.id;
+      console.log(`    capa: ${capa.name}`);
+    } catch (e) {
+      console.log(`    capa falhou (${capa.name}): ${e.message}`);
+    }
+  } else {
+    console.log('    sem imagem na pasta, fica o logo da Caramujo');
+  }
+
+  const fim = await ingest('done', { folderId: pasta.id }, {
+    ids: faixas.map((f) => f.id),
+    capa: capaChave
+  });
+  console.log(`    link: ${SITE}${fim.link}`);
 }
 
 main().catch((e) => { console.error('parou:', e.message); process.exit(1); });

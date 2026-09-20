@@ -337,6 +337,44 @@ borrão do fundo no computador e a mini-capa do player.
 Beat sem tom sai só com o BPM. O nome vem do título limpo, nunca do arquivo original do
 Drive (que pode estar truncado).
 
+### O portfólio do @rideblan33
+
+A pasta `@rideblan33` não vira um catálogo só: cada pasta dentro de `Beat tapes/` vira um
+catálogo próprio, com link próprio, capa própria e só a aba Beats. Criar uma pasta nova no
+Drive é tudo que precisa — a passada da madrugada acha e publica sozinha.
+
+| Pasta | O que vira |
+|---|---|
+| `@rideblan33/Beat tapes/<nome>/` | um catálogo, com a capa que estiver solta dentro dela |
+| `@rideblan33/Beats disponíveis/Exclusivos/` | não vira catálogo: é a fonte da verdade do que está à venda |
+| `@rideblan33/Beats`, `Sons`, `Shows` | ignoradas |
+
+Tape nasce com o download **desligado** nos dois lados, e ninguém troca a capa pela página:
+a arte é a que está na pasta da tape.
+
+### Disponível, vendido, ou pra eu revisar
+
+Beat de tape não recebe tag da pasta. A tag sai do cruzamento, feito pelo site na hora do
+`plan`:
+
+| Onde o beat aparece | Tag |
+|---|---|
+| Só em `Exclusivos` | **disponível** |
+| Só na pasta de algum artista (gravado ou não) | **vendido** |
+| Nos dois, ou em nenhum | sem tag, e entra na lista de revisão do painel |
+
+O que casa é o título limpo; quando os dois lados têm BPM ou tom, eles também têm que bater
+(senão dois `intro` viravam a mesma faixa). Acento não atrapalha: `dígitos` casa com
+`digitos`.
+
+A lista de revisão aparece no topo do portfólio, no painel, com o motivo de cada caso. Ela
+existe porque o cruzamento não decide sozinho nesses dois casos — quem decide é o Bruno,
+mexendo nas pastas do Drive.
+
+Na carga geral, as seis frentes rodam ao mesmo tempo e uma tape pode ser lida antes de o
+artista dela entrar no banco. Por isso o workflow fecha com um job `tapes`, que roda depois
+de todos e só acerta as tags — não reconverte áudio nenhum.
+
 ### Permissão de download
 
 Catálogo novo já nasce com o download ligado nos beats e nas músicas. Desligar é decisão
@@ -383,7 +421,8 @@ Actions é ilimitado em repositório público.
   uma barra com o andamento (`job_estado`, `job_total`, `job_feitos` na tabela `artists`,
   atualizados pelo próprio conversor a cada faixa).
 - Na mão, pelo GitHub: Actions → "Catálogo dos artistas" → Run workflow. O campo aceita
-  nomes separados por vírgula (`nico2b, PUMA`); vazio converte todos.
+  nomes separados por vírgula (`nico2b, PUMA`, e também o nome de uma beat tape); `tapes`
+  converte só o portfólio do @rideblan33; vazio converte tudo.
 - Carga geral: Actions → "Catálogo — carga geral" → Run workflow. Divide as pastas em 6
   frentes que rodam ao mesmo tempo (`scripts/sync.mjs "" 3/6`). Quem já está pronto é
   pulado, então repetir depois de uma falha continua de onde parou.

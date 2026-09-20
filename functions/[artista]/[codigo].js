@@ -32,16 +32,21 @@ export async function onRequestGet({ params, request, env }) {
   const url = new URL(request.url);
   const capa = artist.cover_key ? `${url.origin}/capa/${artist.cover_key}` : `${url.origin}/og-image.png`;
 
+  const tape = artist.tipo === 'tape';
+
   return pagina(request, env, {
     titulo: `${artist.name} · Caramujo Records`,
-    descricao: `Os beats e as músicas de ${artist.name} com o rideblan33. Toca direto, sem baixar nada.`,
+    descricao: tape
+      ? `${artist.name}, beat tape do rideblan33. Toca direto, sem baixar nada.`
+      : `Os beats e as músicas de ${artist.name} com o rideblan33. Toca direto, sem baixar nada.`,
     url: url.origin + url.pathname,
     capa,
     cat: {
       artist: {
         id: artist.id, name: artist.name, who: '@rideblan33',
+        tape,
         cover: artist.cover_key ? `/capa/${artist.cover_key}` : null,
-        capaDoArtista: artist.cover_origem === 'artista',
+        capaDoArtista: !tape && artist.cover_origem === 'artista',
         descricao: artist.descricao || null
       },
       code: artist.code,

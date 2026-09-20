@@ -29,12 +29,17 @@ export async function onRequestPost(context) {
   if (op === 'capa') return capa(d, env, url, request);
   if (op === 'done') return done(d, env, url, await request.json());
   if (op === 'fila') return fila(d, await request.json());
+  if (op === 'exclusivos') return exclusivos(d, await request.json());
   return json({ erro: 'op desconhecida' }, 400);
 }
 
 async function plan(d, body) {
   const { folderId, name, tracks } = body;
   if (!folderId || !name || !Array.isArray(tracks)) return json({ erro: 'faltou dado' }, 400);
+
+  // Beat tape do @rideblan33 nasce com o download desligado nos dois lados.
+  const tape = body.tipo === 'tape';
+  const tipo = tape ? 'tape' : 'artista';
 
   let artist = await d.prepare('SELECT * FROM artists WHERE folder_id = ?').bind(folderId).first();
 
@@ -43,12 +48,16 @@ async function plan(d, body) {
     const taken = await d.prepare('SELECT 1 FROM artists WHERE slug = ?').bind(slug).first();
     if (taken) slug = slug + '-' + code(3);
     await d.prepare(
-      'INSERT INTO artists (slug, name, folder_id, code, dl_beats, dl_sons) VALUES (?, ?, ?, ?, 1, 1)'
-    ).bind(slug, name, folderId, code(5)).run();
+      'INSERT INTO artists (slug, name, folder_id, code, tipo, dl_beats, dl_sons) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).bind(slug, name, folderId, code(5), tipo, tape ? 0 : 1, tape ? 0 : 1).run();
     artist = await d.prepare('SELECT * FROM artists WHERE folder_id = ?').bind(folderId).first();
-  } else if (artist.name !== name) {
-    await d.prepare('UPDATE artists SET name = ? WHERE id = ?').bind(name, artist.id).run();
+  } else if (artist.name !== name || artist.tipo !== tipo) {
+    await d.prepare('UPDATE artists SET name = ?, tipo = ? WHERE id = ?').bind(name, tipo, artist.id).run();
   }
+
+  // Numa tape, a tag não vem da pasta: sai do cruzamento com Exclusivos
+  // e com o que já está nas pastas dos artistas.
+  const venda = tape ? await marcarVenda(d, tracks) : null;
 
   const have = await d.prepare(
     'SELECT id, src_modified, ready FROM tracks WHERE artist_id = ?'
@@ -65,18 +74,18 @@ async function plan(d, body) {
     if (!fresh) need.push(t.id);
     rows.push(
       d.prepare(
-        `INSERT INTO tracks (id, artist_id, title, kind, grp, bpm, mkey, tag, wav_bytes, src_modified, ready, seen_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO tracks (id, artist_id, title, kind, grp, bpm, mkey, tag, wav_bytes, src_modified, ready, revisar, seen_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(id) DO UPDATE SET
            artist_id = excluded.artist_id, title = excluded.title, kind = excluded.kind,
            grp = excluded.grp, bpm = excluded.bpm, mkey = excluded.mkey, tag = excluded.tag,
            wav_bytes = excluded.wav_bytes, src_modified = excluded.src_modified,
            ready = CASE WHEN tracks.src_modified = excluded.src_modified THEN tracks.ready ELSE 0 END,
-           seen_at = excluded.seen_at`
+           revisar = excluded.revisar, seen_at = excluded.seen_at`
       ).bind(
         t.id, artist.id, t.title, t.kind, t.grp,
         t.bpm ?? null, t.key ?? null, t.tag ?? null,
-        t.wavBytes ?? null, t.modified, fresh ? 1 : 0, stamp
+        t.wavBytes ?? null, t.modified, fresh ? 1 : 0, t.revisar ?? null, stamp
       )
     );
   }
@@ -89,9 +98,74 @@ async function plan(d, body) {
 
   const usadoBytes = await usado(d);
   return json({
-    artistId: artist.id, slug: artist.slug, code: artist.code, need,
+    artistId: artist.id, slug: artist.slug, code: artist.code, need, venda,
+    capaAtual: artist.cover_origem === 'artista' ? null : (artist.cover_key || null),
     prateleira: { usado: usadoBytes, teto: TETO_BYTES, folga: TETO_BYTES - usadoBytes }
   });
+}
+
+/* ---------- disponível, vendido, ou pra eu revisar ---------- */
+
+// Mesma faixa em lugares diferentes: comparo o título limpo e, quando os dois
+// lados têm BPM ou tom, exijo que batam. Isso evita confundir dois "intro".
+const limpo = (s) => String(s || '')
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase().replace(/\s+/g, ' ').trim();
+
+function mesma(a, b) {
+  if (limpo(a.title) !== limpo(b.title)) return false;
+  if (a.bpm && b.bpm && Number(a.bpm) !== Number(b.bpm)) return false;
+  if (a.key && b.key && limpo(a.key) !== limpo(b.key)) return false;
+  return true;
+}
+
+async function exclusivos(d, body) {
+  const beats = Array.isArray(body.beats) ? body.beats : [];
+  const lista = beats.map((b) => ({ title: b.title, bpm: b.bpm ?? null, key: b.key ?? null }));
+  await d.prepare(
+    `INSERT INTO meta (chave, valor) VALUES ('exclusivos', ?)
+     ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor`
+  ).bind(JSON.stringify({ at: now(), beats: lista })).run();
+  return json({ ok: true, total: lista.length });
+}
+
+// Escreve t.tag ('disponivel' | 'vendido' | null) e t.revisar nas faixas da tape.
+async function marcarVenda(d, tracks) {
+  const guardado = await d.prepare("SELECT valor FROM meta WHERE chave = 'exclusivos'").first();
+  let aVenda = [];
+  try { aVenda = JSON.parse(guardado?.valor || '{}').beats || []; } catch { aVenda = []; }
+
+  // Tudo que já está na pasta de algum artista (gravado ou não) conta como vendido.
+  // Puxo a lista inteira porque o LOWER do SQLite não tira acento e "dígitos"
+  // não bateria com "digitos"; a comparação boa é aqui, com limpo().
+  const { results } = await d.prepare(
+    `SELECT t.title, t.bpm, t.mkey, a.name AS artista
+       FROM tracks t JOIN artists a ON a.id = t.artist_id
+      WHERE a.tipo = 'artista'`
+  ).all();
+  const naMao = (results || []).map((r) => ({
+    title: r.title, bpm: r.bpm, key: r.mkey, artista: r.artista
+  }));
+
+  const conta = { disponivel: 0, vendido: 0, revisar: 0 };
+
+  for (const t of tracks) {
+    const emExclusivos = aVenda.some((b) => mesma(b, t));
+    const comArtista = naMao.find((r) => mesma(r, t)) || null;
+
+    if (emExclusivos && !comArtista) { t.tag = 'disponivel'; t.revisar = null; conta.disponivel++; }
+    else if (comArtista && !emExclusivos) { t.tag = 'vendido'; t.revisar = null; conta.vendido++; }
+    else {
+      // nos dois ao mesmo tempo, ou em nenhum: sai sem tag e entra na minha lista
+      t.tag = null;
+      t.revisar = emExclusivos
+        ? 'Está em Exclusivos e na pasta de ' + (comArtista?.artista || 'um artista')
+        : 'Não está em Exclusivos nem na pasta de nenhum artista';
+      conta.revisar++;
+    }
+  }
+
+  return conta;
 }
 
 async function track(d, env, url, request) {

@@ -463,12 +463,15 @@ __META__
     return tab === 'beats' ? !!CAT.perm.beats : !!CAT.perm.sons;
   }
 
+  var VENDA = { disponivel:'disponível', vendido:'vendido' };
+
   function sub(t, grouped){
     if (t.kind === 'beat'){
       var bits=[];
       if (t.bpm) bits.push(t.bpm+' BPM');
       if (t.key) bits.push(t.key);
       if (t.grp === 'grav' && !grouped) bits.push('já gravado');
+      if (VENDA[t.tag]) bits.push(VENDA[t.tag]);
       return bits.join(' · ');
     }
     return t.tag || '';
@@ -831,8 +834,8 @@ __META__
   function ligarCapa(){
     var botao=$('trocarCapa'), campo=$('arquivoCapa');
     if(!botao||!campo) return;
-    // só no catálogo do artista, nunca num link avulso
-    if(CAT.preview || !CAT.code) return;
+    // só no catálogo do artista, nunca num link avulso nem numa beat tape
+    if(CAT.preview || !CAT.code || CAT.artist.tape) return;
     var jaTrocou = !!CAT.artist.capaDoArtista;
     botao.hidden = jaTrocou;
     // depois da primeira troca o botão sai de cima da arte: a capa inteira vira o toque

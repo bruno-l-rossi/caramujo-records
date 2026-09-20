@@ -20,13 +20,14 @@ export async function onRequest({ request, env }) {
   const body = await request.json().catch(() => ({}));
   if (op === 'perm') return perm(d, body);
   if (op === 'descricao') return descricao(d, body);
+  if (op === 'revisar') return revisar(d);
   if (op === 'sync') return sync(env, d, body);
   return json({ erro: 'op desconhecida' }, 400);
 }
 
 async function artistas(d) {
   const { results } = await d.prepare(
-    `SELECT a.id, a.slug, a.name, a.code, a.dl_beats, a.dl_sons, a.synced_at,
+    `SELECT a.id, a.slug, a.name, a.code, a.tipo, a.dl_beats, a.dl_sons, a.synced_at,
             a.job_estado, a.job_total, a.job_feitos, a.job_at, a.cover_origem, a.descricao,
             (SELECT COUNT(*) FROM tracks t WHERE t.artist_id = a.id AND t.ready = 1 AND t.kind = 'beat') AS nb,
             (SELECT COUNT(*) FROM tracks t WHERE t.artist_id = a.id AND t.ready = 1 AND t.kind = 'son') AS ns,
@@ -90,6 +91,17 @@ async function perm(d, body) {
   if (!id || !campo) return json({ erro: 'pedido incompleto' }, 400);
   await d.prepare(`UPDATE artists SET ${campo} = ? WHERE id = ?`).bind(body.valor ? 1 : 0, id).run();
   return json({ ok: true });
+}
+
+// Beats de tape que caíram nos dois critérios, ou em nenhum: decido na mão.
+async function revisar(d) {
+  const { results } = await d.prepare(
+    `SELECT t.id, t.title, t.bpm, t.mkey, t.revisar, a.name AS tape, a.slug, a.code
+       FROM tracks t JOIN artists a ON a.id = t.artist_id
+      WHERE a.tipo = 'tape' AND t.revisar IS NOT NULL
+      ORDER BY a.name COLLATE NOCASE, t.title COLLATE NOCASE`
+  ).all();
+  return json({ faixas: results || [] });
 }
 
 async function descricao(d, body) {

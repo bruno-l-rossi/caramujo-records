@@ -8,6 +8,7 @@ const SCHEMA = [
      name TEXT NOT NULL,
      folder_id TEXT UNIQUE NOT NULL,
      code TEXT NOT NULL,
+     tipo TEXT NOT NULL DEFAULT 'artista',
      dl_beats INTEGER NOT NULL DEFAULT 1,
      dl_sons INTEGER NOT NULL DEFAULT 1,
      cover_key TEXT,
@@ -26,6 +27,8 @@ const SCHEMA = [
   `ALTER TABLE artists ADD COLUMN job_total INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE artists ADD COLUMN job_feitos INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE artists ADD COLUMN job_at TEXT`,
+  // beat tapes do @rideblan33 entraram depois dos artistas
+  `ALTER TABLE artists ADD COLUMN tipo TEXT NOT NULL DEFAULT 'artista'`,
   `CREATE TABLE IF NOT EXISTS tracks (
      id TEXT PRIMARY KEY,
      artist_id INTEGER NOT NULL,
@@ -40,8 +43,10 @@ const SCHEMA = [
      mp3_bytes INTEGER,
      src_modified TEXT,
      ready INTEGER NOT NULL DEFAULT 0,
+     revisar TEXT,
      seen_at TEXT
    )`,
+  `ALTER TABLE tracks ADD COLUMN revisar TEXT`,
   `CREATE INDEX IF NOT EXISTS tracks_artist ON tracks (artist_id)`,
   `CREATE TABLE IF NOT EXISTS links (
      code TEXT PRIMARY KEY,
