@@ -161,7 +161,8 @@ Mesmo desenho do catálogo do artista, com quatro diferenças:
 
 No painel, `@rideblan33` fica fixo no topo da lista, acima de qualquer ordenação, e abre a
 lista das tapes. Lá dentro, antes das tapes, aparece o bloco âmbar de revisão quando tem
-beat indefinido.
+beat indefinido — agrupado por tape, com **disponível** e **vendido** em cada linha e um par
+pra marcar a tape inteira. O que é marcado ali some do bloco e não volta.
 
 ## Nunca
 

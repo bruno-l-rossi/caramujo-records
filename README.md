@@ -364,13 +364,19 @@ Beat de tape não recebe tag da pasta. A tag sai do cruzamento, feito pelo site 
 | Nos dois, ou em nenhum | sem tag, e entra na lista de revisão do painel |
 
 O que casa é o título limpo; quando os dois lados têm BPM ou tom, eles também têm que bater
-(senão dois `intro` viravam a mesma faixa). Acento não atrapalha: `dígitos` casa com
-`digitos`.
+(senão dois `intro` viravam a mesma faixa). O casamento é tolerante onde precisa ser:
+acento não conta (`dígitos` = `digitos`), `F#` e `Gb` são a mesma tecla, `F#` casa com
+`F#maj`, e o BPM tem 1 de folga (exportação com casa decimal arredonda diferente).
 
 A lista de revisão aparece em dois lugares no painel: o total vira um link âmbar na linha
-de cima (ao lado da prateleira), e o bloco completo, com o motivo de cada caso, fica no topo
-do portfólio. Ela existe porque o cruzamento não decide sozinho nesses dois casos — quem
-decide é o Bruno, mexendo nas pastas do Drive.
+de cima (ao lado da prateleira), e o bloco completo, agrupado por tape e com o motivo de
+cada caso, fica no topo do portfólio.
+
+Cada beat da lista tem dois botões, **disponível** e **vendido**, e cada tape com mais de um
+pendente tem o par pra marcar todos de uma vez. A resposta vai pra `tracks.venda_manual` e
+**vence o cruzamento pra sempre**: a conversão seguinte não desfaz. É a saída pros casos que
+o Drive não conta — beat vendido que está na pasta do artista com outro nome, ou beat
+disponível que de propósito não entra em Exclusivos (tape sem licença de exclusividade).
 
 Na carga geral, as seis frentes rodam ao mesmo tempo e uma tape pode ser lida antes de o
 artista dela entrar no banco. Por isso o workflow fecha com um job `tapes`, que roda depois

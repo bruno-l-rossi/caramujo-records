@@ -21,6 +21,7 @@ export async function onRequest({ request, env }) {
   if (op === 'perm') return perm(d, body);
   if (op === 'descricao') return descricao(d, body);
   if (op === 'revisar') return revisar(d);
+  if (op === 'venda') return venda(d, body);
   if (op === 'sync') return sync(env, d, body);
   return json({ erro: 'op desconhecida' }, 400);
 }
@@ -96,12 +97,35 @@ async function perm(d, body) {
 // Beats de tape que caíram nos dois critérios, ou em nenhum: decido na mão.
 async function revisar(d) {
   const { results } = await d.prepare(
-    `SELECT t.id, t.title, t.bpm, t.mkey, t.revisar, a.name AS tape, a.slug, a.code
+    `SELECT t.id, t.title, t.bpm, t.mkey, t.revisar, a.id AS tape_id, a.name AS tape
        FROM tracks t JOIN artists a ON a.id = t.artist_id
-      WHERE a.tipo = 'tape' AND t.revisar IS NOT NULL
+      WHERE a.tipo = 'tape' AND t.revisar IS NOT NULL AND t.venda_manual IS NULL
       ORDER BY a.name COLLATE NOCASE, t.title COLLATE NOCASE`
   ).all();
   return json({ faixas: results || [] });
+}
+
+// Marca na mão o que o cruzamento não resolveu. Vence a pasta e não volta atrás.
+async function venda(d, body) {
+  const valor = body.valor === 'disponivel' || body.valor === 'vendido' ? body.valor : null;
+  const ids = Array.isArray(body.ids) ? body.ids.filter(Boolean).slice(0, 200) : [];
+  const tapeId = Number(body.tapeId) || 0;
+
+  if (!ids.length && !tapeId) return json({ erro: 'sem faixa' }, 400);
+
+  if (tapeId) {
+    // a tape inteira, só o que ainda está sem resposta
+    await d.prepare(
+      `UPDATE tracks SET venda_manual = ?, tag = ?, revisar = NULL
+        WHERE artist_id = ? AND revisar IS NOT NULL AND venda_manual IS NULL`
+    ).bind(valor, valor, tapeId).run();
+  } else {
+    const vagas = ids.map(() => '?').join(', ');
+    await d.prepare(
+      `UPDATE tracks SET venda_manual = ?, tag = ?, revisar = NULL WHERE id IN (${vagas})`
+    ).bind(valor, valor, ...ids).run();
+  }
+  return json({ ok: true });
 }
 
 async function descricao(d, body) {

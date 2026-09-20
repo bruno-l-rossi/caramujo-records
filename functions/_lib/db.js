@@ -44,9 +44,11 @@ const SCHEMA = [
      src_modified TEXT,
      ready INTEGER NOT NULL DEFAULT 0,
      revisar TEXT,
+     venda_manual TEXT,
      seen_at TEXT
    )`,
   `ALTER TABLE tracks ADD COLUMN revisar TEXT`,
+  `ALTER TABLE tracks ADD COLUMN venda_manual TEXT`,
   `CREATE INDEX IF NOT EXISTS tracks_artist ON tracks (artist_id)`,
   `CREATE TABLE IF NOT EXISTS links (
      code TEXT PRIMARY KEY,

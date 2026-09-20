@@ -126,9 +126,20 @@ const BASE = `
   .revisar{border:1px solid #3a2f18;background:#16120a;border-radius:14px;padding:14px 16px;margin:6px 0 14px}
   .revisar b{display:block;font-size:14.5px;font-weight:600}
   .revisar>small{display:block;color:var(--ink3);font-size:12.5px;line-height:1.45;margin-top:4px}
-  .revisar ul{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:9px}
-  .revisar li span{display:block;font-size:14px}
-  .revisar li small{display:block;color:var(--ink4);font-size:12px;line-height:1.4}
+  .revisar ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
+  .rev-tape{margin-top:14px;padding-top:12px;border-top:1px solid #2a2314}
+  .rev-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .rev-topo b{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:#d9c79a}
+  .rev-tudo{font-size:11.5px;color:var(--ink4);display:flex;align-items:center;gap:6px}
+  .revisar li{display:flex;flex-direction:column;gap:5px}
+  .rev-nome{font-size:14.5px}
+  .rev-nome i{font-style:normal;color:var(--ink4);font-size:12.5px}
+  .revisar li small{color:var(--ink4);font-size:12px;line-height:1.4}
+  .rev-acoes{display:flex;gap:7px;margin-top:2px}
+  .revisar button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:var(--ink);
+    padding:5px 11px;border-radius:999px;font-size:12px;cursor:pointer;white-space:nowrap}
+  .revisar button:hover{background:rgba(255,255,255,.11)}
+  .revisar button:disabled{opacity:.4;cursor:default}
   .sw{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;border-bottom:1px solid var(--linha)}
   .sw b{font-size:15px;font-weight:500}
   .sw small{display:block;margin-top:3px;font-size:12px;color:var(--ink4)}
@@ -346,14 +357,46 @@ function pagina() {
 
   function cartaoRevisar(){
     if(!revisar.length) return;
+    var porTape={};
+    revisar.forEach(function(f){ (porTape[f.tape]=porTape[f.tape]||{id:f.tape_id,itens:[]}).itens.push(f) });
+
     var d=document.createElement('div');
     d.className='revisar';
-    d.innerHTML='<b>'+revisar.length+(revisar.length===1?' beat pra revisar':' beats pra revisar')+'</b>'+
-      '<small>Caíram em Exclusivos e na pasta de um artista ao mesmo tempo, ou em nenhum dos dois. '+
-      'Saem sem tag no catálogo até você resolver no Drive.</small>'+
-      '<ul>'+revisar.map(function(f){
-        return '<li><span>'+esc(f.title)+'</span><small>'+esc(f.tape)+' — '+esc(f.revisar)+'</small></li>';
-      }).join('')+'</ul>';
+    var html='<b>'+revisar.length+(revisar.length===1?' beat pra revisar':' beats pra revisar')+'</b>'+
+      '<small>O Drive não resolveu: caíram em Exclusivos e na pasta de um artista ao mesmo tempo, '+
+      'ou em nenhum dos dois. Saem sem pastilha no catálogo até você responder aqui. '+
+      'O que você marcar vence a pasta e não volta atrás.</small>';
+
+    Object.keys(porTape).forEach(function(tape){
+      var g=porTape[tape];
+      html+='<div class="rev-tape"><div class="rev-topo"><b>'+esc(tape)+'</b>'+
+        (g.itens.length>1
+          ? '<span class="rev-tudo">todos: <button type="button" data-tape="'+g.id+'" data-v="disponivel">disponível</button>'+
+            '<button type="button" data-tape="'+g.id+'" data-v="vendido">vendido</button></span>'
+          : '')+'</div><ul>'+
+        g.itens.map(function(f){
+          var ficha=[f.mkey,f.bpm?f.bpm+'bpm':''].filter(Boolean).join(' · ');
+          return '<li><span class="rev-nome">'+esc(f.title)+(ficha?' <i>'+esc(ficha)+'</i>':'')+'</span>'+
+            '<small>'+esc(f.revisar)+'</small>'+
+            '<span class="rev-acoes">'+
+              '<button type="button" data-id="'+esc(f.id)+'" data-v="disponivel">disponível</button>'+
+              '<button type="button" data-id="'+esc(f.id)+'" data-v="vendido">vendido</button>'+
+            '</span></li>';
+        }).join('')+'</ul></div>';
+    });
+    d.innerHTML=html;
+
+    d.querySelectorAll('[data-v]').forEach(function(b){
+      b.addEventListener('click',function(){
+        var corpo={ valor:b.dataset.v };
+        if(b.dataset.tape) corpo.tapeId=Number(b.dataset.tape); else corpo.ids=[b.dataset.id];
+        d.querySelectorAll('[data-v]').forEach(function(x){x.disabled=true});
+        acao('venda',corpo).then(function(j){
+          if(j.ok){ flash('Marcado como '+b.dataset.v+'.'); carregar(true); }
+          else { flash(j.erro||'Não consegui marcar.'); d.querySelectorAll('[data-v]').forEach(function(x){x.disabled=false}); }
+        });
+      });
+    });
     $('lista').appendChild(d);
   }
 

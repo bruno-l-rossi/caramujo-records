@@ -112,11 +112,31 @@ const limpo = (s) => String(s || '')
   .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   .toLowerCase().replace(/\s+/g, ' ').trim();
 
+// F# e Gb são a mesma tecla; "F#" e "F#maj" são o mesmo tom escrito de dois jeitos.
+const ENARM = { 'a#': 'bb', 'c#': 'db', 'd#': 'eb', 'f#': 'gb', 'g#': 'ab' };
+
+function tom(k) {
+  const m = limpo(k).match(/^([a-g])(b|#)?(.*)$/);
+  if (!m) return null;
+  const nota = ENARM[m[1] + (m[2] || '')] || (m[1] + (m[2] || ''));
+  const resto = m[3];
+  const q = /^(m|min|minor)$/.test(resto) ? 'm' : (resto ? 'maj' : null);
+  return { nota, q };
+}
+
+function mesmoTom(a, b) {
+  const x = tom(a), y = tom(b);
+  if (!x || !y) return true;                 // um dos lados não diz o tom: não atrapalha
+  if (x.nota !== y.nota) return false;
+  if (x.q && y.q && x.q !== y.q) return false;
+  return true;
+}
+
 function mesma(a, b) {
   if (limpo(a.title) !== limpo(b.title)) return false;
-  if (a.bpm && b.bpm && Number(a.bpm) !== Number(b.bpm)) return false;
-  if (a.key && b.key && limpo(a.key) !== limpo(b.key)) return false;
-  return true;
+  // 1 BPM de folga: exportação com casa decimal arredonda diferente
+  if (a.bpm && b.bpm && Math.abs(Number(a.bpm) - Number(b.bpm)) > 1) return false;
+  return mesmoTom(a.key, b.key);
 }
 
 async function exclusivos(d, body) {
@@ -131,6 +151,17 @@ async function exclusivos(d, body) {
 
 // Escreve t.tag ('disponivel' | 'vendido' | null) e t.revisar nas faixas da tape.
 async function marcarVenda(d, tracks) {
+  // O que eu marquei na mão no painel vence o cruzamento e não volta atrás.
+  const manual = new Map();
+  for (let i = 0; i < tracks.length; i += 60) {
+    const ids = tracks.slice(i, i + 60).map((t) => t.id);
+    const vagas = ids.map(() => '?').join(', ');
+    const { results } = await d.prepare(
+      `SELECT id, venda_manual FROM tracks WHERE venda_manual IS NOT NULL AND id IN (${vagas})`
+    ).bind(...ids).all();
+    for (const r of results || []) manual.set(r.id, r.venda_manual);
+  }
+
   const guardado = await d.prepare("SELECT valor FROM meta WHERE chave = 'exclusivos'").first();
   let aVenda = [];
   try { aVenda = JSON.parse(guardado?.valor || '{}').beats || []; } catch { aVenda = []; }
@@ -150,6 +181,11 @@ async function marcarVenda(d, tracks) {
   const conta = { disponivel: 0, vendido: 0, revisar: 0 };
 
   for (const t of tracks) {
+    if (manual.has(t.id)) {
+      t.tag = manual.get(t.id); t.revisar = null;
+      if (t.tag === 'disponivel') conta.disponivel++; else conta.vendido++;
+      continue;
+    }
     const emExclusivos = aVenda.some((b) => mesma(b, t));
     const comArtista = naMao.find((r) => mesma(r, t)) || null;
 
