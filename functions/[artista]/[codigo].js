@@ -40,7 +40,8 @@ export async function onRequestGet({ params, request, env }) {
     cat: {
       artist: {
         id: artist.id, name: artist.name, who: '@rideblan33',
-        cover: artist.cover_key ? `/capa/${artist.cover_key}` : null
+        cover: artist.cover_key ? `/capa/${artist.cover_key}` : null,
+        capaDoArtista: artist.cover_origem === 'artista'
       },
       code: artist.code,
       owner: false,

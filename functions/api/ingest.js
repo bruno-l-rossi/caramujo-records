@@ -136,7 +136,7 @@ async function done(d, env, url, body) {
 
   // a capa saiu da pasta do Drive: some daqui também, e volta o logo da casa
   const capaAgora = body.capa || null;
-  if (!capaAgora && artist.cover_key) {
+  if (!capaAgora && artist.cover_key && artist.cover_origem !== 'artista') {
     await env.AUDIO.delete(`capa/${artist.cover_key}.jpg`).catch(() => {});
     await d.prepare('UPDATE artists SET cover_key = NULL WHERE id = ?').bind(artist.id).run();
   }
@@ -168,8 +168,15 @@ async function capa(d, env, url, request) {
   const chave = url.searchParams.get('chave');
   if (!folderId || !chave) return json({ erro: 'faltou dado' }, 400);
 
-  const artist = await d.prepare('SELECT id, cover_key FROM artists WHERE folder_id = ?').bind(folderId).first();
+  const artist = await d.prepare(
+    'SELECT id, cover_key, cover_origem FROM artists WHERE folder_id = ?'
+  ).bind(folderId).first();
   if (!artist) return json({ erro: 'artista nao encontrado' }, 404);
+
+  // o artista trocou a capa pelo site: a imagem do Drive não atropela
+  if (artist.cover_origem === 'artista') {
+    return json({ ok: true, pulou: 'capa do artista' });
+  }
 
   const body = await request.arrayBuffer();
   if (!body.byteLength) return json({ erro: 'imagem vazia' }, 400);
@@ -181,7 +188,9 @@ async function capa(d, env, url, request) {
   if (artist.cover_key && artist.cover_key !== chave) {
     await env.AUDIO.delete(`capa/${artist.cover_key}.jpg`).catch(() => {});
   }
-  await d.prepare('UPDATE artists SET cover_key = ? WHERE id = ?').bind(chave, artist.id).run();
+  await d.prepare(
+    "UPDATE artists SET cover_key = ?, cover_origem = 'drive' WHERE id = ?"
+  ).bind(chave, artist.id).run();
 
   return json({ ok: true, chave });
 }

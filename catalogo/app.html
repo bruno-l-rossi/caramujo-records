@@ -82,6 +82,15 @@ __META__
     background:#000 center/cover no-repeat;display:flex;align-items:center;justify-content:center;overflow:hidden;
   }
   .cover .logo{width:62%;aspect-ratio:403/250}
+  .trocar{
+    position:absolute;right:10px;bottom:10px;z-index:2;
+    display:flex;align-items:center;gap:7px;
+    padding:9px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.16);
+    background:rgba(0,0,0,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    color:#e8e8e8;font-size:12px;font-weight:500;cursor:pointer;
+  }
+  .trocar[hidden]{display:none}
+  .trocar:active{background:rgba(0,0,0,.75)}
 
   .panel{
     padding:0 16px 24px;
@@ -153,8 +162,8 @@ __META__
   .foot{padding:6px 0 0;border-top:1px solid rgba(255,255,255,.06);
     display:flex;flex-direction:column;gap:6px;align-items:flex-start}
   .foot .brand-link{padding:16px 2px 0}
-  .foot .brand-link .logo{width:164px;height:30px;opacity:.55}
-  .foot .brand-link:hover .logo{opacity:.9}
+  .foot .brand-link .logo{width:164px;height:30px;opacity:1}
+  .foot .brand-link:hover .logo{opacity:.75}
   .foot-note{font-size:10px;letter-spacing:.16em;color:#333}
 
   body.is-preview .tabsbar,
@@ -300,7 +309,15 @@ __META__
 
   <main class="content">
     <div class="art">
-      <div class="cover" id="capa"><span class="logo logo-v" role="img" aria-label="Caramujo Records"></span></div>
+      <div class="cover" id="capa">
+        <span class="logo logo-v" role="img" aria-label="Caramujo Records"></span>
+        <button class="trocar" id="trocarCapa" type="button" hidden>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 8.5A1.5 1.5 0 014.5 7h2L8 5h8l1.5 2h2A1.5 1.5 0 0121 8.5v9A1.5 1.5 0 0119.5 19h-15A1.5 1.5 0 013 17.5z"/><circle cx="12" cy="12.5" r="3.2"/></svg>
+          Trocar capa
+        </button>
+        <label for="arquivoCapa" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Escolher imagem da capa</label>
+        <input id="arquivoCapa" type="file" accept="image/*" hidden>
+      </div>
     </div>
 
     <section class="panel">
@@ -520,6 +537,7 @@ __META__
     player.hidden=false;dlDock.hidden=true;
     audio.src='/audio/'+t.id+'.mp3';
     audio.play().catch(function(){});
+    tarja(t);
     conta(t);
     paint();render();
   }
@@ -543,9 +561,17 @@ __META__
     $('plToggle').setAttribute('aria-label',audio.paused?'Tocar':'Pausar');
   }
   audio.addEventListener('timeupdate',function(){ if(!scrubbing){pos=audio.currentTime;paint()} });
-  audio.addEventListener('loadedmetadata',paint);
-  audio.addEventListener('play',function(){paint();render()});
-  audio.addEventListener('pause',function(){paint();render()});
+  audio.addEventListener('loadedmetadata',function(){ paint(); tarjaPosicao(); });
+  audio.addEventListener('seeked',tarjaPosicao);
+  audio.addEventListener('durationchange',tarjaPosicao);
+  audio.addEventListener('play',function(){
+    paint();render();tarjaPosicao();
+    if('mediaSession' in navigator) navigator.mediaSession.playbackState='playing';
+  });
+  audio.addEventListener('pause',function(){
+    paint();render();
+    if('mediaSession' in navigator) navigator.mediaSession.playbackState='paused';
+  });
   audio.addEventListener('ended',function(){
     if(cur+1<rows.length) pick(cur+1);
     else { pos=0; paint(); render(); }
@@ -576,6 +602,51 @@ __META__
     });
   });
   $('playAll').addEventListener('click',function(){if(rows.length){exitSel();pick(0)}});
+
+  /* ---------- a tarja do sistema (tela de bloqueio, notificação) ---------- */
+  function arteDoSistema(){
+    var c = CAT.artist.cover;
+    var url = c ? location.origin + c : location.origin + '/assets/brand/Caramujo_Records.png';
+    var tipo = /\.png$/i.test(url) ? 'image/png' : 'image/jpeg';
+    return ['96x96','192x192','256x256','512x512'].map(function(t){
+      return { src:url, sizes:t, type:tipo };
+    });
+  }
+  function tarja(t){
+    if(!('mediaSession' in navigator)) return;
+    try{
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: t.title + ' (prod. @rideblan33)',
+        artist: CAT.artist.name || 'Caramujo Records',
+        album: 'Caramujo Records',
+        artwork: arteDoSistema()
+      });
+    }catch(e){}
+    var liga = function(acao, fn){ try{ navigator.mediaSession.setActionHandler(acao, fn) }catch(e){} };
+    liga('play', function(){ audio.play().catch(function(){}) });
+    liga('pause', function(){ audio.pause() });
+    liga('previoustrack', function(){
+      if(audio.currentTime > 4){ audio.currentTime = 0; return; }
+      if(cur > 0) pick(cur - 1);
+    });
+    liga('nexttrack', function(){ if(cur + 1 < rows.length) pick(cur + 1) });
+    liga('seekbackward', function(d){ nudge(-(d && d.seekOffset || 15)) });
+    liga('seekforward', function(d){ nudge(d && d.seekOffset || 15) });
+    liga('seekto', function(d){ if(d && d.seekTime != null) audio.currentTime = d.seekTime });
+    liga('stop', function(){ audio.pause(); audio.currentTime = 0 });
+  }
+  function tarjaPosicao(){
+    if(!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState) return;
+    var dur = audio.duration;
+    if(!dur || !isFinite(dur)) return;
+    try{
+      navigator.mediaSession.setPositionState({
+        duration: dur,
+        position: Math.min(audio.currentTime, dur),
+        playbackRate: audio.playbackRate || 1
+      });
+    }catch(e){}
+  }
 
   /* ---------- audiências ---------- */
   function conta(t){
@@ -753,6 +824,58 @@ __META__
     });
   }
 
+  /* ---------- o artista troca a capa ---------- */
+  function ligarCapa(){
+    var botao=$('trocarCapa'), campo=$('arquivoCapa');
+    if(!botao||!campo) return;
+    // só no catálogo do artista, nunca num link avulso
+    if(CAT.preview || !CAT.code) return;
+    botao.hidden=false;
+
+    botao.addEventListener('click',function(){ campo.click() });
+    campo.addEventListener('change',function(){
+      var arq=campo.files && campo.files[0];
+      campo.value='';
+      if(!arq) return;
+      if(!/^image\//.test(arq.type)){ flash('Manda uma imagem.'); return; }
+      if(arq.size > 20*1048576){ flash('Essa imagem é pesada demais.'); return; }
+      botao.disabled=true;
+      var antes=botao.innerHTML;
+      botao.textContent='Subindo…';
+      quadrado(arq, 1000).then(function(blob){
+        return fetch('/api/capa?a='+encodeURIComponent(location.pathname.split('/')[1])+'&c='+encodeURIComponent(CAT.code),{
+          method:'POST', headers:{'content-type':'image/jpeg'}, body:blob
+        });
+      }).then(function(r){ return r.json() }).then(function(j){
+        botao.disabled=false;botao.innerHTML=antes;
+        if(!j.ok){ flash(j.erro||'Não consegui trocar a capa.'); return; }
+        CAT.artist.cover=j.capa+'?v='+Date.now();
+        aplicarCapa();
+        flash('Capa trocada.');
+      }).catch(function(){
+        botao.disabled=false;botao.innerHTML=antes;
+        flash('Não consegui trocar a capa.');
+      });
+    });
+  }
+
+  // corta no centro e reduz, pra subir leve e sair sempre quadrada
+  function quadrado(arquivo, lado){
+    return new Promise(function(ok, falhou){
+      var img=new Image();
+      img.onload=function(){
+        var l=Math.min(img.width,img.height);
+        var cv=document.createElement('canvas');
+        cv.width=lado;cv.height=lado;
+        cv.getContext('2d').drawImage(img,(img.width-l)/2,(img.height-l)/2,l,l,0,0,lado,lado);
+        cv.toBlob(function(b){ b?ok(b):falhou() },'image/jpeg',0.86);
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror=falhou;
+      img.src=URL.createObjectURL(arquivo);
+    });
+  }
+
   /* ---------- toast ---------- */
   var tid;
   function flash(msg){
@@ -769,27 +892,36 @@ __META__
     return p.join(', ') || 'catálogo vazio';
   }
 
+  function aplicarCapa(){
+    var c=$('capa');
+    if(!CAT.artist.cover){
+      c.style.backgroundImage='';
+      if(!c.querySelector('.logo')) c.insertAdjacentHTML('afterbegin','<span class="logo logo-v" role="img" aria-label="Caramujo Records"></span>');
+      return;
+    }
+    var arte="url('"+CAT.artist.cover+"')";
+    var marca=c.querySelector('.logo');
+    if(marca) marca.remove();
+    c.style.backgroundImage=arte;
+    var bg=$('fundo');
+    if(bg) bg.style.backgroundImage=arte;
+    var mini=document.querySelector('.pl-art');
+    if(mini){
+      var m=mini.querySelector('.logo');
+      if(m) m.remove();
+      mini.style.backgroundImage=arte;
+      mini.style.backgroundSize='cover';
+      mini.style.backgroundPosition='center';
+    }
+  }
+
   function inicio(){
     $('nome').textContent=CAT.artist.name||'';
     $('who').textContent=CAT.artist.who||'@rideblan33';
     $('count').textContent=contagem();
     document.title=(CAT.artist.name||'Catálogo')+' · Caramujo Records';
 
-    if(CAT.artist.cover){
-      var arte="url('"+CAT.artist.cover+"')";
-      var c=$('capa');
-      c.innerHTML='';
-      c.style.backgroundImage=arte;
-      var bg=$('fundo');
-      if(bg) bg.style.backgroundImage=arte;
-      var mini=document.querySelector('.pl-art');
-      if(mini){
-        mini.innerHTML='';
-        mini.style.backgroundImage=arte;
-        mini.style.backgroundSize='cover';
-        mini.style.backgroundPosition='center';
-      }
-    }
+    aplicarCapa();
 
     if(!SONS.length){ $('tabSons').hidden=true; }
     if(!BEATS.length && SONS.length){ tab='sons'; $('tabBeats').hidden=true;
@@ -803,6 +935,7 @@ __META__
       $('count').textContent=CAT.tracks.length===1?'1 faixa':CAT.tracks.length+' faixas';
     }
 
+    ligarCapa();
     render();
     envia({ kind:'open', artistId:CAT.artist.id, code:CAT.code });
 

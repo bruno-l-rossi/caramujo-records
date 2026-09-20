@@ -25,6 +25,11 @@ const AUDIO = /\.(wav|aiff?|flac|mp3|m4a)$/i;
 const IMAGEM = /^image\/(jpeg|png|webp|heic|heif)$/i;
 const IGNORAR = new Set(['shows', 'vídeos', 'videos', 'sessão de stu', 'sessao de stu']);
 
+// Pastas que ficam de fora da passada geral. O portfólio do rideblan33 tem outra
+// estrutura (beat tapes, exclusivos, free) e vai ser tratado à parte. Pedindo pelo
+// nome na mão, converte assim mesmo.
+const FORA_DA_GERAL = new Set(['@rideblan33', 'batalhas de rima']);
+
 const alvo = (process.argv[2] || '').split(',').map((s) => s.trim()).filter(Boolean);
 
 // "3/6" = terceiro lote de seis. Serve pra dividir a carga geral em vários
@@ -227,7 +232,9 @@ async function main() {
   const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'caramujo-'));
   const artistas = (await filhos(PROJETOS))
     .filter((f) => f.mimeType === 'application/vnd.google-apps.folder')
-    .filter((f) => !alvo.length || alvo.some((a) => a.toLowerCase() === f.name.toLowerCase()));
+    .filter((f) => alvo.length
+      ? alvo.some((a) => a.toLowerCase() === f.name.toLowerCase())
+      : !FORA_DA_GERAL.has(f.name.trim().toLowerCase()));
 
   if (alvo.length && !artistas.length) throw new Error('nenhum artista bateu com: ' + alvo.join(', '));
 

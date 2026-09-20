@@ -97,6 +97,12 @@ Sem arte, o mesmo tratamento cai sobre três manchas claras, que é o fundo neut
 Os avulsos valem para sempre. Dentro de uma prévia ou de um link avulso, quem recebe não
 reenvia: o `...` perde a opção de enviar.
 
+## Tarja do sistema
+
+Tocando no celular, a notificação e a tela de bloqueio mostram a capa do catálogo, o título
+`nome da faixa (prod. @rideblan33)`, o artista e "Caramujo Records". Os botões de faixa
+anterior e próxima navegam na lista que está aberta, e a barra arrasta.
+
 ## Player
 
 Barra de progresso arrastável com bolinha de 13px, botões de 15 segundos para trás e para

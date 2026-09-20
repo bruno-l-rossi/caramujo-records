@@ -329,6 +329,23 @@ borrão do fundo no computador e a mini-capa do player.
 Beat sem tom sai só com o BPM. O nome vem do título limpo, nunca do arquivo original do
 Drive (que pode estar truncado).
 
+### Quem manda na capa
+
+Duas origens, guardadas em `artists.cover_origem`:
+
+- `drive`: a imagem que está solta na pasta do artista. O conversor sobe a cada passada e,
+  se a imagem sumir do Drive, a capa é apagada da prateleira.
+- `artista`: o artista trocou pelo botão na própria página. **Essa vence**: o conversor
+  passa reto e não sobrescreve, e tirar a imagem do Drive não apaga.
+
+Pra retomar o controle, o painel tem "Remover" no bloco CAPA do artista. Depois disso a
+próxima conversão volta a mandar a do Drive.
+
+O botão de trocar só aparece no catálogo do artista (`/artista/codigo`), nunca num link
+avulso (`/f/`, `/p/`). O navegador corta no centro, reduz pra 1000×1000 e manda um JPEG de
+uns 150 KB; o endpoint (`functions/api/capa.js`) confere o código do link, limita a 3 MB e
+registra o evento `capa`, que aparece na atividade do painel.
+
 ### Bindings e variáveis
 
 | Nome | Onde | Pra quê |

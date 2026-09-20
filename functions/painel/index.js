@@ -177,6 +177,10 @@ function pagina() {
       <label for="q" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Buscar artista</label>
       <input id="q" type="search" placeholder="Buscar artista" autocomplete="off">
     </div>
+    <button class="pill" id="ordemBtn" type="button">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M8 4v16"/><path d="M5 7l3-3 3 3"/><path d="M16 20V4"/><path d="M13 17l3 3 3-3"/></svg>
+      <span id="ordemLabel">Atividade</span>
+    </button>
     <button class="pill" id="syncTudo" type="button">Converter tudo</button>
   </div>
 
@@ -189,7 +193,8 @@ function pagina() {
 <script>
 (function(){
   var $=function(i){return document.getElementById(i)};
-  var artistas=[], filtro='';
+  var artistas=[], filtro='', ordem='atividade';
+  var ORDENS={atividade:'Atividade', az:'A a Z', faixas:'Mais faixas'};
 
   function tempo(iso){
     if(!iso) return 'nunca abriu';
@@ -232,6 +237,15 @@ function pagina() {
   function desenhar(){
     var alvo=artistas.filter(function(a){
       return !filtro || a.name.toLowerCase().indexOf(filtro)>-1;
+    });
+    alvo.sort(function(a,b){
+      if(ordem==='az') return a.name.localeCompare(b.name,'pt-BR',{sensitivity:'base'});
+      if(ordem==='faixas') return ((b.nb||0)+(b.ns||0)) - ((a.nb||0)+(a.ns||0));
+      // atividade: quem abriu mais recente primeiro, quem nunca abriu por último
+      if(!a.visto && !b.visto) return a.name.localeCompare(b.name,'pt-BR',{sensitivity:'base'});
+      if(!a.visto) return 1;
+      if(!b.visto) return -1;
+      return a.visto < b.visto ? 1 : -1;
     });
     if(!alvo.length){ $('lista').innerHTML='<div class="vazio">Nenhum artista com esse nome.</div>'; return }
     $('lista').innerHTML='';
@@ -292,6 +306,12 @@ function pagina() {
         sw('beats','Beats','os beats reservados e os já gravados',a.dl_beats)+
         sw('sons','Músicas','os sons prontos, lançados e as guias',a.dl_sons)+
       '</div>'+
+      (a.cover_origem==='artista'
+        ? '<div class="bloco"><div class="rot">CAPA</div>'+
+          '<div class="sw"><span><b>O artista trocou a capa</b>'+
+          '<small>a imagem do Drive não sobrescreve enquanto ela estiver aqui</small></span>'+
+          '<button class="pill" data-act="tirarcapa" type="button">Remover</button></div></div>'
+        : '')+
       '<div class="bloco"><div class="rot">ATIVIDADE</div>'+
         '<div class="numeros">'+
           '<div><b id="nUltima">—</b><span>última<br>atividade</span></div>'+
@@ -312,6 +332,14 @@ function pagina() {
     $('veil').hidden=false;
     c.querySelector('[data-close]').addEventListener('click',fechar);
     c.querySelector('[data-act=copiar]').addEventListener('click',function(){copiar(a)});
+    var tirar=c.querySelector('[data-act=tirarcapa]');
+    if(tirar) tirar.addEventListener('click',function(){
+      tirar.disabled=true;tirar.textContent='Removendo…';
+      fetch('/api/capa?id='+a.id,{method:'DELETE'}).then(function(x){return x.json()}).then(function(j){
+        if(j.ok){ a.cover_origem=null; flash('Capa removida. Na próxima conversão volta a do Drive.'); fechar(); carregar(true); }
+        else { tirar.disabled=false;tirar.textContent='Remover';flash(j.erro||'Não consegui remover.') }
+      });
+    });
     c.querySelector('[data-act=abrir]').addEventListener('click',function(){window.open(link(a),'_blank','noopener')});
     c.querySelector('[data-act=sync]').addEventListener('click',function(e){
       var b=e.currentTarget;b.disabled=true;b.textContent='Mandando…';
@@ -399,6 +427,26 @@ function pagina() {
   }
 
   $('q').addEventListener('input',function(e){filtro=e.target.value.toLowerCase();desenhar()});
+
+  $('ordemBtn').addEventListener('click',function(){
+    var c=$('card');
+    c.innerHTML='<h2>Ordem</h2><p>Como a lista aparece</p><div class="card-list">'+
+      Object.keys(ORDENS).map(function(k){
+        return '<button type="button" data-ordem="'+k+'">'+
+          '<span style="width:18px;display:flex">'+(ordem===k?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M5 12.5l5 5 9-10"/></svg>':'')+'</span>'+
+          ORDENS[k]+'</button>';
+      }).join('')+
+      '</div><button class="pill" data-close type="button" style="width:100%;justify-content:center;margin-top:14px">Fechar</button>';
+    $('veil').hidden=false;
+    c.querySelector('[data-close]').addEventListener('click',fechar);
+    c.querySelectorAll('[data-ordem]').forEach(function(b){
+      b.addEventListener('click',function(){
+        ordem=b.dataset.ordem;
+        $('ordemLabel').textContent=ORDENS[ordem];
+        fechar();
+      });
+    });
+  });
   $('syncTudo').addEventListener('click',function(e){
     var b=e.currentTarget;b.disabled=true;b.textContent='Mandando…';
     acao('sync',{}).then(function(j){
