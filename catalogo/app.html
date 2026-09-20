@@ -41,15 +41,24 @@ __META__
 
 
   .bg{
-    position:fixed;inset:-8%;z-index:0;pointer-events:none;
-    background:#050505;
-    background-image:
-      radial-gradient(circle at 18% 14%, rgba(255,255,255,.12), rgba(255,255,255,0) 30%),
-      radial-gradient(circle at 74% 26%, rgba(255,255,255,.07), rgba(255,255,255,0) 30%),
-      radial-gradient(circle at 38% 78%, rgba(255,255,255,.06), rgba(255,255,255,0) 32%);
-    filter:blur(40px);
+    position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:#050505;
   }
-  .bg::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 40%, rgba(0,0,0,.25), rgba(0,0,0,.82))}
+  .bg i{
+    position:absolute;inset:-14%;display:block;
+    background:#050505 center/cover no-repeat;
+    background-image:
+      radial-gradient(circle at 24% 16%, rgba(255,255,255,.20), rgba(255,255,255,0) 32%),
+      radial-gradient(circle at 70% 30%, rgba(255,255,255,.12), rgba(255,255,255,0) 30%),
+      radial-gradient(circle at 40% 82%, rgba(255,255,255,.10), rgba(255,255,255,0) 34%);
+    filter:blur(34px) saturate(1.15);
+    transform:scale(1.28);
+  }
+  .bg::after{
+    content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(130% 100% at 50% 38%, rgba(0,0,0,.42), rgba(0,0,0,.88) 78%),
+      linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.55));
+  }
 
   .stage{position:relative;z-index:1;min-height:100%;display:flex;flex-direction:column}
 
@@ -66,12 +75,20 @@ __META__
 
   .art{padding:0;display:flex;justify-content:center}
   .cover{
-    position:relative;width:min(100%,52vh);aspect-ratio:1/1;max-width:100%;
+    position:relative;width:min(88%,46vh);aspect-ratio:1/1;max-width:100%;
     background:#000 center/cover no-repeat;display:flex;align-items:center;justify-content:center;overflow:hidden;
   }
   .cover .logo{width:62%;aspect-ratio:403/250}
 
-  .panel{padding:0 16px 24px}
+  .panel{
+    padding:0 16px 24px;
+    background:linear-gradient(180deg,
+      rgba(0,0,0,0) 0,
+      rgba(0,0,0,.55) 26px,
+      rgba(0,0,0,.88) 120px,
+      #000 300px);
+  }
+  .art{padding-top:10px}
   .head{padding-top:16px}
   .title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
   h1{margin:0;font-size:33px;font-weight:700;letter-spacing:-.03em;line-height:1.02;overflow-wrap:anywhere}
@@ -136,14 +153,6 @@ __META__
   .foot .brand-link .logo{width:164px;height:30px;opacity:.55}
   .foot .brand-link:hover .logo{opacity:.9}
   .foot-note{font-size:10px;letter-spacing:.16em;color:#333}
-
-  .pvbar{display:flex;align-items:center;justify-content:space-between;gap:12px;
-    background:#151515;border:1px solid #252525;border-radius:12px;
-    padding:11px 12px 11px 15px;margin-top:18px}
-  .pvbar[hidden]{display:none}
-  .pvbar span{font-size:13px;color:var(--ink-2)}
-  .pvbar button{background:transparent;border:0;padding:6px 4px;font-size:13px;
-    font-weight:500;color:#fff;cursor:pointer}
 
   body.is-preview .tabsbar,
   body.is-preview .tabsbar-line,
@@ -229,24 +238,6 @@ __META__
   .card-close{margin-top:14px;width:100%;padding:13px;border-radius:12px;border:1px solid #2a2a2a;
     background:transparent;color:var(--ink-2);font-size:14px;cursor:pointer}
 
-  .single{position:fixed;inset:0;z-index:40;background:#000;overflow-y:auto;display:flex;flex-direction:column}
-  .single[hidden]{display:none}
-  .single-top{display:flex;align-items:center;gap:10px;padding:14px 16px;
-    padding-top:calc(14px + env(safe-area-inset-top,0px))}
-  .single-top button{width:40px;height:40px;padding:0;background:transparent;border:0;color:#fff;cursor:pointer;
-    display:flex;align-items:center;justify-content:center}
-  .single-top span{font-size:11px;font-weight:700;letter-spacing:.24em;color:#8a8a8a}
-  .single-body{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 22px 40px;text-align:center}
-  .single .cover{max-width:320px;border:1px solid #1c1c1c}
-  .single h2{margin:26px 0 0;font-size:28px;font-weight:700;letter-spacing:-.02em;overflow-wrap:anywhere}
-  .single .who2{margin-top:8px;font-size:14px;color:var(--ink-3)}
-  .single .tagline{margin-top:6px;font-size:13px;color:var(--ink-4);font-variant-numeric:tabular-nums}
-  .single-player{width:100%;max-width:380px;margin-top:26px}
-  .single-ctrls{display:flex;align-items:center;justify-content:center;gap:26px;margin-top:10px}
-  .big-play{width:64px;height:64px;border-radius:50%;background:#fff;border:0;color:#000;cursor:pointer;
-    display:flex;align-items:center;justify-content:center}
-  .single-dl{margin-top:26px}
-
   .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:120px;z-index:60;
     background:#1d1d1d;border:1px solid #2d2d2d;color:#e2e2e2;font-size:13px;
     padding:11px 15px;border-radius:12px;max-width:86%;text-align:center;
@@ -261,6 +252,7 @@ __META__
     .art{flex:0 0 clamp(280px,32vw,420px)}
     .cover{box-shadow:0 30px 80px rgba(0,0,0,.6)}
     .list{padding-bottom:16px;min-height:120px}
+    .art{padding-top:0}
     .panel{
       flex:0 1 700px;max-height:min(74vh,860px);overflow-y:auto;
       background:var(--panel);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);
@@ -289,13 +281,12 @@ __META__
     .dl-dock{max-width:560px;margin:0 auto}
     .veil{align-items:center}
     .card{border-radius:20px}
-    .single-body{padding-top:20px}
   }
 </style>
 </head>
 <body>
 
-<div class="bg" aria-hidden="true"></div>
+<div class="bg" aria-hidden="true"><i id="fundo"></i></div>
 
 <div class="stage">
   <header class="brand">
@@ -310,11 +301,6 @@ __META__
     </div>
 
     <section class="panel">
-      <div class="pvbar" id="pvbar" hidden>
-        <span>Assim a pessoa vê</span>
-        <button type="button" id="pvExit">Sair da prévia</button>
-      </div>
-
       <div class="head">
         <div class="title-row">
           <h1 id="nome">—</h1>
@@ -419,46 +405,6 @@ __META__
   <div class="card" id="card" role="dialog" aria-modal="true" aria-labelledby="cardTitle"></div>
 </div>
 
-<div class="single" id="single" hidden>
-  <div class="single-top">
-    <button id="singleBack" type="button" aria-label="Voltar">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
-    </button>
-    <span class="logo" role="img" aria-label="Caramujo Records" style="width:128px;height:23px"></span>
-  </div>
-  <div class="single-body">
-    <div class="cover" style="width:100%"><span class="logo logo-v" role="img" aria-label="Caramujo Records"></span></div>
-    <h2 id="sName">—</h2>
-    <div class="who2" id="sWho">prod. @rideblan33</div>
-    <div class="tagline" id="sTag">—</div>
-    <div class="single-player">
-      <div class="scrub">
-        <time id="sNow">0:00</time>
-        <label for="sSeek" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Posição da faixa</label>
-        <input id="sSeek" type="range" min="0" max="100" value="0" step="1">
-        <time id="sEnd" class="r">0:00</time>
-      </div>
-      <div class="single-ctrls">
-        <button class="pl-btn skip" id="sBack" type="button" aria-label="Voltar 15 segundos">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" aria-hidden="true"><path d="M11 5V2L6 6l5 4V7a6 6 0 11-6 6"/></svg>
-          <small style="bottom:5px">15</small>
-        </button>
-        <button class="big-play" id="sToggle" type="button" aria-label="Tocar">
-          <svg id="sIcon" width="24" height="24" viewBox="0 0 24 24" fill="#000" aria-hidden="true"><path d="M7 4l12 8-12 8z"/></svg>
-        </button>
-        <button class="pl-btn skip" id="sFwd" type="button" aria-label="Avançar 15 segundos">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" aria-hidden="true" style="transform:scaleX(-1)"><path d="M11 5V2L6 6l5 4V7a6 6 0 11-6 6"/></svg>
-          <small style="bottom:5px">15</small>
-        </button>
-      </div>
-    </div>
-    <button class="pill solid single-dl" id="sDown" type="button">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
-      Baixar
-    </button>
-  </div>
-</div>
-
 <div class="toast" id="toast" hidden></div>
 
 <!--DADOS-->
@@ -475,7 +421,7 @@ __META__
 
   var tab='beats', sort='recentes', query='';
   var rows=[], cur=-1, pos=0, scrubbing=false;
-  var selMode=false, selAction='down', sel={}, singleTrack=null, preview=null;
+  var selMode=false, selAction='down', sel={}, preview=null;
   var contados={};
 
   var $=function(id){return document.getElementById(id)};
@@ -723,28 +669,6 @@ __META__
     if(selAction==='send')sendSheet(p);else downSheet(p);
   });
 
-  /* ---------- prévia ---------- */
-  function openPreview(p){
-    if(p.length===1){openSingle(p[0]);return}
-    preview=p.slice();
-    selMode=false;sel={};dlDock.hidden=true;$('selbar').hidden=true;
-    audio.pause();cur=-1;pos=0;player.hidden=true;
-    document.body.classList.add('is-preview');
-    $('pvbar').hidden=false;
-    $('count').textContent = p.length+' faixas escolhidas';
-    render();
-    window.scrollTo({top:0,behavior:'smooth'});
-  }
-  function exitPreview(){
-    preview=null;
-    document.body.classList.remove('is-preview');
-    $('pvbar').hidden=true;
-    $('count').textContent=contagem();
-    audio.pause();cur=-1;pos=0;player.hidden=true;
-    render();
-    window.scrollTo({top:0,behavior:'smooth'});
-  }
-  $('pvExit').addEventListener('click',exitPreview);
 
   /* ---------- folhas ---------- */
   function open(html){
@@ -829,42 +753,6 @@ __META__
     });
   }
 
-  /* ---------- faixa única ---------- */
-  function openSingle(t){
-    singleTrack=t;
-    audio.pause();cur=-1;player.hidden=true;render();
-    $('sName').textContent=t.title;
-    $('sTag').textContent=(sub(t,false)? sub(t,false)+' · ':'')+mmss(t.dur);
-    $('sDown').hidden=!podeBaixar();
-    $('single').hidden=false;
-    sAudio.src='/audio/'+t.id+'.mp3';
-    sPaint();
-  }
-  var sAudio=new Audio();sAudio.preload='metadata';
-  function sPaint(){
-    var t=singleTrack;if(!t)return;
-    var dur=sAudio.duration&&isFinite(sAudio.duration)?sAudio.duration:(t.dur||0);
-    $('sNow').textContent=mmss(sAudio.currentTime);
-    $('sEnd').textContent=mmss(dur);
-    var sk=$('sSeek');sk.max=Math.max(1,Math.round(dur));sk.value=Math.round(sAudio.currentTime);
-    sk.style.setProperty('--pct',(dur?sAudio.currentTime/dur*100:0)+'%');
-    $('sIcon').innerHTML = sAudio.paused
-      ? '<path d="M7 4l12 8-12 8z"></path>'
-      : '<rect x="5" y="4" width="5" height="16"></rect><rect x="14" y="4" width="5" height="16"></rect>';
-  }
-  sAudio.addEventListener('timeupdate',sPaint);
-  sAudio.addEventListener('loadedmetadata',sPaint);
-  sAudio.addEventListener('play',function(){sPaint();if(singleTrack)conta(singleTrack)});
-  sAudio.addEventListener('pause',sPaint);
-  $('sToggle').addEventListener('click',function(){ sAudio.paused?sAudio.play().catch(function(){}):sAudio.pause() });
-  $('sBack').addEventListener('click',function(){sAudio.currentTime=Math.max(0,sAudio.currentTime-15)});
-  $('sFwd').addEventListener('click',function(){sAudio.currentTime=Math.min(sAudio.duration||1e9,sAudio.currentTime+15)});
-  $('sSeek').addEventListener('input',function(e){sAudio.currentTime=Number(e.target.value);sPaint()});
-  $('sDown').addEventListener('click',function(){downSheet([singleTrack])});
-  $('singleBack').addEventListener('click',function(){
-    $('single').hidden=true;sAudio.pause();
-  });
-
   /* ---------- toast ---------- */
   var tid;
   function flash(msg){
@@ -892,13 +780,8 @@ __META__
       var c=$('capa');
       c.innerHTML='';
       c.style.backgroundImage=arte;
-      var bg=document.querySelector('.bg');
-      if(bg){
-        bg.style.backgroundImage=arte;
-        bg.style.backgroundSize='cover';
-        bg.style.backgroundPosition='center';
-        bg.style.filter='blur(60px) saturate(1.1)';
-      }
+      var bg=$('fundo');
+      if(bg) bg.style.backgroundImage=arte;
       var mini=document.querySelector('.pl-art');
       if(mini){
         mini.innerHTML='';
@@ -906,8 +789,6 @@ __META__
         mini.style.backgroundSize='cover';
         mini.style.backgroundPosition='center';
       }
-      var sc=document.querySelector('#single .cover');
-      if(sc){ sc.innerHTML=''; sc.style.backgroundImage=arte; }
     }
 
     if(!SONS.length){ $('tabSons').hidden=true; }
@@ -925,7 +806,6 @@ __META__
     render();
     envia({ kind:'open', artistId:CAT.artist.id, code:CAT.code });
 
-    if(CAT.preview && CAT.tracks.length===1) openSingle(CAT.tracks[0]);
   }
 
   inicio();

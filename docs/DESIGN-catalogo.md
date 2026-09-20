@@ -46,9 +46,11 @@ Schibsted Grotesk (Google Fonts), com `-apple-system` e Helvetica Neue de reserv
 
 ## Layout
 
-**Celular.** Barra com o logo, capa quadrada de ponta a ponta, nome grande com a lupa na
-mesma linha, usuário, contagem, linha de ações (play cinza grande, ENVIAR, BAIXAR), abas
-Beats e Músicas com a ordenação à direita, lista, rodapé. Player fixo embaixo.
+**Celular.** Barra com o logo, capa quadrada ocupando 88% da largura (teto de 46vh), nome
+grande com a lupa na mesma linha, usuário, contagem, linha de ações (play cinza grande,
+ENVIAR, BAIXAR), abas Beats e Músicas com a ordenação à direita, lista, rodapé. Player fixo
+embaixo. Abaixo da capa, um degradê escurece até o preto em 300px: a arte do fundo aparece
+em volta da capa e some atrás do texto, que nunca perde contraste.
 
 **Computador.** O borrão da capa cobre a tela. Capa nítida à esquerda, painel flutuante de
 cantos arredondados à direita com todo o conteúdo, rolagem dentro do painel. Player fixo
@@ -77,6 +79,15 @@ Na faixa tocando, o número vira um equalizador de três barras.
 - **Enviar** mostra o link com o botão Copiar e a prévia "Ver como a pessoa vê".
 - `...` da faixa: Tocar, Enviar só essa faixa, Baixar.
 
+## O fundo
+
+A capa vira o fundo da tela, ampliada 1,28x e desfocada em 34px, com saturação levemente
+alta. Por cima, duas camadas escuras: um radial que deixa o miolo em 42% de preto e as
+bordas em 88%, mais um linear de apoio. O desfoque tem que deixar a forma da arte visível
+(é assim no Offtop); borrão liso demais vira névoa cinza e perde a graça.
+
+Sem arte, o mesmo tratamento cai sobre três manchas claras, que é o fundo neutro da casa.
+
 ## Links
 
 - Catálogo: `caramujorecords.com.br/[artista]/[codigo]`
@@ -89,8 +100,13 @@ reenvia: o `...` perde a opção de enviar.
 ## Player
 
 Barra de progresso arrastável com bolinha de 13px, botões de 15 segundos para trás e para
-frente, play e pause. Na faixa avulsa o play é um círculo branco de 64px. Toda área de
-toque tem no mínimo 44px.
+frente, play e pause. Toda área de toque tem no mínimo 44px.
+
+## Link avulso
+
+`/f/codigo` (uma faixa) e `/p/codigo` (uma seleção) usam a MESMA página do catálogo, com a
+lista filtrada: some a aba, a busca e o ENVIAR, a contagem vira "1 faixa" ou "N faixas", e
+o `...` da faixa perde a opção de reenviar. Uma faixa e várias faixas têm o mesmo desenho.
 
 ## Logo
 
