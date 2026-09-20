@@ -307,8 +307,16 @@ POST /api/ingest   (protegido por INGEST_TOKEN)
 | `Sons/Já lançados/` | Músicas | JÁ LANÇADAS | mastered |
 
 `Shows/`, `Vídeos/` e `Sessão de stu/` são ignoradas. O nome do arquivo vira título, BPM
-e tom (`scripts/parse.mjs`): o sufixo técnico (`(mastered -12 lufs) prod. @rideblan33`) é
-descartado, inclusive truncado. Arquivo fora do padrão aparece com o nome limpo, sem tag.
+e tom (`scripts/parse.mjs`): o sufixo técnico é descartado em qualquer das formas que
+aparecem no Drive — `(mastered -12 lufs) prod. @rideblan33`, `prod. @rideblan33` solto,
+ou o rabo inteiro dentro do parêntese (`intro (prod. @rideblan33).wav`). Se um parêntese
+ficar aberto depois do corte, o título é cortado ali, pra nunca sobrar `intro (`. Cópia do
+Drive (`_2`, `(1)`) sai do fim. O tom aceita `Abm`, `Bbmin`, `Cmaj`, `Emajor` e sai sempre
+como `Abm` (menor) ou `Abmaj` (maior). Arquivo fora do padrão aparece com o nome limpo,
+sem tag.
+
+O título é regravado a cada conversão. Corrigir o parser e rodar a carga geral de novo
+arruma o nome de todos os catálogos sem reconverter áudio nenhum.
 
 ### A capa do catálogo
 
@@ -328,6 +336,11 @@ borrão do fundo no computador e a mini-capa do player.
 
 Beat sem tom sai só com o BPM. O nome vem do título limpo, nunca do arquivo original do
 Drive (que pode estar truncado).
+
+### Permissão de download
+
+Catálogo novo já nasce com o download ligado nos beats e nas músicas. Desligar é decisão
+minha, no painel, artista por artista — e fica desligado: o conversor não mexe nisso.
 
 ### Quem manda na capa
 

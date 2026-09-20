@@ -8,8 +8,8 @@ const SCHEMA = [
      name TEXT NOT NULL,
      folder_id TEXT UNIQUE NOT NULL,
      code TEXT NOT NULL,
-     dl_beats INTEGER NOT NULL DEFAULT 0,
-     dl_sons INTEGER NOT NULL DEFAULT 0,
+     dl_beats INTEGER NOT NULL DEFAULT 1,
+     dl_sons INTEGER NOT NULL DEFAULT 1,
      cover_key TEXT,
      cover_origem TEXT,
      descricao TEXT,
@@ -59,7 +59,14 @@ const SCHEMA = [
      who TEXT,
      at TEXT NOT NULL
    )`,
-  `CREATE INDEX IF NOT EXISTS events_artist ON events (artist_id, at)`
+  `CREATE INDEX IF NOT EXISTS events_artist ON events (artist_id, at)`,
+  `CREATE TABLE IF NOT EXISTS meta (chave TEXT PRIMARY KEY, valor TEXT NOT NULL)`
+];
+
+// Ajustes que rodam uma vez só e ficam marcados na tabela meta.
+// Depois disso o painel manda: se eu desligar um download, fica desligado.
+const UMA_VEZ = [
+  ['download-ligado-2026-09', 'UPDATE artists SET dl_beats = 1, dl_sons = 1']
 ];
 
 let ready = false;
@@ -70,6 +77,13 @@ export async function db(env) {
     for (const q of SCHEMA) {
       try { await env.DB.prepare(q).run(); }
       catch (e) { if (!/duplicate column/i.test(String(e))) throw e; }
+    }
+    for (const [chave, q] of UMA_VEZ) {
+      const feito = await env.DB.prepare('SELECT 1 FROM meta WHERE chave = ?').bind(chave).first();
+      if (feito) continue;
+      await env.DB.prepare(q).run();
+      await env.DB.prepare('INSERT INTO meta (chave, valor) VALUES (?, ?)')
+        .bind(chave, new Date().toISOString()).run();
     }
     ready = true;
   }

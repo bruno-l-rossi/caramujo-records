@@ -43,7 +43,7 @@ async function plan(d, body) {
     const taken = await d.prepare('SELECT 1 FROM artists WHERE slug = ?').bind(slug).first();
     if (taken) slug = slug + '-' + code(3);
     await d.prepare(
-      'INSERT INTO artists (slug, name, folder_id, code, dl_beats, dl_sons) VALUES (?, ?, ?, ?, 0, 0)'
+      'INSERT INTO artists (slug, name, folder_id, code, dl_beats, dl_sons) VALUES (?, ?, ?, ?, 1, 1)'
     ).bind(slug, name, folderId, code(5)).run();
     artist = await d.prepare('SELECT * FROM artists WHERE folder_id = ?').bind(folderId).first();
   } else if (artist.name !== name) {
