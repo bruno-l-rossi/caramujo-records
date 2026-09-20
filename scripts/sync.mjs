@@ -75,6 +75,29 @@ async function gtoken() {
   return cache.token;
 }
 
+const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// 500, 502, 503 e 429 do Google são quase sempre passageiros.
+async function insiste(oque, tentativas = 4) {
+  let ultimo;
+  for (let i = 1; i <= tentativas; i++) {
+    try {
+      const r = await oque();
+      if (r.ok || r.status === 206) return r;
+      if (![429, 500, 502, 503, 504].includes(r.status)) return r;
+      ultimo = new Error('respondeu ' + r.status);
+    } catch (e) {
+      ultimo = e;
+    }
+    if (i < tentativas) {
+      const pausa = 1500 * Math.pow(2, i - 1);
+      console.log(`    (o Drive tropeçou, tento de novo em ${pausa / 1000}s)`);
+      await espera(pausa);
+    }
+  }
+  throw ultimo || new Error('nao consegui falar com o Drive');
+}
+
 async function drive(params) {
   const q = new URLSearchParams({
     fields: 'files(id,name,mimeType,size,modifiedTime),nextPageToken',
@@ -87,9 +110,9 @@ async function drive(params) {
   let page;
   do {
     if (page) q.set('pageToken', page);
-    const r = await fetch('https://www.googleapis.com/drive/v3/files?' + q, {
+    const r = await insiste(async () => fetch('https://www.googleapis.com/drive/v3/files?' + q, {
       headers: { authorization: 'Bearer ' + (await gtoken()) }
-    });
+    }));
     if (!r.ok) throw new Error('Drive respondeu ' + r.status + ': ' + (await r.text()).slice(0, 200));
     const j = await r.json();
     out.push(...(j.files || []));
@@ -167,9 +190,9 @@ async function converter(faixa, dir) {
   const bruto = path.join(dir, faixa.id + '.fonte' + (path.extname(faixa.fileName) || '.wav'));
   const leve = path.join(dir, faixa.id + '.leve.mp3');
 
-  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${faixa.id}?alt=media&supportsAllDrives=true`, {
+  const r = await insiste(async () => fetch(`https://www.googleapis.com/drive/v3/files/${faixa.id}?alt=media&supportsAllDrives=true`, {
     headers: { authorization: 'Bearer ' + (await gtoken()) }
-  });
+  }));
   if (!r.ok) throw new Error('download falhou (' + r.status + ')');
   await fs.promises.writeFile(bruto, Buffer.from(await r.arrayBuffer()));
 
@@ -190,9 +213,9 @@ async function capinha(arquivo, dir) {
   const bruto = path.join(dir, arquivo.id + '.fonte');
   const quadrado = path.join(dir, arquivo.id + '.capa.jpg');
 
-  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${arquivo.id}?alt=media&supportsAllDrives=true`, {
+  const r = await insiste(async () => fetch(`https://www.googleapis.com/drive/v3/files/${arquivo.id}?alt=media&supportsAllDrives=true`, {
     headers: { authorization: 'Bearer ' + (await gtoken()) }
-  });
+  }));
   if (!r.ok) throw new Error('download da capa falhou (' + r.status + ')');
   await fs.promises.writeFile(bruto, Buffer.from(await r.arrayBuffer()));
 
@@ -210,14 +233,14 @@ async function capinha(arquivo, dir) {
 
 async function ingest(op, params, body, binario = false) {
   const q = new URLSearchParams({ op, ...params });
-  const r = await fetch(`${SITE}/api/ingest?${q}`, {
+  const r = await insiste(() => fetch(`${SITE}/api/ingest?${q}`, {
     method: 'POST',
     headers: {
       'x-ingest-token': TOKEN,
       'content-type': binario ? (op === 'capa' ? 'image/jpeg' : 'audio/mpeg') : 'application/json'
     },
     body: binario ? body : JSON.stringify(body)
-  });
+  }));
   const txt = await r.text();
   if (!r.ok) throw new Error(`site respondeu ${r.status}: ${txt.slice(0, 300)}`);
   return JSON.parse(txt);
@@ -246,9 +269,33 @@ async function main() {
     console.log(`${artistas.length} pasta(s) de artista`);
   }
 
+  const tropecos = [];
+
   for (const artista of fila) {
+    try {
+      await umArtista(artista, dir);
+    } catch (e) {
+      tropecos.push(`${artista.name}: ${e.message}`);
+      console.log(`- ${artista.name}: parou no meio (${e.message}). Sigo com os outros.`);
+    }
+  }
+
+  await fs.promises.rm(dir, { recursive: true, force: true });
+
+  if (tropecos.length) {
+    console.log(`\n${tropecos.length} pasta(s) ficaram pela metade:`);
+    for (const t of tropecos) console.log('  - ' + t);
+    console.log('Rodar de novo continua de onde parou.');
+    process.exitCode = 1;
+  } else {
+    console.log('\nTudo convertido.');
+  }
+}
+
+async function umArtista(artista, dir) {
+  {
     const { faixas, capa } = await catalogo(artista);
-    if (!faixas.length) { console.log(`- ${artista.name}: sem faixa, pulei`); continue; }
+    if (!faixas.length) { console.log(`- ${artista.name}: sem faixa, pulei`); return; }
 
     const p = await ingest('plan', {}, { folderId: artista.id, name: artista.name, tracks: faixas });
     console.log(`- ${artista.name}: ${faixas.length} faixa(s), ${p.need.length} pra converter`);
@@ -284,8 +331,6 @@ async function main() {
     });
     console.log(`    link: ${SITE}${fim.link}`);
   }
-
-  await fs.promises.rm(dir, { recursive: true, force: true });
 }
 
 main().catch((e) => { console.error('parou:', e.message); process.exit(1); });

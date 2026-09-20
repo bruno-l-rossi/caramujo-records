@@ -130,6 +130,16 @@ Sem arte, é preto com o logo vertical no centro. Qualquer imagem solta na pasta
 vira a capa, recortada num quadrado de 1000×1000. Tirar a imagem do Drive e converter de
 novo devolve o logo: a sincronia apaga a capa órfã da prateleira.
 
+O artista também pode subir a dele pelo catálogo, e a escolha dele manda: enquanto existir,
+a pasta do Drive não sobrescreve. Na primeira vez, um botão discreto em cima da arte convida
+a trocar. Depois que ele troca, o botão some — a arte fica limpa para print e vídeo — e o
+convite passa a ser a própria capa: tocar nela abre trocar a imagem ou voltar para a padrão.
+
+## Recado
+
+Um parágrafo curto embaixo da contagem de faixas, escrito só por mim no painel, teto de 280
+caracteres. Sem recado, nada aparece.
+
 ## Nunca
 
 - Trazer a paleta terrosa, o Cormorant ou o selo espiral para dentro da ferramenta.

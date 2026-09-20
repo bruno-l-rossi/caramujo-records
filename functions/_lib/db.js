@@ -12,6 +12,7 @@ const SCHEMA = [
      dl_sons INTEGER NOT NULL DEFAULT 0,
      cover_key TEXT,
      cover_origem TEXT,
+     descricao TEXT,
      synced_at TEXT,
      job_estado TEXT,
      job_total INTEGER NOT NULL DEFAULT 0,
@@ -20,6 +21,7 @@ const SCHEMA = [
    )`,
   // bancos criados antes da barra de andamento
   `ALTER TABLE artists ADD COLUMN cover_origem TEXT`,
+  `ALTER TABLE artists ADD COLUMN descricao TEXT`,
   `ALTER TABLE artists ADD COLUMN job_estado TEXT`,
   `ALTER TABLE artists ADD COLUMN job_total INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE artists ADD COLUMN job_feitos INTEGER NOT NULL DEFAULT 0`,

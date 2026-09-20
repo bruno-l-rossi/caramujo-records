@@ -35,7 +35,8 @@ export async function avulso(kind, { params, request, env }) {
     cat: {
       artist: {
         id: artist.id, name: artist.name, who: '@rideblan33',
-        cover: artist.cover_key ? `/capa/${artist.cover_key}` : null
+        cover: artist.cover_key ? `/capa/${artist.cover_key}` : null,
+        descricao: artist.descricao || null
       },
       code: link.code,
       preview: true,

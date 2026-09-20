@@ -375,6 +375,14 @@ Actions é ilimitado em repositório público.
   frentes que rodam ao mesmo tempo (`scripts/sync.mjs "" 3/6`). Quem já está pronto é
   pulado, então repetir depois de uma falha continua de onde parou.
 
+### Quando o Drive tropeça
+
+O Drive devolve 500 e 429 de vez em quando numa carga grande. Toda chamada ao Drive e ao
+site passa por `insiste()`: até 4 tentativas, esperando 1,5s, 3s e 6s entre elas. Se mesmo
+assim um artista quebrar, o conversor anota o nome, segue para o próximo e só no fim marca
+a rodada como falha — os outros do mesmo lote terminam normalmente. Rodar de novo pega só
+quem ficou faltando.
+
 ### Cuidados
 
 - `_routes.json` mantém a home e os assets fora das Functions: menos gasto de cota e o site

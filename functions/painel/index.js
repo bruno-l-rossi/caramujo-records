@@ -113,6 +113,11 @@ const BASE = `
   .card .end{font-size:13px;color:var(--ink4);word-break:break-all}
   .bloco{margin-top:20px}
   .rot{font-size:11px;letter-spacing:.2em;color:var(--ink4);margin-bottom:10px}
+  .desc{width:100%;min-height:76px;resize:vertical;background:var(--campo);border:1px solid var(--borda);
+    border-radius:12px;padding:12px 14px;font-size:14.5px;line-height:1.45;outline:none}
+  .desc:focus{border-color:#3a3a3a}
+  .desc-baixo{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
+  .desc-baixo small{font-size:11.5px;color:var(--ink4);font-variant-numeric:tabular-nums}
   .sw{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;border-bottom:1px solid var(--linha)}
   .sw b{font-size:15px;font-weight:500}
   .sw small{display:block;margin-top:3px;font-size:12px;color:var(--ink4)}
@@ -302,6 +307,12 @@ function pagina() {
         '<button class="pill solid" data-act="copiar" type="button">Copiar link</button>'+
         '<button class="pill" data-act="abrir" type="button">Abrir</button>'+
       '</div>'+
+      '<div class="bloco"><div class="rot">DESCRIÇÃO DO CATÁLOGO</div>'+
+        '<label for="desc" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Descrição</label>'+
+        '<textarea class="desc" id="desc" maxlength="280" placeholder="Um recado que aparece embaixo da contagem de faixas. Só você escreve.">'+esc(a.descricao||'')+'</textarea>'+
+        '<div class="desc-baixo"><small id="descConta"></small>'+
+        '<button class="pill" data-act="salvardesc" type="button">Salvar</button></div>'+
+      '</div>'+
       '<div class="bloco"><div class="rot">PODE BAIXAR</div>'+
         sw('beats','Beats','os beats reservados e os já gravados',a.dl_beats)+
         sw('sons','Músicas','os sons prontos, lançados e as guias',a.dl_sons)+
@@ -332,6 +343,19 @@ function pagina() {
     $('veil').hidden=false;
     c.querySelector('[data-close]').addEventListener('click',fechar);
     c.querySelector('[data-act=copiar]').addEventListener('click',function(){copiar(a)});
+
+    var campo=$('desc'), conta=$('descConta'), salvar=c.querySelector('[data-act=salvardesc]');
+    var mostrarConta=function(){ conta.textContent=campo.value.length+' de 280' };
+    mostrarConta();
+    campo.addEventListener('input',mostrarConta);
+    salvar.addEventListener('click',function(){
+      salvar.disabled=true;salvar.textContent='Salvando…';
+      acao('descricao',{id:a.id,texto:campo.value}).then(function(j){
+        salvar.disabled=false;salvar.textContent='Salvar';
+        if(j.ok){ a.descricao=j.texto||''; flash(j.texto?'Descrição salva.':'Descrição apagada.'); }
+        else flash(j.erro||'Não consegui salvar.');
+      });
+    });
     var tirar=c.querySelector('[data-act=tirarcapa]');
     if(tirar) tirar.addEventListener('click',function(){
       tirar.disabled=true;tirar.textContent='Removendo…';

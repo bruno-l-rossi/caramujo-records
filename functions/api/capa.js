@@ -46,19 +46,34 @@ export async function onRequestPost({ request, env }) {
 
 // O painel apaga a capa que o artista subiu.
 export async function onRequestDelete({ request, env }) {
-  const { autenticado } = await import('../_lib/sessao.js');
-  if (!(await autenticado(request, env))) return json({ erro: 'entra no painel primeiro' }, 401);
-
   const url = new URL(request.url);
-  const id = Number(url.searchParams.get('id'));
-  if (!id) return json({ erro: 'sem artista' }, 400);
-
   const d = await db(env);
-  const artist = await d.prepare('SELECT id, cover_key FROM artists WHERE id = ?').bind(id).first();
+
+  // dois donos dessa ação: o painel (por id) e o artista (pelo link)
+  const slug = String(url.searchParams.get('a') || '').toLowerCase();
+  const codigo = String(url.searchParams.get('c') || '').toLowerCase();
+  const id = Number(url.searchParams.get('id'));
+
+  let artist = null;
+  if (slug && codigo) {
+    artist = await d.prepare('SELECT * FROM artists WHERE slug = ?').bind(slug).first();
+    if (!artist || artist.code !== codigo) return json({ erro: 'link nao confere' }, 403);
+    if (artist.cover_origem !== 'artista') return json({ erro: 'essa capa vem do estudio' }, 403);
+  } else {
+    const { autenticado } = await import('../_lib/sessao.js');
+    if (!(await autenticado(request, env))) return json({ erro: 'entra no painel primeiro' }, 401);
+    if (!id) return json({ erro: 'sem artista' }, 400);
+    artist = await d.prepare('SELECT * FROM artists WHERE id = ?').bind(id).first();
+  }
   if (!artist) return json({ erro: 'artista nao encontrado' }, 404);
 
   if (artist.cover_key) await env.AUDIO.delete(`capa/${artist.cover_key}.jpg`).catch(() => {});
-  await d.prepare('UPDATE artists SET cover_key = NULL, cover_origem = NULL WHERE id = ?').bind(id).run();
+  await d.prepare('UPDATE artists SET cover_key = NULL, cover_origem = NULL WHERE id = ?')
+    .bind(artist.id).run();
+
+  await d.prepare(
+    'INSERT INTO events (artist_id, track_id, kind, link_code, who, at) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(artist.id, null, 'capa-removida', artist.code, await who(request), now()).run();
 
   return json({ ok: true });
 }
