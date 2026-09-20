@@ -47,7 +47,8 @@ O GitHub (e portanto o deploy do Pages, que publica o repositório inteiro) rece
 │
 ├── docs/                          # Documentação do projeto
 │   ├── DESIGN.md                  # Sistema de marca (paleta, tipografia, tom)
-│   ├── contexto-continuidade-compilado.md  # Contexto pra IA retomar o projeto
+│   ├── contexto-continuidade-compilado.md  # Contexto pra IA retomar o site de vendas
+│   ├── contexto-catalogo-compilado.md      # Contexto pra IA retomar o catálogo de entrega
 │   └── analise-usabilidade-mobile.md
 │
 ├── previews/                      # Abrir no navegador pra conferir (fora do deploy)

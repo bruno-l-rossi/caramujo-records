@@ -125,6 +125,9 @@ const BASE = `
   .seta{flex:none;color:var(--ink4);font-size:20px;line-height:1}
   .revisar{border:1px solid #3a2f18;background:#16120a;border-radius:14px;padding:14px 16px;margin:6px 0 14px}
   .revisar b{display:block;font-size:14.5px;font-weight:600}
+  .revisar.limpo{border-color:#1f1f1f;background:#101010}
+  .vazio small{display:block;margin-top:8px;color:var(--ink4);font-size:12.5px;line-height:1.5}
+  .vazio b{color:var(--ink2);font-weight:600}
   .revisar>small{display:block;color:var(--ink3);font-size:12.5px;line-height:1.45;margin-top:4px}
   .revisar ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
   .rev-tape{margin-top:14px;padding-top:12px;border-top:1px solid #2a2314}
@@ -256,7 +259,7 @@ function pagina() {
       pintarResumo(j.prateleira.usado);
       desenhar();
       acompanhar();
-      if(tapes.length) fetch('/api/painel?op=revisar').then(function(r){return r.json()})
+      fetch('/api/painel?op=revisar').then(function(r){return r.json()})
         .then(function(x){ revisar=x.faixas||[]; pintarResumo(j.prateleira.usado); desenhar(); }).catch(function(){});
       if(silencioso && antes && !artistas.filter(rodando).length) flash('Conversão terminou.');
     }).catch(function(){
@@ -281,13 +284,16 @@ function pagina() {
     $('lista').innerHTML='';
 
     if(vista==='tapes'){ $('lista').appendChild(voltar()); cartaoRevisar(); }
-    else if(tapes.length && !filtro) $('lista').appendChild(fixo());
+    else if(!filtro) $('lista').appendChild(fixo());
 
     if(!alvo.length){
       var v=document.createElement('div'); v.className='vazio';
-      v.textContent = vista==='tapes'
-        ? (filtro?'Nenhuma tape com esse nome.':'Nenhuma beat tape convertida ainda.')
-        : 'Nenhum artista com esse nome.';
+      if(vista!=='tapes') v.textContent='Nenhum artista com esse nome.';
+      else if(filtro) v.textContent='Nenhuma tape com esse nome.';
+      else v.innerHTML='Nenhuma beat tape convertida ainda.<br>'+
+        '<small>Roda <b>Catálogo — carga geral</b> no GitHub Actions. '+
+        'Cada pasta em <b>@rideblan33 / Beat tapes</b> vira um catálogo, e os beats que o '+
+        'cruzamento não resolver aparecem aqui pra você marcar na mão.</small>';
       $('lista').appendChild(v);
       return;
     }
@@ -331,8 +337,10 @@ function pagina() {
     var b=document.createElement('button');
     b.type='button'; b.className='linha';
     b.innerHTML='<span style="flex:1;min-width:0"><span class="nome">@rideblan33</span>'+
-      '<span class="meta">'+tapes.length+(tapes.length===1?' beat tape':' beat tapes')+
-      (revisar.length?' · '+revisar.length+' pra revisar':'')+'</span></span>'+
+      '<span class="meta">'+(tapes.length
+        ? tapes.length+(tapes.length===1?' beat tape':' beat tapes')+
+          (revisar.length?' · '+revisar.length+' pra revisar':' · nada pra revisar')
+        : 'beat tapes — nenhuma convertida ainda')+'</span></span>'+
       '<span class="seta">›</span>';
     b.addEventListener('click',function(){
       vista='tapes'; filtro=''; $('q').value=''; $('q').placeholder='Buscar beat tape'; desenhar();
@@ -356,7 +364,16 @@ function pagina() {
   }
 
   function cartaoRevisar(){
-    if(!revisar.length) return;
+    if(!revisar.length){
+      if(!tapes.length) return;
+      var ok=document.createElement('div');
+      ok.className='revisar limpo';
+      ok.innerHTML='<b>Nada pra revisar</b><small>Todo beat das tapes está classificado como '+
+        'disponível ou vendido. Quando o cruzamento não decidir, o beat aparece aqui com os '+
+        'botões pra você marcar.</small>';
+      $('lista').appendChild(ok);
+      return;
+    }
     var porTape={};
     revisar.forEach(function(f){ (porTape[f.tape]=porTape[f.tape]||{id:f.tape_id,itens:[]}).itens.push(f) });
 
