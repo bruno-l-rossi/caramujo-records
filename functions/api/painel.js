@@ -14,7 +14,7 @@ export async function onRequest({ request, env }) {
   const d = await db(env);
 
   if (op === 'artistas') return artistas(d);
-  if (op === 'eventos') return eventos(d, url.searchParams.get('id'));
+  if (op === 'eventos') return eventos(d, url.searchParams.get('id'), url.searchParams.get('p'));
   if (request.method !== 'POST') return json({ erro: 'op desconhecida' }, 400);
 
   const body = await request.json().catch(() => ({}));
@@ -43,15 +43,44 @@ async function artistas(d) {
   });
 }
 
-async function eventos(d, id) {
+async function eventos(d, id, pagina) {
   const artistId = Number(id);
   if (!artistId) return json({ erro: 'sem artista' }, 400);
+
+  const POR_PAGINA = 10;
+  const p = Math.max(0, Number(pagina) || 0);
+
+  // mês e ano contados no horário de São Paulo
+  const sp = new Date(Date.now() - 3 * 3600e3);
+  const inicioMes = new Date(Date.UTC(sp.getUTCFullYear(), sp.getUTCMonth(), 1) + 3 * 3600e3).toISOString();
+  const inicioAno = new Date(Date.UTC(sp.getUTCFullYear(), 0, 1) + 3 * 3600e3).toISOString();
+
+  const resumo = await d.prepare(
+    `SELECT MAX(at) AS ultima,
+            SUM(CASE WHEN kind = 'open' AND at >= ? THEN 1 ELSE 0 END) AS mes,
+            SUM(CASE WHEN kind = 'open' AND at >= ? THEN 1 ELSE 0 END) AS ano,
+            COUNT(*) AS total
+     FROM events WHERE artist_id = ?`
+  ).bind(inicioMes, inicioAno, artistId).first();
+
   const { results } = await d.prepare(
     `SELECT e.kind, e.at, t.title AS titulo
      FROM events e LEFT JOIN tracks t ON t.id = e.track_id
-     WHERE e.artist_id = ? ORDER BY e.at DESC LIMIT 40`
-  ).bind(artistId).all();
-  return json({ eventos: results || [] });
+     WHERE e.artist_id = ? ORDER BY e.at DESC LIMIT ? OFFSET ?`
+  ).bind(artistId, POR_PAGINA, p * POR_PAGINA).all();
+
+  const total = Number(resumo?.total || 0);
+  return json({
+    eventos: results || [],
+    resumo: {
+      ultima: resumo?.ultima || null,
+      mes: Number(resumo?.mes || 0),
+      ano: Number(resumo?.ano || 0)
+    },
+    pagina: p,
+    paginas: Math.max(1, Math.ceil(total / POR_PAGINA)),
+    total
+  });
 }
 
 async function perm(d, body) {

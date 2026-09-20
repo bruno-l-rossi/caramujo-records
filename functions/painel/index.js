@@ -47,6 +47,9 @@ function html(corpo, status = 200) {
 const BASE = `
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" type="image/svg+xml" href="/assets/brand/selo-creme.svg">
+<link rel="icon" type="image/png" href="/assets/brand/Caramujo_Records.png">
+<meta name="theme-color" content="#0a0a0a">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap">
@@ -118,6 +121,16 @@ const BASE = `
   .toggle i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#8a8a8a;transition:.15s}
   .toggle[aria-pressed="true"]{background:#fff;border-color:#fff}
   .toggle[aria-pressed="true"] i{left:23px;background:#000}
+  .numeros{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .numeros div{background:#101010;border:1px solid var(--borda);border-radius:12px;padding:12px 10px}
+  .numeros b{display:block;font-size:21px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+  .numeros span{display:block;margin-top:6px;font-size:10px;letter-spacing:.09em;color:var(--ink4);
+    text-transform:uppercase;line-height:1.3}
+  .pag{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+  .pag button{width:38px;height:38px;border-radius:10px;border:1px solid var(--borda);background:#141414;
+    color:#fff;font-size:16px;cursor:pointer}
+  .pag button:disabled{opacity:.35;cursor:default}
+  .pag small{font-size:12px;color:var(--ink4);font-variant-numeric:tabular-nums}
   .ev{display:flex;gap:10px;padding:9px 0;font-size:13px;color:var(--ink2);border-bottom:1px solid #161616}
   .ev span:first-child{color:var(--ink4);width:96px;flex-shrink:0;font-variant-numeric:tabular-nums}
   .acoes{display:flex;gap:10px;margin-top:20px}
@@ -279,7 +292,19 @@ function pagina() {
         sw('beats','Beats','os beats reservados e os já gravados',a.dl_beats)+
         sw('sons','Músicas','os sons prontos, lançados e as guias',a.dl_sons)+
       '</div>'+
-      '<div class="bloco"><div class="rot">ÚLTIMAS AUDIÇÕES</div><div id="eventos">carregando…</div></div>'+
+      '<div class="bloco"><div class="rot">ATIVIDADE</div>'+
+        '<div class="numeros">'+
+          '<div><b id="nUltima">—</b><span>última<br>atividade</span></div>'+
+          '<div><b id="nMes">—</b><span>aberturas<br>no mês</span></div>'+
+          '<div><b id="nAno">—</b><span>aberturas<br>no ano</span></div>'+
+        '</div>'+
+        '<div id="eventos">carregando…</div>'+
+        '<div class="pag" id="pag" hidden>'+
+          '<button type="button" data-ir="-1" aria-label="Página anterior">‹</button>'+
+          '<small id="pagInfo"></small>'+
+          '<button type="button" data-ir="1" aria-label="Próxima página">›</button>'+
+        '</div>'+
+      '</div>'+
       '<div class="acoes">'+
         '<button class="pill" data-act="sync" type="button">Converter agora</button>'+
         '<button class="pill" data-close type="button">Fechar</button>'+
@@ -308,17 +333,50 @@ function pagina() {
         });
       });
     });
-    fetch('/api/painel?op=eventos&id='+a.id).then(function(r){return r.json()}).then(function(j){
-      var e=$('eventos');
-      if(!j.eventos||!j.eventos.length){ e.innerHTML='<div class="vazio" style="padding:14px 0">Ninguém abriu ainda.</div>'; return }
-      e.innerHTML=j.eventos.map(function(x){
-        return '<div class="ev"><span>'+quando(x.at)+'</span><span>'+rotulo(x)+'</span></div>';
-      }).join('');
+    var pagina=0;
+    function puxar(){
+      fetch('/api/painel?op=eventos&id='+a.id+'&p='+pagina).then(function(r){return r.json()}).then(function(j){
+        var r=j.resumo||{};
+        $('nUltima').textContent = r.ultima ? dia(r.ultima) : '—';
+        $('nMes').textContent = r.mes||0;
+        $('nAno').textContent = r.ano||0;
+
+        var e=$('eventos');
+        if(!j.eventos||!j.eventos.length){
+          e.innerHTML='<div class="vazio" style="padding:14px 0">Ninguém abriu ainda.</div>';
+          $('pag').hidden=true;return;
+        }
+        e.innerHTML=j.eventos.map(function(x){
+          return '<div class="ev"><span>'+quando(x.at)+'</span><span>'+rotulo(x)+'</span></div>';
+        }).join('');
+
+        var pg=$('pag');
+        pg.hidden = j.paginas<=1;
+        $('pagInfo').textContent = (j.pagina+1)+' de '+j.paginas+' · '+j.total+(j.total===1?' registro':' registros');
+        pg.querySelector('[data-ir="-1"]').disabled = j.pagina<=0;
+        pg.querySelector('[data-ir="1"]').disabled = j.pagina+1>=j.paginas;
+      });
+    }
+    card.querySelectorAll('[data-ir]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        pagina=Math.max(0,pagina+Number(btn.dataset.ir));
+        puxar();
+        $('eventos').scrollIntoView({block:'nearest'});
+      });
     });
+    puxar();
   }
   function sw(campo,titulo,desc,valor){
     return '<div class="sw"><span><b>'+titulo+'</b><small>'+desc+'</small></span>'+
       '<button class="toggle" type="button" data-campo="'+campo+'" aria-pressed="'+(valor?'true':'false')+'" aria-label="'+titulo+'"><i></i></button></div>';
+  }
+  function dia(iso){
+    var d=new Date(iso), h=new Date();
+    var mesmoDia=function(a,b){return a.toDateString()===b.toDateString()};
+    if(mesmoDia(d,h)) return 'hoje';
+    var ontem=new Date(h.getTime()-86400e3);
+    if(mesmoDia(d,ontem)) return 'ontem';
+    return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}).replace('.','');
   }
   function quando(iso){
     var d=new Date(iso);
