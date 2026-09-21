@@ -111,6 +111,13 @@ const BASE = `
     max-height:86vh;overflow-y:auto}
   .card h2{margin:0 0 3px;font-size:20px;font-weight:700;overflow-wrap:anywhere}
   .card .end{font-size:13px;color:var(--ink4);word-break:break-all}
+  .card p{margin:0;font-size:13.5px;color:var(--ink3)}
+  .card-list{display:flex;flex-direction:column;gap:2px;margin-top:16px}
+  .card-list button{display:flex;align-items:center;gap:13px;width:100%;padding:14px 10px;
+    background:transparent;border:0;border-radius:12px;font-size:15px;color:var(--ink);
+    text-align:left;cursor:pointer;-webkit-appearance:none;appearance:none}
+  .card-list button:hover{background:#1a1a1a}
+  .card-list button:active{background:#1d1d1d}
   .bloco{margin-top:20px}
   .rot{font-size:11px;letter-spacing:.2em;color:var(--ink4);margin-bottom:10px}
   .desc{width:100%;min-height:104px;resize:vertical;background:var(--campo);border:1px solid var(--borda);
@@ -209,7 +216,7 @@ function pagina() {
     </div>
     <button class="pill" id="ordemBtn" type="button">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M8 4v16"/><path d="M5 7l3-3 3 3"/><path d="M16 20V4"/><path d="M13 17l3 3 3-3"/></svg>
-      <span id="ordemLabel">Atividade</span>
+      <span id="ordemLabel">Modificação</span>
     </button>
     <button class="pill" id="syncTudo" type="button">Converter tudo</button>
   </div>
@@ -223,8 +230,8 @@ function pagina() {
 <script>
 (function(){
   var $=function(i){return document.getElementById(i)};
-  var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='artistas', filtro='', ordem='atividade';
-  var ORDENS={atividade:'Atividade', az:'A a Z', faixas:'Mais faixas'};
+  var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='artistas', filtro='', ordem='modificado';
+  var ORDENS={modificado:'Modificação', atividade:'Atividade', az:'A a Z', faixas:'Mais faixas'};
 
   function tempo(iso){
     if(!iso) return 'nunca abriu';
@@ -279,6 +286,13 @@ function pagina() {
       return !filtro || a.name.toLowerCase().indexOf(filtro)>-1;
     });
     alvo.sort(function(a,b){
+      if(ordem==='modificado'){
+        // faixa mais nova do Drive primeiro; catálogo sem faixa nenhuma vai pro fim
+        if(!a.modificado && !b.modificado) return a.name.localeCompare(b.name,'pt-BR',{sensitivity:'base'});
+        if(!a.modificado) return 1;
+        if(!b.modificado) return -1;
+        return a.modificado < b.modificado ? 1 : -1;
+      }
       if(ordem==='az') return a.name.localeCompare(b.name,'pt-BR',{sensitivity:'base'});
       if(ordem==='faixas') return ((b.nb||0)+(b.ns||0)) - ((a.nb||0)+(a.ns||0));
       // atividade: quem abriu mais recente primeiro, quem nunca abriu por último
