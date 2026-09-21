@@ -223,7 +223,7 @@ function pagina() {
 <script>
 (function(){
   var $=function(i){return document.getElementById(i)};
-  var artistas=[], tapes=[], revisar=[], vista='artistas', filtro='', ordem='atividade';
+  var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='artistas', filtro='', ordem='atividade';
   var ORDENS={atividade:'Atividade', az:'A a Z', faixas:'Mais faixas'};
 
   function tempo(iso){
@@ -259,8 +259,14 @@ function pagina() {
       pintarResumo(j.prateleira.usado);
       desenhar();
       acompanhar();
-      fetch('/api/painel?op=revisar').then(function(r){return r.json()})
-        .then(function(x){ revisar=x.faixas||[]; pintarResumo(j.prateleira.usado); desenhar(); }).catch(function(){});
+      fetch('/api/painel?op=revisar').then(function(r){return r.json()}).then(function(x){
+        // lista vazia é resposta; resposta torta não pode virar "nada pra revisar"
+        revisarErro = !x || !Array.isArray(x.faixas);
+        revisar = revisarErro ? [] : x.faixas;
+        pintarResumo(j.prateleira.usado); desenhar();
+      }).catch(function(){
+        revisarErro=true; revisar=[]; pintarResumo(j.prateleira.usado); desenhar();
+      });
       if(silencioso && antes && !artistas.filter(rodando).length) flash('Conversão terminou.');
     }).catch(function(){
       if(!silencioso) $('lista').innerHTML='<div class="vazio">Não consegui carregar. Recarrega a página.</div>';
@@ -318,6 +324,15 @@ function pagina() {
     r.textContent = artistas.length+(artistas.length===1?' artista no ar':' artistas no ar')+
       (tapes.length?' · '+tapes.length+(tapes.length===1?' beat tape':' beat tapes'):'')+
       ' · prateleira '+gb(usado)+' de 8 GB';
+    if(revisarErro){
+      var e=document.createElement('button');
+      e.type='button'; e.className='aviso';
+      e.textContent='não consegui conferir os pendentes';
+      e.addEventListener('click',function(){carregar(true)});
+      r.appendChild(document.createTextNode(' · '));
+      r.appendChild(e);
+      return;
+    }
     if(!revisar.length) return;
     var a=document.createElement('button');
     a.type='button'; a.className='aviso';
@@ -339,7 +354,9 @@ function pagina() {
     b.innerHTML='<span style="flex:1;min-width:0"><span class="nome">@rideblan33</span>'+
       '<span class="meta">'+(tapes.length
         ? tapes.length+(tapes.length===1?' beat tape':' beat tapes')+
-          (revisar.length?' · '+revisar.length+' pra revisar':' · nada pra revisar')
+          (revisar.length
+            ? ' · '+revisar.length+' pra revisar'
+            : (revisarErro ? '' : ' · nada pra revisar'))
         : 'beat tapes — nenhuma convertida ainda')+'</span></span>'+
       '<span class="seta">›</span>';
     b.addEventListener('click',function(){
@@ -364,6 +381,15 @@ function pagina() {
   }
 
   function cartaoRevisar(){
+    if(revisarErro){
+      var ruim=document.createElement('div');
+      ruim.className='revisar';
+      ruim.innerHTML='<b>Não consegui conferir os pendentes</b><small>A lista de revisão não '+
+        'respondeu agora. Recarrega a página. Até lá, não confia na contagem: pode ter beat '+
+        'sem pastilha esperando resposta.</small>';
+      $('lista').appendChild(ruim);
+      return;
+    }
     if(!revisar.length){
       if(!tapes.length) return;
       var ok=document.createElement('div');

@@ -366,17 +366,26 @@ Beat de tape não recebe tag da pasta. A tag sai do cruzamento, feito pelo site 
 | Onde o beat aparece | Tag |
 |---|---|
 | Só em `Exclusivos` | **disponível** |
-| Só na pasta de algum artista (gravado ou não) | **vendido** |
-| Nos dois, ou em nenhum | sem tag, e entra na lista de revisão do painel |
+| Só como **beat** na pasta de algum artista (solto ou em `Já gravados`) | **vendido** |
+| Nos dois, só como música gravada, ou em lugar nenhum | sem pastilha, e entra na lista de revisão do painel |
+
+Quem decide **vendido** é o beat. Música com o mesmo nome na pasta do artista não decide
+sozinha, porque nome repetido entre beat e som acontece: o beat vai pra revisão com o motivo
+escrito ("aparece só como música gravada, na pasta de fulano").
 
 O que casa é o título limpo; quando os dois lados têm BPM ou tom, eles também têm que bater
 (senão dois `intro` viravam a mesma faixa). O casamento é tolerante onde precisa ser:
 acento não conta (`dígitos` = `digitos`), `F#` e `Gb` são a mesma tecla, `F#` casa com
 `F#maj`, e o BPM tem 1 de folga (exportação com casa decimal arredonda diferente).
 
-A lista de revisão aparece em dois lugares no painel: o total vira um link âmbar na linha
-de cima (ao lado da prateleira), e o bloco completo, agrupado por tape e com o motivo de
-cada caso, fica no topo do portfólio.
+A lista de revisão é a mesma conta do catálogo: **beat de tape sem pastilha**. Não importa
+se o cruzamento anotou o motivo ou se nem chegou a passar por ele, o que a página mostra sem
+pastilha aparece aqui. Ela vive em dois lugares no painel: o total vira um link âmbar na
+linha de cima (ao lado da prateleira), e o bloco completo, agrupado por tape e com o motivo
+de cada caso, fica no topo do portfólio.
+
+Quando a lista não responde, o painel diz que **não conseguiu conferir**. Ele nunca mais
+desenha "nada pra revisar" em cima de uma resposta que falhou.
 
 Cada beat da lista tem dois botões, **disponível** e **vendido**, e cada tape com mais de um
 pendente tem o par pra marcar todos de uma vez. A resposta vai pra `tracks.venda_manual` e

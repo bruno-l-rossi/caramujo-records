@@ -166,17 +166,22 @@ async function marcarVenda(d, tracks) {
   let aVenda = [];
   try { aVenda = JSON.parse(guardado?.valor || '{}').beats || []; } catch { aVenda = []; }
 
-  // Tudo que já está na pasta de algum artista (gravado ou não) conta como vendido.
+  // Quem decide "vendido" é o BEAT na pasta do artista (solto ou em Já gravados).
+  // Música gravada com o mesmo nome não decide sozinha: manda pra revisão, porque
+  // nome repetido entre beat e som acontece e eu não anuncio beat no chute.
   // Puxo a lista inteira porque o LOWER do SQLite não tira acento e "dígitos"
   // não bateria com "digitos"; a comparação boa é aqui, com limpo().
   const { results } = await d.prepare(
-    `SELECT t.title, t.bpm, t.mkey, a.name AS artista
+    `SELECT t.title, t.bpm, t.mkey, t.kind, a.name AS artista
        FROM tracks t JOIN artists a ON a.id = t.artist_id
       WHERE a.tipo = 'artista'`
   ).all();
-  const naMao = (results || []).map((r) => ({
-    title: r.title, bpm: r.bpm, key: r.mkey, artista: r.artista
-  }));
+  const naMao = [];
+  const gravadas = [];
+  for (const r of results || []) {
+    const item = { title: r.title, bpm: r.bpm, key: r.mkey, artista: r.artista };
+    (r.kind === 'beat' ? naMao : gravadas).push(item);
+  }
 
   const conta = { disponivel: 0, vendido: 0, revisar: 0 };
 
@@ -188,15 +193,22 @@ async function marcarVenda(d, tracks) {
     }
     const emExclusivos = aVenda.some((b) => mesma(b, t));
     const comArtista = naMao.find((r) => mesma(r, t)) || null;
+    const soMusica = comArtista ? null : (gravadas.find((r) => mesma(r, t)) || null);
 
-    if (emExclusivos && !comArtista) { t.tag = 'disponivel'; t.revisar = null; conta.disponivel++; }
-    else if (comArtista && !emExclusivos) { t.tag = 'vendido'; t.revisar = null; conta.vendido++; }
-    else {
-      // nos dois ao mesmo tempo, ou em nenhum: sai sem tag e entra na minha lista
+    if (emExclusivos && !comArtista && !soMusica) {
+      t.tag = 'disponivel'; t.revisar = null; conta.disponivel++;
+    } else if (comArtista && !emExclusivos) {
+      t.tag = 'vendido'; t.revisar = null; conta.vendido++;
+    } else {
+      // nos dois ao mesmo tempo, só como música gravada, ou em lugar nenhum:
+      // sai sem pastilha e entra na minha lista
       t.tag = null;
-      t.revisar = emExclusivos
-        ? 'Está em Exclusivos e na pasta de ' + (comArtista?.artista || 'um artista')
-        : 'Não está em Exclusivos nem na pasta de nenhum artista';
+      t.revisar = comArtista
+        ? 'Está em Exclusivos e nos beats de ' + comArtista.artista
+        : soMusica
+          ? 'Aparece só como música gravada, na pasta de ' + soMusica.artista +
+            (emExclusivos ? ', e também em Exclusivos' : '')
+          : 'Não está em Exclusivos nem nos beats de nenhum artista';
       conta.revisar++;
     }
   }
