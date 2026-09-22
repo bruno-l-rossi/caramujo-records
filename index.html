@@ -3268,8 +3268,10 @@ function toggleMenu(){var b=document.getElementById('navBurger');var l=document.
 document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener('click',function(){var l=document.querySelector('.nav-links');var b=document.getElementById('navBurger');if(l)l.classList.remove('open');if(b)b.classList.remove('open');});});
 </script>
 <script>
-/* ── DEEP-LINK POR BEAT (#beat=slug) ─────────────────────────────
+/* ── DEEP-LINK POR BEAT (#beat=slug e #add=slug) ──────────────────
    Abre o site direto num beat: acha pelo nome, mostra, rola e toca.
+   #add faz o mesmo e ainda joga o beat no carrinho, já aberto: é o link
+   do botão de carrinho das beat tapes.
    Ao tocar qualquer beat, atualiza a URL (link compartilhável). */
 (function(){
   function slugify(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');}
@@ -3287,10 +3289,23 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     })();
   }
 
+  // Veio do catálogo de uma beat tape: joga no carrinho e abre o carrinho,
+  // pronto pro checkout. Beat que já estava lá dentro não é tirado.
+  function paraOCarrinho(b){
+    try{
+      if(b.sold) return;
+      var ja = typeof cart!=='undefined' && cart.some(function(c){return c.beatId===b.id&&!c.stems;});
+      if(!ja && typeof toggleBeat==='function') toggleBeat(b.id,false);
+      if(typeof openCart==='function') openCart();
+      if(history.replaceState) history.replaceState(null,'','#beat='+beatSlug(b));
+    }catch(_){}
+  }
+
   function openBeatFromHash(){
-    var m=(location.hash||'').match(/^#beat=(.+)$/i);
+    var m=(location.hash||'').match(/^#(beat|add)=(.+)$/i);
     if(!m) return;
-    var target=slugify(decodeURIComponent(m[1]));
+    var modo=m[1].toLowerCase();
+    var target=slugify(decodeURIComponent(m[2]));
     if(!target) return;
     var b=BEATS.find(function(x){return beatSlug(x)===target;});
     if(!b) return;
@@ -3312,6 +3327,7 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
       var card=f?f.closest('.bcard'):null;
       if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.classList.add('lucky-hit');setTimeout(function(){card.classList.remove('lucky-hit');},2800);}
     },220);
+    if(modo==='add') paraOCarrinho(b);
     if(!b.sold) deepLinkPlay(b.id);
   }
 
@@ -3324,8 +3340,8 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     };
   }
 
-  window.addEventListener('hashchange',function(){ if(/^#beat=/i.test(location.hash)) openBeatFromHash(); });
-  if(/^#beat=/i.test(location.hash)){
+  window.addEventListener('hashchange',function(){ if(/^#(beat|add)=/i.test(location.hash)) openBeatFromHash(); });
+  if(/^#(beat|add)=/i.test(location.hash)){
     if(document.readyState!=='loading') openBeatFromHash();
     else document.addEventListener('DOMContentLoaded',openBeatFromHash);
   }

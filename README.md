@@ -397,6 +397,24 @@ Na carga geral, as seis frentes rodam ao mesmo tempo e uma tape pode ser lida an
 artista dela entrar no banco. Por isso o workflow fecha com um job `tapes`, que roda depois
 de todos e só acerta as tags — não reconverte áudio nenhum.
 
+### Botão de carrinho na tape
+
+Beat com pastilha **disponível** ganha um botão de carrinho na linha, e a opção
+"Comprar esse beat" no menu `...` (que numa tape não tinha mais nada). Ele abre o site numa
+aba nova em `/#add=<slug-do-beat>`: o site acha o beat pelo nome, joga no carrinho, abre o
+carrinho e toca. Beat que já estava no carrinho não é tirado de lá, e a URL vira `#beat=`
+depois de adicionar, pra recarregar a página não repetir a ação.
+
+O botão só aparece quando o beat existe na vitrine do site e continua à venda lá. Quem faz
+essa ponte é `functions/_lib/vitrine.js`: ele lê a lista `const BEATS` do próprio index.html
+servido (`env.ASSETS`, sem sair pra internet), guarda por 10 minutos e casa cada faixa pelo
+mesmo cruzamento das tapes (`functions/_lib/casar.js`: título limpo, BPM com 1 de folga, tom
+enarmônico). Nada de de-para escrito na mão.
+
+No painel, dentro do portfólio, o card **Vitrine do site** mostra quantos beats do site já
+têm o áudio guardado no R2, quais não acharam par (o nome no Drive está diferente) e quais
+beats disponíveis nas tapes ficaram sem botão.
+
 ### Permissão de download
 
 Catálogo novo já nasce com o download ligado nos beats e nas músicas. Desligar é decisão

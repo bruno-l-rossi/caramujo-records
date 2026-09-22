@@ -3,6 +3,8 @@
 
 import { db, json } from '../_lib/db.js';
 import { autenticado } from '../_lib/sessao.js';
+import { mesma, limpo } from '../_lib/casar.js';
+import { vitrine, indexar, achar } from '../_lib/vitrine.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
 
@@ -19,6 +21,7 @@ export async function onRequest({ request, env }) {
   if (op === 'artistas') return artistas(d);
   if (op === 'eventos') return eventos(d, url.searchParams.get('id'), url.searchParams.get('p'));
   if (op === 'revisar') return revisar(d);
+  if (op === 'vitrine') return relatorio(d, request, env);
   if (request.method !== 'POST') return json({ erro: 'op desconhecida' }, 400);
 
   const body = await request.json().catch(() => ({}));
@@ -112,6 +115,54 @@ async function revisar(d) {
       ORDER BY a.name COLLATE NOCASE, t.title COLLATE NOCASE`
   ).all();
   return json({ faixas: results || [] });
+}
+
+// Os beats à venda no site x o que já está convertido no R2. Diz o que não casou
+// dos dois lados: beat do site sem áudio guardado, e beat disponível numa tape que
+// não existe na vitrine (esse não ganha botão de carrinho).
+async function relatorio(d, request, env) {
+  const beats = await vitrine(request, env);
+  if (!beats.length) return json({ erro: 'não consegui ler a lista de beats do site' }, 502);
+
+  const { results } = await d.prepare(
+    `SELECT t.title, t.bpm, t.mkey AS key FROM tracks t
+       JOIN artists a ON a.id = t.artist_id
+      WHERE t.kind = 'beat' AND t.ready = 1`
+  ).all();
+
+  // índice por título limpo: 134 beats contra ~800 faixas sem varrer tudo toda vez
+  const porTitulo = new Map();
+  for (const f of results || []) {
+    const k = limpo(f.title);
+    if (!porTitulo.has(k)) porTitulo.set(k, []);
+    porTitulo.get(k).push(f);
+  }
+
+  const semAudio = beats
+    .filter((b) => !(porTitulo.get(limpo(b.name)) || []).some((f) => mesma(b, f)))
+    .map((b) => ({ name: b.name, bpm: b.bpm, key: b.key, sold: b.sold ? 1 : 0 }));
+
+  const mapa = indexar(beats);
+  const { results: disp } = await d.prepare(
+    `SELECT t.title, t.bpm, t.mkey AS key, a.name AS tape FROM tracks t
+       JOIN artists a ON a.id = t.artist_id
+      WHERE a.tipo = 'tape' AND t.kind = 'beat' AND t.tag = 'disponivel'`
+  ).all();
+
+  const semBotao = [];
+  for (const t of disp || []) {
+    const b = achar(mapa, t);
+    if (!b) semBotao.push({ title: t.title, tape: t.tape, motivo: 'não existe na vitrine do site' });
+    else if (b.sold) semBotao.push({ title: t.title, tape: t.tape, motivo: 'no site está como vendido' });
+  }
+
+  return json({
+    total: beats.length,
+    aVenda: beats.filter((b) => !b.sold).length,
+    comAudio: beats.length - semAudio.length,
+    semAudio,
+    semBotao
+  });
 }
 
 // Marca na mão o que o cruzamento não resolveu. Vence a pasta e não volta atrás.

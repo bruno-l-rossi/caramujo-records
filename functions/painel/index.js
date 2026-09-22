@@ -231,6 +231,7 @@ function pagina() {
 (function(){
   var $=function(i){return document.getElementById(i)};
   var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='artistas', filtro='', ordem='modificado';
+  var vitri=null, vitriPedida=false;
   var ORDENS={modificado:'Modificação', atividade:'Atividade', az:'A a Z', faixas:'Mais faixas'};
 
   function tempo(iso){
@@ -303,7 +304,7 @@ function pagina() {
     });
     $('lista').innerHTML='';
 
-    if(vista==='tapes'){ $('lista').appendChild(voltar()); cartaoRevisar(); }
+    if(vista==='tapes'){ $('lista').appendChild(voltar()); cartaoRevisar(); pedirVitrine(); cartaoVitrine(); }
     else if(!filtro) $('lista').appendChild(fixo());
 
     if(!alvo.length){
@@ -392,6 +393,51 @@ function pagina() {
     });
     row.appendChild(b);
     return row;
+  }
+
+  // O relatório da vitrine é pesado e não muda a toda hora: busco uma vez só,
+  // na primeira vez que o portfólio abre.
+  function pedirVitrine(){
+    if(vitriPedida) return;
+    vitriPedida=true;
+    fetch('/api/painel?op=vitrine').then(function(r){return r.json()}).then(function(j){
+      vitri = (j && typeof j.total==='number') ? j : { erro:(j&&j.erro)||'não consegui conferir a vitrine' };
+      desenhar();
+    }).catch(function(){ vitri={ erro:'não consegui conferir a vitrine' }; desenhar(); });
+  }
+
+  function cartaoVitrine(){
+    if(!vitri) return;
+    var d=document.createElement('div');
+    if(vitri.erro){
+      d.className='revisar limpo';
+      d.innerHTML='<b>Vitrine do site</b><small>'+esc(vitri.erro)+'. Recarrega a página.</small>';
+      $('lista').appendChild(d); return;
+    }
+    var falta=(vitri.semAudio||[]).length, sem=(vitri.semBotao||[]).length;
+    d.className='revisar'+(falta||sem?'':' limpo');
+    var html='<b>Vitrine do site</b><small>'+vitri.total+' beats no site, '+vitri.aVenda+
+      ' à venda. '+vitri.comAudio+' já têm o áudio guardado aqui'+
+      (falta?', '+falta+' não achei.':'.')+'</small>';
+    if(falta){
+      html+='<div class="rev-tape"><div class="rev-topo"><b>Sem áudio</b></div><ul>'+
+        vitri.semAudio.map(function(b){
+          var ficha=[b.key,b.bpm?b.bpm+'bpm':''].filter(Boolean).join(' · ');
+          return '<li><span class="rev-nome">'+esc(b.name)+(ficha?' <i>'+esc(ficha)+'</i>':'')+
+            (b.sold?' <i>vendido</i>':'')+'</span>'+
+            '<small>Nenhuma faixa convertida com esse nome. No Drive o arquivo deve estar com outro nome.</small></li>';
+        }).join('')+'</ul></div>';
+    }
+    if(sem){
+      html+='<div class="rev-tape"><div class="rev-topo"><b>'+sem+
+        (sem===1?' beat sem botão de carrinho':' beats sem botão de carrinho')+'</b></div><ul>'+
+        vitri.semBotao.map(function(t){
+          return '<li><span class="rev-nome">'+esc(t.title)+' <i>'+esc(t.tape)+'</i></span>'+
+            '<small>'+esc(t.motivo)+'</small></li>';
+        }).join('')+'</ul></div>';
+    }
+    d.innerHTML=html;
+    $('lista').appendChild(d);
   }
 
   function cartaoRevisar(){

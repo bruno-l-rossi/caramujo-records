@@ -2,6 +2,7 @@
 
 import { db } from '../_lib/db.js';
 import { pagina, faixa } from '../_lib/page.js';
+import { vitrine, indexar, achar } from '../_lib/vitrine.js';
 
 // caminhos do site que não são artista
 const RESERVADO = new Set(['api', 'audio', 'assets', 'docs', 'previews', 'functions',
@@ -30,6 +31,20 @@ export async function onRequestGet({ params, request, env }) {
 
   const tracks = (results || []).map(faixa);
   const url = new URL(request.url);
+
+  // Beat de tape com pastilha DISPONÍVEL ganha o botão de carrinho, contanto que
+  // o beat exista na vitrine do site e continue à venda lá. Sem par, sem botão:
+  // ninguém clica pra cair numa aba que não faz nada.
+  if (artist.tipo === 'tape') {
+    const aVenda = tracks.filter((t) => t.tag === 'disponivel');
+    if (aVenda.length) {
+      const mapa = indexar(await vitrine(request, env));
+      for (const t of aVenda) {
+        const b = achar(mapa, t);
+        if (b && !b.sold) t.buy = b.slug;
+      }
+    }
+  }
   const capa = artist.cover_key ? `${url.origin}/capa/${artist.cover_key}` : `${url.origin}/og-image.png`;
 
   const tape = artist.tipo === 'tape';

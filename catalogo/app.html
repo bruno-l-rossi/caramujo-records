@@ -167,6 +167,12 @@ __META__
   .dur{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums;flex-shrink:0}
   .more{width:32px;height:32px;flex-shrink:0;padding:0;background:transparent;border:0;
     display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-3)}
+  .buy{width:30px;height:30px;flex-shrink:0;padding:0;background:transparent;
+    border:1px solid rgba(228,218,199,.45);border-radius:999px;color:#E4DAC7;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    -webkit-appearance:none;appearance:none;transition:background .15s,color .15s}
+  .buy:active{background:#E4DAC7;color:#0a0a0a;border-color:#E4DAC7}
+  @media(hover:hover){.buy:hover{background:#E4DAC7;color:#0a0a0a;border-color:#E4DAC7}}
 
   .empty{padding:26px 0;font-size:14px;color:#5a5a5a}
   .foot{padding:6px 0 0;border-top:1px solid rgba(255,255,255,.06);
@@ -515,6 +521,17 @@ __META__
     return src;
   }
 
+  // Beat à venda: o site é quem cobra. Abro lá numa aba nova, já no carrinho.
+  function botaoCompra(t){
+    return '<button class="buy" type="button" aria-label="Comprar '+esc(t.title)+'">'+
+      '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" '+
+      'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+ICON_CART+'</svg></button>';
+  }
+  function comprar(t){
+    if(!t.buy) return;
+    window.open(location.origin+'/#add='+encodeURIComponent(t.buy),'_blank','noopener');
+  }
+
   function render(){
     rows=data();
     list.innerHTML='';
@@ -545,6 +562,7 @@ __META__
         '<span class="meta"><span class="name">'+esc(t.title)+'</span>'+
         '<span class="sub">'+subLinha(t,grouped)+'</span></span>'+
         '<span class="dur">'+mmss(t.dur)+'</span>'+
+        (!selMode && t.buy ? botaoCompra(t) : '')+
         (selMode?'':'<button class="more" type="button" aria-label="Opções de '+esc(t.title)+'">'+
           '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>');
 
@@ -555,6 +573,8 @@ __META__
           r.querySelector(sel2).addEventListener('click',function(){pick(i)});
         });
         r.querySelector('.more').addEventListener('click',function(e){e.stopPropagation();trackSheet(t)});
+        var bt=r.querySelector('.buy');
+        if(bt) bt.addEventListener('click',function(e){e.stopPropagation();comprar(t)});
       }
       list.appendChild(r);
     });
@@ -716,6 +736,8 @@ __META__
   $('q').addEventListener('input',function(e){query=e.target.value;cur=-1;render()});
 
   var ICON_DOWN='<path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/>';
+  var ICON_CART='<circle cx="9.5" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/>'+
+    '<path d="M2.5 3.5h2.3l2.4 11.1a1.8 1.8 0 001.8 1.4h7.6a1.8 1.8 0 001.8-1.4L21.5 7.4H5.6"/>';
   var ICON_SEND='<path d="M7 17L17 7"/><path d="M9 7h8v8"/>';
 
   $('orderBtn').addEventListener('click',function(){
@@ -804,11 +826,14 @@ __META__
 
   function trackSheet(t){
     var linhas =
+      (t.buy ? item('buy',ICON_CART,'Comprar esse beat') : '') +
       (!CAT.artist.tape && (CAT.owner || (!preview && !CAT.preview)) ? item('send',ICON_SEND,'Enviar só essa faixa') : '') +
       (podeBaixar() ? item('down',ICON_DOWN,'Baixar') : '');
     if(!linhas){ flash('Essa faixa está só pra ouvir.'); return; }
     open('<h2 id="cardTitle">'+esc(t.title)+'</h2><p>'+esc(sub(t,false)||'faixa')+' · '+mmss(t.dur)+'</p>'+
       '<div class="card-list">'+linhas+'</div><button class="card-close" data-close>Fechar</button>');
+    var s0=card.querySelector('[data-act=buy]');
+    if(s0) s0.addEventListener('click',function(){close();comprar(t)});
     var s1=card.querySelector('[data-act=send]');
     if(s1) s1.addEventListener('click',function(){sendSheet([t])});
     var s2=card.querySelector('[data-act=down]');
