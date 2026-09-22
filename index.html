@@ -3268,6 +3268,125 @@ function toggleMenu(){var b=document.getElementById('navBurger');var l=document.
 document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener('click',function(){var l=document.querySelector('.nav-links');var b=document.getElementById('navBurger');if(l)l.classList.remove('open');if(b)b.classList.remove('open');});});
 </script>
 <script>
+/* ── CARRINHO QUE NÃO SOME ────────────────────────────────────────
+   O carrinho vivia só na memória da aba: recarregou, fechou ou abriu
+   noutra aba, zerava. Agora ele volta do navegador, conferido contra os
+   beats e os preços de hoje. Roda ANTES do deep-link, pra um #add= somar
+   ao que já estava lá em vez de começar do zero. */
+(function(){
+  var CHAVE='caramujo_carrinho_v1', VALIDADE=7*864e5;
+
+  function guardar(){
+    try{
+      if(!cart.length){ localStorage.removeItem(CHAVE); return; }
+      localStorage.setItem(CHAVE, JSON.stringify({ em:Date.now(), itens:cart }));
+    }catch(_){}
+  }
+
+  // Os preços de hoje moram no próprio HTML (onclick="addSvc('Mixagem',149)").
+  // Leio de lá na volta: carrinho velho nunca fecha num preço que não está mais
+  // na página. Nome com dois preços diferentes é ambíguo, e aí eu não decido: cai.
+  function tabela(fn){
+    var achados={};
+    try{
+      document.querySelectorAll('[onclick*="'+fn+'("]').forEach(function(el){
+        var m=(el.getAttribute('onclick')||'').match(new RegExp(fn+"\\(\\s*'([^']*)'\\s*,\\s*(\\d+(?:\\.\\d+)?)"));
+        if(!m) return;
+        (achados[m[1]]=achados[m[1]]||[]).push(Number(m[2]));
+      });
+    }catch(_){}
+    var mapa={};
+    Object.keys(achados).forEach(function(k){
+      var unicos=achados[k].filter(function(v,i,a){return a.indexOf(v)===i});
+      mapa[k]= unicos.length===1 ? unicos[0] : null;
+    });
+    return mapa;
+  }
+
+  function beatVivo(id){
+    var b=BEATS.find(function(x){return Number(x.id)===Number(id)});
+    return (b && !b.sold) ? b : null;
+  }
+
+  function restaurar(){
+    var bruto=null;
+    try{ bruto=localStorage.getItem(CHAVE); }catch(_){ return; }
+    if(!bruto) return;
+    var dados=null;
+    try{ dados=JSON.parse(bruto); }catch(_){}
+    if(!dados || !Array.isArray(dados.itens) || !dados.em || Date.now()-dados.em>VALIDADE){
+      try{ localStorage.removeItem(CHAVE); }catch(_){}
+      return;
+    }
+
+    var svc=tabela('addSvc'), pkg=tabela('addPkg'), caiu=0, mexidos=0, bons=[];
+    var marca=Date.now();
+
+    dados.itens.forEach(function(it,i){
+      if(!it || !it.type){ caiu++; return; }
+
+      if(it.type==='Beat'){
+        var b=beatVivo(it.beatId);
+        if(!b){ caiu++; return; }                       // vendido ou sumiu do catálogo
+        var hoje=it.stems ? PRICE_STEMS : PRICE_BEAT;
+        if(Number(it.price)!==hoje) mexidos++;
+        bons.push({ id:it.id||marca+i, beatId:b.id,
+          name: it.stems ? b.name+' + Stems' : b.name,
+          price: it.stems ? PRICE_STEMS : PRICE_BEAT,   // preço de hoje, não o guardado
+          type:'Beat', stems:!!it.stems });
+        return;
+      }
+
+      if(it.type==='Servico'){
+        var ps=svc[it.name];
+        if(ps==null){ caiu++; return; }                 // serviço saiu da página, ou preço ambíguo
+        if(Number(it.unitPrice)!==ps) mexidos++;
+        var q=Math.max(1, Number(it.qty)||1);
+        bons.push({ id:it.id||marca+i, name:it.name, price:ps*q, unitPrice:ps,
+          type:'Servico', qty:q, beatId:null, stems:false });
+        return;
+      }
+
+      if(it.type==='Pacote'){
+        var pp=pkg[it.name];
+        var grupos=Array.isArray(it.pkgBeats)?it.pkgBeats:[];
+        if(pp==null || !grupos.length){ caiu++; return; }
+        var inteiro=grupos.every(function(g){
+          return Array.isArray(g) && g.length && g.every(function(x){ return !!beatVivo(x && x.id); });
+        });
+        if(!inteiro){ caiu++; return; }                 // um beat do pacote foi vendido
+        if(Number(it.unitPrice)!==pp) mexidos++;
+        bons.push({ id:it.id||marca+i, name:it.name, label:it.label||it.name,
+          price:pp*grupos.length, unitPrice:pp, type:'Pacote', qty:grupos.length,
+          stems:!!it.stems, beatId:null, pkgBeats:grupos });
+        return;
+      }
+
+      caiu++;
+    });
+
+    if(!bons.length && !caiu) return;
+    cart.length=0;
+    bons.forEach(function(x){ cart.push(x); });
+    if(typeof updateCart==='function') updateCart();
+    if(typeof syncBeatButtons==='function') syncBeatButtons();
+    var avisos=[];
+    if(caiu) avisos.push(caiu===1 ? '1 item saiu do carrinho' : caiu+' itens saíram do carrinho');
+    if(mexidos) avisos.push(mexidos===1 ? '1 mudou de preço' : mexidos+' mudaram de preço');
+    if(avisos.length && typeof showToast==='function') showToast(avisos.join(' e ')+'.');
+  }
+
+  // Toda mudança do carrinho passa por updateCart. É o único lugar que precisa saber.
+  var _updateCart=window.updateCart;
+  if(typeof _updateCart==='function'){
+    window.updateCart=function(){ var r=_updateCart.apply(this,arguments); guardar(); return r; };
+  }
+
+  if(document.readyState!=='loading') restaurar();
+  else document.addEventListener('DOMContentLoaded',restaurar);
+})();
+</script>
+<script>
 /* ── DEEP-LINK POR BEAT (#beat=slug e #add=slug) ──────────────────
    Abre o site direto num beat: acha pelo nome, mostra, rola e toca.
    #add faz o mesmo e ainda joga o beat no carrinho, já aberto: é o link

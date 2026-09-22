@@ -521,6 +521,14 @@ __META__
     return src;
   }
 
+  // O "..." só aparece quando tem o que oferecer: baixar, ou enviar só essa faixa.
+  // Numa tape sem download a faixa é só pra ouvir, então fica o carrinho e mais nada.
+  function temMenu(){
+    if(selMode) return false;
+    if(podeBaixar()) return true;
+    return !CAT.artist.tape && (CAT.owner || (!preview && !CAT.preview));
+  }
+
   // Beat à venda: o site é quem cobra. Abro lá numa aba nova, já no carrinho.
   function botaoCompra(t){
     return '<button class="buy" type="button" aria-label="Comprar '+esc(t.title)+'">'+
@@ -529,7 +537,11 @@ __META__
   }
   function comprar(t){
     if(!t.buy) return;
-    window.open(location.origin+'/#add='+encodeURIComponent(t.buy),'_blank','noopener');
+    // Aba NOMEADA de propósito: o segundo beat cai na mesma aba que já está aberta
+    // e soma no carrinho. Com _blank cada clique abria uma aba nova, com o carrinho
+    // zerado, e o beat anterior parecia ter sumido. (Sem 'noopener' aqui: com ele o
+    // navegador ignora o nome e abre aba nova assim mesmo. Mesma origem, é nosso.)
+    window.open(location.origin+'/#add='+encodeURIComponent(t.buy),'caramujo-carrinho');
   }
 
   function render(){
@@ -563,8 +575,8 @@ __META__
         '<span class="sub">'+subLinha(t,grouped)+'</span></span>'+
         '<span class="dur">'+mmss(t.dur)+'</span>'+
         (!selMode && t.buy ? botaoCompra(t) : '')+
-        (selMode?'':'<button class="more" type="button" aria-label="Opções de '+esc(t.title)+'">'+
-          '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>');
+        (temMenu()?'<button class="more" type="button" aria-label="Opções de '+esc(t.title)+'">'+
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>':'');
 
       if(selMode){
         r.addEventListener('click',function(){toggleSel(t.id)});
@@ -572,7 +584,8 @@ __META__
         ['.meta','.lead','.dur'].forEach(function(sel2){
           r.querySelector(sel2).addEventListener('click',function(){pick(i)});
         });
-        r.querySelector('.more').addEventListener('click',function(e){e.stopPropagation();trackSheet(t)});
+        var mb=r.querySelector('.more');
+        if(mb) mb.addEventListener('click',function(e){e.stopPropagation();trackSheet(t)});
         var bt=r.querySelector('.buy');
         if(bt) bt.addEventListener('click',function(e){e.stopPropagation();comprar(t)});
       }

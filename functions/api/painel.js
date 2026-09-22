@@ -125,9 +125,9 @@ async function relatorio(d, request, env) {
   if (!beats.length) return json({ erro: 'não consegui ler a lista de beats do site' }, 502);
 
   const { results } = await d.prepare(
-    `SELECT t.title, t.bpm, t.mkey AS key FROM tracks t
-       JOIN artists a ON a.id = t.artist_id
-      WHERE t.kind = 'beat' AND t.ready = 1`
+    `SELECT t.title, t.bpm, t.mkey AS key, t.ready, a.name AS onde
+       FROM tracks t JOIN artists a ON a.id = t.artist_id
+      WHERE t.kind = 'beat'`
   ).all();
 
   // índice por título limpo: 134 beats contra ~800 faixas sem varrer tudo toda vez
@@ -138,9 +138,32 @@ async function relatorio(d, request, env) {
     porTitulo.get(k).push(f);
   }
 
-  const semAudio = beats
-    .filter((b) => !(porTitulo.get(limpo(b.name)) || []).some((f) => mesma(b, f)))
-    .map((b) => ({ name: b.name, bpm: b.bpm, key: b.key, sold: b.sold ? 1 : 0 }));
+  // Exclusivos não vira catálogo, então não tem MP3. A lista serve pra explicar.
+  const guardado = await d.prepare("SELECT valor FROM meta WHERE chave = 'exclusivos'").first();
+  let exclusivos = [];
+  try { exclusivos = JSON.parse(guardado?.valor || '{}').beats || []; } catch { exclusivos = []; }
+
+  const ficha = (x) => [x.key, x.bpm ? x.bpm + 'bpm' : ''].filter(Boolean).join(' ') || 'sem bpm nem tom';
+
+  // Não achou é pouco: o relatório diz POR QUÊ, que é o que vira conserto no Drive.
+  const semAudio = [];
+  for (const b of beats) {
+    const candidatos = porTitulo.get(limpo(b.name)) || [];
+    if (candidatos.some((f) => f.ready === 1 && mesma(b, f))) continue;
+
+    const faltaConverter = candidatos.find((f) => mesma(b, f));
+    const soONome = candidatos[0] || null;
+    const motivo = faltaConverter
+      ? 'Está em ' + faltaConverter.onde + ', mas ainda não foi convertido. Roda a conversão.'
+      : soONome
+        ? 'Achei "' + soONome.title + '" em ' + soONome.onde + ' (' + ficha(soONome) +
+          ') e o site diz ' + ficha(b) + '. O nome bate, o resto não.'
+        : exclusivos.some((e) => mesma(b, e))
+          ? 'Está só em Exclusivos, que não vira catálogo e por isso não tem MP3 guardado.'
+          : 'Não achei esse nome em nenhuma pasta convertida.';
+
+    semAudio.push({ name: b.name, bpm: b.bpm, key: b.key, sold: b.sold ? 1 : 0, motivo });
+  }
 
   const mapa = indexar(beats);
   const { results: disp } = await d.prepare(

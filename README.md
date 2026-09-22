@@ -399,11 +399,18 @@ de todos e só acerta as tags — não reconverte áudio nenhum.
 
 ### Botão de carrinho na tape
 
-Beat com pastilha **disponível** ganha um botão de carrinho na linha, e a opção
-"Comprar esse beat" no menu `...` (que numa tape não tinha mais nada). Ele abre o site numa
-aba nova em `/#add=<slug-do-beat>`: o site acha o beat pelo nome, joga no carrinho, abre o
-carrinho e toca. Beat que já estava no carrinho não é tirado de lá, e a URL vira `#beat=`
-depois de adicionar, pra recarregar a página não repetir a ação.
+Beat com pastilha **disponível** ganha um botão de carrinho na linha. Ele abre o site em
+`/#add=<slug-do-beat>`: o site acha o beat pelo nome, joga no carrinho, abre o carrinho e
+toca. Beat que já estava no carrinho não é tirado de lá, e a URL vira `#beat=` depois de
+adicionar, pra recarregar a página não repetir a ação.
+
+A aba de destino é **nomeada** (`caramujo-carrinho`), não `_blank`: o segundo beat cai na
+mesma aba e soma no carrinho. Com `_blank` cada clique abria uma aba nova, e o beat anterior
+parecia ter sumido. Sem `noopener` de propósito: com ele o navegador ignora o nome da janela
+e abre aba nova assim mesmo. É a nossa própria origem.
+
+O menu `...` da faixa só aparece quando tem o que oferecer (baixar, ou enviar só essa faixa).
+Numa tape sem download a faixa é só pra ouvir, então fica o carrinho e mais nada.
 
 O botão só aparece quando o beat existe na vitrine do site e continua à venda lá. Quem faz
 essa ponte é `functions/_lib/vitrine.js`: ele lê a lista `const BEATS` do próprio index.html
@@ -412,8 +419,15 @@ mesmo cruzamento das tapes (`functions/_lib/casar.js`: título limpo, BPM com 1 
 enarmônico). Nada de de-para escrito na mão.
 
 No painel, dentro do portfólio, o card **Vitrine do site** mostra quantos beats do site já
-têm o áudio guardado no R2, quais não acharam par (o nome no Drive está diferente) e quais
-beats disponíveis nas tapes ficaram sem botão.
+têm o áudio guardado no R2, quais não acharam par e quais beats disponíveis nas tapes ficaram
+sem botão. Pra cada beat sem áudio ele diz o motivo, que é o que vira conserto no Drive:
+
+| Motivo | O que fazer |
+|---|---|
+| Achei "x" em Fulano (140bpm Am) e o site diz 150bpm Abm | Acertar BPM/tom no nome do arquivo, ou no site |
+| Está em Fulano, mas ainda não foi convertido | Rodar a conversão |
+| Está só em Exclusivos, que não vira catálogo | Pôr o beat numa beat tape pra ele ganhar MP3 |
+| Não achei esse nome em nenhuma pasta convertida | Nome diferente em todo lugar |
 
 ### Permissão de download
 

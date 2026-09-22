@@ -425,7 +425,7 @@ function pagina() {
           var ficha=[b.key,b.bpm?b.bpm+'bpm':''].filter(Boolean).join(' · ');
           return '<li><span class="rev-nome">'+esc(b.name)+(ficha?' <i>'+esc(ficha)+'</i>':'')+
             (b.sold?' <i>vendido</i>':'')+'</span>'+
-            '<small>Nenhuma faixa convertida com esse nome. No Drive o arquivo deve estar com outro nome.</small></li>';
+            '<small>'+esc(b.motivo||'Nenhuma faixa convertida com esse nome.')+'</small></li>';
         }).join('')+'</ul></div>';
     }
     if(sem){
