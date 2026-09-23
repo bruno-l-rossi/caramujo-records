@@ -262,7 +262,7 @@ function pagina() {
     fetch('/api/painel?op=artistas').then(function(r){return r.json()}).then(function(j){
       var antes=artistas.filter(rodando).length;
       var todos=j.artistas||[];
-      artistas=todos.filter(function(a){return a.tipo!=='tape'});
+      artistas=todos.filter(function(a){return a.tipo==='artista'});   // 'vitrine' é interno, não aparece
       tapes=todos.filter(function(a){return a.tipo==='tape'});
       pintarResumo(j.prateleira.usado);
       desenhar();
@@ -432,7 +432,8 @@ function pagina() {
       html+='<div class="rev-tape"><div class="rev-topo"><b>'+sem+
         (sem===1?' beat sem botão de carrinho':' beats sem botão de carrinho')+'</b></div><ul>'+
         vitri.semBotao.map(function(t){
-          return '<li><span class="rev-nome">'+esc(t.title)+' <i>'+esc(t.tape)+'</i></span>'+
+          var f=[t.key,t.bpm?t.bpm+'bpm':''].filter(Boolean).join(' · ');
+          return '<li><span class="rev-nome">'+esc(t.title)+' <i>'+esc(t.tape)+(f?' · '+f:'')+'</i></span>'+
             '<small>'+esc(t.motivo)+'</small></li>';
         }).join('')+'</ul></div>';
     }

@@ -3,7 +3,8 @@
 // Protegido pelo token INGEST_TOKEN.
 
 import { db, now, slugify, code, json } from '../_lib/db.js';
-import { mesma } from '../_lib/casar.js';   // o cruzamento mora lá, um só pro site inteiro
+import { mesma, limpo } from '../_lib/casar.js';   // o cruzamento mora lá, um só pro site inteiro
+import { vitrine } from '../_lib/vitrine.js';
 
 // Teto de segurança da prateleira. O plano gratuito do R2 vai até 10 GB;
 // paramos em 8 pra nunca virar cobrança. A conta cheia do catálogo dá ~3 GB.
@@ -31,6 +32,7 @@ export async function onRequestPost(context) {
   if (op === 'done') return done(d, env, url, await request.json());
   if (op === 'fila') return fila(d, await request.json());
   if (op === 'exclusivos') return exclusivos(d, await request.json());
+  if (op === 'faltando') return faltando(d, request, env);
   return json({ erro: 'op desconhecida' }, 400);
 }
 
@@ -38,9 +40,12 @@ async function plan(d, body) {
   const { folderId, name, tracks } = body;
   if (!folderId || !name || !Array.isArray(tracks)) return json({ erro: 'faltou dado' }, 400);
 
-  // Beat tape do @rideblan33 nasce com o download desligado nos dois lados.
-  const tape = body.tipo === 'tape';
-  const tipo = tape ? 'tape' : 'artista';
+  // 'tape'    = beat tape do @rideblan33: nasce sem download, tag vem do cruzamento.
+  // 'vitrine' = prateleira interna, sem página e sem tag: guarda o MP3 de beat que o
+  //             site vende e que não existe em nenhum outro catálogo (só em Exclusivos).
+  const tipo = (body.tipo === 'tape' || body.tipo === 'vitrine') ? body.tipo : 'artista';
+  const tape = tipo === 'tape';
+  const fechado = tipo !== 'artista';
 
   let artist = await d.prepare('SELECT * FROM artists WHERE folder_id = ?').bind(folderId).first();
 
@@ -50,7 +55,7 @@ async function plan(d, body) {
     if (taken) slug = slug + '-' + code(3);
     await d.prepare(
       'INSERT INTO artists (slug, name, folder_id, code, tipo, dl_beats, dl_sons) VALUES (?, ?, ?, ?, ?, ?, ?)'
-    ).bind(slug, name, folderId, code(5), tipo, tape ? 0 : 1, tape ? 0 : 1).run();
+    ).bind(slug, name, folderId, code(5), tipo, fechado ? 0 : 1, fechado ? 0 : 1).run();
     artist = await d.prepare('SELECT * FROM artists WHERE folder_id = ?').bind(folderId).first();
   } else if (artist.name !== name || artist.tipo !== tipo) {
     await d.prepare('UPDATE artists SET name = ?, tipo = ? WHERE id = ?').bind(name, tipo, artist.id).run();
@@ -182,6 +187,37 @@ async function marcarVenda(d, tracks) {
   }
 
   return conta;
+}
+
+// O que o site vende e ainda não tem MP3 guardado em lugar nenhum. O conversor usa
+// isso pra puxar de Exclusivos SÓ esses, sem duplicar o que já está na prateleira.
+async function faltando(d, request, env) {
+  const beats = await vitrine(request, env);
+  if (!beats.length) return json({ erro: 'nao consegui ler a lista de beats do site' }, 502);
+
+  const { results } = await d.prepare(
+    `SELECT t.title, t.bpm, t.mkey AS key FROM tracks t
+       JOIN artists a ON a.id = t.artist_id
+      WHERE t.kind = 'beat' AND t.ready = 1`
+  ).all();
+
+  const porTitulo = new Map();
+  for (const f of results || []) {
+    const k = limpo(f.title);
+    if (!porTitulo.has(k)) porTitulo.set(k, []);
+    porTitulo.get(k).push(f);
+  }
+
+  const faltam = beats
+    .filter((b) => !(porTitulo.get(limpo(b.name)) || []).some((f) => mesma(b, f)))
+    .map((b) => ({ title: b.name, bpm: b.bpm, key: b.key }));
+
+  // o que a prateleira interna já guardou: entra no plano de novo, senão o done apaga
+  const { results: meus } = await d.prepare(
+    `SELECT t.id FROM tracks t JOIN artists a ON a.id = t.artist_id WHERE a.tipo = 'vitrine'`
+  ).all();
+
+  return json({ faltam, tenho: (meus || []).map((r) => r.id) });
 }
 
 async function track(d, env, url, request) {

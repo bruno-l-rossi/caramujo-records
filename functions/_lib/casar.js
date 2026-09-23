@@ -12,6 +12,10 @@ export const limpo = (s) => String(s || '')
 // O mesmo slug que o index.html usa no deep-link (#beat=nome-do-beat).
 export const slug = (s) => limpo(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
+// Chave frouxa pra casar nome escrito na mão: ignora caixa, acento e pontuação.
+// "Clássico vol. 3" e "classico vol 3" viram a mesma coisa.
+export const chave = (s) => limpo(s).replace(/[^a-z0-9]+/g, ' ').trim();
+
 // F# e Gb são a mesma tecla; "F#" e "F#maj" são o mesmo tom escrito de dois jeitos.
 const ENARM = { 'a#': 'bb', 'c#': 'db', 'd#': 'eb', 'f#': 'gb', 'g#': 'ab' };
 
@@ -24,7 +28,7 @@ function tom(k) {
   return { nota, q };
 }
 
-function mesmoTom(a, b) {
+export function mesmoTom(a, b) {
   const x = tom(a), y = tom(b);
   if (!x || !y) return true;                 // um dos lados não diz o tom: não atrapalha
   if (x.nota !== y.nota) return false;

@@ -3,7 +3,7 @@
 
 import { db, json } from '../_lib/db.js';
 import { autenticado } from '../_lib/sessao.js';
-import { mesma, limpo } from '../_lib/casar.js';
+import { mesma, mesmoTom, limpo } from '../_lib/casar.js';
 import { vitrine, indexar, achar } from '../_lib/vitrine.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
@@ -153,11 +153,16 @@ async function relatorio(d, request, env) {
 
     const faltaConverter = candidatos.find((f) => mesma(b, f));
     const soONome = candidatos[0] || null;
+    // o nome já foi comparado sem caixa e sem acento: se chegou aqui, ele BATE.
+    // o que não fecha é BPM ou tom, e é isso que precisa estar escrito.
+    const difBpm = soONome && b.bpm && soONome.bpm && Math.abs(Number(b.bpm) - Number(soONome.bpm)) > 1;
+    const difTom = soONome && !mesmoTom(b.key, soONome.key);
     const motivo = faltaConverter
       ? 'Está em ' + faltaConverter.onde + ', mas ainda não foi convertido. Roda a conversão.'
       : soONome
-        ? 'Achei "' + soONome.title + '" em ' + soONome.onde + ' (' + ficha(soONome) +
-          ') e o site diz ' + ficha(b) + '. O nome bate, o resto não.'
+        ? 'O nome bate (caixa e acento não contam). Não fecha ' +
+          (difBpm && difTom ? 'o BPM nem o tom' : difBpm ? 'o BPM' : difTom ? 'o tom' : 'o BPM/tom') +
+          ': o site diz ' + ficha(b) + ' e o Drive diz ' + ficha(soONome) + ', em ' + soONome.onde + '.'
         : exclusivos.some((e) => mesma(b, e))
           ? 'Está só em Exclusivos, que não vira catálogo e por isso não tem MP3 guardado.'
           : 'Não achei esse nome em nenhuma pasta convertida.';
@@ -175,8 +180,9 @@ async function relatorio(d, request, env) {
   const semBotao = [];
   for (const t of disp || []) {
     const b = achar(mapa, t);
-    if (!b) semBotao.push({ title: t.title, tape: t.tape, motivo: 'não existe na vitrine do site' });
-    else if (b.sold) semBotao.push({ title: t.title, tape: t.tape, motivo: 'no site está como vendido' });
+    const base = { title: t.title, tape: t.tape, bpm: t.bpm, key: t.key };
+    if (!b) semBotao.push({ ...base, motivo: 'não existe na vitrine do site' });
+    else if (b.sold) semBotao.push({ ...base, motivo: 'no site está como vendido' });
   }
 
   return json({

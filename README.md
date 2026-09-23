@@ -412,6 +412,11 @@ e abre aba nova assim mesmo. É a nossa própria origem.
 O menu `...` da faixa só aparece quando tem o que oferecer (baixar, ou enviar só essa faixa).
 Numa tape sem download a faixa é só pra ouvir, então fica o carrinho e mais nada.
 
+**Tape de graça:** tape com o download LIGADO não recebe botão de carrinho. Beat que a pessoa
+baixa de graça não está à venda. É uma chave só, a do download, no painel. A `Nada de novo
+(vol. I)` é assim: beats sem licença exclusiva, todos marcados como disponíveis e liberados
+pra baixar.
+
 O botão só aparece quando o beat existe na vitrine do site e continua à venda lá. Quem faz
 essa ponte é `functions/_lib/vitrine.js`: ele lê a lista `const BEATS` do próprio index.html
 servido (`env.ASSETS`, sem sair pra internet), guarda por 10 minutos e casa cada faixa pelo
@@ -424,10 +429,21 @@ sem botão. Pra cada beat sem áudio ele diz o motivo, que é o que vira consert
 
 | Motivo | O que fazer |
 |---|---|
-| Achei "x" em Fulano (140bpm Am) e o site diz 150bpm Abm | Acertar BPM/tom no nome do arquivo, ou no site |
+| O nome bate (caixa e acento não contam). Não fecha o tom: o site diz Bbm e o Drive diz Bm, em Fulano | Acertar o BPM/tom no nome do arquivo, ou no site |
 | Está em Fulano, mas ainda não foi convertido | Rodar a conversão |
-| Está só em Exclusivos, que não vira catálogo | Pôr o beat numa beat tape pra ele ganhar MP3 |
+| Está só em Exclusivos, que não vira catálogo | Nada: a passada da vitrine converte esse sozinha |
 | Não achei esse nome em nenhuma pasta convertida | Nome diferente em todo lugar |
+
+### A prateleira interna da vitrine
+
+Beat que o site vende e que não existe em NENHUM catálogo (só em `Exclusivos`) ganha o MP3
+puxado direto de lá, pra uma linha interna `artists.tipo='vitrine'`: sem página (a rota
+devolve 404), sem tag de venda, sem download. O conversor pergunta ao site quais beats estão
+sem áudio (`/api/ingest?op=faltando`) e puxa **só** esses, então nada é duplicado: o que já
+está guardado por causa de uma tape ou da pasta de um artista continua sendo reaproveitado.
+
+Roda na passada da madrugada e no job `tapes` da carga geral, nunca dentro de um lote (senão
+as 6 frentes fariam a mesma coisa ao mesmo tempo).
 
 ### Permissão de download
 

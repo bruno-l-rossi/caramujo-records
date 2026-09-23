@@ -16,6 +16,7 @@ import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { parseName } from './parse.mjs';
+import { mesma } from '../functions/_lib/casar.js';   // o mesmo cruzamento que o site usa
 
 const run = promisify(execFile);
 
@@ -237,6 +238,55 @@ async function portfolio() {
   return { tapes, exclusivos };
 }
 
+// Exceção combinada com o Bruno (22/09/2026): beat que o site vende e que não existe
+// em NENHUM catálogo (só em Exclusivos) ganha o MP3 puxado direto de lá, pra prateleira
+// interna 'vitrine'. Só esses: o resto reaproveita o áudio que já está guardado.
+async function vitrineAvulsa(pasta, dir) {
+  const { faltam, tenho } = await ingest('faltando', {}, {});
+  const guardados = new Set(tenho || []);
+
+  const faixas = [];
+  for (const f of await filhos(pasta.id)) {
+    if (!AUDIO.test(f.name)) continue;
+    const { title, bpm, key } = parseName(f.name);
+    const precisa = guardados.has(f.id) || (faltam || []).some((b) => mesma(b, { title, bpm, key }));
+    if (!precisa) continue;
+    faixas.push({
+      id: f.id, title, kind: 'beat', grp: 'res', tag: null, bpm, key,
+      wavBytes: Number(f.size || 0), modified: f.modifiedTime, fileName: f.name
+    });
+  }
+
+  if (!faixas.length) {
+    console.log(`Vitrine: todo beat do site já tem áudio guardado (${(faltam || []).length} sem par em Exclusivos)`);
+    return;
+  }
+
+  const p = await ingest('plan', {}, {
+    folderId: pasta.id, name: 'Beats à venda (interno)', tipo: 'vitrine', tracks: faixas
+  });
+  console.log(`Vitrine: ${faixas.length} beat(s) que só existem em Exclusivos, ${p.need.length} pra converter`);
+
+  for (const id of p.need) {
+    const faixa = faixas.find((f) => f.id === id);
+    try {
+      const { buf, dur, bytes } = await converter(faixa, dir);
+      await ingest('track', { id, dur: String(dur) }, buf, true);
+      console.log(`    ok  ${faixa.title}  ${Math.round(dur)}s  ${(bytes / 1048576).toFixed(1)} MB`);
+    } catch (e) {
+      console.log(`    falhou  ${faixa.title}: ${e.message}`);
+    }
+  }
+
+  await ingest('done', { folderId: pasta.id }, { ids: faixas.map((f) => f.id), capa: null });
+
+  const sobrando = (faltam || []).filter((b) => !faixas.some((f) => mesma(b, f)));
+  if (sobrando.length) {
+    console.log(`Vitrine: ${sobrando.length} beat(s) do site continuam sem áudio (nome diferente no Drive):`);
+    for (const b of sobrando.slice(0, 20)) console.log('    - ' + b.title);
+  }
+}
+
 // A lista do que ainda está à venda. Vai pro site uma vez por rodada.
 async function mandarExclusivos(pasta) {
   const beats = [];
@@ -376,6 +426,13 @@ async function main() {
       tropecos.push(`${pasta.name}: ${e.message}`);
       console.log(`- ${pasta.name}: parou no meio (${e.message}). Sigo com os outros.`);
     }
+  }
+
+  // Passada da vitrine: só na rodada inteira ou no job das tapes. Num lote da carga
+  // geral não roda, senão as 6 frentes fariam a mesma coisa ao mesmo tempo.
+  if (exclusivos && (soTapes || (!alvo.length && !lote))) {
+    try { await vitrineAvulsa(exclusivos, dir); }
+    catch (e) { console.log(`- vitrine: não consegui (${e.message})`); tropecos.push('vitrine: ' + e.message); }
   }
 
   await fs.promises.rm(dir, { recursive: true, force: true });

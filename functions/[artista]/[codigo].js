@@ -18,7 +18,8 @@ export async function onRequestGet({ params, request, env }) {
   const d = await db(env);
   const artist = await d.prepare('SELECT * FROM artists WHERE slug = ?').bind(slug).first();
 
-  if (!artist || artist.code !== codigo) {
+  // a prateleira interna da vitrine não é catálogo de ninguém: não abre página
+  if (!artist || artist.code !== codigo || artist.tipo === 'vitrine') {
     return new Response(semLink(), {
       status: 404,
       headers: { 'content-type': 'text/html; charset=utf-8' }
@@ -35,7 +36,9 @@ export async function onRequestGet({ params, request, env }) {
   // Beat de tape com pastilha DISPONÍVEL ganha o botão de carrinho, contanto que
   // o beat exista na vitrine do site e continue à venda lá. Sem par, sem botão:
   // ninguém clica pra cair numa aba que não faz nada.
-  if (artist.tipo === 'tape') {
+  // Tape com download liberado é tape de graça (a "Nada de novo"): beat sem licença
+  // exclusiva, ninguém compra, então não entra carrinho.
+  if (artist.tipo === 'tape' && !artist.dl_beats) {
     const aVenda = tracks.filter((t) => t.tag === 'disponivel');
     if (aVenda.length) {
       const mapa = indexar(await vitrine(request, env));
