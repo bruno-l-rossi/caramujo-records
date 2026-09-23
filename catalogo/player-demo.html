@@ -37,85 +37,102 @@ html,body{margin:0;padding:0}
 body{background:var(--black);color:var(--txt);font-family:var(--sans);
   -webkit-font-smoothing:antialiased;padding:0 0 150px}
 .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
-.cabeca{padding:26px 0 18px}
+.cabeca{padding:26px 0 20px}
 .kick{font-size:.6rem;font-weight:700;letter-spacing:.3em;color:var(--clay);text-transform:uppercase}
 h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;line-height:1.05;margin:.5rem 0 .6rem;color:var(--cream)}
 .lede{font-size:.9rem;line-height:1.55;color:var(--read);max-width:64ch;margin:0}
-.opcoes{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:18px 0 22px;
-  border-bottom:1px solid var(--wire)}
-.opcoes span{font-size:.58rem;font-weight:700;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-right:4px}
-.opcoes button{font-family:var(--sans);font-size:.6rem;font-weight:700;letter-spacing:.18em;
-  text-transform:uppercase;background:transparent;color:var(--bone);border:1px solid var(--wire);
-  padding:.6rem .85rem;cursor:pointer}
-.opcoes button.on{background:var(--fire);color:var(--black);border-color:var(--fire)}
+.atalho{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--dim);margin:14px 0 0}
+.atalho b{color:var(--bone);font-weight:400;border:1px solid var(--wire);padding:.1rem .35rem}
 
 /* ---------- a lista ---------- */
-.lista{border-top:1px solid var(--wire)}
+.lista{border-top:1px solid var(--wire);margin-top:18px}
 .item{position:relative;display:flex;align-items:center;gap:14px;padding:11px 10px;
-  border-bottom:1px solid var(--wire);cursor:pointer;transition:background .12s}
+  border-bottom:1px solid var(--wire);cursor:pointer;transition:background .14s}
+.item:before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--fire);
+  transform:scaleY(0);transition:transform .16s ease}
 .item:hover{background:var(--deep)}
+.item:hover:before{transform:scaleY(1)}
 .item.tocando{background:var(--deep)}
-.item .cel-num{width:30px;flex:none;display:flex;align-items:center;justify-content:center;
+.item.tocando:before{transform:scaleY(1)}
+.cel-num{width:30px;flex:none;display:flex;align-items:center;justify-content:center;
   font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--dim);font-variant-numeric:tabular-nums}
-.item .cel-num b{display:none;width:30px;height:30px;align-items:center;justify-content:center;
+.cel-num b,.cel-num .eq{display:none}
+.cel-num b{width:30px;height:30px;align-items:center;justify-content:center;
   border:1px solid var(--wire);background:var(--mole);color:var(--bone)}
-.item:hover .cel-num i,.item.tocando .cel-num i{display:none}
-.item:hover .cel-num b,.item.tocando .cel-num b{display:flex}
-.item.tocando .cel-num b{background:var(--fire);color:var(--black);border-color:var(--fire)}
+.item:hover .cel-num i{display:none}
+.item:hover .cel-num b{display:flex}
+.item.tocando .cel-num i{display:none}
+.item.tocando .cel-num b{display:flex;background:var(--fire);color:var(--black);border-color:var(--fire)}
+.item.tocando.rodando:not(:hover) .cel-num b{display:none}
+.item.tocando.rodando:not(:hover) .cel-num .eq{display:flex}
+.eq{align-items:flex-end;gap:2px;height:14px}
+.eq s{width:2px;background:var(--fire);height:4px;animation:pula .9s ease-in-out infinite}
+.eq s:nth-child(2){animation-delay:.18s}
+.eq s:nth-child(3){animation-delay:.36s}
+@keyframes pula{0%,100%{height:3px}50%{height:13px}}
+@media (prefers-reduced-motion:reduce){.eq s{animation:none;height:8px}}
 .capa{width:46px;height:46px;flex:none;border:1px solid var(--wire);background:var(--mole);
   object-fit:cover;display:block}
 .capa.vazia{display:flex;align-items:center;justify-content:center}
-.capa.vazia img{width:26px;height:26px;opacity:.28}
+.capa.vazia img{width:26px;height:26px;opacity:.3}
 .info{flex:1;min-width:0}
 .nome{font-family:var(--serif);font-size:1.28rem;font-weight:600;line-height:1.15;color:var(--cream);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ficha{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--dim);margin-top:3px;
+.ficha{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--read);margin-top:3px;
   letter-spacing:.02em}
+.ficha em{font-style:normal;color:var(--clay);text-transform:uppercase;font-size:.64rem;letter-spacing:.1em}
+.dur{flex:none;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--dim);
+  font-variant-numeric:tabular-nums}
 .preco{flex:none;display:inline-flex;align-items:center;gap:7px;background:var(--bone);color:var(--black);
   border:1px solid var(--bone);font-family:'IBM Plex Mono',monospace;font-size:.76rem;font-weight:500;
-  padding:.52rem .8rem;cursor:pointer;white-space:nowrap}
+  padding:.52rem .8rem;cursor:pointer;transition:background .14s,border-color .14s}
 .preco:hover{background:var(--fire);border-color:var(--fire)}
 .vendido{flex:none;font-family:var(--sans);font-size:.58rem;font-weight:700;letter-spacing:.2em;
   text-transform:uppercase;color:var(--blood);border:1px solid var(--blood);padding:.52rem .8rem}
-.item.fora .nome{color:var(--dim);text-decoration:line-through;
+.item.fora .nome{color:var(--amber);text-decoration:line-through;
   text-decoration-color:var(--blood);text-decoration-thickness:1.5px}
-.item .corrida{position:absolute;left:0;bottom:-1px;height:2px;background:var(--fire);width:0}
+.corrida{position:absolute;left:0;bottom:-1px;height:2px;background:var(--fire);width:0}
 
 /* ---------- barra do pé ---------- */
 .pe{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--deep);
-  border-top:1px solid var(--wire);transform:translateY(110%);transition:transform .22s ease}
+  border-top:1px solid var(--wire);transform:translateY(110%);transition:transform .24s ease}
 .pe.on{transform:none}
 .pe-seek{display:flex;align-items:center;gap:12px;padding:9px 20px 0}
-.pe-t{font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--dim);flex:none;
+.pe-t{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--read);flex:none;
   font-variant-numeric:tabular-nums}
-.trilha{flex:1;height:6px;background:var(--loam);position:relative;cursor:pointer}
-.trilha i{display:block;height:100%;background:var(--fire);width:0}
-.trilha:after{content:'';position:absolute;inset:-10px 0}
-.onda{flex:1;height:30px;display:flex;align-items:center;gap:2px;cursor:pointer}
-.onda span{flex:1;background:var(--loam);min-height:3px}
-.onda span.on{background:var(--fire)}
+.trilha{flex:1;height:5px;background:var(--loam);position:relative;cursor:pointer;transition:height .14s}
+.trilha i{display:block;height:100%;background:var(--fire);width:0;position:relative}
+.trilha i:after{content:'';position:absolute;right:-5px;top:50%;width:10px;height:10px;
+  background:var(--fire);transform:translateY(-50%) scale(0);transition:transform .14s}
+.trilha:hover{height:8px}
+.trilha:hover i:after{transform:translateY(-50%) scale(1)}
+.trilha:before{content:'';position:absolute;inset:-12px 0}
 .pe-baixo{display:flex;align-items:center;gap:14px;padding:8px 20px calc(12px + env(safe-area-inset-bottom,0px))}
 .pe-info{display:flex;align-items:center;gap:11px;flex:1;min-width:0}
 .pe-info .capa{width:40px;height:40px}
 .pe-nome{min-width:0}
 .pe-nome div{font-family:var(--serif);font-size:1.05rem;font-weight:600;color:var(--cream);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pe-nome small{display:block;font-family:'IBM Plex Mono',monospace;font-size:.63rem;color:var(--dim);margin-top:1px}
+.pe-nome small{display:block;font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--read);margin-top:1px}
 .transporte{display:flex;align-items:center;gap:6px;flex:none}
 .tb{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:transparent;
-  border:1px solid transparent;color:var(--bone);cursor:pointer;padding:0}
+  border:1px solid transparent;color:var(--bone);cursor:pointer;padding:0;transition:color .14s,border-color .14s}
 .tb:hover{color:var(--cream);border-color:var(--wire)}
 .tb.principal{width:40px;height:40px;background:var(--fire);color:var(--black);border-color:var(--fire)}
 .tb.principal:hover{background:var(--clay);border-color:var(--clay)}
-.pe-dir{display:flex;align-items:center;gap:10px;flex:1;justify-content:flex-end}
+.pe-dir{display:flex;align-items:center;gap:10px;flex:1;justify-content:flex-end;position:relative}
+.vol-pop{position:absolute;right:56px;bottom:46px;background:var(--mole);border:1px solid var(--wire);
+  padding:10px 12px;display:none}
+.vol-pop.on{display:block}
+.vol-pop input{width:110px;accent-color:#b98f5e;background:transparent}
 @media(max-width:760px){
-  /* no celular o preço é o que importa: fica o número, sai o ícone */
   .nome{font-size:1.05rem}
-  .ficha{font-size:.62rem}
+  .ficha{font-size:.64rem}
   .item{gap:10px;padding:9px 2px}
-  .item .cel-num{width:26px}
-  .item .cel-num b{width:26px;height:26px}
+  .cel-num{width:26px}
+  .cel-num b{width:26px;height:26px}
   .capa{width:40px;height:40px}
+  .dur{display:none}
   .preco{padding:.5rem .62rem;font-size:.72rem;gap:0}
   .preco svg{display:none}
   .vendido{padding:.5rem .6rem;font-size:.54rem}
@@ -131,9 +148,10 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;line-height:1.05;ma
   .tb.principal{width:36px;height:36px}
   .pe-dir{flex:none}
   .pe-dir .vol{display:none}
+  .atalho{display:none}
 }
-.nota{font-size:.8rem;line-height:1.55;color:var(--dim);padding:18px 0 0;max-width:62ch}
-.nota b{color:var(--bone)}
+.nota{font-size:.82rem;line-height:1.6;color:var(--read);padding:20px 0 0;max-width:64ch}
+.nota b{color:var(--cream)}
 </style>
 </head>
 <body>
@@ -141,40 +159,35 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;line-height:1.05;ma
   <div class="cabeca">
     <div class="kick">// Caramujo Records</div>
     <h1>Player novo, sem SoundCloud</h1>
-    <p class="lede">A linha do beat com número, capa, nome e a ficha embaixo, do jeito que você mandou,
-    na fonte e nas cores da casa. A barra do pé aparece quando você dá play. O som vem do seu Drive.</p>
-  </div>
-
-  <div class="opcoes">
-    <span>Barra do pé</span>
-    <button class="op on" data-seek="linha" type="button">Linha</button>
-    <button class="op" data-seek="onda" type="button">Onda</button>
+    <p class="lede">Número, capa, nome e a ficha com gênero, BPM e tom. Beat vendido continua tocando,
+    riscado, como prova de que sai. A barra do pé sobe no play.</p>
+    <p class="atalho">No computador: <b>espaço</b> toca e pausa · <b>←</b> <b>→</b> andam 5 segundos ·
+      <b>↑</b> <b>↓</b> mexem no volume</p>
   </div>
 
   <div class="lista" id="lista"></div>
-
   <p class="nota" id="nota">Carregando os beats do seu catálogo…</p>
 </div>
 
 <div class="pe" id="pe">
   <div class="pe-seek">
     <div class="pe-t" id="tAgora">0:00</div>
-    <div class="trilha" id="seekLinha"><i id="seekFill"></i></div>
-    <div class="onda" id="seekOnda" style="display:none"></div>
+    <div class="trilha" id="seek"><i id="seekFill"></i></div>
     <div class="pe-t" id="tTotal">0:00</div>
   </div>
   <div class="pe-baixo">
     <div class="pe-info">
       <div class="capa vazia" id="peCapa"><img src="/assets/brand/selo-creme.svg" alt=""></div>
-      <div class="pe-nome"><div id="peNome">—</div><small id="peSub"><span class="quem">@rideblan33</span></small></div>
+      <div class="pe-nome"><div id="peNome">—</div><small id="peSub"></small></div>
     </div>
     <div class="transporte">
-      <button class="tb" id="bAnt" type="button" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M7 5v14h2.6V5zM19 5l-9 7 9 7z"/></svg></button>
-      <button class="tb principal" id="bPlay" type="button" aria-label="Tocar"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M7 4.5v15l13-7.5z"/></svg></button>
-      <button class="tb" id="bProx" type="button" aria-label="Próxima"><svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M17 5v14h-2.6V5zM5 5l9 7-9 7z"/></svg></button>
+      <button class="tb" id="bAnt" type="button" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M7 5v14h2.6V5zM19 5l-9 7 9 7z"/></svg></button>
+      <button class="tb principal" id="bPlay" type="button" aria-label="Tocar"><svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M7 4.5v15l13-7.5z"/></svg></button>
+      <button class="tb" id="bProx" type="button" aria-label="Próxima"><svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M17 5v14h-2.6V5zM5 5l9 7-9 7z"/></svg></button>
     </div>
     <div class="pe-dir">
       <button class="tb vol" id="bVol" type="button" aria-label="Volume"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path d="M16 9a4.5 4.5 0 010 6"/><path d="M18.8 6.5a8 8 0 010 11"/></svg></button>
+      <div class="vol-pop" id="volPop"><input id="vol" type="range" min="0" max="100" value="100" aria-label="Volume"></div>
       <button class="preco" id="peCarrinho" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="9.5" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3.5h2.3l2.4 11.1a1.8 1.8 0 001.8 1.4h7.6a1.8 1.8 0 001.8-1.4L21.5 7.4H5.6"/></svg><span class="rotulo">R$119</span></button>
     </div>
   </div>
@@ -185,33 +198,30 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;line-height:1.05;ma
 <script>
 (function(){
   var $=function(i){return document.getElementById(i)};
-  var som=$('som'), beats=[], atual=-1, estiloSeek='linha';
-  var ICON_PLAY='<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M7 4.5v15l13-7.5z"/></svg>', ICON_PAUSE='<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4.5" width="4" height="15"/><rect x="14" y="4.5" width="4" height="15"/></svg>', SELO='/assets/brand/selo-creme.svg', CART='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="9.5" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3.5h2.3l2.4 11.1a1.8 1.8 0 001.8 1.4h7.6a1.8 1.8 0 001.8-1.4L21.5 7.4H5.6"/></svg>';
+  var som=$('som'), beats=[], atual=-1;
+  var P='<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M7 4.5v15l13-7.5z"/></svg>', PA='<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="6" y="4.5" width="4" height="15"/><rect x="14" y="4.5" width="4" height="15"/></svg>', PB='<svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M7 4.5v15l13-7.5z"/></svg>', PAB='<svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><rect x="6" y="4.5" width="4" height="15"/><rect x="14" y="4.5" width="4" height="15"/></svg>', SELO='/assets/brand/selo-creme.svg', CART='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="9.5" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3.5h2.3l2.4 11.1a1.8 1.8 0 001.8 1.4h7.6a1.8 1.8 0 001.8-1.4L21.5 7.4H5.6"/></svg>';
 
   function mmss(s){s=Math.max(0,Math.round(s||0));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]})}
-  function ficha(b){return [b.bpm?b.bpm+' BPM':'',b.key||''].filter(Boolean).join('  ·  ')}
-
-  function onda(nome){
-    var x=0; for(var i=0;i<nome.length;i++) x=(x*31+nome.charCodeAt(i))>>>0;
-    var b=[];
-    for(var j=0;j<90;j++){ x=(x*1103515245+12345)>>>0; var h=14+(x%86); if(j<4||j>85) h=Math.round(h*.4); b.push(h) }
-    return b;
+  function fichaHTML(b){
+    var resto=[b.bpm?b.bpm+' BPM':'',b.key||''].filter(Boolean).join('  ·  ');
+    return (b.genero?'<em>'+esc(b.genero)+'</em>'+(resto?'  ·  ':''):'')+esc(resto);
   }
-
-  function capaHTML(b,cls){
+  function capaHTML(b,extra){
     return b.capa
-      ? '<img class="capa '+cls+'" src="'+esc(b.capa)+'" alt="" loading="lazy">'
-      : '<div class="capa vazia '+cls+'"><img src="'+SELO+'" alt=""></div>';
+      ? '<img class="capa" '+extra+' src="'+esc(b.capa)+'" alt="" loading="lazy">'
+      : '<div class="capa vazia" '+extra+'><img src="'+SELO+'" alt=""></div>';
   }
 
   function desenhar(){
     $('lista').innerHTML=beats.map(function(b,i){
       return '<div class="item'+(b.sold?' fora':'')+'" data-i="'+i+'">'+
-        '<div class="cel-num"><i>'+String(i+1).padStart(2,'0')+'</i><b>'+ICON_PLAY+'</b></div>'+
+        '<div class="cel-num"><i>'+String(i+1).padStart(2,'0')+'</i><b>'+P+'</b>'+
+          '<span class="eq"><s></s><s></s><s></s></span></div>'+
         capaHTML(b,'')+
         '<div class="info"><div class="nome">'+esc(b.name)+'</div>'+
-          '<div class="ficha">'+esc(ficha(b))+'</div></div>'+
+          '<div class="ficha">'+fichaHTML(b)+'</div></div>'+
+        '<span class="dur">'+mmss(b.dur)+'</span>'+
         (b.sold
           ? '<span class="vendido">Vendido</span>'
           : '<button class="preco" type="button" data-carrinho="'+i+'">'+CART+'<span class="rotulo">R$119</span></button>')+
@@ -233,58 +243,87 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;line-height:1.05;ma
 
   function toca(i){
     var b=beats[i];
-    if(!b||b.sold||!b.mp3) return;
+    if(!b||!b.mp3) return;                    // vendido TOCA: é prova social
     if(i===atual){ if(som.paused) som.play(); else som.pause(); return }
     atual=i; som.src=b.mp3; som.play();
     $('pe').classList.add('on');
     $('peNome').textContent=b.name;
-    $('peSub').innerHTML='<span class="quem">@rideblan33  ·  </span>'+esc(ficha(b));
-    $('peCapa').outerHTML=capaHTML(b,'').replace('class="capa','id="peCapa" class="capa');
+    $('peSub').innerHTML='<span class="quem">@rideblan33  ·  </span>'+fichaHTML(b);
+    $('peCapa').outerHTML=capaHTML(b,'id="peCapa"');
     $('tTotal').textContent=mmss(b.dur);
-    if(estiloSeek==='onda') montarOnda(b);
+    sistema(b);
     pinta();
   }
 
-  function montarOnda(b){
-    $('seekOnda').innerHTML=onda(b.name).map(function(h){return '<span style="height:'+h+'%"></span>'}).join('');
+  // capa e nome na tela de bloqueio do celular
+  function sistema(b){
+    try{
+      if(!('mediaSession' in navigator)) return;
+      navigator.mediaSession.metadata=new MediaMetadata({
+        title:b.name, artist:'@rideblan33', album:'Caramujo Records',
+        artwork:b.capa?[{src:b.capa,sizes:'512x512',type:'image/jpeg'}]:[]
+      });
+      navigator.mediaSession.setActionHandler('play',function(){som.play()});
+      navigator.mediaSession.setActionHandler('pause',function(){som.pause()});
+      navigator.mediaSession.setActionHandler('previoustrack',function(){vizinho(-1)});
+      navigator.mediaSession.setActionHandler('nexttrack',function(){vizinho(1)});
+    }catch(_){}
   }
 
   function pinta(){
     var f=som.duration?som.currentTime/som.duration:0;
     var tocando=atual>-1 && !som.paused;
     $('seekFill').style.width=(f*100)+'%';
-    var barras=$('seekOnda').children, corte=Math.round(f*barras.length);
-    for(var k=0;k<barras.length;k++) barras[k].classList.toggle('on',k<corte);
     $('tAgora').textContent=mmss(som.currentTime);
     if(som.duration) $('tTotal').textContent=mmss(som.duration);
-    $('bPlay').innerHTML=tocando?ICON_PAUSE:ICON_PLAY;
+    $('bPlay').innerHTML=tocando?PAB:PB;
+    $('bPlay').setAttribute('aria-label',tocando?'Pausar':'Tocar');
     $('lista').querySelectorAll('.item').forEach(function(el){
       var meu=Number(el.dataset.i)===atual;
       el.classList.toggle('tocando',meu);
-      el.querySelector('.cel-num b').innerHTML=(meu&&tocando)?ICON_PAUSE:ICON_PLAY;
+      el.classList.toggle('rodando',meu&&tocando);
+      el.querySelector('.cel-num b').innerHTML=(meu&&tocando)?PA:P;
       el.querySelector('.corrida').style.width=meu?(f*100)+'%':'0';
     });
   }
 
-  function pula(e,el){
-    var r=el.getBoundingClientRect();
-    var f=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
+  function pula(e){
+    var r=$('seek').getBoundingClientRect();
+    var f=Math.min(1,Math.max(0,((e.clientX!=null?e.clientX:e.touches[0].clientX)-r.left)/r.width));
     if(som.duration) som.currentTime=f*som.duration;
     pinta();
   }
-  $('seekLinha').addEventListener('click',function(e){pula(e,this)});
-  $('seekOnda').addEventListener('click',function(e){pula(e,this)});
+  $('seek').addEventListener('click',pula);
 
-  $('bPlay').addEventListener('click',function(){ if(atual<0) return toca(0); if(som.paused) som.play(); else som.pause() });
-  $('bAnt').addEventListener('click',function(){ vizinho(-1) });
-  $('bProx').addEventListener('click',function(){ vizinho(1) });
   function vizinho(d){
     if(!beats.length) return;
-    var i=atual;
+    var i=atual<0?-1:atual;
     for(var n=0;n<beats.length;n++){
       i=(i+d+beats.length)%beats.length;
-      if(!beats[i].sold&&beats[i].mp3) return toca(i);
+      if(beats[i].mp3) return toca(i);
     }
+  }
+  $('bPlay').addEventListener('click',function(){ if(atual<0) return vizinho(1); if(som.paused) som.play(); else som.pause() });
+  $('bAnt').addEventListener('click',function(){ vizinho(-1) });
+  $('bProx').addEventListener('click',function(){ vizinho(1) });
+
+  $('bVol').addEventListener('click',function(e){ e.stopPropagation(); $('volPop').classList.toggle('on') });
+  document.addEventListener('click',function(){ $('volPop').classList.remove('on') });
+  $('volPop').addEventListener('click',function(e){ e.stopPropagation() });
+  $('vol').addEventListener('input',function(){ som.volume=Number(this.value)/100 });
+
+  document.addEventListener('keydown',function(e){
+    var t=e.target.tagName;
+    if(t==='INPUT'||t==='TEXTAREA') return;
+    if(e.code==='Space'){ e.preventDefault(); if(atual<0) vizinho(1); else if(som.paused) som.play(); else som.pause(); }
+    else if(e.key==='ArrowRight'&&atual>-1){ som.currentTime=Math.min(som.duration||0,som.currentTime+5); pinta() }
+    else if(e.key==='ArrowLeft'&&atual>-1){ som.currentTime=Math.max(0,som.currentTime-5); pinta() }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); mexeVolume(.1) }
+    else if(e.key==='ArrowDown'){ e.preventDefault(); mexeVolume(-.1) }
+  });
+  function mexeVolume(d){
+    som.volume=Math.min(1,Math.max(0,som.volume+d));
+    $('vol').value=Math.round(som.volume*100);
   }
 
   som.addEventListener('timeupdate',pinta);
@@ -292,27 +331,15 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;line-height:1.05;ma
   som.addEventListener('pause',pinta);
   som.addEventListener('ended',function(){ vizinho(1) });
 
-  document.querySelectorAll('.op').forEach(function(bt){
-    bt.addEventListener('click',function(){
-      document.querySelectorAll('.op').forEach(function(x){x.classList.remove('on')});
-      bt.classList.add('on');
-      estiloSeek=bt.dataset.seek;
-      var linha=estiloSeek==='linha';
-      $('seekLinha').style.display=linha?'':'none';
-      $('seekOnda').style.display=linha?'none':'flex';
-      if(!linha&&atual>-1) montarOnda(beats[atual]);
-      pinta();
-    });
-  });
-
   fetch('/api/vitrine').then(function(r){return r.json()}).then(function(j){
     var todos=(j.beats||[]).filter(function(b){return b.mp3});
     if(!todos.length){ $('nota').textContent='Nenhum beat com áudio guardado ainda.'; return }
-    beats=todos.slice(0,8);
+    beats=todos.slice(0,10);
     desenhar();
-    $('nota').innerHTML='São 8 beats de verdade do seu catálogo, tocando do Drive. '+
-      'A capa que aparece é a da beat tape onde o beat está. '+
-      '<b>'+j.comAudio+'</b> dos <b>'+j.total+'</b> beats do site já têm áudio guardado.';
+    var comCapa=beats.filter(function(b){return b.capa}).length;
+    $('nota').innerHTML='Beats de verdade do seu catálogo, tocando do Drive. '+
+      '<b>'+j.comAudio+'</b> dos <b>'+j.total+'</b> beats do site têm áudio guardado e '+
+      '<b>'+(j.comCapa||0)+'</b> têm capa de beat tape. Nesses 10 aqui, '+comCapa+' vieram com capa.';
   }).catch(function(){ $('nota').textContent='Não consegui falar com o site agora.' });
 })();
 </script>

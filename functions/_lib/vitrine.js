@@ -46,12 +46,27 @@ function parse(html) {
   return beats;
 }
 
+// O site escreve o gênero em código ('boombap') e o nome bonito noutra lista.
+// Leio as duas, pra ninguém ver "boombap" na tela.
+function generos(html) {
+  const m = html.match(/const GENRE_LABELS\s*=\s*\{([^}]*)\}/);
+  const mapa = {};
+  if (!m) return mapa;
+  const re = /'([^']+)'\s*:\s*'([^']*)'/g;
+  let p;
+  while ((p = re.exec(m[1]))) mapa[p[1]] = p[2];
+  return mapa;
+}
+
 export async function vitrine(request, env) {
   if (cache.beats && Date.now() - cache.at < VALIDADE) return cache.beats;
   try {
     const r = await env.ASSETS.fetch(new URL('/index.html', request.url));
     if (!r.ok) return cache.beats || [];
-    const beats = parse(await r.text());
+    const pagina = await r.text();
+    const beats = parse(pagina);
+    const rotulos = generos(pagina);
+    for (const b of beats) b.generoLabel = rotulos[b.genre] || b.genre || '';
     if (beats.length) cache = { at: Date.now(), beats };
     return beats.length ? beats : (cache.beats || []);
   } catch {

@@ -31,15 +31,15 @@ export async function onRequestGet({ request, env }) {
 
   const dados = beats.map((b) => {
     const candidatos = (porTitulo.get(limpo(b.name)) || []).filter((x) => mesma(b, x));
-    // capa: prefiro a arte da beat tape (é arte do Bruno) antes da foto de um artista
-    const f = candidatos.find((x) => x.tipo === 'tape' && x.cover_key)
-      || candidatos.find((x) => x.cover_key)
-      || candidatos[0] || null;
+    // A capa do beat é a arte da BEAT TAPE onde ele está, que é arte do Bruno.
+    // Capa de pasta de artista é foto do artista, não do beat: essa não serve.
+    const comCapa = candidatos.find((x) => x.tipo === 'tape' && x.cover_key) || null;
+    const f = comCapa || candidatos[0] || null;
     return {
       id: b.id, name: b.name, slug: b.slug, bpm: b.bpm, key: b.key,
-      genre: b.genre, sold: b.sold,
+      genre: b.genre, genero: b.generoLabel || b.genre || '', sold: b.sold,
       mp3: f ? '/audio/' + f.id : null,
-      capa: f && f.cover_key ? '/capa/' + f.cover_key : null,
+      capa: comCapa ? '/capa/' + comCapa.cover_key : null,
       dur: f ? (f.dur || 0) : 0
     };
   });
@@ -50,7 +50,12 @@ export async function onRequestGet({ request, env }) {
 
 function resposta(dados) {
   return json(
-    { beats: dados, comAudio: dados.filter((b) => b.mp3).length, total: dados.length },
+    {
+      beats: dados,
+      comAudio: dados.filter((b) => b.mp3).length,
+      comCapa: dados.filter((b) => b.capa).length,
+      total: dados.length
+    },
     200,
     { 'cache-control': 'public, max-age=300' }
   );
