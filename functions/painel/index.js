@@ -110,6 +110,12 @@ const BASE = `
     border-radius:20px 20px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom,0px));
     max-height:86vh;overflow-y:auto}
   .card h2{margin:0 0 3px;font-size:20px;font-weight:700;overflow-wrap:anywhere}
+  .cab{display:flex;align-items:center;gap:13px}
+  .cab-txt{flex:1;min-width:0}
+  .capa-mini{width:62px;height:62px;flex:none;border-radius:8px;overflow:hidden;background:#171717;
+    border:1px solid var(--linha);display:flex;align-items:center;justify-content:center}
+  .capa-mini img{width:100%;height:100%;object-fit:cover;display:block}
+  .capa-mini.vazia{color:var(--ink4);font-size:10px;letter-spacing:.08em;text-align:center;padding:4px}
   .card .end{font-size:13px;color:var(--ink4);word-break:break-all}
   .card p{margin:0;font-size:13.5px;color:var(--ink3)}
   .card-list{display:flex;flex-direction:column;gap:2px;margin-top:16px}
@@ -236,10 +242,12 @@ function pagina() {
 
   function tempo(iso){
     if(!iso) return 'nunca abriu';
-    var d=(Date.now()-new Date(iso).getTime())/1000;
-    if(d<3600) return 'aberto agora há pouco';
-    if(d<86400) return 'aberto hoje';
-    var dias=Math.floor(d/86400);
+    var q=new Date(iso), agora=new Date();
+    if((agora.getTime()-q.getTime())/1000 < 3600) return 'aberto agora há pouco';
+    // o que conta é a virada do dia: 23h50 de ontem é ONTEM, não "hoje há 24h"
+    var zero=function(x){return new Date(x.getFullYear(),x.getMonth(),x.getDate()).getTime()};
+    var dias=Math.round((zero(agora)-zero(q))/86400000);
+    if(dias<=0) return 'aberto hoje';
     if(dias===1) return 'aberto ontem';
     if(dias<30) return 'aberto há '+dias+' dias';
     var m=Math.floor(dias/30);
@@ -528,6 +536,12 @@ function pagina() {
       '<small>'+texto+'</small></span>';
   }
 
+  function capaMini(a){
+    return a.cover_key
+      ? '<div class="capa-mini"><img src="/capa/'+esc(a.cover_key)+'" alt="capa de '+esc(a.name)+'" loading="lazy"></div>'
+      : '<div class="capa-mini vazia">sem capa</div>';
+  }
+
   function copiar(a){
     var u=link(a);
     if(navigator.clipboard) navigator.clipboard.writeText(u);
@@ -537,7 +551,9 @@ function pagina() {
   function abrir(a){
     var c=$('card');
     c.innerHTML=
-      '<h2>'+esc(a.name)+'</h2><div class="end">'+esc(link(a).replace(/^https?:\\/\\//,''))+'</div>'+
+      '<div class="cab">'+capaMini(a)+'<div class="cab-txt">'+
+        '<h2>'+esc(a.name)+'</h2><div class="end">'+esc(link(a).replace(/^https?:\\/\\//,''))+'</div>'+
+      '</div></div>'+
       '<div class="acoes">'+
         '<button class="pill solid" data-act="copiar" type="button">Copiar link</button>'+
         '<button class="pill" data-act="abrir" type="button">Abrir</button>'+

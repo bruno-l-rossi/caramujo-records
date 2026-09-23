@@ -11,3 +11,6 @@ docs/*
 previews/*
 !previews/preview-email-entrega.html
 mockups-antigos/
+
+# Testes: rodam na máquina, não sobem nem entram no deploy.
+testes/

@@ -96,7 +96,7 @@ nav{
   font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.76rem;font-weight:700;
   letter-spacing:.22em;text-transform:uppercase;
   color:var(--read);text-decoration:none;
-  padding:0 1.1rem;border-left:1px solid var(--wire);
+  padding:0 1.1rem;
   display:flex;align-items:center;height:54px; /* área de toque = barra inteira (não só o texto) */
   transition:color .15s,background .15s;
 }
@@ -767,14 +767,12 @@ html { scroll-padding-top: 70px; }
     width:auto;
   }
   .nav-links a{
-    border-left:1px solid var(--wire);
     border-right:none;
     line-height:54px;
     font-size:.6rem;
     padding:0 .8rem;
     white-space:nowrap;
   }
-  .nav-links a:first-child{border-left:none;}
   .s{padding:3.5rem 1.2rem;}
   .hero-content{padding:7rem 1.2rem 3rem;}
   .hero-title{white-space:normal;font-size:clamp(3rem,14vw,8rem);}
@@ -1071,7 +1069,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
   .nav-links{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;justify-content:flex-start;}
   .nav-links::-webkit-scrollbar{display:none;}
 }
-#hero,#como-funciona,#beats,#packages,#services,#estudio,#contact{scroll-margin-top:60px;}
+#hero,#beats,#packages,#services,#estudio,#contact{scroll-margin-top:60px;}
 @media(max-width:860px){ body::before{display:none!important;} }
 @media(max-width:860px){ .ft{min-height:40px;} .np-ctl{width:44px;height:44px;} }
 
@@ -1284,7 +1282,11 @@ html,body{overflow-x:hidden;}
 @media(hover:hover){
   .vol-wrap:hover .vol-pop{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
 }
-.vol-wrap:before{content:'';position:absolute;left:-12px;right:-12px;top:-16px;bottom:0}
+/* ponte invisível pro mouse não perder o popup no caminho — só onde tem mouse.
+   No celular ela ficava POR CIMA do botão e engolia o toque. */
+@media(hover:hover){
+  .vol-wrap:before{content:'';position:absolute;left:-12px;right:-12px;top:-16px;bottom:0}
+}
 .vol-pop input{-webkit-appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;
   width:22px;height:96px;accent-color:#b98f5e;background:transparent;cursor:pointer}
 /* beat em destaque no hero */
@@ -1422,10 +1424,15 @@ html,body{overflow-x:hidden;}
   </div>
 
   <div class="hero-week" id="heroWeek">
-    <div class="hw-head">
-      <span class="hw-kick">Beat em destaque</span>
+    <div class="hw-topo">
+      <div class="hw-capa vazia" id="hwCapa"><img src="assets/brand/selo-creme.svg" alt="" width="34" height="34"></div>
+      <div class="hw-txt">
+        <div class="hw-head">
+          <span class="hw-kick">Beat em destaque</span>
+        </div>
+        <div class="hw-name" id="hwName">—</div>
+      </div>
     </div>
-    <div class="hw-name" id="hwName">—</div>
     <div class="hw-chips" id="hwChips"></div>
     <div class="hw-play" id="hwPlay">
       <button class="tb principal" id="hwBtn" type="button" aria-label="Tocar o beat em destaque"></button>
@@ -1442,19 +1449,6 @@ html,body{overflow-x:hidden;}
 </section>
 
 <div class="hr"></div>
-
-<!-- ═══ COMO FUNCIONA (strip) ═══════════════════ -->
-<section id="como-funciona" class="hiw-strip">
-  <div class="hiw-strip-inner">
-    <span class="hiw-s"><span class="hiw-n">01</span> Ouça</span>
-    <span class="hiw-arw">→</span>
-    <span class="hiw-s"><span class="hiw-n">02</span> Escolha beats, pacotes ou mix &amp; master</span>
-    <span class="hiw-arw">→</span>
-    <span class="hiw-s"><span class="hiw-n">03</span> Pague no PIX ou cartão</span>
-    <span class="hiw-arw">→</span>
-    <span class="hiw-s"><span class="hiw-n">04</span> Receba com licença exclusiva</span>
-  </div>
-</section>
 
 <!-- ═══ BEATS DISPONÍVEIS (merged) ══════════════════ -->
 <section id="beats" class="s s-earth">
@@ -1808,7 +1802,6 @@ html,body{overflow-x:hidden;}
     <div class="cp-empty">Nenhum item adicionado.</div>
   </div>
   <div class="cp-foot">
-    <p class="cp-note">Pagamento via PIX ou cartão de crédito. Após confirmação, os arquivos serão entregues seguindo os prazos estipulados no contrato.</p>
     <div class="cp-coupon" id="cpCouponArea">
       <div class="cp-coupon-row">
         <input class="cp-coupon-input" id="cpCouponInput" type="text" placeholder="CUPOM DE DESCONTO" maxlength="20" autocomplete="off" spellcheck="false"/>
@@ -2160,6 +2153,34 @@ html{-webkit-text-size-adjust:100%}
   .tb{width:34px;height:34px}
   .pe-info{gap:9px}
 }
+
+/* ══ NOVO v22 — capa no destaque, piscada do carrinho e volume de dedo ══════ */
+.hw-topo{display:flex;align-items:center;gap:14px}
+.hw-txt{flex:1;min-width:0}
+.hw-capa{width:96px;height:96px;flex:none;border:1px solid var(--wire);background:var(--mole);
+  display:flex;align-items:center;justify-content:center;overflow:hidden}
+.hw-capa img{width:100%;height:100%;object-fit:cover;display:block}
+.hw-capa.vazia img{width:34px;height:34px;object-fit:contain;opacity:.3}
+
+@keyframes piscada{0%{transform:scale(1)}22%{transform:scale(1.16)}60%{transform:scale(.98)}100%{transform:scale(1)}}
+@keyframes piscada-cor{0%,100%{background:var(--fire);border-color:var(--fire)}45%{background:var(--cream);border-color:var(--cream)}}
+.piscou{animation:piscada .5s ease}
+#navCart.piscou{animation:piscada .55s ease;color:var(--fire)}
+.preco.piscou{animation:piscada .5s ease,piscada-cor .5s ease}
+
+@media(max-width:900px){
+  /* no celular o destaque sai de cena: a pessoa cai direto no catálogo */
+  .hero-week{display:none}
+}
+@media(max-width:760px){
+  /* slider de volume DEITADO no telefone: o de pé não obedece arrasto de dedo */
+  /* largura na mão: o popup é absoluto dentro de um wrap de 38px e o
+     max-width:100% da casa o espremia até o tamanho do wrap */
+  .vol-pop{left:auto;right:-6px;width:176px;max-width:none;transform:translateY(6px);padding:11px 13px}
+  .vol-pop.on{transform:translateY(0)}
+  .vol-pop input{-webkit-appearance:auto;appearance:auto;writing-mode:horizontal-tb;
+    direction:ltr;width:150px;max-width:none;height:26px;touch-action:none}
+}
 </style>
 
 <script src="https://sdk.mercadopago.com/js/v2" defer></script>
@@ -2386,7 +2407,7 @@ const ICO_PAUSE='<svg viewBox="0 0 24 24" fill="currentColor" width="13" height=
 const ICO_CART='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="9.5" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3.5h2.3l2.4 11.1a1.8 1.8 0 001.8 1.4h7.6a1.8 1.8 0 001.8-1.4L21.5 7.4H5.6"/></svg>';
 function fmtDur(s){s=Math.max(0,Math.round(s||0));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
 
-const BEATS_PER_PAGE = 9;
+const BEATS_PER_PAGE = 10;
 let curPage = 1;
 let beatQuery = '';
 
@@ -2640,6 +2661,8 @@ function toggleBeat(beatId,stems){
     if(otherIdx!==-1) cart.splice(otherIdx,1);
     cart.push({id:Date.now(),beatId:beat.id,name:stems?`${beat.name} + Stems`:beat.name,price:stems?PRICE_STEMS:PRICE_BEAT,type:'Beat',stems});
     updateCart(); syncBeatButtons();
+    piscar(document.getElementById('bb'+beat.id));
+    piscar(document.getElementById('navCart'));
     confirmAdd(`"${beat.name}"`);
   } else {
     cart.splice(existing,1);
@@ -2885,6 +2908,16 @@ function showCouponMsg(text, ok) {
   const msg = document.getElementById('cpCouponMsg');
   msg.textContent = text;
   msg.className = 'cp-coupon-msg ' + (ok ? 'ok' : 'err');
+}
+
+// piscada curta: no celular o carrinho fica lá em cima, então o item tem que
+// dar um sinal de que entrou.
+function piscar(el){
+  if(!el) return;
+  el.classList.remove('piscou');
+  void el.offsetWidth;                 // reinicia a animação se clicar de novo
+  el.classList.add('piscou');
+  setTimeout(function(){ el.classList.remove('piscou'); }, 700);
 }
 
 function updateCart(){
@@ -3671,6 +3704,11 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
       if(ch) ch.innerHTML='<span class="hw-chip">'+gl+'</span><span class="hw-chip">'+b.bpm+' BPM</span><span class="hw-chip">'+b.key+'</span>';
       var ad=$('hwAdd'); if(ad) ad.textContent='Adicionar ao carrinho · R$'+PRICE_BEAT;
       var f=fonte(FEATURED_BEAT_ID);
+      var cp=$('hwCapa');
+      if(cp){
+        if(f&&f.capa){ cp.className='hw-capa'; cp.innerHTML='<img src="'+f.capa+'" alt="">'; }
+        else { cp.className='hw-capa vazia'; cp.innerHTML='<img src="assets/brand/selo-creme.svg" alt="" width="34" height="34">'; }
+      }
       var bloco=$('hwPlay'); if(bloco) bloco.style.display=(f&&f.mp3)?'':'none';
       pintarHero(0,false);
     }catch(_){}
@@ -3709,7 +3747,18 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
 
   // iPhone não deixa mexer no volume por software. Testo de verdade: se o
   // aparelho ignorar, o slider some e o carrinho fica no lugar dele no celular.
+  function ehIOS(){
+    try{
+      var ua=navigator.userAgent||'';
+      if(/iPad|iPhone|iPod/.test(ua)) return true;
+      // iPad moderno se apresenta como Mac; o toque entrega
+      return navigator.platform==='MacIntel' && navigator.maxTouchPoints>1;
+    }catch(_){ return false; }
+  }
   function volumeMexe(){
+    // iPhone/iPad aceitam escrever em som.volume e ignoram o valor: só o
+    // botão físico manda. Não adianta testar, tem que reconhecer o aparelho.
+    if(ehIOS()) return false;
     try{
       var v=som.volume;
       som.volume=0.42;

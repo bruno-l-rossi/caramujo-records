@@ -35,7 +35,7 @@ export async function onRequest({ request, env }) {
 async function artistas(d) {
   const { results } = await d.prepare(
     `SELECT a.id, a.slug, a.name, a.code, a.tipo, a.dl_beats, a.dl_sons, a.synced_at,
-            a.job_estado, a.job_total, a.job_feitos, a.job_at, a.cover_origem, a.descricao,
+            a.job_estado, a.job_total, a.job_feitos, a.job_at, a.cover_origem, a.cover_key, a.descricao,
             (SELECT MAX(t.src_modified) FROM tracks t WHERE t.artist_id = a.id) AS modificado,
             (SELECT COUNT(*) FROM tracks t WHERE t.artist_id = a.id AND t.ready = 1 AND t.kind = 'beat') AS nb,
             (SELECT COUNT(*) FROM tracks t WHERE t.artist_id = a.id AND t.ready = 1 AND t.kind = 'son') AS ns,
