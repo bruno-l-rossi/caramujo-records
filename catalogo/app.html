@@ -172,6 +172,9 @@ __META__
     display:flex;align-items:center;justify-content:center;cursor:pointer;
     -webkit-appearance:none;appearance:none;transition:background .15s,color .15s}
   .buy:active{background:#E4DAC7;color:#0a0a0a;border-color:#E4DAC7}
+  /* o anel continua com 30px, mas o dedo pega 44: área de toque invisível */
+  .buy,.more{position:relative}
+  .buy:after,.more:after{content:'';position:absolute;inset:-7px}
   @media(hover:hover){.buy:hover{background:#E4DAC7;color:#0a0a0a;border-color:#E4DAC7}}
 
   .empty{padding:26px 0;font-size:14px;color:#5a5a5a}

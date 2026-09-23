@@ -24,8 +24,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="preconnect" href="https://sdk.mercadopago.com"/>
 <link rel="preconnect" href="https://api.mercadopago.com"/>
-<link rel="preconnect" href="https://w.soundcloud.com"/>
-<script src="https://w.soundcloud.com/player/api.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -276,7 +274,6 @@ nav{
 .bcard-chips{display:flex;gap:.4rem;flex-wrap:wrap;flex:1;}
 
 /* SC player */
-.bcard iframe{display:block;width:100%;}
 
 /* buy bar — prominent, full width */
 .bcard-buybar{
@@ -975,7 +972,6 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .hw-num{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--fire);line-height:1;}
 .hw-name{font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--cream);margin-top:.2rem;}
 .hw-meta{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.14em;color:var(--label);margin-top:.15rem;}
-.hero-week iframe{width:100%;height:100px;margin-top:.7rem;border:0;display:block;}
 .hw-add{width:100%;justify-content:center;margin-top:.7rem;font-size:.76rem;}
 
 /* ═══ NOVO: COMO FUNCIONA ═══ */
@@ -1015,7 +1011,6 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .hero-week .hw-name{font-size:2.4rem;}
 .hw-chips{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem;}
 .hw-chip{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);border:1px solid var(--wire);padding:.28rem .5rem;}
-.hero-week iframe{height:100px;margin-top:.9rem;}
 .hw-add{margin-top:.9rem;}
 @media(max-width:900px){.hero-week{position:static;transform:none;width:100%;max-width:430px;margin:1.8rem 0 0;}.hero-week .hw-name{font-size:2rem;}}
 
@@ -1194,6 +1189,130 @@ html,body{overflow-x:hidden;}
   .studio-ph{scroll-snap-align:center;flex:0 0 82vw;max-width:340px;}
   .studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb,.studio-ph .vid-thumb>img{width:100%;height:auto;max-height:none;}
 }
+
+/* ══ NOVO v18 — player do Drive (sai o SoundCloud) ═══════════════════
+   Linha do beat: número/play, capa da beat tape, nome, ficha e preço.
+   Barra do pé: tempo, seek, capa, nome, transporte, volume e preço. */
+#beatCards{display:block}
+#beatCards .item{position:relative;display:flex;align-items:center;gap:14px;padding:11px 10px;
+  border-bottom:1px solid var(--wire);cursor:pointer;transition:background .14s}
+#beatCards .item:before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--fire);
+  transform:scaleY(0);transition:transform .16s ease}
+#beatCards .item:hover{background:var(--deep)}
+#beatCards .item:hover:before{transform:scaleY(1)}
+#beatCards .item.tocando{background:var(--deep)}
+#beatCards .item.tocando:before{transform:scaleY(1)}
+#beatCards .item.lucky-hit{background:var(--earth)}
+#beatCards .cel-num{width:30px;flex:none;display:flex;align-items:center;justify-content:center;
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--dim);font-variant-numeric:tabular-nums}
+#beatCards .cel-num b,#beatCards .cel-num .eq3{display:none}
+#beatCards .cel-num b{width:30px;height:30px;align-items:center;justify-content:center;
+  border:1px solid var(--wire);background:var(--mole);color:var(--bone)}
+#beatCards .item:hover .cel-num i{display:none}
+#beatCards .item:hover .cel-num b{display:flex}
+#beatCards .item.tocando .cel-num i{display:none}
+#beatCards .item.tocando .cel-num b{display:flex;background:var(--fire);color:var(--black);border-color:var(--fire)}
+#beatCards .item.tocando.rodando:not(:hover) .cel-num b{display:none}
+#beatCards .item.tocando.rodando:not(:hover) .cel-num .eq3{display:flex}
+#beatCards .eq3{align-items:flex-end;gap:2px;height:14px}
+#beatCards .eq3 s{width:2px;background:var(--fire);height:4px;animation:pulaEq .9s ease-in-out infinite}
+#beatCards .eq3 s:nth-child(2){animation-delay:.18s}
+#beatCards .eq3 s:nth-child(3){animation-delay:.36s}
+@keyframes pulaEq{0%,100%{height:3px}50%{height:13px}}
+@media (prefers-reduced-motion:reduce){#beatCards .eq3 s{animation:none;height:8px}}
+.capa{width:46px;height:46px;flex:none;border:1px solid var(--wire);background:var(--mole);
+  object-fit:cover;display:block}
+.capa.vazia{display:flex;align-items:center;justify-content:center}
+.capa.vazia img{width:26px;height:26px;opacity:.3;border:0}
+#beatCards .info{flex:1;min-width:0}
+#beatCards .nome{font-family:var(--serif);font-size:1.28rem;font-weight:600;line-height:1.15;color:var(--cream);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#beatCards .ficha{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--read);margin-top:3px;
+  letter-spacing:.02em}
+#beatCards .ficha em{font-style:normal;color:var(--clay);text-transform:uppercase;font-size:.64rem;letter-spacing:.1em}
+#beatCards .dur{flex:none;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--dim);
+  font-variant-numeric:tabular-nums}
+.preco{flex:none;display:inline-flex;align-items:center;gap:7px;background:var(--bone);color:var(--black);
+  border:1px solid var(--bone);font-family:'IBM Plex Mono',monospace;font-size:.76rem;font-weight:500;
+  padding:.52rem .8rem;cursor:pointer;transition:background .14s,border-color .14s;white-space:nowrap}
+.preco:hover{background:var(--fire);border-color:var(--fire)}
+.preco.on{background:var(--fire);border-color:var(--fire)}
+#beatCards .vendido{flex:none;font-family:var(--sans);font-size:.58rem;font-weight:700;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--blood);border:1px solid var(--blood);padding:.52rem .8rem}
+#beatCards .item.fora .nome{color:var(--amber);text-decoration:line-through;
+  text-decoration-color:var(--blood);text-decoration-thickness:1.5px}
+#beatCards .corrida{position:absolute;left:0;bottom:-1px;height:2px;background:var(--fire);width:0}
+
+/* barra do pé, agora de ponta a ponta */
+.np-bar{left:0!important;right:0!important;bottom:0!important;width:100%!important;max-width:none!important;
+  min-width:0!important;transform:translateY(110%)!important;background:var(--deep)!important;
+  border:0!important;border-top:1px solid var(--wire)!important;padding:0!important;gap:0!important;
+  backdrop-filter:none!important;box-shadow:none!important;border-radius:0!important}
+.np-bar.on{transform:none!important}
+.pe-seek{display:flex;align-items:center;gap:12px;padding:9px 20px 0}
+.pe-t{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--read);flex:none;
+  font-variant-numeric:tabular-nums}
+.trilha{flex:1;height:5px;background:var(--loam);position:relative;cursor:pointer;
+  transition:height .16s ease,background .16s ease;touch-action:none}
+.trilha i{display:block;height:100%;background:var(--fire);width:0;position:relative}
+.trilha i:after{content:'';position:absolute;right:-7px;top:50%;width:14px;height:14px;
+  background:var(--fire);box-shadow:0 0 0 3px var(--deep);
+  transform:translateY(-50%) scale(0);transition:transform .16s ease}
+.trilha:hover,.trilha.perto{height:13px;background:var(--earth)}
+.trilha:hover i:after,.trilha.perto i:after{transform:translateY(-50%) scale(1)}
+.trilha:before{content:'';position:absolute;inset:-16px 0}
+.pe-baixo{display:flex;align-items:center;gap:14px;padding:8px 20px calc(12px + env(safe-area-inset-bottom,0px))}
+.pe-info{display:flex;align-items:center;gap:11px;flex:1;min-width:0}
+.pe-info .capa{width:40px;height:40px}
+.pe-nome{min-width:0}
+.pe-nome .t{font-family:var(--serif);font-size:1.05rem;font-weight:600;color:var(--cream);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pe-nome small{display:block;font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--read);margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.transporte{display:flex;align-items:center;gap:6px;flex:none}
+.tb{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:transparent;
+  border:1px solid transparent;color:var(--bone);cursor:pointer;padding:0;transition:color .14s,border-color .14s}
+.tb:hover{color:var(--cream);border-color:var(--wire)}
+.tb.principal{width:40px;height:40px;background:var(--fire);color:var(--black);border-color:var(--fire)}
+.tb.principal:hover{background:var(--clay);border-color:var(--clay)}
+.pe-dir{display:flex;align-items:center;gap:10px;flex:1;justify-content:flex-end}
+.vol-wrap{position:relative;display:flex;align-items:center}
+.vol-pop{position:absolute;left:50%;bottom:40px;transform:translateX(-50%) translateY(6px);
+  background:var(--mole);border:1px solid var(--wire);padding:12px 8px;
+  opacity:0;pointer-events:none;transition:opacity .16s ease,transform .16s ease}
+.vol-pop.on{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+@media(hover:hover){
+  .vol-wrap:hover .vol-pop{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+}
+.vol-wrap:before{content:'';position:absolute;left:-12px;right:-12px;top:-16px;bottom:0}
+.vol-pop input{-webkit-appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;
+  width:22px;height:96px;accent-color:#b98f5e;background:transparent;cursor:pointer}
+/* beat em destaque no hero */
+.hw-play{display:flex;align-items:center;gap:12px;margin:.6rem 0 .9rem}
+.hw-play .tb.principal{width:44px;height:44px}
+@media(max-width:760px){
+  #beatCards .nome{font-size:1.05rem}
+  #beatCards .ficha{font-size:.64rem}
+  #beatCards .item{gap:10px;padding:9px 2px}
+  #beatCards .cel-num{width:26px}
+  #beatCards .cel-num b{width:26px;height:26px}
+  .capa{width:40px;height:40px}
+  #beatCards .dur{display:none}
+  .preco{padding:.5rem .62rem;font-size:.72rem;gap:0}
+  .preco svg{display:none}
+  #beatCards .vendido{padding:.5rem .6rem;font-size:.54rem}
+  .pe-seek{padding:8px 14px 0;gap:8px}
+  .pe-baixo{gap:8px;padding:8px 14px calc(10px + env(safe-area-inset-bottom,0px))}
+  .pe-info{flex:1;min-width:0}
+  .pe-info .capa{width:34px;height:34px}
+  .pe-nome .t{font-size:.95rem}
+  .pe-nome .quem{display:none}
+  .transporte{gap:2px}
+  .tb{width:30px;height:30px}
+  .tb.principal{width:36px;height:36px}
+  .pe-dir{flex:none}
+  .pe-dir .vol-wrap{display:none}
+}
 </style>
 
 <!-- ═══ GA4 ═════════════════════════════════════════
@@ -1259,6 +1378,7 @@ html,body{overflow-x:hidden;}
   </ul>
   <div class="nav-right">
     <a class="nav-ig" href="https://ig.me/m/rideblan33" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg></a>
+    <button class="nav-cart" id="navCart" type="button" onclick="toggleCart()" aria-label="Abrir carrinho"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.4 11.5h11.2L21 7H6"/></svg><span class="cart-n" id="cartNTopo">0</span></button>
     <button class="nav-burger" id="navBurger" onclick="toggleMenu()" aria-label="Abrir menu"><span></span><span></span><span></span></button>
   </div>
 </nav>
@@ -1307,7 +1427,11 @@ html,body{overflow-x:hidden;}
     </div>
     <div class="hw-name" id="hwName">—</div>
     <div class="hw-chips" id="hwChips"></div>
-    <iframe id="heroBeatFrame" title="Beat em destaque" width="100%" height="100" scrolling="no" frameborder="no" allow="autoplay" loading="lazy" data-bid="" src=""></iframe>
+    <div class="hw-play" id="hwPlay">
+      <button class="tb principal" id="hwBtn" type="button" aria-label="Tocar o beat em destaque"></button>
+      <div class="trilha" id="hwSeek"><i id="hwFill"></i></div>
+      <div class="pe-t" id="hwTempo">0:00</div>
+    </div>
     <button class="btn btn-fire hw-add" id="hwAdd" onclick="npAddFeatured()">Adicionar ao carrinho · R$119</button>
   </div>
 
@@ -1641,23 +1765,29 @@ html,body{overflow-x:hidden;}
 
 <!-- ═══ NOVO: BARRA TOCANDO AGORA ═══ -->
 <div class="np-bar" id="npBar" data-bid="">
-  <div class="np-seek" id="npSeek" role="slider" aria-label="Avançar ou voltar na faixa" aria-valuemin="0" aria-valuemax="100" tabindex="0"><div class="np-seek-fill" id="npSeekFill"></div><div class="np-seek-knob" id="npSeekKnob"></div></div>
-  <div class="np-row">
-    <div class="np-ctls">
-    <button class="np-ctl" id="npPrev" onclick="npPrev()" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M7 6h2v12H7z"/><path d="M20 6v12l-9-6z"/></svg></button>
-    <button class="np-ctl np-play is-playing" id="npPlay" onclick="npToggle()" aria-label="Play/pause"><svg class="ic-play" viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M7 5v14l12-7z"/></svg><svg class="ic-pause" viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M7 5h3.2v14H7zM13.8 5H17v14h-3.2z"/></svg></button>
-    <button class="np-ctl" id="npNext" onclick="npNext()" aria-label="Próxima"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M15 6h2v12h-2z"/><path d="M4 6l9 6-9 6z"/></svg></button>
-    <button class="np-ctl" id="npShuffle" onclick="feelingLucky()" aria-label="Faixa aleatória"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg></button>
+  <div class="pe-seek">
+    <div class="pe-t" id="npTAgora">0:00</div>
+    <div class="trilha" id="npSeek" role="slider" aria-label="Avançar ou voltar na faixa" aria-valuemin="0" aria-valuemax="100" tabindex="0"><i id="npSeekFill"></i></div>
+    <div class="pe-t" id="npTime">0:00</div>
   </div>
-  <div class="np-info">
-    <div class="np-name" id="npName">—</div>
-    <div class="np-meta" id="npMeta"></div>
-  </div>
-    <div class="np-vol-wrap" id="npVolWrap">
-      <button class="np-vol-btn" id="npVolBtn" type="button" onclick="npVolToggle(event)" aria-label="Volume"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16.5 12a3.5 3.5 0 0 0-2-3.15v6.3A3.5 3.5 0 0 0 16.5 12z"/></svg></button>
-      <div class="np-vol-pop"><input type="range" id="npVol" class="np-vol-slider" min="0" max="100" value="100" step="1" aria-label="Volume" oninput="npSetVolume(this.value)"></div>
+  <div class="pe-baixo">
+    <div class="pe-info">
+      <div class="capa vazia" id="npCapa"><img src="assets/brand/selo-creme.svg" alt="" width="26" height="26"></div>
+      <div class="pe-nome"><div class="t" id="npName">—</div><small id="npMeta"></small></div>
     </div>
-    <div class="np-time" id="npTime">0:00 / 0:00</div>
+    <div class="transporte">
+      <button class="tb" id="npPrev" onclick="npPrev()" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M7 5v14h2.6V5zM19 5l-9 7 9 7z"/></svg></button>
+      <button class="tb principal" id="npPlay" onclick="npToggle()" aria-label="Tocar"></button>
+      <button class="tb" id="npNext" onclick="npNext()" aria-label="Próxima"><svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M17 5v14h-2.6V5zM5 5l9 7-9 7z"/></svg></button>
+      <button class="tb" id="npShuffle" onclick="feelingLucky()" aria-label="Faixa aleatória"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg></button>
+    </div>
+    <div class="pe-dir">
+      <div class="vol-wrap" id="npVolWrap">
+        <button class="tb" id="npVolBtn" type="button" onclick="npVolToggle(event)" aria-label="Volume"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path d="M16 9a4.5 4.5 0 010 6"/><path d="M18.8 6.5a8 8 0 010 11"/></svg></button>
+        <div class="vol-pop" id="npVolPop"><input type="range" id="npVol" min="0" max="100" value="100" step="1" aria-label="Volume" oninput="npSetVolume(this.value)"></div>
+      </div>
+      <button class="preco" id="npPreco" type="button" onclick="npAddCurrent()"></button>
+    </div>
   </div>
 </div>
 
@@ -1936,6 +2066,100 @@ html,body{overflow-x:hidden;}
 /* MP SDK dark theme override — estilos aplicados acima */
 
 #mpBrickContainer .mp-checkout-bricks__container { background: transparent !important; }
+
+/* ══ NOVO v19 — passada de celular no player ═════════════════════════
+   O público chega pelo celular, então: alvo de toque grande, seek que dá
+   pra pegar sem hover, e nada de controle que não funciona no aparelho. */
+#beatCards .item,.preco,.tb,.trilha{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.np-bar.on ~ .cart-btn{bottom:7.2rem}
+body.tocando{padding-bottom:104px}
+@media(max-width:760px){
+  /* a ficha não desce de 11px: piso de leitura da casa */
+  #beatCards .ficha{font-size:.68rem}
+  #beatCards .item{padding:11px 2px}
+  #beatCards .cel-num b{width:30px;height:30px}
+  /* sem hover no celular, a barra já nasce grossa e com o pino à mostra */
+  .trilha{height:9px}
+  .trilha i:after{transform:translateY(-50%) scale(1);width:16px;height:16px;right:-8px}
+  .trilha:before{inset:-20px 0}
+  .pe-seek{padding:10px 14px 0}
+  .tb{width:38px;height:38px}
+  .tb.principal{width:44px;height:44px}
+  .transporte{gap:4px}
+  #npShuffle{display:none}
+  /* no celular o volume ocupa o lugar do carrinho (o carrinho da página já
+     está ali do lado). Se o aparelho não deixa mexer no volume por software,
+     como o iPhone, o carrinho volta: controle morto não fica na tela. */
+  .pe-dir .vol-wrap{display:flex}
+  .pe-dir #npPreco{display:none}
+  body.sem-volume .pe-dir .vol-wrap{display:none}
+  body.sem-volume .pe-dir #npPreco{display:inline-flex}
+  .vol-pop{padding:14px 10px}
+  .vol-pop input{height:120px;width:26px}
+  body.tocando{padding-bottom:96px}
+}
+
+/* pino do seek: some quando não tem o que mostrar, pra não bater no relógio */
+.trilha.zerada i:after{display:none}
+@media(max-width:760px){
+  .pe-seek{gap:13px}
+  .hw-play{gap:14px}
+}
+
+/* ══ NOVO v20 — carrinho no topo do celular ══════════════════════════
+   A bolha flutuante caía bem em cima da coluna de preço das faixas. No
+   celular ela sai e o carrinho vira ícone fixo na barra de cima, que já
+   está sempre à vista. No computador nada muda. */
+.nav-cart{display:none;position:relative;background:none;border:none;cursor:pointer;
+  width:44px;height:44px;align-items:center;justify-content:center;padding:0;
+  color:var(--bone);transition:color .15s}
+.nav-cart:hover{color:var(--fire)}
+.nav-cart svg{width:22px;height:22px;display:block}
+.nav-cart .cart-n{position:absolute;top:5px;right:-1px;font-size:.68rem;line-height:1.3;
+  padding:0 .28rem;min-width:16px;border:1px solid var(--ember)}
+@media(max-width:760px){
+  .nav-cart.has-items{display:flex}
+  .cart-btn.has-items{display:none}
+}
+
+/* ══ NOVO v21 — dedo no celular ══════════════════════════════════════
+   Tudo que faz parte do caminho de ouvir e comprar passa a ter 40px ou
+   mais de altura, que é o tamanho de um polegar. E a ficha do beat ganha
+   um ponto de corpo: é a linha que a pessoa lê de perto pra decidir. */
+html{-webkit-text-size-adjust:100%}
+@media(max-width:760px){
+  #beatCards .ficha{font-size:.72rem;letter-spacing:0}
+  #beatCards .ficha em{font-size:.66rem;letter-spacing:.04em}
+  #beatCards .preco{min-height:42px;justify-content:center}
+  #beatCards .vendido{font-size:.6rem;min-height:42px;padding:.5rem .7rem;
+    display:inline-flex;align-items:center;justify-content:center}
+  .btn{min-height:44px;justify-content:center}
+  .sort-select{min-height:40px;font-size:.66rem}
+  .pg-btn{min-height:36px;padding:.3rem 1rem}
+  .pg-num{min-width:36px;height:36px}
+  .ft{min-height:38px;font-size:.62rem;display:inline-flex;align-items:center}
+  .cp-x{min-width:34px;min-height:34px;display:inline-flex;align-items:center;justify-content:center}
+}
+
+/* celular estreito (iPhone SE e afins): tudo encolhe um ponto pra ficha do
+   beat caber numa linha só — gênero, BPM e tom lado a lado. */
+@media(max-width:400px){
+  #beatCards .item{gap:8px}
+  #beatCards .cel-num{width:22px}
+  #beatCards .cel-num b{width:26px;height:26px}
+  #beatCards .capa{width:36px;height:36px}
+  #beatCards .nome{font-size:1.02rem}
+  #beatCards .ficha{font-size:.66rem}
+  #beatCards .ficha em{font-size:.6rem;letter-spacing:.03em}
+  #beatCards .preco{font-size:.68rem;padding:.5rem .5rem}
+  #beatCards .vendido{font-size:.54rem;letter-spacing:.12em;padding:.5rem .5rem}
+  /* a barra do pé também: gênero, BPM e tom inteiros, sem reticência */
+  .pe-baixo{gap:6px;padding-left:10px;padding-right:10px}
+  .pe-nome small{font-size:.62rem}
+  .transporte{gap:0}
+  .tb{width:34px;height:34px}
+  .pe-info{gap:9px}
+}
 </style>
 
 <script src="https://sdk.mercadopago.com/js/v2" defer></script>
@@ -2157,6 +2381,11 @@ function filt(g,btn){
 }
 
 
+const ICO_PLAY='<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M7 4.5v15l13-7.5z"/></svg>';
+const ICO_PAUSE='<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="6" y="4.5" width="4" height="15"/><rect x="14" y="4.5" width="4" height="15"/></svg>';
+const ICO_CART='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="9.5" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3.5h2.3l2.4 11.1a1.8 1.8 0 001.8 1.4h7.6a1.8 1.8 0 001.8-1.4L21.5 7.4H5.6"/></svg>';
+function fmtDur(s){s=Math.max(0,Math.round(s||0));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
 const BEATS_PER_PAGE = 9;
 let curPage = 1;
 let beatQuery = '';
@@ -2164,6 +2393,9 @@ let beatQuery = '';
 function renderCards(){
   const wrap=document.getElementById('beatCards');
   let src=curFilt==='todos'?BEATS.slice():BEATS.filter(b=>b.genre===curFilt);
+  // beat sem MP3 guardado não aparece. Se a vitrine não respondeu, mostro todos:
+  // loja no ar vale mais que player perfeito.
+  if(window.__VIT_OK) src=src.filter(b=>(window.__VIT[String(b.id)]||{}).mp3);
   if(showAvailOnly) src=src.filter(b=>!b.sold);
   if(beatQuery) src=src.filter(b=>normalizeStr(b.name).includes(beatQuery));
   if(sortMode==='aleatorio'&&shuffleOrder) src.sort((a,b)=>shuffleOrder.indexOf(a.id)-shuffleOrder.indexOf(b.id));
@@ -2187,31 +2419,25 @@ function renderCards(){
 
   wrap.innerHTML=pageSrc.map((b,i)=>{
     const globalIdx=start+i;
-    const inBeat =cart.some(c=>c.beatId===b.id&&c.stems===false);
+    const inBeat=cart.some(c=>c.beatId===b.id&&c.stems===false);
+    const f=(window.__VIT||{})[String(b.id)]||{};
     const genreLabel=GENRE_LABELS[b.genre]||b.genre;
-    const soldOut=b.sold;
-    return `<div class="bcard${soldOut?' bcard-sold':''}">
-      <div class="bcard-header">
-        <span class="bcard-num">${String(globalIdx+1).padStart(2,'0')}</span>
-        <span class="bcard-name">${b.name}</span>
-        <div class="bcard-chips">
-          <span class="chip chip-g">${genreLabel}</span>
-          <span class="chip chip-meta">${b.bpm} BPM</span>
-          <span class="chip chip-meta">${b.key}</span>
-        </div>
+    const resto=[b.bpm?b.bpm+' BPM':'',b.key||''].filter(Boolean).join('  ·  ');
+    const capa=f.capa
+      ? `<img class="capa" src="${f.capa}" alt="" loading="lazy" decoding="async">`
+      : `<div class="capa vazia"><img src="assets/brand/selo-creme.svg" alt="" width="26" height="26"></div>`;
+    return `<div class="item${b.sold?' fora':''}" data-bid="${b.id}">
+      <div class="cel-num"><i>${String(globalIdx+1).padStart(2,'0')}</i><b>${ICO_PLAY}</b><span class="eq3"><s></s><s></s><s></s></span></div>
+      ${capa}
+      <div class="info">
+        <div class="nome">${b.name}</div>
+        <div class="ficha"><em>${genreLabel}</em>${resto?'  ·  '+resto:''}</div>
       </div>
-      <iframe title="Player de áudio SoundCloud" width="100%" height="100" scrolling="no" frameborder="no" allow="autoplay" loading="lazy" data-bid="${b.id}"
-        src="https://w.soundcloud.com/player/?url=${b.scUrl}&color=%23A87B4A&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false">
-      </iframe>
-      <div class="bcard-buybar">
-        <div class="bcard-btns">
-        ${soldOut
-          ?`<button class="bbtn bbtn-soldout" disabled style="flex:1;">✕ Vendido</button>`
-          :`<button class="bbtn bbtn-beat ${inBeat?'on':''}" id="bb${b.id}" onclick="toggleBeat(${b.id},false)" style="flex:1;">
-            <span class="chk">${inBeat?'✓':''}</span> ${inBeat?'No carrinho':'Adicionar ao carrinho'} &nbsp;·&nbsp; R$${PRICE_BEAT}
-          </button>`}
-        </div>
-      </div>
+      <span class="dur">${fmtDur(f.dur)}</span>
+      ${b.sold
+        ? `<span class="vendido">Vendido</span>`
+        : `<button class="preco${inBeat?' on':''}" id="bb${b.id}" type="button" onclick="event.stopPropagation();toggleBeat(${b.id},false)">${ICO_CART}<span class="rotulo">${inBeat?'No carrinho':'R$'+PRICE_BEAT}</span></button>`}
+      <i class="corrida"></i>
     </div>`;
   }).join('');
 
@@ -2233,7 +2459,7 @@ function renderCards(){
   document.getElementById('pgNext').disabled    = (curPage===totalPages);
   document.getElementById('pgPrevTop').disabled = (curPage===1);
   document.getElementById('pgNextTop').disabled = (curPage===totalPages);
-  setTimeout(bindPlayers,800);
+  setTimeout(bindPlayers,30);
 }
 
 // Paginação numerada: 1 … 6 [7] 8 … 14 — acesso direto a qualquer página
@@ -2269,12 +2495,12 @@ function gotoPage(p){
 // Sincroniza os botões dos cards sem re-render: adicionar/tirar do carrinho
 // não recria os iframes, então o beat que estiver tocando segue tocando.
 function syncBeatButtons(){
-  document.querySelectorAll('#beatCards .bbtn-beat').forEach(btn=>{
+  document.querySelectorAll('#beatCards .preco').forEach(btn=>{
     const m=(btn.id||'').match(/^bb(\d+)$/); if(!m) return;
     const id=Number(m[1]);
     const inBeat=cart.some(c=>c.beatId===id&&c.stems===false);
     btn.classList.toggle('on',inBeat);
-    btn.innerHTML=`<span class="chk">${inBeat?'✓':''}</span> ${inBeat?'No carrinho':'Adicionar ao carrinho'} &nbsp;·&nbsp; R$${PRICE_BEAT}`;
+    btn.innerHTML=`${ICO_CART}<span class="rotulo">${inBeat?'No carrinho':'R$'+PRICE_BEAT}</span>`;
   });
 }
 
@@ -2291,36 +2517,21 @@ function catalogVisible(){
 let autoPlayFirst=false;
 let luckyPlayId=null; // beat sorteado pelo "Estou com sorte"
 function bindPlayers(){
-  if(!window.SC||!SC.Widget) return;
-  const frames=[...document.querySelectorAll('#beatCards iframe')];
-  const widgets=frames.map(f=>SC.Widget(f));
-  widgets.forEach((w,i)=>{
-    w.bind(SC.Widget.Events.PLAY,()=>{widgets.forEach((o,j)=>{if(j!==i)o.pause();});if(window.__heroWidget){try{window.__heroWidget.pause();}catch(_){}}if(window.npSet){window.npSet(w,frames[i].dataset.bid);}});
-    w.bind(SC.Widget.Events.FINISH,()=>{
-      const n=widgets[i+1];
-      if(n){
-        if(catalogVisible()) frames[i+1].scrollIntoView({behavior:'smooth',block:'center'});
-        setTimeout(()=>n.play(),600);
-      }else{
-        const nextBtn=document.getElementById('pgNext');
-        if(nextBtn&&!nextBtn.disabled){ autoPlayFirst=true; changePage(1,catalogVisible()); }
-      }
-    });
-  });
+  // Não existe mais iframe pra ligar. Depois de cada render eu só repinto o
+  // estado do player e resolvo o que ficou pendente: página nova em modo rádio
+  // e o beat sorteado no "Estou com sorte".
+  if(typeof window.repintarPlayer==='function') window.repintarPlayer();
   if(autoPlayFirst){
     autoPlayFirst=false;
-    setTimeout(()=>{
-      if(frames[0]){
-        if(catalogVisible()) frames[0].scrollIntoView({behavior:'smooth',block:'center'});
-        widgets[0].play();
-      }
-    },900);
+    var primeiro=document.querySelector('#beatCards .item');
+    if(primeiro){
+      if(catalogVisible()) primeiro.scrollIntoView({behavior:'smooth',block:'center'});
+      setTimeout(function(){ window.tocarBeat(primeiro.dataset.bid); },300);
+    }
   }
-  // "Estou com sorte": dá play no beat sorteado (scroll/destaque já rolaram no feelingLucky)
   if(luckyPlayId!==null){
-    const idx=frames.findIndex(f=>Number(f.dataset.bid)===Number(luckyPlayId));
-    luckyPlayId=null;
-    if(idx>=0) setTimeout(()=>widgets[idx].play(),400);
+    var alvo=luckyPlayId; luckyPlayId=null;
+    setTimeout(function(){ window.tocarBeat(alvo); },200);
   }
 }
 
@@ -2344,8 +2555,7 @@ function feelingLucky(){
   renderCards();
   // Scroll + destaque imediatos (independem do player carregar; o play vem no bindPlayers)
   setTimeout(()=>{
-    const frame=document.querySelector(`#beatCards iframe[data-bid="${pick.id}"]`);
-    const card=frame?frame.closest('.bcard'):null;
+    const card=document.querySelector(`#beatCards .item[data-bid="${pick.id}"]`);
     if(card){
       card.scrollIntoView({behavior:'smooth',block:'center'});
       card.classList.add('lucky-hit');
@@ -2682,6 +2892,10 @@ function updateCart(){
   const units=cart.reduce((s,c)=>s+(c.qty||1),0);
   document.getElementById('cartN').textContent=units;
   document.getElementById('cartBtn').classList.toggle('has-items',cart.length>0);
+  // no celular o carrinho mora no topo: a bolha flutuante tapava os botões de preço
+  var nc=document.getElementById('navCart'), nn=document.getElementById('cartNTopo');
+  if(nn) nn.textContent=units;
+  if(nc) nc.classList.toggle('has-items',cart.length>0);
   const subtotal=cart.reduce((s,c)=>s+c.price,0);
   const discount=calcDiscount(subtotal);
   const total=subtotal - discount;
@@ -3186,6 +3400,17 @@ function showToast(msg, duration=3500) {
     document.body.appendChild(t);
   }
   t.textContent = msg;
+  // o aviso não pode cair em cima de botão: com o carrinho aberto ele sobe pro
+  // topo, com o player tocando ele senta em cima da barra.
+  var painel = document.getElementById('cartPanel');
+  var barra = document.getElementById('npBar');
+  if (painel && painel.classList.contains('open')) {
+    t.style.top = '70px'; t.style.bottom = 'auto';
+  } else {
+    t.style.top = 'auto';
+    t.style.bottom = (barra && barra.classList.contains('on'))
+      ? (barra.offsetHeight + 14) + 'px' : '1.5rem';
+  }
   t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)';
   clearTimeout(t._t);
   t._t = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(20px)'; }, duration);
@@ -3235,33 +3460,274 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
     var wk=Math.floor(Date.now()/6048e5); // nº da semana; troca 1x por semana
     return pool[wk%pool.length];
   })();
-  function fmt(ms){ms=ms||0;if(ms<0)ms=0;var s=Math.floor(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
-  function frameList(){return [].slice.call(document.querySelectorAll('#beatCards iframe'));}
-  window.npShow=function(name,meta,bid){var bar=document.getElementById('npBar');if(!bar)return;document.getElementById('npName').textContent=name;document.getElementById('npMeta').textContent=meta;bar.dataset.bid=(bid==null?'':String(bid));bar.classList.add('on');};
-  window.npFromBid=function(bid){try{var b=BEATS.find(function(x){return String(x.id)===String(bid);});if(!b)return;var gl=(typeof GENRE_LABELS!=='undefined'&&GENRE_LABELS[b.genre])||b.genre;window.npShow(b.name,gl+' · '+b.bpm+' BPM · '+b.key,b.id);}catch(_){}};
-  window.npBindProgress=function(w){if(w.__npBound)return;w.__npBound=true;w.bind(SC.Widget.Events.PLAY_PROGRESS,function(e){if(window.__npCurrent&&window.__npCurrent.widget!==w)return;if(!window.__npSeeking){var pct=Math.max(0,Math.min(100,(e.relativePosition||0)*100));var f=document.getElementById('npSeekFill');if(f)f.style.width=pct+'%';var k=document.getElementById('npSeekKnob');if(k)k.style.left=pct+'%';}var t=document.getElementById('npTime');if(t)w.getDuration(function(d){t.textContent=fmt(e.currentPosition)+' / '+fmt(d);});});};
-  function npMark(p){var b=document.getElementById('npPlay');if(b)b.classList.toggle('is-playing',p);}
+
+  /* ── O PLAYER ──────────────────────────────────────────────────────
+     Um <audio> só pra página inteira, tocando o MP3 que o conversor guardou
+     no R2 a partir do meu Drive. Zero SoundCloud, zero iframe. O endereço de
+     cada MP3, a capa da beat tape e a duração vêm de /api/vitrine. */
+  var $=function(i){return document.getElementById(i);};
+  var som=new Audio(); som.preload='none';
+  var atual=null;
+  var nada=function(){};
+  window.__VIT={}; window.__VIT_OK=false;
   window.__npCurrent={widget:null,bid:null};
-  if(typeof window.__npVol!=='number')window.__npVol=100;
-  window.npSetVolume=function(v){v=Math.max(0,Math.min(100,Math.round(Number(v)||0)));window.__npVol=v;var c=window.__npCurrent;if(c&&c.widget){try{c.widget.setVolume(v);}catch(_){}}var s=document.getElementById('npVol');if(s&&String(s.value)!==String(v))s.value=v;};
-  window.npSet=function(w,bid){window.__npCurrent={widget:w,bid:bid};npFromBid(bid);npBindProgress(w);npMark(true);try{w.setVolume(window.__npVol);}catch(_){}if(!w.__npPause){w.__npPause=true;w.bind(SC.Widget.Events.PAUSE,function(){if(window.__npCurrent.widget===w)npMark(false);});}};
-  window.npToggle=function(){var c=window.__npCurrent;if(!c||!c.widget)return;c.widget.isPaused(function(p){if(p)c.widget.play();else c.widget.pause();});};
-  window.npVolToggle=function(e){var w=document.getElementById('npVolWrap');if(w)w.classList.toggle('open');if(e){e.stopPropagation();}};
+  if(typeof window.__npVol!=='number') window.__npVol=100;
+
+  var ICO_P='<svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M7 4.5v15l13-7.5z"/></svg>';
+  var ICO_PA='<svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><rect x="6" y="4.5" width="4" height="15"/><rect x="14" y="4.5" width="4" height="15"/></svg>';
+
+  function beat(id){for(var i=0;i<BEATS.length;i++){if(String(BEATS[i].id)===String(id))return BEATS[i];}return null;}
+  function fonte(id){return window.__VIT[String(id)]||null;}
+  function glab(b){return (typeof GENRE_LABELS!=='undefined'&&GENRE_LABELS[b.genre])||b.genre||'';}
+  function mm(s){s=Math.max(0,Math.round(s||0));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+  function capaHTML(f,id){
+    return (f&&f.capa)
+      ? '<img class="capa" id="'+id+'" src="'+f.capa+'" alt="">'
+      : '<div class="capa vazia" id="'+id+'"><img src="assets/brand/selo-creme.svg" alt="" width="26" height="26"></div>';
+  }
+
+  window.tocarBeat=function(id){
+    var b=beat(id), f=fonte(id);
+    if(!b||!f||!f.mp3) return;                    // beat vendido TOCA: é prova social
+    if(String(atual)===String(id)){ if(som.paused) som.play().catch(nada); else som.pause(); return; }
+    atual=b.id;
+    som.src=f.mp3;
+    som.volume=Math.max(0,Math.min(1,window.__npVol/100));
+    som.play().catch(nada);
+    window.__npCurrent={widget:null,bid:b.id};
+    var bar=$('npBar'); if(bar){ bar.dataset.bid=String(b.id); bar.classList.add('on'); }
+    document.body.classList.add('tocando');   // abre espaço embaixo pra barra não cobrir faixa
+    if($('npName')) $('npName').textContent=b.name;
+    if($('npMeta')) $('npMeta').innerHTML='<span class="quem">@rideblan33  ·  </span>'+
+      glab(b)+(b.bpm?'  ·  '+b.bpm+' BPM':'')+(b.key?'  ·  '+b.key:'');
+    var c=$('npCapa'); if(c) c.outerHTML=capaHTML(f,'npCapa');
+    if($('npTime')) $('npTime').textContent=mm(f.dur);
+    var pr=$('npPreco');
+    if(pr){ pr.style.display=b.sold?'none':''; pr.innerHTML=ICO_CART+'<span class="rotulo">R$'+PRICE_BEAT+'</span>'; }
+    sistema(b,f);
+    try{ if(typeof window.npSet==='function') window.npSet(null,b.id); }catch(_){}
+    repintar();
+  };
+
+  // nome e capa na tela de bloqueio do celular
+  function sistema(b,f){
+    try{
+      if(!('mediaSession' in navigator)) return;
+      navigator.mediaSession.metadata=new MediaMetadata({
+        title:b.name, artist:'@rideblan33', album:'Caramujo Records',
+        artwork:f.capa?[{src:f.capa,sizes:'512x512',type:'image/jpeg'}]:[]
+      });
+      navigator.mediaSession.setActionHandler('play',function(){som.play().catch(nada);});
+      navigator.mediaSession.setActionHandler('pause',function(){som.pause();});
+      navigator.mediaSession.setActionHandler('previoustrack',function(){window.npPrev();});
+      navigator.mediaSession.setActionHandler('nexttrack',function(){window.npNext();});
+    }catch(_){}
+  }
+
+  function repintar(){
+    var f=som.duration?som.currentTime/som.duration:0;
+    var tocando=atual!==null && !som.paused;
+    if($('npSeekFill')) $('npSeekFill').style.width=(f*100)+'%';
+    if($('npSeek')) $('npSeek').classList.toggle('zerada',!(f>0.004));
+    if($('npTAgora')) $('npTAgora').textContent=mm(som.currentTime);
+    if(som.duration && $('npTime')) $('npTime').textContent=mm(som.duration);
+    if($('npPlay')){ $('npPlay').innerHTML=tocando?ICO_PA:ICO_P;
+      $('npPlay').setAttribute('aria-label',tocando?'Pausar':'Tocar'); }
+    var linhas=document.querySelectorAll('#beatCards .item');
+    for(var i=0;i<linhas.length;i++){
+      var el=linhas[i], meu=String(el.dataset.bid)===String(atual);
+      el.classList.toggle('tocando',meu);
+      el.classList.toggle('rodando',meu&&tocando);
+      var b=el.querySelector('.cel-num b'); if(b) b.innerHTML=(meu&&tocando)?ICO_PAUSE:ICO_PLAY;
+      var c=el.querySelector('.corrida'); if(c) c.style.width=meu?(f*100)+'%':'0';
+    }
+    pintarHero(f,tocando);
+  }
+  window.repintarPlayer=repintar;
+
+  function pintarHero(f,tocando){
+    var bt=$('hwBtn'); if(!bt) return;
+    var meu=String(atual)===String(FEATURED_BEAT_ID);
+    bt.innerHTML=(meu&&tocando)?ICO_PA:ICO_P;
+    if($('hwFill')) $('hwFill').style.width=meu?(f*100)+'%':'0';
+    if($('hwSeek')) $('hwSeek').classList.toggle('zerada',!(meu&&f>0.004));
+    if($('hwTempo')){
+      var d=fonte(FEATURED_BEAT_ID);
+      $('hwTempo').textContent=meu?mm(som.currentTime):mm(d?d.dur:0);
+    }
+  }
+
+  function ordem(){
+    var out=[], linhas=document.querySelectorAll('#beatCards .item');
+    for(var i=0;i<linhas.length;i++) out.push(linhas[i].dataset.bid);
+    return out;
+  }
+  function rolarPara(id){
+    var el=document.querySelector('#beatCards .item[data-bid="'+id+'"]');
+    if(el && typeof catalogVisible==='function' && catalogVisible()) el.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  function anda(d,auto){
+    var lista=ordem();
+    if(!lista.length) return;
+    var i=lista.indexOf(String(atual));
+    var prox=i>-1 ? lista[i+d] : lista[0];
+    if(prox!=null){ if(auto) rolarPara(prox); return window.tocarBeat(prox); }
+    // acabou a página: em modo rádio, vira a página e toca a primeira
+    var bt=$(d>0?'pgNext':'pgPrev');
+    if(auto && bt && !bt.disabled){ autoPlayFirst=true; changePage(d,catalogVisible()); return; }
+    window.tocarBeat(d>0?lista[0]:lista[lista.length-1]);
+  }
+  window.npNext=function(){anda(1,false);};
+  window.npPrev=function(){anda(-1,false);};
+  window.npToggle=function(){
+    if(atual===null) return anda(1,false);
+    if(som.paused) som.play().catch(nada); else som.pause();
+  };
+  window.npSet=function(_,bid){ window.__npCurrent={widget:null,bid:bid}; };
+  window.npFromBid=function(bid){ var b=beat(bid); if(b&&$('npName')) $('npName').textContent=b.name; };
+  window.npShow=function(){};
+  window.npBindProgress=function(){};
+  window.pauseCatalog=function(){ som.pause(); };
+  window.pausarBeat=function(){ if(!som.paused){ window.__npResume=true; som.pause(); } };
+  window.retomarBeat=function(){ if(window.__npResume){ window.__npResume=false; som.play().catch(nada); } };
+  window.npSetVolume=function(v){
+    v=Math.max(0,Math.min(100,Math.round(Number(v)||0)));
+    window.__npVol=v; som.volume=v/100;
+    var sl=$('npVol'); if(sl&&String(sl.value)!==String(v)) sl.value=v;
+  };
+  window.npVolToggle=function(e){ var w=$('npVolWrap'); if(w) w.classList.toggle('open');
+    var pop=$('npVolPop'); if(pop) pop.classList.toggle('on'); if(e) e.stopPropagation(); };
+  // no celular não tem hover pra fechar: some no toque fora e no Esc
+  window.npVolFechar=function(){ var w=$('npVolWrap'), p=$('npVolPop');
+    if(w) w.classList.remove('open'); if(p) p.classList.remove('on'); };
+  document.addEventListener('click',function(e){
+    var p=$('npVolPop'); if(!p||!p.classList.contains('on')) return;
+    if(e.target&&e.target.closest&&e.target.closest('#npVolWrap')) return;
+    window.npVolFechar();
+  });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') window.npVolFechar(); });
+  window.npAddCurrent=function(){ var bid=$('npBar').dataset.bid; if(bid){ try{toggleBeat(Number(bid),false);}catch(_){} } };
+  window.npAddFeatured=function(){ try{toggleBeat(FEATURED_BEAT_ID,false);}catch(_){} };
+
+  /* seek: clique e arrasto, no pé e no destaque */
+  function ligarSeek(el){
+    if(!el) return;
+    var arrastando=false;
+    function em(x){
+      var r=el.getBoundingClientRect();
+      var f=Math.max(0,Math.min(1,(x-r.left)/r.width));
+      if(som.duration){ som.currentTime=f*som.duration; }
+      repintar();
+    }
+    el.addEventListener('pointerdown',function(e){arrastando=true;try{el.setPointerCapture(e.pointerId);}catch(_){}em(e.clientX);e.preventDefault();});
+    el.addEventListener('pointermove',function(e){if(arrastando)em(e.clientX);});
+    el.addEventListener('pointerup',function(e){if(arrastando){arrastando=false;em(e.clientX);}});
+    el.addEventListener('pointercancel',function(){arrastando=false;});
+  }
+
+  /* a barra engorda quando o mouse chega perto, antes de encostar */
+  document.addEventListener('mousemove',function(e){
+    var sk=$('npSeek'), bar=$('npBar');
+    if(!sk||!bar||!bar.classList.contains('on')) return;
+    var r=sk.getBoundingClientRect();
+    sk.classList.toggle('perto', e.clientY>r.top-30 && e.clientY<r.bottom+30);
+  });
+  document.addEventListener('click',function(e){
+    var w=$('npVolWrap'); if(w&&!w.contains(e.target)){ w.classList.remove('open'); var p=$('npVolPop'); if(p)p.classList.remove('on'); }
+  });
+
+  /* teclado: espaço toca, setas andam e mexem no volume */
+  document.addEventListener('keydown',function(e){
+    var t=(e.target&&e.target.tagName)||'';
+    if(t==='INPUT'||t==='TEXTAREA'||e.target.isContentEditable) return;
+    if(e.code==='Space'){ e.preventDefault(); window.npToggle(); }
+    else if(e.key==='ArrowRight'&&atual!==null){ som.currentTime=Math.min(som.duration||0,som.currentTime+5); repintar(); }
+    else if(e.key==='ArrowLeft'&&atual!==null){ som.currentTime=Math.max(0,som.currentTime-5); repintar(); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); window.npSetVolume(window.__npVol+10); }
+    else if(e.key==='ArrowDown'){ e.preventDefault(); window.npSetVolume(window.__npVol-10); }
+  });
+
+  som.addEventListener('timeupdate',repintar);
+  som.addEventListener('play',repintar);
+  som.addEventListener('pause',repintar);
+  som.addEventListener('ended',function(){ anda(1,true); });
+
+  /* clique na linha do catálogo (vale pra qualquer render) */
+  document.addEventListener('click',function(e){
+    var alvo=e.target;
+    if(alvo.closest && alvo.closest('.preco')) return;
+    var linha=alvo.closest?alvo.closest('#beatCards .item'):null;
+    if(linha) window.tocarBeat(linha.dataset.bid);
+  });
+
+  /* ── beat em destaque ── */
+  function renderFeatured(){
+    try{
+      var b=BEATS.find(function(x){return x.id===FEATURED_BEAT_ID;});
+      if(!b) return;
+      var gl=glab(b);
+      var nm=$('hwName'); if(nm) nm.textContent=b.name;
+      var ch=$('hwChips');
+      if(ch) ch.innerHTML='<span class="hw-chip">'+gl+'</span><span class="hw-chip">'+b.bpm+' BPM</span><span class="hw-chip">'+b.key+'</span>';
+      var ad=$('hwAdd'); if(ad) ad.textContent='Adicionar ao carrinho · R$'+PRICE_BEAT;
+      var f=fonte(FEATURED_BEAT_ID);
+      var bloco=$('hwPlay'); if(bloco) bloco.style.display=(f&&f.mp3)?'':'none';
+      pintarHero(0,false);
+    }catch(_){}
+  }
+  function initHero(){
+    var bt=$('hwBtn');
+    if(bt&&!bt.__ligado){ bt.__ligado=true; bt.addEventListener('click',function(){ window.tocarBeat(FEATURED_BEAT_ID); }); }
+    ligarSeek($('hwSeek'));
+  }
+
+  function initStudioVideos(){
+    document.querySelectorAll('#estudio video.has-audio').forEach(function(v){
+      v.addEventListener('play',function(){ window.pausarBeat(); });
+      v.addEventListener('pause',window.retomarBeat);
+      v.addEventListener('ended',window.retomarBeat);
+    });
+  }
+
   window.toggleFilters=function(){var p=document.getElementById('filtersPanel'),b=document.getElementById('filtersToggle');if(!p)return;var open=p.classList.toggle('open');if(b)b.setAttribute('aria-expanded',open?'true':'false');};
   window.studioScroll=function(dir){var st=document.querySelector('.studio-strip');if(!st)return;var it=st.querySelector('.studio-ph');var w=it?it.getBoundingClientRect().width+16:st.clientWidth*0.8;st.scrollBy({left:dir*w,behavior:'smooth'});};
   (function(){var st=document.querySelector('.studio-strip');if(!st||!('IntersectionObserver'in window))return;var figs=st.querySelectorAll('.studio-ph');if(figs.length<2)return;var first=figs[0],last=figs[figs.length-1];var pv=document.querySelector('.studio-nav.prev'),nx=document.querySelector('.studio-nav.next');var io=new IntersectionObserver(function(ents){ents.forEach(function(en){if(en.target===first&&pv)pv.style.display=en.isIntersecting?'none':'';if(en.target===last&&nx)nx.style.display=en.isIntersecting?'none':'';});},{root:st,threshold:0.6});io.observe(first);io.observe(last);})();
-  document.addEventListener('click',function(e){var w=document.getElementById('npVolWrap');if(w&&!w.contains(e.target))w.classList.remove('open');});
-  (function(){var seek=document.getElementById('npSeek');if(!seek)return;function at(x){var c=window.__npCurrent;if(!c||!c.widget)return;var r=seek.getBoundingClientRect();var f=Math.max(0,Math.min(1,(x-r.left)/r.width));var fl=document.getElementById('npSeekFill');if(fl)fl.style.width=(f*100)+'%';var k=document.getElementById('npSeekKnob');if(k)k.style.left=(f*100)+'%';c.widget.getDuration(function(d){try{c.widget.seekTo(Math.floor(f*d));}catch(_){}});}var drag=false;seek.addEventListener('pointerdown',function(e){drag=true;window.__npSeeking=true;try{seek.setPointerCapture(e.pointerId);}catch(_){}at(e.clientX);e.preventDefault();});seek.addEventListener('pointermove',function(e){if(drag)at(e.clientX);});seek.addEventListener('pointerup',function(e){if(drag){drag=false;window.__npSeeking=false;at(e.clientX);}});seek.addEventListener('pointercancel',function(){drag=false;window.__npSeeking=false;});})();
-  function playFrame(f){if(!f)return;try{var w=SC.Widget(f);if(typeof catalogVisible==='function'&&catalogVisible())f.scrollIntoView({behavior:'smooth',block:'center'});w.play();}catch(_){}}
-  window.npNext=function(){var fs=frameList();if(!fs.length)return;var bid=(window.__npCurrent&&window.__npCurrent.bid);var idx=fs.map(function(f){return String(f.dataset.bid);}).indexOf(String(bid));playFrame(fs[idx+1]||fs[0]);};
-  window.npPrev=function(){var fs=frameList();if(!fs.length)return;var bid=(window.__npCurrent&&window.__npCurrent.bid);var idx=fs.map(function(f){return String(f.dataset.bid);}).indexOf(String(bid));playFrame(idx>0?fs[idx-1]:fs[fs.length-1]);};
-  window.npAddCurrent=function(){var bid=document.getElementById('npBar').dataset.bid;if(bid){try{toggleBeat(Number(bid),false);}catch(_){}}};
-  window.npAddFeatured=function(){try{toggleBeat(FEATURED_BEAT_ID,false);}catch(_){}};
-  window.pauseCatalog=function(){document.querySelectorAll('#beatCards iframe').forEach(function(f){try{SC.Widget(f).pause();}catch(_){}});};
-  function renderFeatured(){try{var b=BEATS.find(function(x){return x.id===FEATURED_BEAT_ID;});if(!b)return;var gl=(typeof GENRE_LABELS!=='undefined'&&GENRE_LABELS[b.genre])||b.genre;var nm=document.getElementById('hwName');if(nm)nm.textContent=b.name;var ch=document.getElementById('hwChips');if(ch)ch.innerHTML='<span class="hw-chip">'+gl+'</span><span class="hw-chip">'+b.bpm+' BPM</span><span class="hw-chip">'+b.key+'</span>';var f=document.getElementById('heroBeatFrame');if(f){f.dataset.bid=b.id;f.src='https://w.soundcloud.com/player/?url='+b.scUrl+'&color=%23A87B4A&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false';}var ad=document.getElementById('hwAdd');if(ad)ad.textContent='Adicionar ao carrinho · R$'+PRICE_BEAT;}catch(_){}}
-  function initHero(){if(!window.SC||!SC.Widget){return setTimeout(initHero,500);}var f=document.getElementById('heroBeatFrame');if(!f||!f.src)return setTimeout(initHero,500);var w=SC.Widget(f);window.__heroWidget=w;w.bind(SC.Widget.Events.READY,function(){w.bind(SC.Widget.Events.PLAY,function(){window.pauseCatalog();window.npSet(w,FEATURED_BEAT_ID);});});}
-  function initStudioVideos(){document.querySelectorAll('#estudio video.has-audio').forEach(function(v){v.addEventListener('play',function(){var c=window.__npCurrent;if(c&&c.widget){c.widget.isPaused(function(p){if(!p){window.__npResume=c.widget;try{c.widget.pause();}catch(_){}}});}});function resume(){if(window.__npResume){try{window.__npResume.play();}catch(_){}window.__npResume=null;}}v.addEventListener('pause',resume);v.addEventListener('ended',resume);});}
-  function boot(){renderFeatured();initStudioVideos();setTimeout(initHero,300);}
+
+  /* ── a lista de beats com o endereço do MP3 ── */
+  function carregarVitrine(){
+    if(typeof fetch!=='function') return;      // navegador muito velho: loja segue de pé
+    fetch('/api/vitrine').then(function(r){return r.json();}).then(function(j){
+      var m={};
+      (j.beats||[]).forEach(function(b){ m[String(b.id)]={mp3:b.mp3,capa:b.capa,dur:b.dur}; });
+      window.__VIT=m; window.__VIT_OK=true;
+      if(typeof renderCards==='function') renderCards();
+      renderFeatured();
+      repintar();
+    }).catch(function(){ window.__VIT_OK=false; });
+  }
+
+
+  // iPhone não deixa mexer no volume por software. Testo de verdade: se o
+  // aparelho ignorar, o slider some e o carrinho fica no lugar dele no celular.
+  function volumeMexe(){
+    try{
+      var v=som.volume;
+      som.volume=0.42;
+      var ok=Math.abs(som.volume-0.42)<0.01;
+      som.volume=v;
+      return ok;
+    }catch(_){ return false; }
+  }
+
+  function boot(){
+    document.body.classList.toggle('sem-volume',!volumeMexe());
+    renderFeatured();
+    initHero();
+    initStudioVideos();
+    ligarSeek($('npSeek'));
+    if($('npPlay')) $('npPlay').innerHTML=ICO_P;
+    carregarVitrine();
+  }
   if(document.readyState!=='loading')boot();else document.addEventListener('DOMContentLoaded',boot);
 })();
 </script>
@@ -3398,15 +3864,16 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
   function slugify(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');}
   function beatSlug(b){return slugify(b&&b.name);}
 
-  // espera o SoundCloud carregar e o card existir, aí toca (mesma lógica do "Estou com sorte")
+  // espera a linha do beat existir na página e o MP3 dele estar conhecido, aí toca
   function deepLinkPlay(id){
     var start=Date.now();
-    (function wait(){
-      if(window.SC&&window.SC.Widget&&document.querySelector('#beatCards iframe[data-bid="'+id+'"]')){
-        try{ luckyPlayId=id; bindPlayers(); }catch(_){}
+    (function espera(){
+      var pronto=window.__VIT_OK && (window.__VIT[String(id)]||{}).mp3;
+      if(pronto && document.querySelector('#beatCards .item[data-bid="'+id+'"]')){
+        try{ window.tocarBeat(id); }catch(_){}
         return;
       }
-      if(Date.now()-start<15000) setTimeout(wait,250);
+      if(Date.now()-start<15000) setTimeout(espera,250);
     })();
   }
 
@@ -3444,12 +3911,11 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     renderCards();
     // rola até o card e destaca
     setTimeout(function(){
-      var f=document.querySelector('#beatCards iframe[data-bid="'+b.id+'"]');
-      var card=f?f.closest('.bcard'):null;
+      var card=document.querySelector('#beatCards .item[data-bid="'+b.id+'"]');
       if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.classList.add('lucky-hit');setTimeout(function(){card.classList.remove('lucky-hit');},2800);}
     },220);
     if(modo==='add') paraOCarrinho(b);
-    if(!b.sold) deepLinkPlay(b.id);
+    deepLinkPlay(b.id);   // beat vendido também toca: prova social
   }
 
   // ao tocar um beat, grava #beat=slug na URL (sem recarregar nem re-disparar o deep-link)
@@ -3486,8 +3952,7 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
       var v=document.createElement('video'); v.src=src; v.setAttribute('playsinline',''); v.playsInline=true; v.controls=true; v.autoplay=true;
       if(kind==='video-loop'){ v.loop=true; v.muted=true; }
       else {
-        var c=window.__npCurrent;
-        if(c&&c.widget){ try{ c.widget.isPaused(function(p){ if(!p){ window.__npResume=c.widget; try{c.widget.pause();}catch(_){} } }); }catch(_){} }
+        try{ window.pausarBeat(); }catch(_){}
       }
       inner.appendChild(v);
       try{ v.play(); }catch(_){}
@@ -3502,7 +3967,7 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     inner.innerHTML='';
     lb.classList.remove('on'); lb.setAttribute('aria-hidden','true');
     document.body.style.overflow='';
-    if(window.__npResume){ try{window.__npResume.play();}catch(_){} window.__npResume=null; }
+    try{ window.retomarBeat(); }catch(_){}
   };
   var lb=document.getElementById('mediaLB');
   if(lb) lb.addEventListener('click',function(e){ if(e.target===lb) window.closeLB(); });

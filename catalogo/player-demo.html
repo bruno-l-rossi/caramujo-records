@@ -100,13 +100,15 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;line-height:1.05;ma
 .pe-seek{display:flex;align-items:center;gap:12px;padding:9px 20px 0}
 .pe-t{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--read);flex:none;
   font-variant-numeric:tabular-nums}
-.trilha{flex:1;height:5px;background:var(--loam);position:relative;cursor:pointer;transition:height .14s}
+.trilha{flex:1;height:5px;background:var(--loam);position:relative;cursor:pointer;
+  transition:height .16s ease,background .16s ease}
 .trilha i{display:block;height:100%;background:var(--fire);width:0;position:relative}
-.trilha i:after{content:'';position:absolute;right:-5px;top:50%;width:10px;height:10px;
-  background:var(--fire);transform:translateY(-50%) scale(0);transition:transform .14s}
-.trilha:hover{height:8px}
-.trilha:hover i:after{transform:translateY(-50%) scale(1)}
-.trilha:before{content:'';position:absolute;inset:-12px 0}
+.trilha i:after{content:'';position:absolute;right:-7px;top:50%;width:14px;height:14px;
+  background:var(--fire);box-shadow:0 0 0 3px var(--deep);
+  transform:translateY(-50%) scale(0);transition:transform .16s ease}
+.trilha:hover,.trilha.perto{height:13px;background:var(--earth)}
+.trilha:hover i:after,.trilha.perto i:after{transform:translateY(-50%) scale(1)}
+.trilha:before{content:'';position:absolute;inset:-16px 0}
 .pe-baixo{display:flex;align-items:center;gap:14px;padding:8px 20px calc(12px + env(safe-area-inset-bottom,0px))}
 .pe-info{display:flex;align-items:center;gap:11px;flex:1;min-width:0}
 .pe-info .capa{width:40px;height:40px}
@@ -121,10 +123,14 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;line-height:1.05;ma
 .tb.principal{width:40px;height:40px;background:var(--fire);color:var(--black);border-color:var(--fire)}
 .tb.principal:hover{background:var(--clay);border-color:var(--clay)}
 .pe-dir{display:flex;align-items:center;gap:10px;flex:1;justify-content:flex-end;position:relative}
-.vol-pop{position:absolute;right:56px;bottom:46px;background:var(--mole);border:1px solid var(--wire);
-  padding:10px 12px;display:none}
-.vol-pop.on{display:block}
-.vol-pop input{width:110px;accent-color:#b98f5e;background:transparent}
+.vol-wrap{position:relative;display:flex;align-items:center}
+.vol-pop{position:absolute;left:50%;bottom:40px;transform:translateX(-50%) translateY(6px);
+  background:var(--mole);border:1px solid var(--wire);padding:12px 8px;
+  opacity:0;pointer-events:none;transition:opacity .16s ease,transform .16s ease}
+.vol-wrap:hover .vol-pop,.vol-pop.on{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+.vol-wrap:before{content:'';position:absolute;left:-12px;right:-12px;top:-16px;bottom:0}
+.vol-pop input{-webkit-appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;
+  width:22px;height:96px;accent-color:#b98f5e;background:transparent;cursor:pointer}
 @media(max-width:760px){
   .nome{font-size:1.05rem}
   .ficha{font-size:.64rem}
@@ -152,6 +158,38 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;line-height:1.05;ma
 }
 .nota{font-size:.82rem;line-height:1.6;color:var(--read);padding:20px 0 0;max-width:64ch}
 .nota b{color:var(--cream)}
+
+/* ── passada de celular ─────────────────────────────────────────────
+   O público chega pelo celular: alvo grande, seek que dá pra pegar sem
+   hover, e nenhum controle que o aparelho não obedece. */
+.item,.preco,.tb,.trilha{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+body.tocando{padding-bottom:104px}
+@media(max-width:760px){
+  .ficha{font-size:.68rem}
+  .item{padding:11px 2px}
+  .cel-num b{width:30px;height:30px}
+  .trilha{height:9px}
+  .trilha i:after{transform:translateY(-50%) scale(1);width:16px;height:16px;right:-8px}
+  .trilha:before{inset:-20px 0}
+  .pe-seek{padding:10px 14px 0}
+  .tb{width:38px;height:38px}
+  .tb.principal{width:44px;height:44px}
+  .transporte{gap:4px}
+  .pe-dir .vol-wrap{display:flex}
+  .pe-dir #peCarrinho{display:none}
+  body.sem-volume .pe-dir .vol-wrap{display:none}
+  body.sem-volume .pe-dir #peCarrinho{display:inline-flex}
+  .vol-pop{padding:14px 10px}
+  .vol-pop input{height:120px;width:26px}
+  body.tocando{padding-bottom:96px}
+}
+
+/* pino do seek: some quando não tem o que mostrar, pra não bater no relógio */
+.trilha.zerada i:after{display:none}
+@media(max-width:760px){
+  .pe-seek{gap:13px}
+  .hw-play{gap:14px}
+}
 </style>
 </head>
 <body>
@@ -186,8 +224,10 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;line-height:1.05;ma
       <button class="tb" id="bProx" type="button" aria-label="Próxima"><svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M17 5v14h-2.6V5zM5 5l9 7-9 7z"/></svg></button>
     </div>
     <div class="pe-dir">
-      <button class="tb vol" id="bVol" type="button" aria-label="Volume"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path d="M16 9a4.5 4.5 0 010 6"/><path d="M18.8 6.5a8 8 0 010 11"/></svg></button>
-      <div class="vol-pop" id="volPop"><input id="vol" type="range" min="0" max="100" value="100" aria-label="Volume"></div>
+      <div class="vol-wrap vol">
+        <button class="tb" id="bVol" type="button" aria-label="Volume"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path d="M16 9a4.5 4.5 0 010 6"/><path d="M18.8 6.5a8 8 0 010 11"/></svg></button>
+        <div class="vol-pop" id="volPop"><input id="vol" type="range" min="0" max="100" value="100" aria-label="Volume"></div>
+      </div>
       <button class="preco" id="peCarrinho" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="9.5" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3.5h2.3l2.4 11.1a1.8 1.8 0 001.8 1.4h7.6a1.8 1.8 0 001.8-1.4L21.5 7.4H5.6"/></svg><span class="rotulo">R$119</span></button>
     </div>
   </div>
@@ -247,6 +287,7 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;line-height:1.05;ma
     if(i===atual){ if(som.paused) som.play(); else som.pause(); return }
     atual=i; som.src=b.mp3; som.play();
     $('pe').classList.add('on');
+    document.body.classList.add('tocando');
     $('peNome').textContent=b.name;
     $('peSub').innerHTML='<span class="quem">@rideblan33  ·  </span>'+fichaHTML(b);
     $('peCapa').outerHTML=capaHTML(b,'id="peCapa"');
@@ -274,6 +315,7 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;line-height:1.05;ma
     var f=som.duration?som.currentTime/som.duration:0;
     var tocando=atual>-1 && !som.paused;
     $('seekFill').style.width=(f*100)+'%';
+    $('seek').classList.toggle('zerada',!(f>0.004));
     $('tAgora').textContent=mmss(som.currentTime);
     if(som.duration) $('tTotal').textContent=mmss(som.duration);
     $('bPlay').innerHTML=tocando?PAB:PB;
@@ -307,9 +349,18 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;line-height:1.05;ma
   $('bAnt').addEventListener('click',function(){ vizinho(-1) });
   $('bProx').addEventListener('click',function(){ vizinho(1) });
 
+  // no computador o popup abre no passar do mouse (CSS). no celular, que não tem
+  // hover, abre no toque.
   $('bVol').addEventListener('click',function(e){ e.stopPropagation(); $('volPop').classList.toggle('on') });
   document.addEventListener('click',function(){ $('volPop').classList.remove('on') });
   $('volPop').addEventListener('click',function(e){ e.stopPropagation() });
+
+  // a barra de seek engorda quando o mouse chega PERTO, antes de encostar
+  document.addEventListener('mousemove',function(e){
+    if(!$('pe').classList.contains('on')) return;
+    var r=$('seek').getBoundingClientRect();
+    $('seek').classList.toggle('perto', e.clientY>r.top-30 && e.clientY<r.bottom+30);
+  });
   $('vol').addEventListener('input',function(){ som.volume=Number(this.value)/100 });
 
   document.addEventListener('keydown',function(e){
@@ -330,6 +381,15 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.1rem;line-height:1.05;ma
   som.addEventListener('play',pinta);
   som.addEventListener('pause',pinta);
   som.addEventListener('ended',function(){ vizinho(1) });
+
+  // iPhone ignora volume por software: nesse caso o slider sai e volta o carrinho
+  (function(){
+    try{
+      var v=som.volume; som.volume=0.42;
+      var ok=Math.abs(som.volume-0.42)<0.01; som.volume=v;
+      document.body.classList.toggle('sem-volume',!ok);
+    }catch(_){ document.body.classList.add('sem-volume'); }
+  })();
 
   fetch('/api/vitrine').then(function(r){return r.json()}).then(function(j){
     var todos=(j.beats||[]).filter(function(b){return b.mp3});
