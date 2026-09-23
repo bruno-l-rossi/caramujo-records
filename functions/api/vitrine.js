@@ -17,8 +17,8 @@ export async function onRequestGet({ request, env }) {
 
   const d = await db(env);
   const { results } = await d.prepare(
-    `SELECT t.id, t.title, t.bpm, t.mkey AS key, t.dur FROM tracks t
-       JOIN artists a ON a.id = t.artist_id
+    `SELECT t.id, t.title, t.bpm, t.mkey AS key, t.dur, a.tipo, a.cover_key
+       FROM tracks t JOIN artists a ON a.id = t.artist_id
       WHERE t.kind = 'beat' AND t.ready = 1`
   ).all();
 
@@ -30,11 +30,16 @@ export async function onRequestGet({ request, env }) {
   }
 
   const dados = beats.map((b) => {
-    const f = (porTitulo.get(limpo(b.name)) || []).find((x) => mesma(b, x)) || null;
+    const candidatos = (porTitulo.get(limpo(b.name)) || []).filter((x) => mesma(b, x));
+    // capa: prefiro a arte da beat tape (é arte do Bruno) antes da foto de um artista
+    const f = candidatos.find((x) => x.tipo === 'tape' && x.cover_key)
+      || candidatos.find((x) => x.cover_key)
+      || candidatos[0] || null;
     return {
       id: b.id, name: b.name, slug: b.slug, bpm: b.bpm, key: b.key,
       genre: b.genre, sold: b.sold,
       mp3: f ? '/audio/' + f.id : null,
+      capa: f && f.cover_key ? '/capa/' + f.cover_key : null,
       dur: f ? (f.dur || 0) : 0
     };
   });
