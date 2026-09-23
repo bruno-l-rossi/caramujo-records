@@ -2168,6 +2168,25 @@ html{-webkit-text-size-adjust:100%}
   .vol-pop{width:54px;max-width:none;padding:14px 12px}
   .vol-pop input{width:26px;max-width:none;height:132px;touch-action:none}
 }
+
+/* ══ NOVO v24 — volume sem esbarrão, hero mais curto ═══════════════════════
+   A barra do pé cria contexto de empilhamento próprio (tem transform), então
+   nada dentro dela subia acima do carrinho flutuante (z 8000). Subo a barra
+   pra 8100 — ainda abaixo do véu (8200) e do painel do carrinho (8500) — e,
+   enquanto o slider está aberto, o carrinho desliza pra cima pra não brigar. */
+.np-bar{z-index:8100}
+.cart-btn{transition:background .14s,transform .22s ease,opacity .22s ease}
+body.vol-aberto .cart-btn{transform:translateY(-76px)}
+
+/* o hero encurta: sem a marca de scroll, aquele vão no fim virou sobra */
+#hero{min-height:94vh}
+@media(max-width:760px){
+  #hero{min-height:84vh}
+  .hero-content{padding-top:5.4rem;padding-bottom:2rem}
+}
+@media(max-width:480px){
+  .hero-content{padding:5rem 1rem 1.6rem}
+}
 </style>
 
 <script src="https://sdk.mercadopago.com/js/v2" defer></script>
@@ -3615,17 +3634,52 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
     window.__npVol=v; som.volume=v/100;
     var sl=$('npVol'); if(sl&&String(sl.value)!==String(v)) sl.value=v;
   };
+  // 3,5s parado e o volume se recolhe sozinho. Qualquer mexida reinicia a conta.
+  var relogioVol=null, abriuVolEm=0, abriuVolY=0;
+  function contarVol(){
+    clearTimeout(relogioVol);
+    relogioVol=setTimeout(function(){ window.npVolFechar(); }, 3500);
+  }
+  function marcarVol(aberto){
+    document.body.classList.toggle('vol-aberto', !!aberto);   // tira o carrinho da frente
+    if(aberto){ abriuVolEm=Date.now(); abriuVolY=window.pageYOffset||0; contarVol(); }
+    else clearTimeout(relogioVol);
+  }
   window.npVolToggle=function(e){ var w=$('npVolWrap'); if(w) w.classList.toggle('open');
-    var pop=$('npVolPop'); if(pop) pop.classList.toggle('on'); if(e) e.stopPropagation(); };
-  // no celular não tem hover pra fechar: some no toque fora e no Esc
+    var pop=$('npVolPop'); if(pop) pop.classList.toggle('on');
+    marcarVol(pop && pop.classList.contains('on'));
+    if(e) e.stopPropagation(); };
+  // no celular não tem hover pra fechar: some no toque fora, no Esc, ao rolar a
+  // página e sozinho depois de 3,5s parado.
   window.npVolFechar=function(){ var w=$('npVolWrap'), p=$('npVolPop');
-    if(w) w.classList.remove('open'); if(p) p.classList.remove('on'); };
+    if(w) w.classList.remove('open'); if(p) p.classList.remove('on');
+    document.body.classList.remove('vol-aberto'); clearTimeout(relogioVol); };
   document.addEventListener('click',function(e){
     var p=$('npVolPop'); if(!p||!p.classList.contains('on')) return;
     if(e.target&&e.target.closest&&e.target.closest('#npVolWrap')) return;
     window.npVolFechar();
   });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') window.npVolFechar(); });
+  window.addEventListener('scroll',function(){
+    var p=$('npVolPop'); if(!p || !p.classList.contains('on')) return;
+    if(Date.now()-abriuVolEm < 450) return;                 // rolagem que já vinha correndo
+    if(Math.abs((window.pageYOffset||0)-abriuVolY) < 30) return;   // tremidinha não conta
+    window.npVolFechar();
+  },{passive:true});
+  (function(){
+    var w=$('npVolWrap'); if(!w) return;
+    // mexer no slider (dedo, mouse ou teclado) segura o popup aberto
+    ['pointerdown','input','keydown','touchstart'].forEach(function(ev){
+      w.addEventListener(ev,function(){ if($('npVolPop').classList.contains('on')) contarVol(); },{passive:true});
+    });
+    // no computador quem manda é o mouse: entrou, o carrinho sai da frente
+    w.addEventListener('pointerenter',function(e){ if(e.pointerType==='mouse') marcarVol(true); });
+    w.addEventListener('pointerleave',function(e){
+      if(e.pointerType!=='mouse') return;
+      clearTimeout(relogioVol);
+      if(!$('npVolPop').classList.contains('on')) document.body.classList.remove('vol-aberto');
+    });
+  })();
   window.npAddCurrent=function(){ var bid=$('npBar').dataset.bid; if(bid){ try{toggleBeat(Number(bid),false);}catch(_){} } };
   window.npAddFeatured=function(){ try{toggleBeat(FEATURED_BEAT_ID,false);}catch(_){} };
 

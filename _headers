@@ -6,17 +6,23 @@
 /catalogo/*
   X-Robots-Tag: noindex
 
+# no-store também: se alguma cópia velha ficou guardada no navegador de
+# alguém, ela morre na primeira visita em vez de sobreviver ao deploy.
 /docs/*
   X-Robots-Tag: noindex
+  Cache-Control: no-store
 
 /previews/*
   X-Robots-Tag: noindex
+  Cache-Control: no-store
 
 /mockups-antigos/*
   X-Robots-Tag: noindex
+  Cache-Control: no-store
 
 /README.md
   X-Robots-Tag: noindex
+  Cache-Control: no-store
 
 /*
   X-Frame-Options: SAMEORIGIN
