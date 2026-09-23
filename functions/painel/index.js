@@ -94,6 +94,10 @@ const BASE = `
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .meta{display:block;margin-top:4px;font-size:12.5px;color:var(--ink3);line-height:1.3;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .capa-lista{width:44px;height:44px;flex-shrink:0;border-radius:9px;overflow:hidden;background:#171717;
+    border:1px solid var(--linha);display:flex;align-items:center;justify-content:center}
+  .capa-lista img{width:100%;height:100%;object-fit:cover;display:block}
+  .capa-lista.vazia img{width:18px;height:18px;object-fit:contain;opacity:.28}
   .copiar{width:42px;height:42px;flex-shrink:0;border-radius:11px;border:1px solid var(--borda);
     background:#141414;display:flex;align-items:center;justify-content:center;cursor:pointer}
   .vazio{padding:40px 0;color:#5a5a5a;font-size:14px}
@@ -331,7 +335,7 @@ function pagina() {
       row.className='item';
       var b=document.createElement('button');
       b.type='button';b.className='linha';
-      b.innerHTML='<span style="flex:1;min-width:0"><span class="nome">'+esc(a.name)+'</span>'+
+      b.innerHTML=capaLista(a)+'<span style="flex:1;min-width:0"><span class="nome">'+esc(a.name)+'</span>'+
         (rodando(a) ? barra(a) : '<span class="meta">'+conta(a)+' · '+tempo(a.visto)+'</span>')+'</span>';
       b.addEventListener('click',function(){abrir(a)});
       var c=document.createElement('button');
@@ -374,7 +378,8 @@ function pagina() {
     var row=document.createElement('div'); row.className='item';
     var b=document.createElement('button');
     b.type='button'; b.className='linha';
-    b.innerHTML='<span style="flex:1;min-width:0"><span class="nome">@rideblan33</span>'+
+    b.innerHTML='<span class="capa-lista vazia"><img src="/assets/brand/selo-creme.svg" alt="" width="18" height="18"></span>'+
+      '<span style="flex:1;min-width:0"><span class="nome">@rideblan33</span>'+
       '<span class="meta">'+(tapes.length
         ? tapes.length+(tapes.length===1?' beat tape':' beat tapes')+
           (revisar.length
@@ -534,6 +539,12 @@ function pagina() {
     var indef = (a.job_estado==='na fila' || !total);
     return '<span class="andamento"><span class="trilho'+(indef?' indef':'')+'"><i style="width:'+pct+'%"></i></span>'+
       '<small>'+texto+'</small></span>';
+  }
+
+  function capaLista(a){
+    return a.cover_key
+      ? '<span class="capa-lista"><img src="/capa/'+esc(a.cover_key)+'" alt="" loading="lazy"></span>'
+      : '<span class="capa-lista vazia"><img src="/assets/brand/selo-creme.svg" alt="" width="18" height="18"></span>';
   }
 
   function capaMini(a){

@@ -1,6 +1,8 @@
-# Apoio fora do índice dos buscadores. O que não sobe no deploy responde 404;
-# o que sobe como exceção (README, docs/DESIGN.md, previews/preview-email-
-# entrega.html) fica coberto por estas regras.
+# Apoio fora do índice dos buscadores. Desde 23/09/2026 NADA de apoio sobe no
+# deploy: README e os DESIGN.md foram pra .github/, que o Cloudflare Pages não
+# publica, e docs/ e previews/ ficaram só na máquina. /docs/*, /previews/* e
+# /README.md agora respondem 404 de verdade. As regras abaixo ficam por defesa
+# em profundidade, caso algum arquivo volte a subir sem querer.
 /catalogo/*
   X-Robots-Tag: noindex
 

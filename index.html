@@ -202,14 +202,6 @@ nav{
 .btn-ghost{background:transparent;color:var(--bone);border:1px solid var(--wire);}
 .btn-ghost:hover{border-color:var(--clay);color:var(--cream);}
 
-.scroll-cue{
-  position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);
-  z-index:3;display:flex;flex-direction:column;align-items:center;gap:.4rem;
-}
-.scroll-cue span{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.5rem;letter-spacing:.25em;text-transform:uppercase;color:var(--dim);}
-.scroll-line{width:1px;height:36px;background:linear-gradient(to bottom,var(--ember),transparent);animation:sline 2s ease-in-out infinite;}
-@keyframes sline{0%,100%{opacity:.4;transform:scaleY(1);}50%{opacity:1;transform:scaleY(1.25);}}
-
 /* SECTION */
 .s{padding:5rem 2.4rem;position:relative;}
 .s-dark{background:var(--deep);}
@@ -1442,10 +1434,6 @@ html,body{overflow-x:hidden;}
     <button class="btn btn-fire hw-add" id="hwAdd" onclick="npAddFeatured()">Adicionar ao carrinho · R$119</button>
   </div>
 
-  <div class="scroll-cue">
-    <div class="scroll-line"></div>
-    <span>scroll</span>
-  </div>
 </section>
 
 <div class="hr"></div>
@@ -2174,12 +2162,11 @@ html{-webkit-text-size-adjust:100%}
 }
 @media(max-width:760px){
   /* slider de volume DEITADO no telefone: o de pé não obedece arrasto de dedo */
-  /* largura na mão: o popup é absoluto dentro de um wrap de 38px e o
-     max-width:100% da casa o espremia até o tamanho do wrap */
-  .vol-pop{left:auto;right:-6px;width:176px;max-width:none;transform:translateY(6px);padding:11px 13px}
-  .vol-pop.on{transform:translateY(0)}
-  .vol-pop input{-webkit-appearance:auto;appearance:auto;writing-mode:horizontal-tb;
-    direction:ltr;width:150px;max-width:none;height:26px;touch-action:none}
+  /* o popup é absoluto dentro de um wrap de 38px e o max-width:100% da casa
+     espremia tudo. Largura na mão resolve, e o slider fica EM PÉ como no
+     computador. touch-action:none pro arrasto do dedo não virar rolagem. */
+  .vol-pop{width:54px;max-width:none;padding:14px 12px}
+  .vol-pop input{width:26px;max-width:none;height:132px;touch-action:none}
 }
 </style>
 

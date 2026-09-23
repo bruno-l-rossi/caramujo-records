@@ -16,11 +16,12 @@ Jornada do site: **hero → pacotes → catálogo de beats → serviços → con
 
 ## Estrutura do Projeto
 
-O GitHub (e portanto o deploy do Pages, que publica o repositório inteiro) recebe **só o que o site e o backend usam**, mais 3 exceções deliberadas: este `README.md`, o `docs/DESIGN.md` e o `previews/preview-email-entrega.html` (backup do e-mail de entrega, disparo manual). O resto do apoio fica nesta pasta local, segurado pelo `.gitignore`.
+O GitHub recebe **só o que o site e o backend usam**. O apoio que precisa existir no GitHub (este `README.md`, os `DESIGN.md` e o backup do e-mail de entrega) mora em **`.github/`**, que o Cloudflare Pages não publica — pasta começando com ponto não vira URL. Assim nada de apoio tem endereço público. O resto do apoio fica só na máquina, segurado pelo `.gitignore`.
 
-**No GitHub/deploy:** `index.html`, `og-image.png`, `_headers`, `robots.txt`, `llms.txt`, `.gitignore`, `assets/` (10 arquivos, todos referenciados pelo site), `functions/` (4 endpoints + `coupons.json`, que a validação de cupom e o webhook leem/gravam via GitHub API), `README.md`, `docs/DESIGN.md` e `previews/preview-email-entrega.html`.
+**No GitHub e no deploy:** `index.html`, `404.html`, `og-image.png`, `_headers`, `_routes.json`, `robots.txt`, `llms.txt`, `.gitignore`, `assets/`, `catalogo/app.html`, `functions/` e `scripts/`.
+**No GitHub mas FORA do deploy:** `.github/` — `README.md`, `docs/DESIGN.md`, `docs/DESIGN-catalogo.md`, `previews/preview-email-entrega.html` e os workflows.
 
-**Só local (apoio):** o resto de `docs/` (análises, política de crawlers, planos, contexto de continuidade), o resto de `previews/` e `mockups-antigos/`.
+**Só local (apoio):** `docs/` (análises, política de crawlers, planos, contexto compilado), `previews/`, `mockups-antigos/` e `testes/` (os 8 arquivos de conferência; ver `testes/LEIAME.md`).
 
 ```
 /
@@ -63,7 +64,7 @@ O GitHub (e portanto o deploy do Pages, que publica o repositório inteiro) rece
     └── email-pedido.html          # Mockup antigo (não disparado por código)
 ```
 
-> **Deploy:** o Cloudflare Pages publica o repositório inteiro (por isso `assets/brand/…` e `assets/termos-de-licenca.pdf` funcionam nas URLs). O apoio que não sobe passa a responder 404 em produção após o push. As 3 exceções que sobem (README, DESIGN, preview-email-entrega) têm URL pública, cobertas pelo noindex do `_headers` e pelos Disallow do `robots.txt`. A `og-image.png` fica na raiz de propósito (URL absoluta nas meta tags + cache das redes sociais). Os e-mails reais são gerados nos `functions/`, não nos arquivos de `mockups-antigos/`. Pra conferir o layout mobile antes de publicar, abra `previews/preview-mobile.html`.
+> **Deploy:** o Cloudflare Pages publica o repositório inteiro, menos o que começa com ponto (por isso `assets/brand/…` funciona nas URLs e `.github/…` não). O apoio que não sobe responde 404 de verdade desde que existe o `404.html` na raiz — sem ele o Pages tratava o site como SPA e devolvia a home com status 200 pra qualquer endereço errado. A `og-image.png` fica na raiz de propósito (URL absoluta nas meta tags + cache das redes sociais). Os e-mails reais são gerados nos `functions/`, não nos arquivos de `mockups-antigos/`. Pra conferir o layout mobile antes de publicar, abra `previews/preview-mobile.html`.
 
 ### Os 4 e-mails (nomes amigáveis)
 

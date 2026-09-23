@@ -1,9 +1,12 @@
 {
   "version": 1,
-  "include": ["/*"],
+  "include": [
+    "/*"
+  ],
   "exclude": [
     "/",
     "/index.html",
+    "/404.html",
     "/og-image.png",
     "/robots.txt",
     "/llms.txt",

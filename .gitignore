@@ -2,14 +2,11 @@
 .claude/
 .obsidian/
 
-# Apoio: fica na pasta local, fora do GitHub/deploy.
-# Exceções que SOBEM: README, docs/DESIGN.md e previews/preview-email-entrega.html
-# (backup do e-mail de entrega, disparo manual).
-docs/*
-!docs/DESIGN.md
-!docs/DESIGN-catalogo.md
-previews/*
-!previews/preview-email-entrega.html
+# Apoio: fica na pasta local, fora do GitHub e fora do deploy.
+# O que PRECISA ir pro GitHub (README e os DESIGN.md) mora em .github/, que o
+# Cloudflare Pages não publica: pasta começando com ponto não vira URL.
+docs/
+previews/
 mockups-antigos/
 
 # Testes: rodam na máquina, não sobem nem entram no deploy.
