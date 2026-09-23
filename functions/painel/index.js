@@ -66,8 +66,9 @@ const BASE = `
   .wrap{max-width:760px;margin:0 auto;padding:0 18px 120px}
   .topo{display:flex;align-items:center;justify-content:space-between;
     padding:18px 0 6px;padding-top:calc(18px + env(safe-area-inset-top,0px))}
-  .marca{width:148px;height:27px;background:url('/assets/brand/caramujo-h.webp') left center/contain no-repeat;opacity:.9}
-  .so{font-size:12px;color:var(--ink4)}
+  .marca{display:block;width:148px;height:27px;background:url('/assets/brand/caramujo-h.webp') left center/contain no-repeat;opacity:.9}
+  a.marca{transition:opacity .15s}
+  a.marca:hover{opacity:1}
   h1{margin:22px 0 4px;font-size:34px;font-weight:700;letter-spacing:-.02em}
   .sub{font-size:14px;color:var(--ink4)}
   .barra{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
@@ -214,7 +215,7 @@ function pagina() {
   return `<!doctype html><html lang="pt-BR"><head><title>Painel · Caramujo</title>${BASE}</head>
 <body>
 <div class="wrap">
-  <div class="topo"><div class="marca"></div><span class="so">só você vê</span></div>
+  <div class="topo"><a class="marca" href="/" aria-label="Voltar pro site"></a></div>
   <h1>Seus artistas</h1>
   <div class="sub" id="resumo">carregando…</div>
 

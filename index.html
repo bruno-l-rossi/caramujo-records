@@ -838,7 +838,10 @@ html { scroll-padding-top: 70px; }
   .s{padding:2.5rem 1rem;}
   .hero-content{padding:6rem 1rem 2.5rem;}
   nav{padding:0 .7rem;}
-  .nav-wm{display:none;} /* só o selo no mobile; libera espaço pros links */
+  /* o nome fica: com o menu em hambúrguer sobra espaço, e selo sozinho não diz
+     de quem é o site pra quem chega pelo link de uma tape */
+  .nav-wm{font-size:1.05rem;}
+  .nav-wm small{font-size:.4rem;letter-spacing:.3em;}
   .nav-links a{font-size:.58rem;padding:0 .65rem;}
   .bcard-header{padding:.6rem 1rem .5rem;}
   .chip{font-size:.7rem;padding:.14rem .42rem;} /* piso de legibilidade: ~11px */
@@ -946,8 +949,10 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .bbtn-soldout,.bbtn-soldout:hover{background:var(--blood)!important;color:var(--cream)!important;cursor:not-allowed!important;letter-spacing:.18em;}
 @media(max-width:860px){
   body::before{animation:none;}
-  /* Balão da licença vira folha fixa no rodapé da tela (não cobre o texto que o cliente tá lendo) */
-  .lic-box{position:fixed;left:.8rem;right:.8rem;bottom:.8rem;top:auto;transform:none;width:auto;max-width:none;}
+  /* O balão da licença abre COLADO no link, igual ao computador. Ele era folha
+     fixa no rodapé e a barra do player passou a cobrir. Posição vem do JS
+     (posicionarLic), que mede o botão e encaixa o balão embaixo sem vazar. */
+  .lic-box{position:fixed;left:0;right:auto;bottom:auto;top:0;transform:none;max-width:none;}
   .lic-box::before{display:none;}
 }
 @media (prefers-reduced-motion: reduce){
@@ -2385,14 +2390,55 @@ function sortBeats(v){
   }
   curPage=1; renderCards();
 }
+let relogioLic=null;
+const noCelular=()=>{ try{ return window.matchMedia('(max-width:860px)').matches; }catch(_){ return false; } };
+
+// No celular o balão é position:fixed: sem isso ele nasceria no canto da tela.
+// Mede o botão, encaixa embaixo dele e trava dentro da janela.
+function posicionarLic(){
+  const box=document.getElementById('licBox'), bt=document.querySelector('.lic-toggle');
+  if(!box||!bt) return;
+  if(!noCelular()){ box.style.cssText=''; return; }
+  const r=bt.getBoundingClientRect();
+  const larg=Math.min(window.innerWidth-16,360);
+  const esq=Math.min(Math.max(8,r.left+r.width/2-larg/2),window.innerWidth-larg-8);
+  box.style.width=larg+'px';
+  box.style.left=esq+'px';
+  box.style.top=(r.bottom+10)+'px';
+}
+function fecharLic(){
+  const box=document.getElementById('licBox');
+  if(box) box.classList.remove('open');
+  clearTimeout(relogioLic);
+}
+function contarLic(){                     // some sozinho, mas com tempo de ler
+  clearTimeout(relogioLic);
+  relogioLic=setTimeout(fecharLic,9000);
+}
 function toggleLic(e){
   e.stopPropagation();
-  document.getElementById('licBox').classList.toggle('open');
+  const box=document.getElementById('licBox');
+  if(!box) return;
+  if(box.classList.contains('open')){ fecharLic(); return; }
+  posicionarLic();
+  box.classList.add('open');
+  contarLic();
 }
 document.addEventListener('click',ev=>{
   const box=document.getElementById('licBox');
-  if(box&&box.classList.contains('open')&&!ev.target.closest('.lic-wrap')) box.classList.remove('open');
+  if(!box||!box.classList.contains('open')) return;
+  if(ev.target.closest('.lic-wrap')) { contarLic(); return; }   // leu de novo, ganha mais tempo
+  fecharLic();
 });
+window.addEventListener('scroll',()=>{
+  const box=document.getElementById('licBox');
+  if(box&&box.classList.contains('open')) fecharLic();
+},{passive:true});
+window.addEventListener('resize',()=>{
+  const box=document.getElementById('licBox');
+  if(box&&box.classList.contains('open')) posicionarLic();
+});
+document.addEventListener('keydown',ev=>{ if(ev.key==='Escape') fecharLic(); });
 const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':'Hood Trap','experimental':'Experimental','detroit':'Detroit','drumless':'Drumless','hard':'Hard','funk':'Funk','pluggnb':'Pluggnb','drill':'Drill','nomelody':'No Melody','bounce':'Bounce'};
 
 /* ── FILTER & RENDER ─────────────────────────────── */

@@ -483,6 +483,15 @@ registra o evento `capa`, que aparece na atividade do painel.
 | `DB` | Pages → Bindings → D1 | banco `caramujo`, catálogo e atividade |
 | `INGEST_TOKEN` | Pages (secret) e GitHub (secret) | senha entre o conversor e o site |
 | `GDRIVE_SA_JSON` | Pages (secret) e GitHub (secret) | conta de serviço com leitura em `Projetos` |
+| `PAINEL_SENHA` | Pages (secret) | senha do `/painel` — e também a chave que assina o cookie |
+
+### Trocar a senha do painel
+
+1. `dash.cloudflare.com` → **Workers & Pages** → projeto do site → **Settings** → **Variables and Secrets**.
+2. Editar `PAINEL_SENHA` (ou criar, se sumiu). Guardar como **Secret**, não como texto simples.
+3. **Redeploy obrigatório**: em Deployments, no último deploy, *Retry deployment* / *Redeploy*. Variável do Pages só passa a valer no deploy seguinte.
+4. Efeito colateral de graça: a senha É a chave HMAC que assina o cookie (`functions/_lib/sessao.js`), então trocar a senha derruba TODAS as sessões abertas, em qualquer aparelho. Não existe "sair" no painel; trocar a senha é o botão de sair.
+5. O cookie dura 30 dias (`DIAS` em `sessao.js`). Errar a senha devolve 401 e a mesma tela de login, sem dizer nada além de "Senha errada."
 
 ### Custo e limites
 
