@@ -170,19 +170,20 @@ async function relatorio(d, request, env) {
     semAudio.push({ name: b.name, bpm: b.bpm, key: b.key, sold: b.sold ? 1 : 0, motivo });
   }
 
+  // Beat disponível numa tape que ainda não está à venda no site. Não é erro, é fila:
+  // é o que falta postar. Tape de graça fica fora (não tem carrinho por definição) e
+  // beat vendido no site também (a pastilha dele já vira vendido sozinha).
   const mapa = indexar(beats);
   const { results: disp } = await d.prepare(
     `SELECT t.title, t.bpm, t.mkey AS key, a.name AS tape FROM tracks t
        JOIN artists a ON a.id = t.artist_id
-      WHERE a.tipo = 'tape' AND t.kind = 'beat' AND t.tag = 'disponivel'`
+      WHERE a.tipo = 'tape' AND a.dl_beats = 0 AND t.kind = 'beat' AND t.tag = 'disponivel'`
   ).all();
 
   const semBotao = [];
   for (const t of disp || []) {
-    const b = achar(mapa, t);
-    const base = { title: t.title, tape: t.tape, bpm: t.bpm, key: t.key };
-    if (!b) semBotao.push({ ...base, motivo: 'não existe na vitrine do site' });
-    else if (b.sold) semBotao.push({ ...base, motivo: 'no site está como vendido' });
+    if (achar(mapa, t)) continue;
+    semBotao.push({ title: t.title, tape: t.tape, bpm: t.bpm, key: t.key });
   }
 
   return json({

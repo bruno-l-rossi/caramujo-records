@@ -26,7 +26,7 @@ export async function onRequestPost(context) {
   const op = url.searchParams.get('op');
   const d = await db(env);
 
-  if (op === 'plan') return plan(d, await request.json());
+  if (op === 'plan') return plan(d, await request.json(), request, env);
   if (op === 'track') return track(d, env, url, request);
   if (op === 'capa') return capa(d, env, url, request);
   if (op === 'done') return done(d, env, url, await request.json());
@@ -36,7 +36,7 @@ export async function onRequestPost(context) {
   return json({ erro: 'op desconhecida' }, 400);
 }
 
-async function plan(d, body) {
+async function plan(d, body, request, env) {
   const { folderId, name, tracks } = body;
   if (!folderId || !name || !Array.isArray(tracks)) return json({ erro: 'faltou dado' }, 400);
 
@@ -63,7 +63,7 @@ async function plan(d, body) {
 
   // Numa tape, a tag não vem da pasta: sai do cruzamento com Exclusivos
   // e com o que já está nas pastas dos artistas.
-  const venda = tape ? await marcarVenda(d, tracks) : null;
+  const venda = tape ? await marcarVenda(d, tracks, request, env) : null;
 
   const have = await d.prepare(
     'SELECT id, src_modified, ready FROM tracks WHERE artist_id = ?'
@@ -123,7 +123,7 @@ async function exclusivos(d, body) {
 }
 
 // Escreve t.tag ('disponivel' | 'vendido' | null) e t.revisar nas faixas da tape.
-async function marcarVenda(d, tracks) {
+async function marcarVenda(d, tracks, request, env) {
   // O que eu marquei na mão no painel vence o cruzamento e não volta atrás.
   const manual = new Map();
   for (let i = 0; i < tracks.length; i += 60) {
@@ -134,6 +134,12 @@ async function marcarVenda(d, tracks) {
     ).bind(...ids).all();
     for (const r of results || []) manual.set(r.id, r.venda_manual);
   }
+
+  // O SITE manda no vendido. Se lá o beat já saiu, a tape acompanha, aconteça o que
+  // acontecer no cruzamento: anunciar DISPONÍVEL um beat vendido é o pior erro daqui.
+  let vendidosNoSite = [];
+  try { vendidosNoSite = (await vitrine(request, env)).filter((b) => b.sold); }
+  catch { vendidosNoSite = []; }
 
   const guardado = await d.prepare("SELECT valor FROM meta WHERE chave = 'exclusivos'").first();
   let aVenda = [];
@@ -162,6 +168,10 @@ async function marcarVenda(d, tracks) {
     if (manual.has(t.id)) {
       t.tag = manual.get(t.id); t.revisar = null;
       if (t.tag === 'disponivel') conta.disponivel++; else conta.vendido++;
+      continue;
+    }
+    if (vendidosNoSite.some((b) => mesma(b, t))) {
+      t.tag = 'vendido'; t.revisar = null; conta.vendido++;
       continue;
     }
     const emExclusivos = aVenda.some((b) => mesma(b, t));

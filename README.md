@@ -373,6 +373,12 @@ Quem decide **vendido** é o beat. Música com o mesmo nome na pasta do artista 
 sozinha, porque nome repetido entre beat e som acontece: o beat vai pra revisão com o motivo
 escrito ("aparece só como música gravada, na pasta de fulano").
 
+**O site manda no vendido.** Antes de qualquer cruzamento: se o beat está `sold:true` na
+lista do site, a pastilha na tape é **vendido**, ponto. Isso vale na conversão (fica gravado)
+e na hora de montar a página (vale na hora, sem esperar a próxima rodada). Anunciar
+DISPONÍVEL um beat que já saiu é o pior erro possível aqui, e o mesmo beat costuma aparecer
+em duas tapes diferentes.
+
 O que casa é o título limpo; quando os dois lados têm BPM ou tom, eles também têm que bater
 (senão dois `intro` viravam a mesma faixa). O casamento é tolerante onde precisa ser:
 acento não conta (`dígitos` = `digitos`), `F#` e `Gb` são a mesma tecla, `F#` casa com
@@ -424,8 +430,9 @@ mesmo cruzamento das tapes (`functions/_lib/casar.js`: título limpo, BPM com 1 
 enarmônico). Nada de de-para escrito na mão.
 
 No painel, dentro do portfólio, o card **Vitrine do site** mostra quantos beats do site já
-têm o áudio guardado no R2, quais não acharam par e quais beats disponíveis nas tapes ficaram
-sem botão. Pra cada beat sem áudio ele diz o motivo, que é o que vira conserto no Drive:
+têm o áudio guardado no R2, quais não acharam par, e a **fila de postagem**: beat com pastilha
+disponível numa tape que ainda não existe na vitrine do site. Fila não é alarme, é o que falta
+subir. Tape de graça e beat vendido no site ficam fora dessa conta. Pra cada beat sem áudio ele diz o motivo, que é o que vira conserto no Drive:
 
 | Motivo | O que fazer |
 |---|---|

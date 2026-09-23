@@ -78,35 +78,44 @@ const SCHEMA = [
 const RESPOSTAS = {
   disponivel: ['nada vai me parar', 'loop', 'olhando pra tras', 'nada mudou', 'real',
     'matueto', 'sereno', 'sequencia', 'elegancia', 'cotidiano', 'roakutan',
-    'classico vol 3', 'casa', 'beat sincero', 'funeral', 'gana'],
-  vendido: ['regalia', 'aquela sorte', 'arrepio', 'classic', 'classico como lincoln',
-    'malas prontas']
+    'classico vol 3', 'casa', 'beat sincero', 'funeral', 'gana', 'malas prontas'],
+  vendido: ['regalia', 'aquela sorte', 'arrepio', 'classic', 'classico como lincoln']
 };
 
-// Só mexe em beat de tape que ainda está SEM pastilha. O que já foi resolvido, pelo
-// cruzamento ou na mão, fica como está: marcar disponível um beat já vendido é o
-// pior erro possível aqui.
-export async function respostasDoBruno(DB) {
+// Aplica as respostas nos beats das tapes. Comparo em JS porque o LOWER do SQLite
+// não tira acento. Três modos, porque cada um roda uma vez e num momento diferente:
+//   'pendentes'         -> só faixa sem pastilha nenhuma. Foi a primeira passada.
+//   'vendido'           -> corrige pra vendido mesmo por cima de pastilha errada.
+//                          Nessa direção é sempre seguro; a inversa anunciaria um
+//                          beat que já saiu, que é o pior erro daqui.
+//   'fixar-disponivel'  -> não muda pastilha nenhuma: só carimba a resposta dele em
+//                          quem já está disponível, pra conversão nenhuma desfazer.
+async function aplicarRespostas(DB, modo) {
   const dicionario = new Map();
   for (const valor of Object.keys(RESPOSTAS)) {
     for (const nome of RESPOSTAS[valor]) dicionario.set(chave(nome), valor);
   }
   const { results } = await DB.prepare(
-    `SELECT t.id, t.title FROM tracks t JOIN artists a ON a.id = t.artist_id
-      WHERE a.tipo = 'tape' AND t.kind = 'beat'
-        AND t.tag IS NULL AND t.venda_manual IS NULL`
+    `SELECT t.id, t.title, t.tag FROM tracks t JOIN artists a ON a.id = t.artist_id
+      WHERE a.tipo = 'tape' AND t.kind = 'beat' AND t.venda_manual IS NULL`
   ).all();
   const mudar = [];
   for (const r of results || []) {
     const valor = dicionario.get(chave(r.title));
-    if (valor) {
-      mudar.push(DB.prepare(
-        'UPDATE tracks SET venda_manual = ?, tag = ?, revisar = NULL WHERE id = ?'
-      ).bind(valor, valor, r.id));
-    }
+    if (!valor) continue;
+    if (modo === 'pendentes' && r.tag !== null) continue;
+    if (modo === 'vendido' && valor !== 'vendido') continue;
+    if (modo === 'fixar-disponivel' && !(valor === 'disponivel' && r.tag === 'disponivel')) continue;
+    mudar.push(DB.prepare(
+      'UPDATE tracks SET venda_manual = ?, tag = ?, revisar = NULL WHERE id = ?'
+    ).bind(valor, valor, r.id));
   }
   if (mudar.length) await DB.batch(mudar);
 }
+
+export const respostasDoBruno = (DB) => aplicarRespostas(DB, 'pendentes');
+export const vendidosDoBruno = (DB) => aplicarRespostas(DB, 'vendido');
+export const disponiveisDoBruno = (DB) => aplicarRespostas(DB, 'fixar-disponivel');
 
 // Ajustes que rodam uma vez só e ficam marcados na tabela meta.
 // Depois disso o painel manda: se eu desligar um download, fica desligado.
@@ -121,7 +130,13 @@ export const UMA_VEZ = [
     `UPDATE tracks SET venda_manual = 'disponivel', tag = 'disponivel', revisar = NULL
       WHERE kind = 'beat' AND venda_manual IS NULL
         AND artist_id IN (SELECT id FROM artists WHERE tipo = 'tape' AND name LIKE 'Nada de novo%')`],
-  ['respostas-do-bruno-2026-09-22', respostasDoBruno]
+  ['respostas-do-bruno-2026-09-22', respostasDoBruno],
+  // Segunda passada: beat que o Bruno confirmou vendido em 23/09/2026 e que o
+  // cruzamento tinha deixado como disponível (ele continua na pasta Exclusivos).
+  ['vendidos-do-bruno-2026-09-23', vendidosDoBruno],
+  // Terceira: carimba a resposta dele em quem já está disponível, sem mexer em
+  // pastilha. Assim "malas prontas" e companhia não voltam atrás numa conversão.
+  ['disponiveis-do-bruno-2026-09-23', disponiveisDoBruno]
 ];
 
 let ready = false;

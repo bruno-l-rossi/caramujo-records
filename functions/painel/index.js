@@ -415,7 +415,7 @@ function pagina() {
       $('lista').appendChild(d); return;
     }
     var falta=(vitri.semAudio||[]).length, sem=(vitri.semBotao||[]).length;
-    d.className='revisar'+(falta||sem?'':' limpo');
+    d.className='revisar'+(falta?'':' limpo');   // fila de postagem não é alarme
     var html='<b>Vitrine do site</b><small>'+vitri.total+' beats no site, '+vitri.aVenda+
       ' à venda. '+vitri.comAudio+' já têm o áudio guardado aqui'+
       (falta?', '+falta+' não achei.':'.')+'</small>';
@@ -430,11 +430,12 @@ function pagina() {
     }
     if(sem){
       html+='<div class="rev-tape"><div class="rev-topo"><b>'+sem+
-        (sem===1?' beat sem botão de carrinho':' beats sem botão de carrinho')+'</b></div><ul>'+
+        (sem===1?' beat ainda não está à venda no site':' beats ainda não estão à venda no site')+
+        '</b></div><small>Eles ficam com pastilha disponível na tape e sem carrinho até você '+
+        'postar. É a fila do que falta subir.</small><ul>'+
         vitri.semBotao.map(function(t){
           var f=[t.key,t.bpm?t.bpm+'bpm':''].filter(Boolean).join(' · ');
-          return '<li><span class="rev-nome">'+esc(t.title)+' <i>'+esc(t.tape)+(f?' · '+f:'')+'</i></span>'+
-            '<small>'+esc(t.motivo)+'</small></li>';
+          return '<li><span class="rev-nome">'+esc(t.title)+' <i>'+esc(t.tape)+(f?' · '+f:'')+'</i></span></li>';
         }).join('')+'</ul></div>';
     }
     d.innerHTML=html;

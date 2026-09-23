@@ -36,16 +36,18 @@ export async function onRequestGet({ params, request, env }) {
   // Beat de tape com pastilha DISPONÍVEL ganha o botão de carrinho, contanto que
   // o beat exista na vitrine do site e continue à venda lá. Sem par, sem botão:
   // ninguém clica pra cair numa aba que não faz nada.
-  // Tape com download liberado é tape de graça (a "Nada de novo"): beat sem licença
-  // exclusiva, ninguém compra, então não entra carrinho.
-  if (artist.tipo === 'tape' && !artist.dl_beats) {
-    const aVenda = tracks.filter((t) => t.tag === 'disponivel');
-    if (aVenda.length) {
-      const mapa = indexar(await vitrine(request, env));
-      for (const t of aVenda) {
-        const b = achar(mapa, t);
-        if (b && !b.sold) t.buy = b.slug;
-      }
+  // Numa tape, o site manda: beat vendido lá sai com pastilha de vendido aqui, mesmo
+  // que a última conversão ainda não tenha acertado isso.
+  // Carrinho só em tape com download DESLIGADO: tape de graça (a "Nada de novo") tem
+  // beat sem licença exclusiva, ninguém compra.
+  if (artist.tipo === 'tape') {
+    const mapa = indexar(await vitrine(request, env));
+    for (const t of tracks) {
+      if (t.kind !== 'beat') continue;
+      const b = achar(mapa, t);
+      if (!b) continue;
+      if (b.sold) { t.tag = 'vendido'; continue; }
+      if (!artist.dl_beats && t.tag === 'disponivel') t.buy = b.slug;
     }
   }
   const capa = artist.cover_key ? `${url.origin}/capa/${artist.cover_key}` : `${url.origin}/og-image.png`;
