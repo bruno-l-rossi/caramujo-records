@@ -4,7 +4,6 @@
     "/*"
   ],
   "exclude": [
-    "/",
     "/index.html",
     "/404.html",
     "/og-image.png",

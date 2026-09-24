@@ -96,8 +96,57 @@ const SCHEMA = [
   `CREATE UNIQUE INDEX IF NOT EXISTS beat_evento_um ON beat_evento (sessao, beat_id, tipo)`,
   `CREATE INDEX IF NOT EXISTS beat_evento_dia ON beat_evento (dia, tipo)`,
   `CREATE INDEX IF NOT EXISTS funil_dia ON funil (dia, etapa)`,
-  `CREATE TABLE IF NOT EXISTS meta (chave TEXT PRIMARY KEY, valor TEXT NOT NULL)`
+  `CREATE TABLE IF NOT EXISTS meta (chave TEXT PRIMARY KEY, valor TEXT NOT NULL)`,
+  // A loja (24/09/2026): a lista de beats à venda, os cupons e cada uso de cupom
+  // saíram do GitHub (const BEATS no index.html e functions/coupons.json) e vieram
+  // pra cá. Venda e cupom gravam aqui: acabou o commit + redeploy a cada venda.
+  // id = o mesmo número de antes (carrinho salvo, funil e analytics apontam pra ele).
+  // ordem: menor aparece primeiro na lista do site; beat novo entra com MIN-1.
+  `CREATE TABLE IF NOT EXISTS beats (
+     id INTEGER PRIMARY KEY,
+     name TEXT NOT NULL,
+     bpm INTEGER,
+     mkey TEXT,
+     genre TEXT NOT NULL,
+     sold INTEGER NOT NULL DEFAULT 0,
+     sold_at TEXT,
+     sold_por TEXT,
+     unsold_at TEXT,
+     ordem REAL NOT NULL,
+     track_id TEXT,
+     criado_em TEXT NOT NULL,
+     mexido_em TEXT
+   )`,
+  `CREATE INDEX IF NOT EXISTS beats_ordem ON beats (ordem)`,
+  `CREATE TABLE IF NOT EXISTS cupons (
+     codigo TEXT PRIMARY KEY,
+     pct INTEGER,
+     preco_fixo REAL,
+     max_usos INTEGER,
+     usos INTEGER NOT NULL DEFAULT 0,
+     ativo INTEGER NOT NULL DEFAULT 1,
+     criado_em TEXT NOT NULL
+   )`,
+  // um uso por pagamento: o webhook do Mercado Pago chega repetido e a chave
+  // (codigo, pagamento) não deixa contar duas vezes
+  `CREATE TABLE IF NOT EXISTS cupom_uso (
+     codigo TEXT NOT NULL,
+     pagamento TEXT NOT NULL,
+     valor REAL,
+     at TEXT NOT NULL,
+     PRIMARY KEY (codigo, pagamento)
+   )`
 ];
+
+// Versão do esquema: muda sozinha quando a lista acima muda. Com ela gravada na
+// meta, um isolate novo gasta 2 consultas pra acordar em vez de ~30 (o plano
+// gratuito aceita 50 por chamada, e a importação da loja precisa de folga).
+function assinatura(txt) {
+  let h = 5381;
+  for (let i = 0; i < txt.length; i++) h = ((h << 5) + h + txt.charCodeAt(i)) | 0;
+  return 'esquema-' + (h >>> 0).toString(36);
+}
+const VERSAO = assinatura(SCHEMA.join('\n'));
 
 // As respostas que o Bruno deu em 22/09/2026 pros beats que o cruzamento não
 // resolveu. Comparo o título em JS, sem acento e sem pontuação, porque o LOWER do
@@ -176,13 +225,25 @@ let ready = false;
 export async function db(env) {
   if (!env.DB) throw new Error('D1 nao esta ligado (binding DB)');
   if (!ready) {
-    for (const q of SCHEMA) {
-      try { await env.DB.prepare(q).run(); }
-      catch (e) { if (!/duplicate column/i.test(String(e))) throw e; }
+    let versao = null;
+    try {
+      const v = await env.DB.prepare("SELECT valor FROM meta WHERE chave = 'esquema'").first();
+      versao = v ? v.valor : null;
+    } catch (_) { versao = null; }            // banco novo: nem a meta existe ainda
+    if (versao !== VERSAO) {
+      for (const q of SCHEMA) {
+        try { await env.DB.prepare(q).run(); }
+        catch (e) { if (!/duplicate column/i.test(String(e))) throw e; }
+      }
+      await env.DB.prepare("INSERT OR REPLACE INTO meta (chave, valor) VALUES ('esquema', ?)").bind(VERSAO).run();
     }
+    const vagas = UMA_VEZ.map(() => '?').join(', ');
+    const { results: jaFeitos } = await env.DB.prepare(
+      `SELECT chave FROM meta WHERE chave IN (${vagas})`
+    ).bind(...UMA_VEZ.map((x) => x[0])).all();
+    const feitos = new Set((jaFeitos || []).map((r) => r.chave));
     for (const [marca, q] of UMA_VEZ) {
-      const feito = await env.DB.prepare('SELECT 1 FROM meta WHERE chave = ?').bind(marca).first();
-      if (feito) continue;
+      if (feitos.has(marca)) continue;
       if (typeof q === 'function') await q(env.DB);
       else await env.DB.prepare(q).run();
       await env.DB.prepare('INSERT INTO meta (chave, valor) VALUES (?, ?)')

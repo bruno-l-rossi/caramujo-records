@@ -77,7 +77,7 @@ const BASE = `
   .sub{font-size:14px;color:var(--ink4)}
   .barra{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
   .barra .pill{flex:0 0 auto}
-  .barra[hidden],#resumo[hidden],#lista[hidden],#analytics[hidden]{display:none}
+  .barra[hidden],#resumo[hidden],#lista[hidden],#analytics[hidden],#vitrine[hidden]{display:none}
   @media (max-width:560px){
     .campo{flex:1 1 100%}
     .barra .pill{margin-left:auto}
@@ -205,7 +205,7 @@ const BASE = `
   .vit-topo .vit-seta{font-size:20px;color:var(--ink3);transition:transform .15s}
   .vit-topo[aria-expanded="true"] .vit-seta{transform:rotate(90deg)}
   .vit-corpo[hidden]{display:none}
-  .home{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}
+  .home{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:22px}
   @media (max-width:640px){.home{grid-template-columns:1fr}}
   .home button{display:flex;flex-direction:column;align-items:flex-start;gap:14px;min-height:150px;padding:18px;
     background:#111;border:1px solid var(--borda);border-radius:16px;color:var(--ink);text-align:left;cursor:pointer;
@@ -272,8 +272,10 @@ function pagina() {
 
   <div id="lista"><div class="vazio">carregando…</div></div>
   <div id="analytics" hidden></div>
+  <div id="vitrine" hidden></div>
 </div>
 <script src="/assets/painel/analytics.js?v=2026-09-27b" defer></script>
+<script src="/assets/painel/vitrine.js?v=2026-09-24a" defer></script>
 
 <div class="veil" id="veil" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>
@@ -282,7 +284,7 @@ function pagina() {
 (function(){
   var $=function(i){return document.getElementById(i)};
   var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='home', filtro='', ordem='modificado';
-  var vitri=null, vitriPedida=false;
+  var lojaResumo=null, lojaPedida=false;
   var ORDENS={modificado:'Modificação', atividade:'Atividade', az:'A a Z', faixas:'Mais faixas'};
 
   function tempo(iso){
@@ -334,8 +336,9 @@ function pagina() {
     });
   }
 
-  var TITULOS={home:'Painel',artistas:'Artistas',tapes:'Beat tapes',analytics:'Analytics'};
+  var TITULOS={home:'Painel',artistas:'Artistas',tapes:'Beat tapes',vitrine:'Vitrine',analytics:'Analytics'};
   function irPara(v){
+    if(v==='home') lojaPedida=false;          // volta da Vitrine com o número novo
     vista=v; filtro=''; $('q').value='';
     $('q').placeholder = v==='tapes' ? 'Buscar beat tape' : 'Buscar artista';
     desenhar(); window.scrollTo(0,0);
@@ -353,6 +356,10 @@ function pagina() {
         tapes.length+(tapes.length===1?' beat tape':' beat tapes')+
           (revisarErro?'':(revisar.length?' · <em>'+revisar.length+' pra revisar</em>':' · nada pra revisar')),
         '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M8.5 14h7"/>'],
+      ['vitrine','Vitrine',
+        (!lojaResumo?'beats do site, fila de postagem e cupons':lojaResumo.erro?'beats do site, fila de postagem e cupons':
+          lojaResumo.aVenda+' à venda no site · '+lojaResumo.cupons+(lojaResumo.cupons===1?' cupom valendo':' cupons valendo')),
+        '<path d="M4 9l1.5-4.5h13L20 9"/><path d="M4 9h16v10a1 1 0 01-1 1H5a1 1 0 01-1-1z"/><path d="M9 20v-6h6v6"/>'],
       ['analytics','Analytics',
         (!r?'carregando…':r.erro?'vitrine, beat tapes e artistas':
           'últimos 7 dias · '+nEtapa(r,'visita')+' visitas · '+nEtapa(r,'pago')+(nEtapa(r,'pago')===1?' venda':' vendas')),
@@ -377,9 +384,20 @@ function pagina() {
     document.querySelector('.topo .marca').setAttribute('aria-label', vista==='home' ? 'Voltar pro site' : 'Voltar pro painel');
     $('barra').hidden = !(vista==='artistas'||vista==='tapes');
     $('resumo').hidden = vista==='analytics';
-    $('lista').hidden = vista==='analytics';
+    $('lista').hidden = vista==='analytics'||vista==='vitrine';
     $('analytics').hidden = vista!=='analytics';
-    if(vista==='home'){ pedirResumoFunil(); $('lista').innerHTML=''; $('lista').appendChild(home()); return; }
+    $('vitrine').hidden = vista!=='vitrine';
+    if(vista==='home'){ pedirResumoFunil(); pedirResumoLoja(); $('lista').innerHTML=''; $('lista').appendChild(home()); return; }
+    if(vista==='vitrine'){
+      // monta uma vez só (igual ao analytics): a lista de artistas recarrega sozinha
+      // durante conversão e não pode apagar o que você está digitando aqui
+      if(!$('vitrine').dataset.montado && window.CaramujoVitrine){
+        $('vitrine').dataset.montado='1';
+        window.CaramujoVitrine.abrir($('vitrine'));
+      } else if(window.CaramujoVitrine) window.CaramujoVitrine.pintar();
+      if(!window.CaramujoVitrine) $('vitrine').innerHTML='<div class="vazio">carregando…</div>';
+      return;
+    }
     if(vista==='analytics'){
       // monta uma vez só: a lista recarrega sozinha durante conversão e não pode
       // derrubar o período nem a aba que você escolheu
@@ -412,7 +430,7 @@ function pagina() {
     });
     $('lista').innerHTML='';
 
-    if(vista==='tapes'){ cartaoRevisar(); pedirVitrine(); cartaoVitrine(); }
+    if(vista==='tapes') cartaoRevisar();
 
     if(!alvo.length){
       var v=document.createElement('div'); v.className='vazio';
@@ -442,6 +460,7 @@ function pagina() {
     });
   }
   function pintarResumo(usado){
+    if(vista==='vitrine') return;            // lá o resumo é da loja
     var r=$('resumo');
     r.textContent = artistas.length+(artistas.length===1?' artista no ar':' artistas no ar')+
       (tapes.length?' · '+tapes.length+(tapes.length===1?' beat tape':' beat tapes'):'')+
@@ -476,62 +495,17 @@ function pagina() {
     }).catch(function(){ funilResumo={erro:true}; if(vista==='home') desenhar(); });
   }
   function nEtapa(j,e){ var x=(j.etapas||[]).filter(function(t){return t.etapa===e})[0]; return x?x.total:0; }
-  // O relatório da vitrine é pesado e não muda a toda hora: busco uma vez só,
-  // na primeira vez que o portfólio abre.
-  function pedirVitrine(){
-    if(vitriPedida) return;
-    vitriPedida=true;
-    fetch('/api/painel?op=vitrine').then(function(r){return r.json()}).then(function(j){
-      vitri = (j && typeof j.total==='number') ? j : { erro:(j&&j.erro)||'não consegui conferir a vitrine' };
-      desenhar();
-    }).catch(function(){ vitri={ erro:'não consegui conferir a vitrine' }; desenhar(); });
-  }
-
-  function cartaoVitrine(){
-    if(!vitri) return;
-    var d=document.createElement('div');
-    if(vitri.erro){
-      d.className='revisar limpo';
-      d.innerHTML='<b>Vitrine do site</b><small>'+esc(vitri.erro)+'. Recarrega a página.</small>';
-      $('lista').appendChild(d); return;
-    }
-    var falta=(vitri.semAudio||[]).length, sem=(vitri.semBotao||[]).length;
-    d.className='revisar'+(falta?'':' limpo');   // fila de postagem não é alarme
-    // recolhível: o resumo fica sempre à vista, as listas abrem no toque (lembra a escolha)
-    var aberta=false; try{ aberta=localStorage.getItem('painel-vitrine-aberta')==='1'; }catch(_){}
-    var html='<button type="button" class="vit-topo" aria-expanded="'+(aberta?'true':'false')+'">'+
-      '<b>Vitrine do site</b><span class="vit-seta" aria-hidden="true">›</span></button>'+
-      '<small>'+vitri.total+' beats no site, '+vitri.aVenda+
-      ' à venda. '+vitri.comAudio+' já têm o áudio guardado aqui'+
-      (falta?', '+falta+' não achei.':'.')+(sem?' '+sem+' na fila de postagem.':'')+'</small><div class="vit-corpo"'+(aberta?'':' hidden')+'>';
-    if(falta){
-      html+='<div class="rev-tape"><div class="rev-topo"><b>Sem áudio</b></div><ul>'+
-        vitri.semAudio.map(function(b){
-          var ficha=[b.key,b.bpm?b.bpm+'bpm':''].filter(Boolean).join(' · ');
-          return '<li><span class="rev-nome">'+esc(b.name)+(ficha?' <i>'+esc(ficha)+'</i>':'')+
-            (b.sold?' <i>vendido</i>':'')+'</span>'+
-            '<small>'+esc(b.motivo||'Nenhuma faixa convertida com esse nome.')+'</small></li>';
-        }).join('')+'</ul></div>';
-    }
-    if(sem){
-      html+='<div class="rev-tape"><div class="rev-topo"><b>'+sem+
-        (sem===1?' beat ainda não está à venda no site':' beats ainda não estão à venda no site')+
-        '</b></div><small>Eles ficam com pastilha disponível na tape e sem carrinho até você '+
-        'postar. É a fila do que falta subir.</small><ul>'+
-        vitri.semBotao.map(function(t){
-          var f=[t.key,t.bpm?t.bpm+'bpm':''].filter(Boolean).join(' · ');
-          return '<li><span class="rev-nome">'+esc(t.title)+' <i>'+esc(t.tape)+(f?' · '+f:'')+'</i></span></li>';
-        }).join('')+'</ul></div>';
-    }
-    html+='</div>';
-    d.innerHTML=html;
-    var tg=d.querySelector('.vit-topo');
-    tg.addEventListener('click',function(){
-      var corpo=d.querySelector('.vit-corpo'), abre=corpo.hidden;
-      corpo.hidden=!abre; tg.setAttribute('aria-expanded',abre?'true':'false');
-      try{ localStorage.setItem('painel-vitrine-aberta',abre?'1':'0'); }catch(_){}
-    });
-    $('lista').appendChild(d);
+  // resumo da loja pro botão da home (a tela Vitrine mora em /assets/painel/vitrine.js)
+  function pedirResumoLoja(){
+    if(lojaPedida) return; lojaPedida=true;
+    fetch('/api/painel?op=loja').then(function(r){return r.json()}).then(function(j){
+      if(!j||!Array.isArray(j.beats)){ lojaResumo={erro:true}; }
+      else lojaResumo={
+        aVenda:j.beats.filter(function(b){return !b.sold}).length,
+        cupons:(j.cupons||[]).filter(function(c){return c.ativo && !(c.max_usos!==null && c.usos>=c.max_usos)}).length
+      };
+      if(vista==='home') desenhar();
+    }).catch(function(){ lojaResumo={erro:true}; if(vista==='home') desenhar(); });
   }
 
   function cartaoRevisar(){
@@ -826,6 +800,8 @@ function pagina() {
   });
 
   var tid;
+  window.__painelFlash=function(m){ flash(m); };
+  window.__painelFechar=function(){ fechar(); };
   function flash(m){
     clearTimeout(tid);
     var el=$('toast');el.textContent=m;el.hidden=false;el.style.opacity='1';

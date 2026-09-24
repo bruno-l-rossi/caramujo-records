@@ -1,78 +1,46 @@
-// A vitrine é a lista de beats à venda, que mora escrita no index.html
-// (decisão do Bruno em 21/09/2026: manter na mão por enquanto).
-//
-// Aqui eu leio essa lista do PRÓPRIO site servido (env.ASSETS, sem sair pra internet)
-// e caso cada beat com o que já está convertido no R2, pra não subir MP3 repetido.
-// Serve o botão de carrinho do catálogo e o relatório do painel.
+// A vitrine é a lista de beats à venda do site. Desde 24/09/2026 ela mora no D1
+// (tabela beats, ver _lib/loja.js); antes era const BEATS escrito no index.html.
+// Aqui ela ganha slug e rótulo de gênero, e casa com o que já está convertido no R2.
+// Serve o botão de carrinho do catálogo, a pastilha de vendido das tapes, o
+// relatório do painel e a /api/vitrine.
 
 import { mesma, limpo, slug } from './casar.js';
+import { db } from './db.js';
+import { garantirLoja, lerBeats, lerEstatico } from './loja.js';
 
-const VALIDADE = 10 * 60 * 1000;    // o index.html só muda quando o Bruno publica
+const VALIDADE = 60 * 1000;        // venda e edição no painel aparecem em até 1 minuto
 let cache = { at: 0, beats: null };
-let preco = null;   // PRICE_BEAT do index.html, lido junto com a lista
+let preco = null;   // PRICE_BEAT do index.html (o preço segue escrito lá)
 
-function parse(html) {
-  const ini = html.indexOf('const BEATS=[');
-  if (ini < 0) return [];
-  const fim = html.indexOf('];', ini);
-  if (fim < 0) return [];
-  const bloco = html.slice(ini, fim);   // ~15 KB, não os 188 KB da página
-
-  const beats = [];
-  const entrada = /\{\s*id:\s*(\d+)\s*,([^}]*)\}/g;
-  let m;
-  while ((m = entrada.exec(bloco))) {
-    const resto = m[2];
-    const texto = (chave) => {
-      const t = resto.match(new RegExp(chave + ":\\s*'((?:[^'\\\\]|\\\\.)*)'"));
-      return t ? t[1].replace(/\\(.)/g, '$1') : null;
-    };
-    const numero = (chave) => {
-      const t = resto.match(new RegExp(chave + ':\\s*(\\d+)'));
-      return t ? Number(t[1]) : null;
-    };
-    const name = texto('name');
-    if (!name) continue;
-    beats.push({
-      id: Number(m[1]),
-      name,
-      title: name,                    // mesma() compara por .title
-      slug: slug(name),               // o mesmo slug do deep-link do site
-      bpm: numero('bpm'),
-      key: texto('key'),
-      genre: texto('genre'),
-      sold: /sold:\s*true/.test(resto)
-    });
-  }
-  return beats;
-}
-
-// O site escreve o gênero em código ('boombap') e o nome bonito noutra lista.
-// Leio as duas, pra ninguém ver "boombap" na tela.
-function generos(html) {
-  const m = html.match(/const GENRE_LABELS\s*=\s*\{([^}]*)\}/);
-  const mapa = {};
-  if (!m) return mapa;
-  const re = /'([^']+)'\s*:\s*'([^']*)'/g;
-  let p;
-  while ((p = re.exec(m[1]))) mapa[p[1]] = p[2];
-  return mapa;
-}
+export function esquecerVitrine() { cache = { at: 0, beats: null }; }
 
 export async function vitrine(request, env) {
   if (cache.beats && Date.now() - cache.at < VALIDADE) return cache.beats;
   try {
-    const r = await env.ASSETS.fetch(new URL('/index.html', request.url));
-    if (!r.ok) return cache.beats || [];
-    const pagina = await r.text();
-    const beats = parse(pagina);
-    const rotulos = generos(pagina);
-    const p = pagina.match(/const PRICE_BEAT\s*=\s*(\d+)/);
-    if (p) preco = Number(p[1]);
-    for (const b of beats) b.generoLabel = rotulos[b.genre] || b.genre || '';
+    const d = await db(env);
+    await garantirLoja(request, env, d);
+    const linhas = await lerBeats(d);
+    let rotulos = {};
+    try {
+      const est = await lerEstatico(request, env);
+      rotulos = est.generos;
+      if (est.preco) preco = est.preco;
+    } catch (_) { /* sem rótulo, mostra o código do gênero */ }
+    const beats = linhas.map((b) => ({
+      id: b.id,
+      name: b.name,
+      title: b.name,                  // mesma() compara por .title
+      slug: slug(b.name),             // o mesmo slug do deep-link do site
+      bpm: b.bpm,
+      key: b.key,
+      genre: b.genre,
+      generoLabel: rotulos[b.genre] || b.genre || '',
+      sold: !!b.sold
+    }));
     if (beats.length) cache = { at: Date.now(), beats };
     return beats.length ? beats : (cache.beats || []);
-  } catch {
+  } catch (e) {
+    console.error('vitrine sem banco', e && e.message);
     return cache.beats || [];      // vitrine fora do ar não pode derrubar o catálogo
   }
 }

@@ -1,41 +1,45 @@
 /**
  * Cloudflare Pages Function: create-payment
- * Variáveis de ambiente: MP_ACCESS_TOKEN, NOTIFY_EMAIL, NOTIFY_FROM, RESEND_API_KEY, GITHUB_TOKEN
+ * Variáveis de ambiente: MP_ACCESS_TOKEN, NOTIFY_EMAIL, NOTIFY_FROM, RESEND_API_KEY
+ *
+ * Desde 24/09/2026 cupom e "vendido" moram no D1 (_lib/loja.js). Antes de cobrar:
+ *  - o cupom é conferido no banco (esgotado ou pausado = recusa);
+ *  - beat que já foi vendido é recusado com aviso (janela de até 1 minuto em que
+ *    a lista de quem está com a página aberta ainda não atualizou).
+ * Falha técnica do banco NÃO bloqueia a venda (mesma regra de antes com o GitHub).
+ * MELHORIA FUTURA (mapeada com o Bruno em 24/09/2026): o valor cobrado (`amount`)
+ * ainda vem do navegador. Dá pra refazer a conta aqui (beat, stems, pacote,
+ * serviço, cupom) e ignorar o valor do cliente. Mexe fundo no checkout: só com
+ * aprovação dele e compra de teste PIX + cartão.
  */
 
-const GITHUB_OWNER  = 'bruno-l-rossi';
-const GITHUB_REPO   = 'caramujo-records';
-const GITHUB_BRANCH = 'main';
-const COUPONS_FILE  = 'functions/coupons.json'; // fora dos assets estáticos: não é servido publicamente
+import { db } from '../_lib/db.js';
+import { garantirLoja, lerCupom, situacaoCupom, vendidosEntre } from '../_lib/loja.js';
 
-// ── Valida cupom lendo functions/coupons.json direto do GitHub ────────────────
-async function validateCouponFromGitHub(couponCode, githubToken) {
-  if (!couponCode || !githubToken) return { valid: false, reason: 'sem token' };
+async function conferirCupom(request, env, couponCode) {
+  if (!couponCode) return { valid: false, reason: 'sem cupom' };
   try {
-    const res = await fetch(
-      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${COUPONS_FILE}?ref=${GITHUB_BRANCH}`,
-      {
-        headers: {
-          Authorization: `Bearer ${githubToken}`,
-          Accept: 'application/vnd.github+json',
-          'X-GitHub-Api-Version': '2022-11-28',
-          'User-Agent': 'caramujo-records-webhook/1.0',
-        },
-      }
-    );
-    if (!res.ok) return { valid: false, reason: 'github error' };
-    const { content } = await res.json();
-    const coupons = JSON.parse(decodeURIComponent(escape(atob(content.replace(/\n/g, '')))));
-
-    const c = coupons[couponCode];
-    if (!c) return { valid: false, reason: 'not found' };
-
-    const maxUses = (c.maxUses === null || c.maxUses === undefined) ? Infinity : c.maxUses;
-    if ((c.uses || 0) >= maxUses) return { valid: false, reason: 'expired' };
+    const d = await db(env);
+    await garantirLoja(request, env, d);
+    const situacao = situacaoCupom(await lerCupom(d, couponCode));
+    if (situacao === 'not_found') return { valid: false, reason: 'not found' };
+    if (situacao === 'expired') return { valid: false, reason: 'expired' };
     return { valid: true };
   } catch (e) {
-    console.warn('[coupon-check] Falha ao validar cupom via GitHub:', e.message);
+    console.warn('[coupon-check] Falha ao validar cupom no banco:', e.message);
     return { valid: true }; // em caso de falha técnica, não bloqueia o pagamento
+  }
+}
+
+async function jaVendidos(request, env, nomes) {
+  if (!nomes.length) return [];
+  try {
+    const d = await db(env);
+    await garantirLoja(request, env, d);
+    return await vendidosEntre(d, nomes);
+  } catch (e) {
+    console.warn('[sold-check] Falha ao conferir vendidos no banco:', e.message);
+    return []; // falha técnica não bloqueia o pagamento
   }
 }
 
@@ -492,9 +496,9 @@ export async function onRequestPost({ request, env }) {
   if (!isValidEmail(email))
     return Response.json({ error: 'Email inválido.' }, { status: 400, headers: cors });
 
-  // Valida cupom no servidor (lê uses atual do GitHub para evitar reuso após expiração)
+  // Valida cupom no servidor (lê os usos atuais do banco para evitar reuso após esgotar)
   if (couponCode) {
-    const couponCheck = await validateCouponFromGitHub(couponCode, env.GITHUB_TOKEN);
+    const couponCheck = await conferirCupom(request, env, couponCode);
     if (!couponCheck.valid && couponCheck.reason === 'expired') {
       return Response.json({ error: 'Cupom expirado ou já utilizado o número máximo de vezes.' }, { status: 400, headers: cors });
     }
@@ -567,6 +571,15 @@ export async function onRequestPost({ request, env }) {
       ...(pkgBeatsList.length > 0    ? { pkg_beats:     pkgBeatsList.join('||')     } : {}),
       ...(catalogBeatsList.length > 0 ? { catalog_beats: catalogBeatsList.join('||') } : {}),
     };
+
+    // Beat que alguém acabou de comprar não pode ser vendido de novo.
+    const vendidos = await jaVendidos(request, env, [...catalogBeatsList, ...pkgBeatsList]);
+    if (vendidos.length) {
+      const erro = vendidos.length === 1
+        ? `O beat ${vendidos[0]} acabou de ser vendido. Tira ele do carrinho e tenta de novo.`
+        : `Os beats ${vendidos.slice(0, -1).join(', ')} e ${vendidos[vendidos.length - 1]} acabaram de ser vendidos. Tira eles do carrinho e tenta de novo.`;
+      return Response.json({ error: erro, vendidos }, { status: 400, headers: cors });
+    }
 
     const mpRes = await fetch('https://api.mercadopago.com/v1/payments', {
       method: 'POST',

@@ -4,7 +4,9 @@
 import { db, json } from '../_lib/db.js';
 import { autenticado } from '../_lib/sessao.js';
 import { mesma, mesmoTom, limpo } from '../_lib/casar.js';
-import { vitrine, indexar, achar } from '../_lib/vitrine.js';
+import { vitrine, indexar, achar, esquecerVitrine } from '../_lib/vitrine.js';
+import { garantirLoja, lerBeats, lerDestaque, lerEstatico, esquecerLoja } from '../_lib/loja.js';
+import { slug } from '../_lib/casar.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
 
@@ -24,6 +26,8 @@ export async function onRequest({ request, env }) {
   if (op === 'vitrine') return relatorio(d, request, env);
   if (op === 'funil') return funil(d, request, env, url.searchParams.get('dias'));
   if (op === 'analytics') return analytics(d, request, env, url.searchParams);
+  if (op === 'loja') return loja(d, request, env);
+  if (op === 'cupom-usos') return cupomUsos(d, url.searchParams.get('codigo'));
   if (request.method !== 'POST') return json({ erro: 'op desconhecida' }, 400);
 
   const body = await request.json().catch(() => ({}));
@@ -31,6 +35,12 @@ export async function onRequest({ request, env }) {
   if (op === 'descricao') return descricao(d, body);
   if (op === 'venda') return venda(d, body);
   if (op === 'sync') return sync(env, d, body);
+  if (LOJA_POST[op]) {
+    await garantirLoja(request, env, d);
+    const r = await LOJA_POST[op](d, body, request, env);
+    esquecerLoja(); esquecerVitrine();
+    return r;
+  }
   return json({ erro: 'op desconhecida' }, 400);
 }
 
@@ -177,15 +187,21 @@ async function relatorio(d, request, env) {
   // beat vendido no site também (a pastilha dele já vira vendido sozinha).
   const mapa = indexar(beats);
   const { results: disp } = await d.prepare(
-    `SELECT t.title, t.bpm, t.mkey AS key, a.name AS tape FROM tracks t
+    `SELECT t.id, t.title, t.bpm, t.mkey AS key, a.name AS tape FROM tracks t
        JOIN artists a ON a.id = t.artist_id
-      WHERE a.tipo = 'tape' AND a.dl_beats = 0 AND t.kind = 'beat' AND t.tag = 'disponivel'`
+      WHERE a.tipo = 'tape' AND a.dl_beats = 0 AND t.kind = 'beat' AND t.tag = 'disponivel'
+      ORDER BY t.src_modified DESC`
   ).all();
 
   const semBotao = [];
+  const vistos = new Set();
   for (const t of disp || []) {
     if (achar(mapa, t)) continue;
-    semBotao.push({ title: t.title, tape: t.tape, bpm: t.bpm, key: t.key });
+    // o mesmo beat em duas tapes vira UM item na fila (publicar um resolve os dois)
+    const k = limpo(t.title) + '|' + (t.bpm || '') + '|' + (t.key || '');
+    if (vistos.has(k)) continue;
+    vistos.add(k);
+    semBotao.push({ id: t.id, title: t.title, tape: t.tape, bpm: t.bpm, key: t.key });
   }
 
   return json({
@@ -537,3 +553,184 @@ async function abaCatalogos(d, p, tipo) {
   }
   return out;
 }
+
+/* ---------- a loja: beats do site, destaque do hero e cupons (24/09/2026) ---------- */
+// Tudo que antes era editar o index.html ou o coupons.json e fazer push.
+
+async function loja(d, request, env) {
+  await garantirLoja(request, env, d);
+  const [beats, destaque, cupons] = await Promise.all([
+    lerBeats(d),
+    lerDestaque(d),
+    d.prepare('SELECT codigo, pct, preco_fixo, max_usos, usos, ativo, criado_em FROM cupons ORDER BY ativo DESC, criado_em DESC, codigo').all()
+  ]);
+  let generos = {}, preco = null;
+  try { const est = await lerEstatico(request, env); generos = est.generos; preco = est.preco; } catch (_) { /* segue sem rótulo */ }
+  return json({
+    beats: beats.map((b) => ({ ...b, slug: slug(b.name) })),
+    destaque,
+    cupons: cupons.results || [],
+    generos,
+    preco
+  });
+}
+
+async function cupomUsos(d, codigo) {
+  const c = String(codigo || '').trim().toUpperCase().slice(0, 30);
+  if (!c) return json({ erro: 'sem cupom' }, 400);
+  const { results } = await d.prepare(
+    'SELECT pagamento, valor, at FROM cupom_uso WHERE codigo = ? ORDER BY at DESC LIMIT 100'
+  ).bind(c).all();
+  return json({ codigo: c, usos: results || [] });
+}
+
+// Nome como o site escreve: caixa alta, um espaço entre as palavras.
+function nomeBeat(txt) {
+  const n = String(txt || '').replace(/\s+/g, ' ').trim().toLocaleUpperCase('pt-BR');
+  if (!n) return { erro: 'o beat precisa de nome' };
+  if (n.length > 60) return { erro: 'nome comprido demais (até 60 letras)' };
+  if (/[<>|\\]/.test(n)) return { erro: 'tira os símbolos < > | \\ do nome' };
+  if (!slug(n)) return { erro: 'o nome precisa ter pelo menos uma letra ou número' };
+  return { nome: n };
+}
+
+// 'f#min' -> 'F#m', 'Ebmaj' -> 'Ebmaj', 'c' -> 'C'. Vazio vale (tem beat sem tom).
+function tomBeat(txt) {
+  const t = String(txt || '').replace(/\s+/g, '').trim();
+  if (!t) return { tom: '' };
+  const m = t.match(/^([A-Ga-g])([#b]?)(m|min|minor|maj|major|M)?$/);
+  if (!m) return { erro: 'tom não reconhecido (ex.: Dm, F#m, Ebmaj)' };
+  const q = m[3] ? (/^(m|min|minor)$/.test(m[3]) ? 'm' : 'maj') : '';
+  return { tom: m[1].toUpperCase() + m[2] + q };
+}
+
+async function fichaValida(d, body, request, env, idAtual) {
+  const n = nomeBeat(body.name);
+  if (n.erro) return n;
+  const bpm = Number(body.bpm);
+  if (!Number.isInteger(bpm) || bpm < 40 || bpm > 300) return { erro: 'BPM entre 40 e 300' };
+  const t = tomBeat(body.key);
+  if (t.erro) return t;
+  let generos = {};
+  try { generos = (await lerEstatico(request, env)).generos; } catch (_) { generos = {}; }
+  const genre = String(body.genre || '');
+  // gênero é SEMPRE escolha do Bruno: sem ele, nada entra
+  if (!genre || !Object.prototype.hasOwnProperty.call(generos, genre)) return { erro: 'escolhe o gênero' };
+  const outros = (await lerBeats(d)).filter((b) => b.id !== idAtual);
+  const igual = outros.find((b) => slug(b.name) === slug(n.nome));
+  if (igual) return { erro: 'já tem um beat chamado ' + igual.name + ' no site' };
+  return { name: n.nome, bpm, key: t.tom, genre };
+}
+
+async function topoDaLista(d) {
+  const r = await d.prepare('SELECT MIN(ordem) m FROM beats').first();
+  return r && r.m !== null && r.m !== undefined ? Number(r.m) - 1 : 0;
+}
+
+async function beatPorId(d, id) {
+  const n = Number(id);
+  if (!Number.isInteger(n) || n <= 0) return null;
+  return d.prepare('SELECT * FROM beats WHERE id = ?').bind(n).first();
+}
+
+const LOJA_POST = {
+  async 'beat-publicar'(d, body, request, env) {
+    const f = await fichaValida(d, body, request, env, null);
+    if (f.erro) return json({ erro: f.erro }, 400);
+    const prox = await d.prepare('SELECT COALESCE(MAX(id), 0) + 1 AS n FROM beats').first();
+    const id = Number(prox.n);
+    const quando = new Date().toISOString();
+    await d.prepare(
+      `INSERT INTO beats (id, name, bpm, mkey, genre, sold, ordem, track_id, criado_em, mexido_em)
+       VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`
+    ).bind(id, f.name, f.bpm, f.key, f.genre, await topoDaLista(d),
+      body.track_id ? String(body.track_id).slice(0, 80) : null, quando, quando).run();
+    return json({ ok: true, id, name: f.name });
+  },
+
+  async 'beat-editar'(d, body, request, env) {
+    const b = await beatPorId(d, body.id);
+    if (!b) return json({ erro: 'beat não encontrado' }, 404);
+    const f = await fichaValida(d, body, request, env, b.id);
+    if (f.erro) return json({ erro: f.erro }, 400);
+    await d.prepare('UPDATE beats SET name = ?, bpm = ?, mkey = ?, genre = ?, mexido_em = ? WHERE id = ?')
+      .bind(f.name, f.bpm, f.key, f.genre, new Date().toISOString(), b.id).run();
+    return json({ ok: true, name: f.name });
+  },
+
+  async 'beat-vender'(d, body) {
+    const b = await beatPorId(d, body.id);
+    if (!b) return json({ erro: 'beat não encontrado' }, 404);
+    if (b.sold) return json({ ok: true });
+    const quando = new Date().toISOString();
+    await d.prepare("UPDATE beats SET sold = 1, sold_at = ?, sold_por = 'painel', unsold_at = NULL, mexido_em = ? WHERE id = ?")
+      .bind(quando, quando, b.id).run();
+    return json({ ok: true });
+  },
+
+  // Volta pra venda. Só com confirmação explícita: anunciar beat vendido é o pior erro daqui.
+  async 'beat-desvender'(d, body) {
+    if (body.confirmo !== true) return json({ erro: 'precisa confirmar' }, 400);
+    const b = await beatPorId(d, body.id);
+    if (!b) return json({ erro: 'beat não encontrado' }, 404);
+    if (!b.sold) return json({ ok: true });
+    const quando = new Date().toISOString();
+    await d.prepare('UPDATE beats SET sold = 0, sold_at = NULL, sold_por = NULL, unsold_at = ?, mexido_em = ? WHERE id = ?')
+      .bind(quando, quando, b.id).run();
+    return json({ ok: true });
+  },
+
+  async 'beat-topo'(d, body) {
+    const b = await beatPorId(d, body.id);
+    if (!b) return json({ erro: 'beat não encontrado' }, 404);
+    await d.prepare('UPDATE beats SET ordem = ?, mexido_em = ? WHERE id = ?')
+      .bind(await topoDaLista(d), new Date().toISOString(), b.id).run();
+    return json({ ok: true });
+  },
+
+  // Destaque do hero. id vazio = volta o rodízio semanal. ate vazio = sem prazo.
+  async destaque(d, body) {
+    const ate = String(body.ate || '');
+    if (ate && !/^\d{4}-\d{2}-\d{2}$/.test(ate)) return json({ erro: 'data inválida' }, 400);
+    let id = null;
+    if (body.id) {
+      const b = await beatPorId(d, body.id);
+      if (!b) return json({ erro: 'beat não encontrado' }, 404);
+      if (b.sold) return json({ erro: 'beat vendido não vai pro destaque' }, 400);
+      id = b.id;
+    }
+    await d.prepare("INSERT OR REPLACE INTO meta (chave, valor) VALUES ('destaque', ?)")
+      .bind(JSON.stringify({ id, ate: id ? ate : '' })).run();
+    return json({ ok: true });
+  },
+
+  async 'cupom-criar'(d, body) {
+    const codigo = String(body.codigo || '').trim().toUpperCase();
+    if (!/^[A-Z0-9]{3,30}$/.test(codigo)) return json({ erro: 'código com 3 a 30 letras ou números, sem espaço' }, 400);
+    const tipo = body.tipo === 'fixo' ? 'fixo' : body.tipo === 'pct' ? 'pct' : null;
+    if (!tipo) return json({ erro: 'escolhe desconto ou preço fixo' }, 400);
+    const valor = Number(String(body.valor || '').replace(',', '.'));
+    if (tipo === 'pct' && !(Number.isInteger(valor) && valor >= 1 && valor <= 100)) return json({ erro: 'desconto entre 1% e 100%' }, 400);
+    if (tipo === 'fixo' && !(valor >= 1 && valor <= 100000)) return json({ erro: 'preço fixo a partir de R$1' }, 400);
+    let max = body.max_usos;
+    if (max === '' || max === null || max === undefined) max = null;
+    else {
+      max = Number(max);
+      if (!Number.isInteger(max) || max < 1 || max > 100000) return json({ erro: 'limite de usos inválido' }, 400);
+    }
+    const ja = await d.prepare('SELECT 1 FROM cupons WHERE codigo = ?').bind(codigo).first();
+    if (ja) return json({ erro: 'já existe um cupom ' + codigo }, 400);
+    await d.prepare(
+      'INSERT INTO cupons (codigo, pct, preco_fixo, max_usos, usos, ativo, criado_em) VALUES (?, ?, ?, ?, 0, 1, ?)'
+    ).bind(codigo, tipo === 'pct' ? valor : null, tipo === 'fixo' ? Math.round(valor * 100) / 100 : null, max,
+      new Date().toISOString()).run();
+    return json({ ok: true, codigo });
+  },
+
+  async 'cupom-ativo'(d, body) {
+    const codigo = String(body.codigo || '').trim().toUpperCase().slice(0, 30);
+    const r = await d.prepare('UPDATE cupons SET ativo = ? WHERE codigo = ?').bind(body.ativo ? 1 : 0, codigo).run();
+    if (!Number((r && r.meta && r.meta.changes) || 0)) return json({ erro: 'cupom não encontrado' }, 404);
+    return json({ ok: true });
+  }
+};

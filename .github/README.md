@@ -39,12 +39,14 @@ O GitHub recebe **só o que o site e o backend usam**. O apoio que precisa exist
 │   └── (mídia do "Por dentro do estúdio": studio-hero.jpg, depo-*, sessao.mp4, posters)
 │
 ├── functions/                     # Backend (Cloudflare Pages Functions) — GERA os e-mails e o contrato
-│   ├── coupons.json               # Cupons de desconto (não é servido publicamente)
+│   ├── index.js                   # A página inicial: põe a lista de beats do banco (D1) dentro do index.html
+│   ├── coupons.json               # Retrato antigo dos cupons: só serviu pra importação (24/09/2026)
+│   ├── _lib/loja.js               # A loja no D1: beats, cupons, destaque do hero, importação, reserva
 │   └── api/
-│       ├── create-payment.js      # Pagamento (cartão) + e-mails "compra recebida" e do comprador + contrato
+│       ├── create-payment.js      # Pagamento + e-mails + contrato; recusa beat já vendido e cupom esgotado
 │       ├── check-payment.js       # Consulta status de um pagamento
-│       ├── validate-coupon.js     # Valida cupom digitado no carrinho (lê coupons.json via GitHub API)
-│       └── payment-webhook.js     # Webhook: aprovação (PIX) + e-mails "compra confirmada" e do comprador
+│       ├── validate-coupon.js     # Valida cupom digitado no carrinho (tabela cupons do D1)
+│       └── payment-webhook.js     # Webhook: aprovação + e-mails (PIX) + vendido e uso de cupom no D1
 │
 ├── docs/                          # Documentação do projeto
 │   ├── DESIGN.md                  # Sistema de marca (paleta, tipografia, tom)
@@ -139,12 +141,11 @@ Comprador preenche dados → create-payment.js → Mercado Pago
                            Email ao comprador              Email ao produtor
                            (confirmação + prazos)          (resumo + contrato em anexo)
                                     ↓
-                           GitHub API: commits automáticos
-                           — index.html: beat marcado como sold:true
-                           — functions/coupons.json: uses do cupom +1
+                           Banco (D1), sem GitHub e sem redeploy:
+                           — tabela beats: beat vendido
+                           — tabela cupom_uso: um uso por pagamento
                                     ↓
-                           Cloudflare Pages: redeploy automático
-                           (catálogo atualizado em produção)
+                           O site mostra o vendido em até 1 minuto
 ```
 
 > **Cartão:** emails disparados no `create-payment.js` (resposta síncrona).
@@ -162,7 +163,7 @@ Configuradas no painel do Cloudflare Pages → **Settings → Environment variab
 | `RESEND_API_KEY` | API Key do [Resend](https://resend.com) para envio de emails |
 | `NOTIFY_EMAIL` | Email do produtor que recebe as notificações de venda |
 | `NOTIFY_FROM` | Email remetente (ex: `rideblan33@caramujorecords.com.br`) |
-| `GITHUB_TOKEN` | Personal Access Token do GitHub com permissão `Contents: Read & Write` |
+| `GITHUB_TOKEN` | Token do GitHub. Hoje só dispara a conversão pelo painel (Actions) e leu o coupons.json na importação |
 
 ---
 
@@ -177,52 +178,37 @@ git commit -m "descrição da mudança"
 git push
 ```
 
-O webhook de pagamento também dispara commits automáticos (marcação de beats vendidos e controle de cupons), o que aciona um novo redeploy.
+Desde 24/09/2026 o webhook NÃO commita mais nada: vendido e cupom moram no banco. Push só quando você mexe no código.
 
 > **CSP (`_headers`):** script externo só entra se estiver na lista do `script-src`. Hoje a lista é Mercado Pago, EmailJS (jsdelivr) e o Web Analytics do Cloudflare (`static.cloudflareinsights.com`, com `cloudflareinsights.com` no `connect-src`). CSP quebra calada: depois de mexer, testar o checkout de ponta a ponta e olhar o console.
 
 ---
 
-## Adicionando Beats ao Catálogo
+## Beats do site e cupons (painel > Vitrine)
 
-Os beats são definidos diretamente no `index.html`, no array `BEATS`:
+Desde 24/09/2026 a lista de beats, os cupons e o destaque do hero moram no banco (D1),
+e tudo se mexe no **painel > Vitrine**:
 
-```js
-{id:137, name:'NOME DO BEAT', bpm:140, key:'Am', genre:'trap', sold:false},
-```
+- **Beats:** editar nome/BPM/tom/gênero, marcar vendido, desfazer vendido (pede
+  confirmação), subir pro topo, pôr no destaque do hero (com data opcional). Mostra
+  também os beats sem áudio e o motivo.
+- **Fila:** beat disponível numa beat tape paga que ainda não está no site. **Publicar**
+  pede o gênero (obrigatório) e põe o beat no topo da lista.
+- **Cupons:** criar (% de desconto ou preço fixo, com ou sem limite de usos), pausar,
+  ver cada uso (data, valor e pagamento).
 
-| Campo | Descrição |
-|---|---|
-| `id` | Identificador único (não repetir) |
-| `name` | Nome do beat (usado na busca e no contrato) |
-| `bpm` | BPM do beat |
-| `key` | Tom (ex: `Am`, `Ebm`) |
-| `genre` | Um dos: `trap` `boombap` `plug` `hoodtrap` `experimental` `hard` `detroit` `drumless` `funk` `pluggnb` `bounce` `nomelody` `drill` |
-| `sold` | `false` disponível · `true` vendido (fica visível, riscado e sem compra) |
+Como a página recebe a lista: `functions/index.js` pega o `index.html` e troca o bloco
+`const BEATS=[...]` pela lista do banco a cada visita (cópia de 1 minuto na memória).
+O `const BEATS` escrito no arquivo não manda mais em nada: serviu pra importação da
+primeira vez. Banco fora do ar: entra a última lista boa (cache da Cloudflare, 30 dias);
+sem cópia nenhuma, a página sai com a lista vazia e o aviso de fora do ar.
 
-O áudio não vai aqui: a `/api/vitrine` casa o beat pelo nome, BPM e tom com o MP3 que o conversor guardou no R2. Beat sem MP3 não aparece na lista. O webhook marca `sold:true` procurando `{id:N, name:'NOME'...sold:false`, então manter essa ordem dos campos.
+O áudio segue igual: a `/api/vitrine` casa o beat pelo nome, BPM e tom com o MP3 que o
+conversor guardou no R2. Renomeou o beat no painel? Renomeia no Drive também.
 
----
-
-## Cupons de Desconto
-
-Definidos em `functions/coupons.json` (os códigos não aparecem no código-fonte da página; o front valida via `POST /api/validate-coupon`):
-
-```json
-{
-  "CODIGO": { "pct": 20, "maxUses": 10, "uses": 0 },
-  "FIXO":   { "fixedPrice": 99, "maxUses": 1, "uses": 0 }
-}
-```
-
-| Campo | Descrição |
-|---|---|
-| `pct` | Desconto percentual sobre o subtotal |
-| `fixedPrice` | Alternativa ao `pct`: trava o total no valor definido |
-| `uses` | Usos atuais (atualizado automaticamente via webhook, em commit próprio) |
-| `maxUses` | Limite de usos (`null` para ilimitado) |
-
-> O arquivo fica dentro de `functions/` de propósito: o Cloudflare Pages não serve essa pasta como asset estático, então os códigos não vazam pela URL. Depois de qualquer deploy, conferir que `caramujorecords.com.br/functions/coupons.json` responde 404.
+**Melhoria futura mapeada:** o valor cobrado ainda vem do navegador. Dá pra refazer a
+conta no servidor (beat, stems, pacote, serviço, cupom). Mexe fundo no checkout: só com
+compra de teste PIX + cartão.
 
 ---
 
@@ -433,12 +419,12 @@ baixa de graça não está à venda. É uma chave só, a do download, no painel.
 pra baixar.
 
 O botão só aparece quando o beat existe na vitrine do site e continua à venda lá. Quem faz
-essa ponte é `functions/_lib/vitrine.js`: ele lê a lista `const BEATS` do próprio index.html
-servido (`env.ASSETS`, sem sair pra internet), guarda por 10 minutos e casa cada faixa pelo
+essa ponte é `functions/_lib/vitrine.js`: ele lê a lista de beats do banco (tabela `beats`),
+guarda por 1 minuto e casa cada faixa pelo
 mesmo cruzamento das tapes (`functions/_lib/casar.js`: título limpo, BPM com 1 de folga, tom
 enarmônico). Nada de de-para escrito na mão.
 
-No painel, dentro do portfólio, o card **Vitrine do site** mostra quantos beats do site já
+No painel, na tela **Vitrine** (desde 24/09/2026; antes era um card em Beat tapes), aparece quantos beats do site já
 têm o áudio guardado no R2, quais não acharam par, e a **fila de postagem**: beat com pastilha
 disponível numa tape que ainda não existe na vitrine do site. Fila não é alarme, é o que falta
 subir. Tape de graça e beat vendido no site ficam fora dessa conta. Pra cada beat sem áudio ele diz o motivo, que é o que vira conserto no Drive:

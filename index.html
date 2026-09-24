@@ -2075,7 +2075,10 @@ document.addEventListener('mousemove',e=>{
   setTimeout(()=>{curR.style.left=e.clientX+'px';curR.style.top=e.clientY+'px';},90);
 });
 
-/* beats data */
+/* beats data
+   Desde 24/09/2026 a lista mora no banco (painel > Vitrine). A cada visita o
+   servidor (functions/index.js) troca esta lista pela do banco. Mexer aqui NÃO
+   muda o site: ela só serviu pra importação da primeira vez. */
 const BEATS=[
   {id:135, name:'GANA',  bpm:140,  key:'Dm',  genre:'trap',  sold:false},
   {id:136, name:'FUNERAL',  bpm:168,  key:'Gm',  genre:'hard',  sold:false},
@@ -3393,7 +3396,8 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
       if(ob&&!ob.sold&&noPrazo) return FEATURED_OVERRIDE_ID;
     }
     var pool=BEATS.filter(function(b){return !b.sold;}).map(function(b){return b.id;});
-    if(!pool.length) pool=[BEATS[0].id];
+    if(!pool.length && BEATS.length) pool=[BEATS[0].id];
+    if(!pool.length) return null;          // loja fora do ar: lista vazia
     var wk=Math.floor(Date.now()/6048e5); // nº da semana; troca 1x por semana
     return pool[wk%pool.length];
   })();
@@ -3652,7 +3656,7 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
   function renderFeatured(){
     try{
       var b=BEATS.find(function(x){return x.id===FEATURED_BEAT_ID;});
-      if(!b) return;
+      if(!b){ var hw=document.querySelector('.hero-week'); if(hw) hw.style.display='none'; return; }
       var gl=glab(b);
       var nm=$('hwName'); if(nm) nm.textContent=b.name;
       var ch=$('hwChips');
@@ -3719,7 +3723,7 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
     var m={};
     beats.forEach(function(b){ m[String(b.id)]={mp3:b.mp3,capa:b.capa?b.capa+'?p':null,capaG:b.capa,dur:b.dur}; });
     window.__VIT=m; window.__VIT_OK=true;
-    var av=$('foraAr'); if(av) av.remove();
+    var av=$('foraAr'); if(av && !av.dataset.lista) av.remove();
     if(typeof renderCards==='function') renderCards();
     renderFeatured();
     repintar();
@@ -3727,14 +3731,21 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
   function avisoForaDoAr(){
     if($('foraAr')) return;
     var lista=$('beatCards'); if(!lista||!lista.parentNode) return;
+    // sem lista (o banco caiu e não tinha cópia guardada) o texto muda
+    var semLista=!!window.__LOJA_FORA;
     var d=document.createElement('div'); d.className='fora-ar'; d.id='foraAr'; d.setAttribute('role','status');
+    if(semLista) d.dataset.lista='1';
     d.innerHTML='<img src="/assets/brand/selo-creme.svg" alt="" width="62" height="70">'
-      +'<div><p class="codigo">Fora do ar</p><h3>O player volta em instantes</h3>'
-      +'<p class="texto">Os beats estão aqui embaixo, mas o áudio não carregou agora. Tenta de novo daqui a pouco ou chama o @rideblan33 no Instagram.</p>'
+      +'<div><p class="codigo">Fora do ar</p><h3>'+(semLista?'Os beats voltam em instantes':'O player volta em instantes')+'</h3>'
+      +'<p class="texto">'+(semLista?'A lista de beats não carregou agora.':'Os beats estão aqui embaixo, mas o áudio não carregou agora.')+' Tenta de novo daqui a pouco ou chama o @rideblan33 no Instagram.</p>'
       +'<div class="saidas"><button class="fogo" type="button" id="foraArDeNovo">Tentar de novo</button>'
       +'<a class="fantasma" href="https://ig.me/m/rideblan33" target="_blank" rel="noopener">Instagram</a></div></div>';
     lista.parentNode.insertBefore(d,lista);
-    var b=$('foraArDeNovo'); if(b) b.addEventListener('click',function(){ b.textContent='Carregando…'; carregarVitrine(function(){ b.textContent='Tentar de novo'; }); });
+    var b=$('foraArDeNovo'); if(b) b.addEventListener('click',function(){
+      b.textContent='Carregando…';
+      if(semLista){ location.reload(); return; }
+      carregarVitrine(function(){ b.textContent='Tentar de novo'; });
+    });
   }
   function carregarVitrine(depoisDeFalhar){
     if(typeof fetch!=='function') return;      // navegador muito velho: loja segue de pé
@@ -3833,6 +3844,7 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
     initStudioVideos();
     ligarSeek($('npSeek'));
     if($('npPlay')) $('npPlay').innerHTML=ICO_P;
+    if(window.__LOJA_FORA) avisoForaDoAr();
     carregarVitrine();
   }
   if(document.readyState!=='loading')boot();else document.addEventListener('DOMContentLoaded',boot);
@@ -3884,6 +3896,8 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
   }
 
   function restaurar(){
+    // loja fora do ar (lista vazia): o carrinho salvo fica guardado pra depois
+    if(!BEATS.length) return;
     var bruto=null;
     try{ bruto=localStorage.getItem(CHAVE); }catch(_){ return; }
     if(!bruto) return;
