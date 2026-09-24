@@ -574,6 +574,18 @@ O `/painel` abre com 3 botões. **Analytics** (`assets/painel/analytics.js`, dad
 
 ---
 
+## Se a API cair (plano B)
+
+Três camadas, da mais comum pra mais rara:
+
+1. **Reserva na Cloudflare.** Toda lista boa da `/api/vitrine` fica guardada no cache da Cloudflare. Se o banco falhar, a API devolve essa reserva (`reserva: true`) e ninguém percebe.
+2. **Cópia no navegador.** Quem já visitou o site tem a última lista guardada (`localStorage`, chave `caramujo-vitrine`). Se a API nem responder, o player usa essa cópia.
+3. **Aviso.** Quem nunca visitou e pegou a queda vê o aviso "Fora do ar" em cima da lista, com a cara da 404 e o link do Instagram. A lista de beats aparece mesmo assim.
+
+Páginas (link de artista, tape, beat, painel) que quebrarem mostram a página de erro da casa (`functions/_lib/erro.js`, montada a partir do `404.html`) pelo `functions/_middleware.js`. API, áudio, capa e download passam direto por ele.
+
+O que nenhum plano B cobre: o limite diário do plano gratuito (100 mil chamadas, erro 1027). Aí tudo que é função para até as 21h, checkout junto. A saída é o Workers Paid (US$ 5/mês).
+
 ## Contato
 
 **@rideblan33** · [contato@caramujorecords.com.br](mailto:contato@caramujorecords.com.br) · São Carlos, SP — Desde 2018

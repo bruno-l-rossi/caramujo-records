@@ -469,7 +469,7 @@ async function abaCatalogos(d, p, tipo) {
 
   // todas as faixas prontas (beats nas tapes; beats e músicas nos artistas) com os plays do período
   const faixas = (await d.prepare(
-    `SELECT t.id, t.title, a.name AS onde, COUNT(e.id) n
+    `SELECT t.id, t.title, t.kind, a.name AS onde, COUNT(e.id) n
        FROM tracks t JOIN artists a ON a.id = t.artist_id
        LEFT JOIN events e ON e.track_id = t.id AND e.artist_id = a.id AND e.kind = 'play' AND e.at >= ? AND e.at < ?
       WHERE a.tipo = ? AND t.ready = 1 ${tipo === 'tape' ? "AND t.kind = 'beat'" : ''}

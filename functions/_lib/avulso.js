@@ -2,13 +2,17 @@
 
 import { db } from './db.js';
 import { pagina, faixa } from './page.js';
+import { paginaErro } from './erro.js';
 
 export async function avulso(kind, { params, request, env }) {
   const c = String(params.codigo || '').toLowerCase();
   const d = await db(env);
 
   const link = await d.prepare('SELECT * FROM links WHERE code = ? AND kind = ?').bind(c, kind).first();
-  if (!link) return new Response('link nao encontrado', { status: 404 });
+  if (!link) return paginaErro(request, env, 404, {
+    titulo: 'Esse link não abre',
+    texto: 'Ou ele veio cortado, ou o catálogo mudou de endereço. Pede o link de novo pro {ig}.'
+  });
 
   const ids = link.track_ids.split(',').filter(Boolean);
   const marcas = ids.map(() => '?').join(',');
@@ -19,7 +23,11 @@ export async function avulso(kind, { params, request, env }) {
   ).bind(...ids).all();
 
   const tracks = (results || []).map(faixa);
-  if (!tracks.length) return new Response('essas faixas sairam do ar', { status: 404 });
+  if (!tracks.length) return paginaErro(request, env, 404, {
+    codigo: 'Saiu do catálogo',
+    titulo: 'Essas faixas saíram do ar',
+    texto: 'O link existe, mas as faixas dele não estão mais no catálogo. Pede o link novo pro {ig}.'
+  });
 
   const url = new URL(request.url);
   const umaSo = tracks.length === 1;

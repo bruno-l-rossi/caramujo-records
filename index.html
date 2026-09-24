@@ -1113,6 +1113,35 @@ html,body{overflow-x:hidden;}
   .pe-dir #npPreco .rotulo{display:none}          /* abaixo de 360px: só o ícone (aceso quando está no carrinho) */
   .pe-dir #npPreco{padding:.45rem .55rem}
 }
+
+/* ══ NOVO v32 — serviços numa linha, aviso de fora do ar ══════════════════
+   Computador: o subtítulo dos serviços cabe numa linha só (com o 12x no fim). */
+@media(min-width:1000px){#services .s-sub{max-width:none}}
+/* botão do carrinho: ícone de + (ou ✓ quando já está no carrinho) também no celular */
+.preco svg{flex:none}
+@media(max-width:760px){#beatCards .preco{gap:6px;padding:.5rem .6rem}#beatCards .preco svg{display:block;width:14px;height:14px}}
+@media(max-width:400px){#beatCards .preco{gap:5px;padding:.5rem .5rem}#beatCards .preco svg{width:13px;height:13px}}
+/* abaixo de 360px, o beat que já está no carrinho mostra só o ✓ (igual à barra), pra ficha não quebrar */
+@media(max-width:359px){#beatCards .preco.on .rotulo{display:none}#beatCards .preco.on{min-width:44px}}
+/* Se o player não carregar e o navegador não tiver cópia guardada, aparece
+   este aviso em cima da lista, com a cara da 404 do site. */
+.fora-ar{border:1px solid var(--wire);background:rgba(20,17,13,.6);padding:1.6rem 1.4rem 1.5rem;margin:0 0 1rem;
+  display:flex;gap:1.4rem;align-items:center}
+.fora-ar img{width:62px;height:auto;opacity:.85;flex:none}
+.fora-ar .codigo{font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.24em;text-transform:uppercase;color:var(--clay);margin:0}
+.fora-ar h3{font-family:var(--serif);font-weight:500;font-size:1.7rem;line-height:1.05;color:var(--cream);margin:.35rem 0 0}
+.fora-ar p.texto{font-size:.86rem;line-height:1.6;color:var(--read);margin:.6rem 0 0;max-width:52ch}
+.fora-ar .saidas{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.1rem}
+.fora-ar .saidas a,.fora-ar .saidas button{font-family:var(--serif);font-size:.95rem;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;
+  padding:.6rem 1.3rem;min-height:44px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background .18s,border-color .18s,color .18s}
+.fora-ar .fogo{background:var(--ember);color:var(--cream);border:1px solid var(--ember)}
+.fora-ar .fogo:hover{background:var(--fire);border-color:var(--fire)}
+.fora-ar .fantasma{background:transparent;color:var(--bone);border:1px solid var(--wire)}
+.fora-ar .fantasma:hover{border-color:var(--clay);color:var(--cream)}
+@media(max-width:600px){.fora-ar{flex-direction:column;align-items:flex-start;gap:.8rem;padding:1.2rem 1.1rem}.fora-ar img{width:38px}
+  .fora-ar h3{font-size:1.45rem}.fora-ar p.texto{font-size:.82rem}
+  .fora-ar .saidas a,.fora-ar .saidas button{font-size:.82rem;letter-spacing:.08em;padding:.55rem .9rem;flex:1 1 auto}}
 </style>
 
 <!-- ═══ EMAILJS (formulário de contato) ══════════════
@@ -2270,7 +2299,9 @@ function filt(g,btn){
 
 const ICO_PLAY='<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M7 4.5v15l13-7.5z"/></svg>';
 const ICO_PAUSE='<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="6" y="4.5" width="4" height="15"/><rect x="14" y="4.5" width="4" height="15"/></svg>';
-const ICO_CART='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="9.5" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3.5h2.3l2.4 11.1a1.8 1.8 0 001.8 1.4h7.6a1.8 1.8 0 001.8-1.4L21.5 7.4H5.6"/></svg>';
+// carrinho com + (Bruno, 27/09): o botão pede a ação, não parece etiqueta de preço
+const ICO_CART='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="9.5" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2.5 3.5h2.3l2.4 11.1a1.8 1.8 0 001.8 1.4h7.6a1.8 1.8 0 001.8-1.4L21.5 7.4H5.6"/><path d="M14.5 .8v5.4M11.8 3.5h5.4" stroke-width="2"/></svg>';
+const ICO_OK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M5 12.5l4.2 4.2L19 7"/></svg>';
 function fmtDur(s){s=Math.max(0,Math.round(s||0));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
 
 const BEATS_PER_PAGE = 10;
@@ -2320,10 +2351,10 @@ function renderCards(){
         <div class="nome">${b.name}</div>
         <div class="ficha"><em>${genreLabel}</em>${resto?'  ·  '+resto:''}</div>
       </div>
-      <span class="dur">${fmtDur(f.dur)}</span>
+      <span class="dur">${f.dur?fmtDur(f.dur):''}</span>
       ${b.sold
         ? `<span class="vendido">Vendido</span>`
-        : `<button class="preco${inBeat?' on':''}" id="bb${b.id}" type="button" onclick="event.stopPropagation();toggleBeat(${b.id},false)">${ICO_CART}<span class="rotulo">${inBeat?'No carrinho':'R$'+PRICE_BEAT}</span></button>`}
+        : `<button class="preco${inBeat?' on':''}" id="bb${b.id}" type="button" onclick="event.stopPropagation();toggleBeat(${b.id},false)">${inBeat?ICO_OK:ICO_CART}<span class="rotulo">${inBeat?'No carrinho':'R$'+PRICE_BEAT}</span></button>`}
       <i class="corrida"></i>
     </div>`;
   }).join('');
@@ -2388,7 +2419,7 @@ function syncBeatButtons(){
     const id=Number(m[1]);
     const inBeat=cart.some(c=>c.beatId===id&&c.stems===false);
     btn.classList.toggle('on',inBeat);
-    btn.innerHTML=`${ICO_CART}<span class="rotulo">${inBeat?'No carrinho':'R$'+PRICE_BEAT}</span>`;
+    btn.innerHTML=`${inBeat?ICO_OK:ICO_CART}<span class="rotulo">${inBeat?'No carrinho':'R$'+PRICE_BEAT}</span>`;
   });
 }
 
@@ -3560,7 +3591,7 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
     var no=false; try{ no=cart.some(function(c){return c.beatId===b.id&&c.stems===false;}); }catch(_){}
     pr.classList.toggle('on',no);
     pr.setAttribute('aria-label',no?'Tirar '+b.name+' do carrinho':'Pôr '+b.name+' no carrinho');
-    pr.innerHTML=ICO_CART+'<span class="rotulo">'+(no?'No carrinho':'R$'+PRICE_BEAT)+'</span>';
+    pr.innerHTML=(no?ICO_OK:ICO_CART)+'<span class="rotulo">'+(no?'No carrinho':'R$'+PRICE_BEAT)+'</span>';
   };
   window.npAddFeatured=function(){ try{toggleBeat(FEATURED_BEAT_ID,false);}catch(_){} };
 
@@ -3678,16 +3709,48 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
   (function(){var st=document.querySelector('.studio-strip');if(!st||!('IntersectionObserver'in window))return;var figs=st.querySelectorAll('.studio-ph');if(figs.length<2)return;var first=figs[0],last=figs[figs.length-1];var pv=document.querySelector('.studio-nav.prev'),nx=document.querySelector('.studio-nav.next');var io=new IntersectionObserver(function(ents){ents.forEach(function(en){if(en.target===first&&pv)pv.style.display=en.isIntersecting?'none':'';if(en.target===last&&nx)nx.style.display=en.isIntersecting?'none':'';});},{root:st,threshold:0.6});io.observe(first);io.observe(last);})();
 
   /* ── a lista de beats com o endereço do MP3 ── */
-  function carregarVitrine(){
+  // Plano B (26/09/2026): a última lista boa fica guardada no navegador. Se a
+  // API falhar (bug num deploy, banco fora do ar, limite do dia), quem já
+  // visitou continua ouvindo com essa cópia. Quem nunca visitou vê o aviso.
+  var GUARDA_VIT='caramujo-vitrine';
+  function aplicaVitrine(beats){
+    var m={};
+    beats.forEach(function(b){ m[String(b.id)]={mp3:b.mp3,capa:b.capa?b.capa+'?p':null,capaG:b.capa,dur:b.dur}; });
+    window.__VIT=m; window.__VIT_OK=true;
+    var av=$('foraAr'); if(av) av.remove();
+    if(typeof renderCards==='function') renderCards();
+    renderFeatured();
+    repintar();
+  }
+  function avisoForaDoAr(){
+    if($('foraAr')) return;
+    var lista=$('beatCards'); if(!lista||!lista.parentNode) return;
+    var d=document.createElement('div'); d.className='fora-ar'; d.id='foraAr'; d.setAttribute('role','status');
+    d.innerHTML='<img src="/assets/brand/selo-creme.svg" alt="" width="62" height="70">'
+      +'<div><p class="codigo">Fora do ar</p><h3>O player volta em instantes</h3>'
+      +'<p class="texto">Os beats estão aqui embaixo, mas o áudio não carregou agora. Tenta de novo daqui a pouco ou chama o @rideblan33 no Instagram.</p>'
+      +'<div class="saidas"><button class="fogo" type="button" id="foraArDeNovo">Tentar de novo</button>'
+      +'<a class="fantasma" href="https://ig.me/m/rideblan33" target="_blank" rel="noopener">Instagram</a></div></div>';
+    lista.parentNode.insertBefore(d,lista);
+    var b=$('foraArDeNovo'); if(b) b.addEventListener('click',function(){ b.textContent='Carregando…'; carregarVitrine(function(){ b.textContent='Tentar de novo'; }); });
+  }
+  function carregarVitrine(depoisDeFalhar){
     if(typeof fetch!=='function') return;      // navegador muito velho: loja segue de pé
-    fetch('/api/vitrine').then(function(r){return r.json();}).then(function(j){
-      var m={};
-      (j.beats||[]).forEach(function(b){ m[String(b.id)]={mp3:b.mp3,capa:b.capa?b.capa+'?p':null,capaG:b.capa,dur:b.dur}; });
-      window.__VIT=m; window.__VIT_OK=true;
+    var ctl=null; try{ ctl=new AbortController(); setTimeout(function(){ try{ctl.abort();}catch(_){} },9000); }catch(_){ ctl=null; }
+    fetch('/api/vitrine',ctl?{signal:ctl.signal}:undefined).then(function(r){ if(!r.ok) throw new Error('vitrine '+r.status); return r.json(); }).then(function(j){
+      if(!j||!j.beats||!j.beats.length) throw new Error('vitrine vazia');
+      try{ localStorage.setItem(GUARDA_VIT,JSON.stringify({at:Date.now(),beats:j.beats})); }catch(_){}
+      aplicaVitrine(j.beats);
+    }).catch(function(){
+      var c=null; try{ c=JSON.parse(localStorage.getItem(GUARDA_VIT)||'null'); }catch(_){}
+      if(c&&c.beats&&c.beats.length){ aplicaVitrine(c.beats); return; }
+      window.__VIT_OK=false;
+      // a lista só desenhava depois da API; sem ela, ficava vazia. Agora desenha
+      // todos os beats (loja de pé, dá pra comprar) com o aviso em cima.
       if(typeof renderCards==='function') renderCards();
-      renderFeatured();
-      repintar();
-    }).catch(function(){ window.__VIT_OK=false; });
+      avisoForaDoAr();
+      if(typeof depoisDeFalhar==='function') depoisDeFalhar();
+    });
   }
 
 

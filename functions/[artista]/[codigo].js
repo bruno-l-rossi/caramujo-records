@@ -1,5 +1,6 @@
 // A página do artista: caramujorecords.com.br/nome-do-artista/codigo
 
+import { paginaErro } from '../_lib/erro.js';
 import { db } from '../_lib/db.js';
 import { pagina, faixa } from '../_lib/page.js';
 import { vitrine, indexar, achar } from '../_lib/vitrine.js';
@@ -20,9 +21,9 @@ export async function onRequestGet({ params, request, env }) {
 
   // a prateleira interna da vitrine não é catálogo de ninguém: não abre página
   if (!artist || artist.code !== codigo || artist.tipo === 'vitrine') {
-    return new Response(semLink(), {
-      status: 404,
-      headers: { 'content-type': 'text/html; charset=utf-8' }
+    return paginaErro(request, env, 404, {
+      titulo: 'Esse link não abre',
+      texto: 'Ou ele veio cortado, ou o catálogo mudou de endereço. Pede o link de novo pro {ig}.'
     });
   }
 
@@ -78,17 +79,3 @@ export async function onRequestGet({ params, request, env }) {
   });
 }
 
-function semLink() {
-  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Link nao encontrado · Caramujo Records</title>
-<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-background:#000;color:#fff;font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;
-text-align:center;padding:24px}h1{font-size:22px;font-weight:600;margin:0 0 10px}
-p{color:#8a8a8a;font-size:15px;line-height:1.5;margin:0 0 22px;max-width:340px}
-a{color:#fff;font-size:14px}</style></head><body><div>
-<h1>Esse link não abre</h1>
-<p>Ou ele veio cortado, ou o catálogo mudou de endereço. Pede o link de novo pro rideblan.</p>
-<a href="https://caramujorecords.com.br">caramujorecords.com.br</a>
-</div></body></html>`;
-}

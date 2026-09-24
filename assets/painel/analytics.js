@@ -16,6 +16,7 @@
     '.an-seg{display:flex;background:#111;border:1px solid var(--borda);border-radius:999px;padding:3px}',
     '.an-seg button{border:0;background:transparent;color:var(--ink3);font-size:13.5px;font-weight:500;padding:8px 14px;border-radius:999px;cursor:pointer}',
     '.an-seg button[aria-pressed="true"]{background:#fff;color:#000}',
+    '.an-dir{margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px}',
     '.an-datas{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink3)}',
     '.an-datas input{background:var(--campo);border:1px solid var(--borda);border-radius:10px;color:var(--ink);padding:7px 9px;font-size:13px;color-scheme:dark}',
     '.an-corpo{transition:opacity .2s}',
@@ -56,6 +57,8 @@
     '.an-tab td{text-align:right;padding:9px 0 9px 10px;border-bottom:1px solid #161616;font-variant-numeric:tabular-nums;color:var(--ink2);white-space:nowrap}',
     '.an-tab td:first-child{color:var(--ink);white-space:normal;overflow-wrap:anywhere}',
     '.an-tab td:first-child small{display:block;color:var(--ink4);font-size:11.5px}',
+    '.an-tag{display:inline-block;vertical-align:1px;margin-left:8px;padding:1px 7px;border:1px solid var(--borda);border-radius:999px;font-size:10.5px;font-weight:500;letter-spacing:.02em;color:var(--ink3);white-space:nowrap}',
+    '.an-tag.beat{border-color:rgba(184,138,58,.55);color:#d6b27a}',
     '.an-rolar{overflow-x:auto}',
     '.an-barras{display:flex;flex-direction:column;gap:12px}',
     '.an-barra{display:grid;grid-template-columns:150px 1fr;align-items:center;gap:10px}',
@@ -337,7 +340,7 @@
     if (sub) b.appendChild(el('p', 'an-sub', sub));
     if (!linhas.length) { b.appendChild(el('p', 'an-sub', opts.vazio || 'Nada nesse período.')); b.__filtra = function () {}; return b; }
     var limite = opts.limite || 0, MAX_BUSCA = 50;
-    var chaves = linhas.map(function (l) { return normal(Array.isArray(l[0]) ? l[0].join(' ') : l[0]); });
+    var chaves = linhas.map(function (l) { return normal(Array.isArray(l[0]) ? l[0].slice(0, 2).join(' ') : l[0]); });
     if (opts.busca) b.appendChild(campoBusca(opts.busca, function (q) { b.__filtra(q); }));
     var box = el('div', 'an-rolar'), t = el('table', 'an-tab'), mais = el('p', 'an-mais');
     var cab = el('tr'); colunas.forEach(function (c) { cab.appendChild(el('th', null, c)); });
@@ -345,7 +348,12 @@
       var tr = el('tr');
       l.forEach(function (c, i) {
         var td = el('td');
-        if (i === 0 && Array.isArray(c)) { td.appendChild(document.createTextNode(c[0])); td.appendChild(el('small', null, c[1])); }
+        if (i === 0 && Array.isArray(c)) {
+          td.appendChild(document.createTextNode(c[0]));
+          // 3º item = etiqueta (Beat / Música), pra separar faixas de mesmo nome
+          if (c[2]) td.appendChild(el('span', 'an-tag' + (c[2] === 'Beat' ? ' beat' : ''), c[2]));
+          td.appendChild(el('small', null, c[1]));
+        }
         else td.textContent = c;
         tr.appendChild(td);
       });
@@ -474,7 +482,7 @@
       j.lista.map(function (t) { return [t.name, num(t.open), num(t.pessoas), num(t.play), num(t.download), ult(t.ultima)]; }),
       { busca: 'Buscar artista', limite: 10, vazio: 'Nenhum artista convertido ainda.' }));
     corpo.appendChild(tabela('Faixas', 'Plays no período. Todas as faixas, inclusive as zeradas.', ['Faixa', 'Plays'],
-      j.faixas.map(function (f) { return [[f.title, f.onde], num(f.n)]; }), { busca: 'Buscar faixa ou artista', limite: 10 }));
+      j.faixas.map(function (f) { return [[f.title, f.onde, f.kind === 'beat' ? 'Beat' : 'Música'], num(f.n)]; }), { busca: 'Buscar faixa ou artista', limite: 10 }));
   }
 
   /* ---------- montagem ---------- */
@@ -515,7 +523,9 @@
           puxa();
         });
       });
-      filtros.appendChild(abas); filtros.appendChild(per); filtros.appendChild(datas);
+      // período e datas no canto direito, alinhados com o fim dos gráficos
+      var dir = el('div', 'an-dir'); dir.appendChild(datas); dir.appendChild(per);
+      filtros.appendChild(abas); filtros.appendChild(dir);
       raiz.appendChild(filtros);
       var legenda = el('div', 'an-periodo'); raiz.appendChild(legenda);
       var corpo = el('div', 'an-corpo'); raiz.appendChild(corpo);

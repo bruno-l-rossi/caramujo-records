@@ -16,9 +16,53 @@ export async function onRequestGet({ request, env }) {
 }
 
 // A lista pronta (beat + MP3 + capa). Também usada pelo link de beat (/b/<slug>).
+// Plano B (26/09/2026): toda lista boa vai pro cache da Cloudflare como reserva.
+// Se montar falhar (banco fora do ar, bug, limite do dia no D1), devolvo a última
+// reserva, marcada com .reserva = true. Sem reserva, null (a API responde 502 e o
+// navegador usa a cópia dele).
 export async function montarVitrine(request, env) {
   if (cache.dados && Date.now() - cache.at < VALIDADE) return cache.dados;
+  let dados = null;
+  try {
+    dados = await montar(request, env);
+  } catch (e) {
+    console.error('vitrine falhou', e && e.message);
+  }
+  if (dados) {
+    cache = { at: Date.now(), dados };
+    await guardarReserva(request, dados);
+    return dados;
+  }
+  return lerReserva(request);
+}
 
+const RESERVA = '/__reserva/vitrine';
+const temCache = () => typeof caches !== 'undefined' && caches.default;
+
+async function guardarReserva(request, dados) {
+  if (!temCache()) return;
+  try {
+    await caches.default.put(new URL(RESERVA, request.url), new Response(JSON.stringify(dados), {
+      headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=2592000' }
+    }));
+  } catch (_) { /* reserva é bônus: sem ela a vitrine segue igual */ }
+}
+
+async function lerReserva(request) {
+  if (!temCache()) return null;
+  try {
+    const r = await caches.default.match(new URL(RESERVA, request.url));
+    if (!r) return null;
+    const dados = await r.json();
+    if (!Array.isArray(dados) || !dados.length) return null;
+    dados.reserva = true;
+    return dados;
+  } catch (_) {
+    return null;
+  }
+}
+
+async function montar(request, env) {
   const beats = await vitrine(request, env);
   if (!beats.length) return null;
 
@@ -51,7 +95,6 @@ export async function montarVitrine(request, env) {
     };
   });
 
-  cache = { at: Date.now(), dados };
   return dados;
 }
 
@@ -61,9 +104,11 @@ function resposta(dados) {
       beats: dados,
       comAudio: dados.filter((b) => b.mp3).length,
       comCapa: dados.filter((b) => b.capa).length,
-      total: dados.length
+      total: dados.length,
+      ...(dados.reserva ? { reserva: true } : {})
     },
     200,
-    { 'cache-control': 'public, max-age=300' }
+    // a reserva vale por 1 minuto: assim que o banco voltar, a lista nova aparece
+    { 'cache-control': dados.reserva ? 'public, max-age=60' : 'public, max-age=300' }
   );
 }
