@@ -199,6 +199,12 @@ const BASE = `
   .login button{width:100%;margin-top:12px;padding:14px;border-radius:12px;border:0;background:#fff;color:#000;
     font-size:15px;font-weight:600;cursor:pointer}
   .erro{margin-top:14px;font-size:13px;color:#e08d7e}
+  .revisar .vit-topo{display:flex;align-items:center;justify-content:space-between;width:100%;padding:0;border:0;
+    background:transparent;color:var(--ink);cursor:pointer;text-align:left;border-radius:0;font-size:inherit;white-space:normal}
+  .revisar .vit-topo:hover{background:transparent}
+  .vit-topo .vit-seta{font-size:20px;color:var(--ink3);transition:transform .15s}
+  .vit-topo[aria-expanded="true"] .vit-seta{transform:rotate(90deg)}
+  .vit-corpo[hidden]{display:none}
   .home{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}
   @media (max-width:640px){.home{grid-template-columns:1fr}}
   .home button{display:flex;flex-direction:column;align-items:flex-start;gap:14px;min-height:150px;padding:18px;
@@ -267,7 +273,7 @@ function pagina() {
   <div id="lista"><div class="vazio">carregando…</div></div>
   <div id="analytics" hidden></div>
 </div>
-<script src="/assets/painel/analytics.js?v=2026-09-25" defer></script>
+<script src="/assets/painel/analytics.js?v=2026-09-26" defer></script>
 
 <div class="veil" id="veil" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>
@@ -361,18 +367,14 @@ function pagina() {
     });
     return box;
   }
-  function voltarHome(rotulo){
-    var row=document.createElement('div'); row.className='item';
-    var b=document.createElement('button'); b.type='button'; b.className='linha';
-    b.innerHTML='<span class="seta" style="transform:rotate(180deg)">›</span>'+
-      '<span style="flex:1;min-width:0"><span class="nome">Painel</span><span class="meta">'+rotulo+'</span></span>';
-    b.addEventListener('click',function(){ irPara('home'); });
-    row.appendChild(b);
-    return row;
-  }
+  // o selo do topo: numa subpágina volta pra home do painel; na home, leva pro site
+  document.querySelector('.topo .marca').addEventListener('click',function(e){
+    if(vista!=='home'){ e.preventDefault(); irPara('home'); }
+  });
 
   function desenhar(){
     $('titulo').textContent=TITULOS[vista];
+    document.querySelector('.topo .marca').setAttribute('aria-label', vista==='home' ? 'Voltar pro site' : 'Voltar pro painel');
     $('barra').hidden = !(vista==='artistas'||vista==='tapes');
     $('resumo').hidden = vista==='analytics';
     $('lista').hidden = vista==='analytics';
@@ -410,8 +412,7 @@ function pagina() {
     });
     $('lista').innerHTML='';
 
-    if(vista==='tapes'){ $('lista').appendChild(voltar()); cartaoRevisar(); pedirVitrine(); cartaoVitrine(); }
-    else $('lista').appendChild(voltarHome('artistas, links e downloads'));
+    if(vista==='tapes'){ cartaoRevisar(); pedirVitrine(); cartaoVitrine(); }
 
     if(!alvo.length){
       var v=document.createElement('div'); v.className='vazio';
@@ -475,18 +476,6 @@ function pagina() {
     }).catch(function(){ funilResumo={erro:true}; if(vista==='home') desenhar(); });
   }
   function nEtapa(j,e){ var x=(j.etapas||[]).filter(function(t){return t.etapa===e})[0]; return x?x.total:0; }
-  function voltar(){
-    var row=document.createElement('div'); row.className='item';
-    var b=document.createElement('button');
-    b.type='button'; b.className='linha';
-    b.innerHTML='<span class="seta" style="transform:rotate(180deg)">›</span>'+
-      '<span style="flex:1;min-width:0"><span class="nome">Painel</span>'+
-      '<span class="meta">@rideblan33 · beat tapes</span></span>';
-    b.addEventListener('click',function(){ irPara('home'); });
-    row.appendChild(b);
-    return row;
-  }
-
   // O relatório da vitrine é pesado e não muda a toda hora: busco uma vez só,
   // na primeira vez que o portfólio abre.
   function pedirVitrine(){
@@ -508,9 +497,13 @@ function pagina() {
     }
     var falta=(vitri.semAudio||[]).length, sem=(vitri.semBotao||[]).length;
     d.className='revisar'+(falta?'':' limpo');   // fila de postagem não é alarme
-    var html='<b>Vitrine do site</b><small>'+vitri.total+' beats no site, '+vitri.aVenda+
+    // recolhível: o resumo fica sempre à vista, as listas abrem no toque (lembra a escolha)
+    var aberta=false; try{ aberta=localStorage.getItem('painel-vitrine-aberta')==='1'; }catch(_){}
+    var html='<button type="button" class="vit-topo" aria-expanded="'+(aberta?'true':'false')+'">'+
+      '<b>Vitrine do site</b><span class="vit-seta" aria-hidden="true">›</span></button>'+
+      '<small>'+vitri.total+' beats no site, '+vitri.aVenda+
       ' à venda. '+vitri.comAudio+' já têm o áudio guardado aqui'+
-      (falta?', '+falta+' não achei.':'.')+'</small>';
+      (falta?', '+falta+' não achei.':'.')+(sem?' '+sem+' na fila de postagem.':'')+'</small><div class="vit-corpo"'+(aberta?'':' hidden')+'>';
     if(falta){
       html+='<div class="rev-tape"><div class="rev-topo"><b>Sem áudio</b></div><ul>'+
         vitri.semAudio.map(function(b){
@@ -530,7 +523,14 @@ function pagina() {
           return '<li><span class="rev-nome">'+esc(t.title)+' <i>'+esc(t.tape)+(f?' · '+f:'')+'</i></span></li>';
         }).join('')+'</ul></div>';
     }
+    html+='</div>';
     d.innerHTML=html;
+    var tg=d.querySelector('.vit-topo');
+    tg.addEventListener('click',function(){
+      var corpo=d.querySelector('.vit-corpo'), abre=corpo.hidden;
+      corpo.hidden=!abre; tg.setAttribute('aria-expanded',abre?'true':'false');
+      try{ localStorage.setItem('painel-vitrine-aberta',abre?'1':'0'); }catch(_){}
+    });
     $('lista').appendChild(d);
   }
 

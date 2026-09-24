@@ -23,6 +23,8 @@ const run = promisify(execFile);
 const PROJETOS = process.env.PROJETOS_FOLDER_ID || '1wbIR0daNpWvZu5o6NiyrTkEJJkgHXgaH';
 const SITE = (process.env.SITE_URL || 'https://caramujorecords.com.br').replace(/\/$/, '');
 const TOKEN = process.env.INGEST_TOKEN;
+// MP3 de 128k pra ouvir e pra baixar (25/09/2026). Tem que bater com KBPS do functions/api/ingest.js.
+const KBPS = 128;
 const AUDIO = /\.(wav|aiff?|flac|mp3|m4a)$/i;
 const IMAGEM = /^image\/(jpeg|png|webp|heic|heif)$/i;
 const IGNORAR = new Set(['shows', 'vídeos', 'videos', 'sessão de stu', 'sessao de stu']);
@@ -271,7 +273,7 @@ async function vitrineAvulsa(pasta, dir) {
     const faixa = faixas.find((f) => f.id === id);
     try {
       const { buf, dur, bytes } = await converter(faixa, dir);
-      await ingest('track', { id, dur: String(dur) }, buf, true);
+      await ingest('track', { id, dur: String(dur), kbps: String(KBPS) }, buf, true);
       console.log(`    ok  ${faixa.title}  ${Math.round(dur)}s  ${(bytes / 1048576).toFixed(1)} MB`);
     } catch (e) {
       console.log(`    falhou  ${faixa.title}: ${e.message}`);
@@ -325,7 +327,7 @@ async function converter(faixa, dir) {
   await fs.promises.writeFile(bruto, Buffer.from(await r.arrayBuffer()));
 
   await run('ffmpeg', ['-y', '-loglevel', 'error', '-i', bruto,
-    '-vn', '-c:a', 'libmp3lame', '-b:a', '192k', '-ar', '44100', leve]);
+    '-vn', '-c:a', 'libmp3lame', '-b:a', KBPS + 'k', '-ar', '44100', leve]);
 
   const { stdout } = await run('ffprobe', ['-v', 'error', '-show_entries',
     'format=duration', '-of', 'csv=p=0', leve]);
@@ -441,6 +443,15 @@ async function main() {
     catch (e) { console.log(`- vitrine: não consegui (${e.message})`); tropecos.push('vitrine: ' + e.message); }
   }
 
+  // Faxina da prateleira: roda quando a rodada passou por tudo (madrugada, "Converter
+  // tudo" ou o job final da carga geral). Apaga do R2 o que nenhum catálogo usa mais.
+  if (!tropecos.length && (soTapes || (!alvo.length && !lote))) {
+    try {
+      const f = await ingest('faxina', {}, {});
+      console.log(`- faxina da prateleira: ${f.apagados} arquivo(s) sem uso apagado(s), ${(f.liberados / 1048576).toFixed(1)} MB liberados (${f.vistos} conferidos)`);
+    } catch (e) { console.log(`- faxina: não consegui (${e.message})`); }
+  }
+
   await fs.promises.rm(dir, { recursive: true, force: true });
 
   if (tropecos.length) {
@@ -473,7 +484,7 @@ async function umaPasta(pasta, dir) {
     const faixa = faixas.find((f) => f.id === id);
     try {
       const { buf, dur, bytes } = await converter(faixa, dir);
-      await ingest('track', { id, dur: String(dur) }, buf, true);
+      await ingest('track', { id, dur: String(dur), kbps: String(KBPS) }, buf, true);
       console.log(`    ok  ${faixa.title}  ${Math.round(dur)}s  ${(bytes / 1048576).toFixed(1)} MB`);
     } catch (e) {
       console.log(`    falhou  ${faixa.title}: ${e.message}`);

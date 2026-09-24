@@ -22,7 +22,8 @@ export async function onRequestPost({ request, env }) {
 
   const sessao = String(b.s || '');
   const etapa = String(b.e || '');
-  if (!/^[a-z0-9]{10,32}$/.test(sessao) || !ETAPAS.includes(etapa)) return vazio();
+  const porBeat = etapa === 'toque' || etapa === 'adicao';   // cada beat tocado / posto no carrinho
+  if (!/^[a-z0-9]{10,32}$/.test(sessao) || !(ETAPAS.includes(etapa) || porBeat)) return vazio();
   const aparelho = b.a === 'celular' ? 'celular' : 'computador';
   const origem = /^[a-z0-9-]{1,40}$/.test(String(b.o || '')) ? String(b.o) : 'direto';
   const beat = Number.isInteger(b.b) && b.b > 0 && b.b < 100000 ? b.b : null;
@@ -35,6 +36,12 @@ export async function onRequestPost({ request, env }) {
     const d = await db(env);
     const agora = new Date();
     const dia = new Date(agora.getTime() - 3 * 3600e3).toISOString().slice(0, 10); // São Paulo
+    if (porBeat) {
+      if (!beat) return vazio();
+      await d.prepare('INSERT OR IGNORE INTO beat_evento (sessao, beat_id, tipo, dia) VALUES (?, ?, ?, ?)')
+        .bind(sessao, beat, etapa, dia).run();
+      return vazio();
+    }
     await d.prepare(
       'INSERT OR IGNORE INTO funil (sessao, etapa, aparelho, origem, beat_id, dia, at) VALUES (?, ?, ?, ?, ?, ?, ?)'
     ).bind(sessao, etapa, aparelho, origem, beat, dia, agora.toISOString()).run();
@@ -43,6 +50,7 @@ export async function onRequestPost({ request, env }) {
     if (Math.random() < 0.01) {
       const corte = new Date(agora.getTime() - RETENCAO_DIAS * 86400e3).toISOString().slice(0, 10);
       await d.prepare('DELETE FROM funil WHERE dia < ?').bind(corte).run();
+      await d.prepare('DELETE FROM beat_evento WHERE dia < ?').bind(corte).run();
     }
   } catch { /* funil fora do ar não atrapalha ninguém */ }
   return vazio();

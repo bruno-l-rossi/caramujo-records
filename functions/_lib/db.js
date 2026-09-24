@@ -50,6 +50,8 @@ const SCHEMA = [
      seen_at TEXT
    )`,
   `ALTER TABLE tracks ADD COLUMN revisar TEXT`,
+  // bitrate do MP3 guardado. NULL = 192k antigo; o conversor refaz em 128k (25/09/2026)
+  `ALTER TABLE tracks ADD COLUMN mp3_kbps INTEGER`,
   `ALTER TABLE tracks ADD COLUMN venda_manual TEXT`,
   `CREATE INDEX IF NOT EXISTS tracks_artist ON tracks (artist_id)`,
   `CREATE TABLE IF NOT EXISTS links (
@@ -83,6 +85,16 @@ const SCHEMA = [
      at TEXT NOT NULL
    )`,
   `CREATE UNIQUE INDEX IF NOT EXISTS funil_sessao_etapa ON funil (sessao, etapa)`,
+  // cada beat que a visita tocou ou pôs no carrinho (uma vez por beat por visita):
+  // o funil só guarda o PRIMEIRO de cada etapa, isso aqui guarda todos
+  `CREATE TABLE IF NOT EXISTS beat_evento (
+     sessao TEXT NOT NULL,
+     beat_id INTEGER NOT NULL,
+     tipo TEXT NOT NULL,
+     dia TEXT NOT NULL
+   )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS beat_evento_um ON beat_evento (sessao, beat_id, tipo)`,
+  `CREATE INDEX IF NOT EXISTS beat_evento_dia ON beat_evento (dia, tipo)`,
   `CREATE INDEX IF NOT EXISTS funil_dia ON funil (dia, etapa)`,
   `CREATE TABLE IF NOT EXISTS meta (chave TEXT PRIMARY KEY, valor TEXT NOT NULL)`
 ];
@@ -151,7 +163,12 @@ export const UMA_VEZ = [
   ['vendidos-do-bruno-2026-09-23', vendidosDoBruno],
   // Terceira: carimba a resposta dele em quem já está disponível, sem mexer em
   // pastilha. Assim "malas prontas" e companhia não voltam atrás numa conversão.
-  ['disponiveis-do-bruno-2026-09-23', disponiveisDoBruno]
+  ['disponiveis-do-bruno-2026-09-23', disponiveisDoBruno],
+  // o que o funil já tinha (o primeiro beat de cada visita) entra na tabela nova
+  ['beat-evento-do-funil-2026-09-25',
+    `INSERT OR IGNORE INTO beat_evento (sessao, beat_id, tipo, dia)
+       SELECT sessao, beat_id, CASE etapa WHEN 'play' THEN 'toque' ELSE 'adicao' END, dia
+         FROM funil WHERE etapa IN ('play', 'carrinho') AND beat_id IS NOT NULL`]
 ];
 
 let ready = false;

@@ -290,7 +290,7 @@ escreve nada lá.
 Drive (WAV, pastas do rideblan33)
    │
    │  GitHub Actions (.github/workflows/catalogo.yml)
-   │  scripts/sync.mjs: lê as pastas, converte o que mudou (ffmpeg, MP3 192k)
+   │  scripts/sync.mjs: lê as pastas, converte o que mudou (ffmpeg, MP3 128k)
    ▼
 POST /api/ingest   (protegido por INGEST_TOKEN)
    ├── MP3 vai pro R2 (binding AUDIO), chave mp3/<id do arquivo no Drive>.mp3
@@ -521,6 +521,11 @@ Actions é ilimitado em repositório público.
 - Carga geral: Actions → "Catálogo — carga geral" → Run workflow. Divide as pastas em 6
   frentes que rodam ao mesmo tempo (`scripts/sync.mjs "" 3/6`). Quem já está pronto é
   pulado, então repetir depois de uma falha continua de onde parou.
+
+### MP3 de 128k e faxina da prateleira
+O MP3 guardado no R2 (ouvir no site, nos catálogos e o "baixar MP3") é de **128k** desde 26/09/2026 (`KBPS` em `scripts/sync.mjs` e `functions/api/ingest.js`, os dois iguais). Faixa guardada em outro bitrate (`tracks.mp3_kbps`) entra no plano da próxima conversão e é refeita a partir do WAV; a antiga segue tocando até a nova chegar. Pra refazer tudo de uma vez: Actions → "Catálogo — carga geral".
+
+No fim de toda rodada inteira (madrugada, "Converter tudo" ou o job final da carga geral), `POST /api/ingest?op=faxina` apaga do R2 o MP3 e a capa que nenhum catálogo usa mais. Só mexe em arquivo com mais de 1 hora. Apagar no R2 não custa nada.
 
 ### Quando o Drive tropeça
 

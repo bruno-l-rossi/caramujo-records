@@ -42,11 +42,14 @@
     '.an-balao .lin b{display:inline;font-size:14px;min-width:26px}',
     '.an-balao .dia{display:block;font-size:11.5px;color:var(--ink4);margin-bottom:2px}',
     '.an-chips button .k{display:inline-block;width:12px;height:2px;border-radius:1px;vertical-align:middle;margin-right:7px}',
-    '.an-chips button[aria-pressed="false"] .k{opacity:.35}',
+    '.an-chips button[aria-pressed="false"] .k{opacity:.6}',
+    '.an-chips button:disabled{opacity:.4;cursor:not-allowed}',
+    '.an-mais{font-size:12px;color:var(--ink4);margin-top:8px}',
+    '.an-chips .nota[hidden]{display:none}',
     '.an-chips .nota{align-self:center;font-size:12px;color:var(--ink4);margin-left:4px}',
     '.an-chips .nota:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#e8e0cf;margin-right:6px;vertical-align:0}',
     '.an-busca{display:flex;align-items:center;gap:8px;background:var(--campo);border:1px solid var(--borda);border-radius:10px;padding:8px 11px;margin:4px 0 8px;max-width:320px}',
-    '.an-busca input{flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--ink);font-size:14px}',
+    '.an-busca input{flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--ink);font-size:14px;color-scheme:dark}',
     '.an-tab{width:100%;border-collapse:collapse;font-size:13px}',
     '.an-tab th{font-weight:500;color:var(--ink4);text-align:right;padding:6px 0 6px 10px;border-bottom:1px solid var(--linha);font-size:11.5px;white-space:nowrap}',
     '.an-tab th:first-child,.an-tab td:first-child{text-align:left;padding-left:0}',
@@ -230,38 +233,56 @@
     return d;
   }
 
-  // bloco: título + botões de liga/desliga por métrica (cada um com a cor da
-  // sua linha, e juntos são a legenda) + gráfico + tabela
-  function evolucao(titulo, sub, dias, serie, metricas, vendas) {
+  // bloco: título + botões de liga/desliga por métrica + gráfico + tabela.
+  // Até 3 linhas por vez (3 cores que passam no validador em todos os pares).
+  // Cada linha ligada ocupa uma das 3 vagas de cor e fica com ela enquanto
+  // estiver ligada: desligar uma não repinta as outras. Com 3 ligadas, as
+  // demais ficam travadas até você desligar uma.
+  function evolucao(titulo, sub, dias, serie, metricas, padrao, vendas) {
     var b = el('div', 'an-bloco');
     b.appendChild(el('h3', null, titulo));
     if (sub) b.appendChild(el('p', 'an-sub', sub));
     var chips = el('div', 'an-chips'), alvo = el('div');
-    chips.setAttribute('role', 'group'); chips.setAttribute('aria-label', 'Linhas do gráfico');
+    chips.setAttribute('role', 'group'); chips.setAttribute('aria-label', 'Linhas do gráfico (até 3)');
     b.appendChild(chips); b.appendChild(alvo);
-    var ligadas = metricas.map(function () { return true; });
+    var vaga = {};                              // métrica -> índice da cor
+    (padrao || metricas.slice(0, 3).map(function (m) { return m[0]; })).forEach(function (k, i) { vaga[k] = i; });
     var valores = function (k) { return serie[k] || dias.map(function () { return 0; }); };
+    var ligadas = function () { return Object.keys(vaga).length; };
     function desenha() {
-      [].forEach.call(chips.querySelectorAll('button'), function (c, i) { c.setAttribute('aria-pressed', ligadas[i] ? 'true' : 'false'); });
+      [].forEach.call(chips.querySelectorAll('button'), function (c) {
+        var on = c.dataset.k in vaga;
+        c.setAttribute('aria-pressed', on ? 'true' : 'false');
+        c.disabled = !on && ligadas() >= 3;
+        c.title = c.disabled ? 'Máximo de 3 linhas: desligue uma pra ligar esta' : '';
+        c.querySelector('.k').style.background = on ? CORES[vaga[c.dataset.k]] : '#3a3a3a';
+      });
       alvo.textContent = '';
       var vis = [];
-      metricas.forEach(function (m, i) { if (ligadas[i]) vis.push({ nome: m[1], cor: CORES[i], valores: valores(m[0]) }); });
-      alvo.appendChild(grafico(dias, vis, vendas));
+      metricas.forEach(function (m) { if (m[0] in vaga) vis.push({ nome: m[1], cor: CORES[vaga[m[0]]], valores: valores(m[0]) }); });
+      var pontos = vendas && !('pago' in vaga);      // com a linha Pagaram ligada, o ponto é redundante
+      if (nota) nota.hidden = !pontos;
+      alvo.appendChild(grafico(dias, vis, pontos ? vendas : null));
       var cols = metricas.map(function (m) { return { nome: m[1], valores: valores(m[0]) }; });
-      if (vendas) cols.push({ nome: 'Vendas', valores: vendas });
       alvo.appendChild(tabelaDias(dias, cols));
     }
-    metricas.forEach(function (m, i) {
-      var c = el('button'); c.type = 'button';
-      var k = el('span', 'k'); k.style.background = CORES[i];
-      c.appendChild(k); c.appendChild(document.createTextNode(m[1]));
+    metricas.forEach(function (m) {
+      var c = el('button'); c.type = 'button'; c.dataset.k = m[0];
+      c.appendChild(el('span', 'k')); c.appendChild(document.createTextNode(m[1]));
       c.addEventListener('click', function () {
-        if (ligadas[i] && ligadas.filter(Boolean).length === 1) return;   // sempre fica ao menos uma
-        ligadas[i] = !ligadas[i]; desenha();
+        if (m[0] in vaga) {
+          if (ligadas() === 1) return;             // sempre fica ao menos uma
+          delete vaga[m[0]];
+        } else {
+          if (ligadas() >= 3) return;
+          var usadas = Object.keys(vaga).map(function (k) { return vaga[k]; });
+          vaga[m[0]] = [0, 1, 2].filter(function (x) { return usadas.indexOf(x) < 0; })[0];
+        }
+        desenha();
       });
       chips.appendChild(c);
     });
-    if (vendas) chips.appendChild(el('span', 'nota', 'dia com venda'));
+    var nota = vendas ? chips.appendChild(el('span', 'nota', 'dia com venda')) : null;
     desenha();
     return b;
   }
@@ -306,41 +327,54 @@
   // mesma busca do catálogo: vai filtrando enquanto digita, sem ligar pra
   // maiúscula nem acento
   var normal = function (x) { return String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); };
-  function tabela(titulo, sub, colunas, linhas, vazio, busca) {
+  // opts: { vazio, busca: 'placeholder', limite: 10 }. Sem busca digitada mostra
+  // as primeiras `limite` linhas (já vêm ordenadas); com busca, mostra o que
+  // casar (até 50). b.__filtra(q) deixa uma busca de fora comandar a tabela.
+  function tabela(titulo, sub, colunas, linhas, opts) {
+    opts = opts || {};
     var b = el('div', 'an-bloco');
     b.appendChild(el('h3', null, titulo));
     if (sub) b.appendChild(el('p', 'an-sub', sub));
-    if (!linhas.length) { b.appendChild(el('p', 'an-sub', vazio || 'Nada nesse período.')); return b; }
-    var box = el('div', 'an-rolar'), t = el('table', 'an-tab');
-    var nada = el('p', 'an-sub', 'Nenhum resultado pra essa busca.'); nada.hidden = true;
-    if (busca) {
-      var campo = el('label', 'an-busca');
-      campo.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6a6a6a" stroke-width="1.9"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg>';
-      var inp = el('input'); inp.type = 'search'; inp.placeholder = busca; inp.setAttribute('aria-label', busca); inp.autocomplete = 'off';
-      campo.appendChild(inp); b.appendChild(campo);
-      inp.addEventListener('input', function () {
-        var q = normal(inp.value.trim()), vis = 0;
-        [].forEach.call(t.querySelectorAll('tr[data-busca]'), function (tr) {
-          var ok = !q || tr.dataset.busca.indexOf(q) > -1;
-          tr.hidden = !ok; if (ok) vis++;
-        });
-        nada.hidden = vis > 0;
-      });
-    }
-    var cab = el('tr'); colunas.forEach(function (c) { cab.appendChild(el('th', null, c)); }); t.appendChild(cab);
-    linhas.forEach(function (l) {
+    if (!linhas.length) { b.appendChild(el('p', 'an-sub', opts.vazio || 'Nada nesse período.')); b.__filtra = function () {}; return b; }
+    var limite = opts.limite || 0, MAX_BUSCA = 50;
+    var chaves = linhas.map(function (l) { return normal(Array.isArray(l[0]) ? l[0].join(' ') : l[0]); });
+    if (opts.busca) b.appendChild(campoBusca(opts.busca, function (q) { b.__filtra(q); }));
+    var box = el('div', 'an-rolar'), t = el('table', 'an-tab'), mais = el('p', 'an-mais');
+    var cab = el('tr'); colunas.forEach(function (c) { cab.appendChild(el('th', null, c)); });
+    function linha(l) {
       var tr = el('tr');
-      tr.dataset.busca = normal(Array.isArray(l[0]) ? l[0].join(' ') : l[0]);
       l.forEach(function (c, i) {
         var td = el('td');
         if (i === 0 && Array.isArray(c)) { td.appendChild(document.createTextNode(c[0])); td.appendChild(el('small', null, c[1])); }
         else td.textContent = c;
         tr.appendChild(td);
       });
-      t.appendChild(tr);
-    });
-    box.appendChild(t); b.appendChild(box); b.appendChild(nada);
+      return tr;
+    }
+    b.__filtra = function (qBruto) {
+      var q = normal(String(qBruto || '').trim());
+      var idx = [];
+      for (var i = 0; i < linhas.length; i++) if (!q || chaves[i].indexOf(q) > -1) idx.push(i);
+      var teto = q ? MAX_BUSCA : (limite || linhas.length);
+      t.textContent = ''; t.appendChild(cab);
+      idx.slice(0, teto).forEach(function (i) { t.appendChild(linha(linhas[i])); });
+      if (!idx.length) mais.textContent = 'Nenhum resultado pra essa busca.';
+      else if (idx.length > teto) mais.textContent = q
+        ? 'Mostrando ' + teto + ' de ' + idx.length + ' resultados. Continue digitando pra achar.'
+        : 'Mostrando ' + teto + ' de ' + linhas.length + '. Use a busca pra achar os outros.';
+      else mais.textContent = '';
+    };
+    box.appendChild(t); b.appendChild(box); b.appendChild(mais);
+    b.__filtra('');
     return b;
+  }
+  function campoBusca(placeholder, aoDigitar) {
+    var campo = el('label', 'an-busca');
+    campo.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6a6a6a" stroke-width="1.9"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg>';
+    var inp = el('input'); inp.type = 'search'; inp.placeholder = placeholder; inp.setAttribute('aria-label', placeholder); inp.autocomplete = 'off';
+    campo.appendChild(inp);
+    inp.addEventListener('input', function () { aoDigitar(inp.value); });
+    return campo;
   }
 
   /* ---------- as três abas ---------- */
@@ -355,8 +389,9 @@
       ['Conversão', pct(a.pago.total, V), 'visitas que viraram venda']
     ]));
     if (!V) corpo.appendChild(el('div', 'an-vazio', 'Nenhuma visita contada nesse período. O funil da vitrine começou a contar no deploy de 24/09/2026.'));
-    corpo.appendChild(evolucao('Evolução por dia', 'Cada visita conta uma vez por etapa. Toque numa linha pra esconder ou mostrar.', j.dias, j.serie,
-      [['visita', 'Visitas'], ['play', 'Deram play'], ['carrinho', 'Puseram no carrinho']], j.serie.pago));
+    corpo.appendChild(evolucao('Evolução por dia', 'Cada visita conta uma vez por etapa. Até 3 linhas por vez: desligue uma pra ligar outra.', j.dias, j.serie,
+      [['visita', 'Visitas'], ['play', 'Deram play'], ['carrinho', 'Puseram no carrinho'], ['checkout', 'Abriram o checkout'], ['pagamento', 'Chegaram no pagamento'], ['pago', 'Pagaram']],
+      ['visita', 'carrinho', 'pago'], j.serie.pago));
     var NOMES = { visita: 'Visitas', play: 'Deram play', carrinho: 'Puseram no carrinho', checkout: 'Abriram o checkout', pagamento: 'Chegaram no pagamento', pago: 'Pagaram' };
     var ant = null;
     var dois = el('div', 'an-dois');
@@ -378,13 +413,20 @@
     dois.appendChild(ap);
     corpo.appendChild(dois);
     corpo.appendChild(tabela('De onde vieram', 'Use ?de=bio ou ?de=story nos links que você divulga pra separar a origem.', ['Origem', 'Visitas', 'Carrinho', 'Pagaram'],
-      j.origens.map(function (o) { return [nomeOrigem(o), num(o.visitas), num(o.carrinho), num(o.pagos)]; })));
+      j.origens.map(function (o) { return [nomeOrigem(o), num(o.visitas), num(o.carrinho), num(o.pagos)]; }), { vazio: 'Nenhuma visita nesse período.' }));
+    // beats tocados e adições ao carrinho: top 10, com uma busca só pras duas
+    var bb = el('div', 'an-bloco');
+    bb.appendChild(el('h3', null, 'Beats'));
+    bb.appendChild(el('p', 'an-sub', 'Quantas visitas tocaram cada beat e quantas puseram no carrinho. Todos os beats da vitrine, inclusive os zerados.'));
     var top = el('div', 'an-dois');
-    top.appendChild(tabela('Primeiro beat que tocaram', 'O beat que abriu a escuta de cada visita.', ['Beat', 'Visitas'],
-      j.tocados.map(function (x) { return [x.nome, num(x.n)]; })));
-    top.appendChild(tabela('Primeiro beat no carrinho', 'O beat que abriu o carrinho de cada visita.', ['Beat', 'Visitas'],
-      j.carrinhos.map(function (x) { return [x.nome, num(x.n)]; })));
-    corpo.appendChild(top);
+    var tt = tabela('Beats tocados', null, ['Beat', 'Visitas'],
+      j.tocados.map(function (x) { return [x.vendido ? [x.nome, 'vendido'] : x.nome, num(x.n)]; }), { limite: 10 });
+    var tc = tabela('Adições ao carrinho', null, ['Beat', 'Visitas'],
+      j.carrinhos.map(function (x) { return [x.vendido ? [x.nome, 'vendido'] : x.nome, num(x.n)]; }), { limite: 10 });
+    bb.appendChild(campoBusca('Buscar beat', function (q) { tt.__filtra(q); tc.__filtra(q); }));
+    top.appendChild(tt); top.appendChild(tc);
+    bb.appendChild(top);
+    corpo.appendChild(bb);
   }
 
   function tapes(j, corpo) {
@@ -397,8 +439,9 @@
       ['Vendas', num(v.pagos), 'de quem veio das tapes']
     ]));
     if (!a.open && !a.play) corpo.appendChild(el('div', 'an-vazio', 'Nenhuma beat tape aberta nesse período.'));
-    corpo.appendChild(evolucao('Evolução por dia', 'Toque numa linha pra esconder ou mostrar.', j.dias, j.serie,
-      [['open', 'Aberturas'], ['play', 'Plays'], ['carrinho', 'Cliques no carrinho']]));
+    corpo.appendChild(evolucao('Evolução por dia', 'Até 3 linhas por vez: desligue uma pra ligar outra.', j.dias, j.serie,
+      [['pessoas', 'Pessoas que abriram'], ['open', 'Aberturas'], ['play', 'Plays'], ['carrinho', 'Cliques no carrinho'], ['vitrine', 'Chegaram na vitrine']],
+      ['pessoas', 'play', 'carrinho']));
     corpo.appendChild(barras('Da tape até a venda', 'Pessoas diferentes em cada etapa. "Chegaram na vitrine" conta quem saiu de uma tape pelo botão de carrinho.', [
       ['Abriram a tape', a.pessoas, '', ''],
       ['Ouviram algum beat', a.ouviram, pct(a.ouviram, a.pessoas), ''],
@@ -407,9 +450,10 @@
       ['Pagaram', v.pagos, pct(v.pagos, v.visitas), '']
     ]));
     corpo.appendChild(tabela('Por beat tape', null, ['Tape', 'Pessoas', 'Plays', 'Carrinho', 'Vitrine', 'Vendas'],
-      j.lista.map(function (t) { return [t.name, num(t.pessoas), num(t.play), num(t.carrinho), num(t.vitrine), num(t.pagos)]; }), null, 'Buscar beat tape'));
-    corpo.appendChild(tabela('Beats mais tocados nas tapes', null, ['Beat', 'Plays'],
-      j.faixas.map(function (f) { return [[f.title, f.onde], num(f.n)]; })));
+      j.lista.map(function (t) { return [t.name, num(t.pessoas), num(t.play), num(t.carrinho), num(t.vitrine), num(t.pagos)]; }),
+      { busca: 'Buscar beat tape', limite: 10, vazio: 'Nenhuma beat tape convertida ainda.' }));
+    corpo.appendChild(tabela('Beats das tapes', 'Plays no período. Todos os beats, inclusive os zerados.', ['Beat', 'Plays'],
+      j.faixas.map(function (f) { return [[f.title, f.onde], num(f.n)]; }), { busca: 'Buscar beat ou tape', limite: 10 }));
   }
 
   function artistas(j, corpo) {
@@ -422,13 +466,15 @@
       ['Artistas ativos', num(a.ativos), 'abriram o link no período']
     ]));
     if (!a.open && !a.play) corpo.appendChild(el('div', 'an-vazio', 'Nenhum link de artista aberto nesse período.'));
-    corpo.appendChild(evolucao('Evolução por dia', 'Toque numa linha pra esconder ou mostrar.', j.dias, j.serie,
-      [['open', 'Aberturas'], ['play', 'Plays'], ['download', 'Downloads']]));
+    corpo.appendChild(evolucao('Evolução por dia', 'Até 3 linhas por vez: desligue uma pra ligar outra.', j.dias, j.serie,
+      [['pessoas', 'Pessoas'], ['open', 'Aberturas'], ['play', 'Plays'], ['download', 'Downloads']],
+      ['pessoas', 'play', 'download']));
     var ult = function (iso) { if (!iso) return '—'; return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }); };
     corpo.appendChild(tabela('Por artista', 'Ordenado por aberturas no período.', ['Artista', 'Aberturas', 'Pessoas', 'Plays', 'Downloads', 'Última'],
-      j.lista.map(function (t) { return [t.name, num(t.open), num(t.pessoas), num(t.play), num(t.download), ult(t.ultima)]; }), null, 'Buscar artista'));
-    corpo.appendChild(tabela('Faixas mais tocadas', null, ['Faixa', 'Plays'],
-      j.faixas.map(function (f) { return [[f.title, f.onde], num(f.n)]; })));
+      j.lista.map(function (t) { return [t.name, num(t.open), num(t.pessoas), num(t.play), num(t.download), ult(t.ultima)]; }),
+      { busca: 'Buscar artista', limite: 10, vazio: 'Nenhum artista convertido ainda.' }));
+    corpo.appendChild(tabela('Faixas', 'Plays no período. Todas as faixas, inclusive as zeradas.', ['Faixa', 'Plays'],
+      j.faixas.map(function (f) { return [[f.title, f.onde], num(f.n)]; }), { busca: 'Buscar faixa ou artista', limite: 10 }));
   }
 
   /* ---------- montagem ---------- */
@@ -440,10 +486,6 @@
       if (estado.preset) { estado.ate = hoje(); estado.de = soma(estado.ate, -(estado.preset - 1)); }
       raiz.textContent = '';
 
-      var volta = el('div', 'item'), vb = el('button', 'linha');
-      vb.type = 'button';
-      vb.innerHTML = '<span class="seta" style="transform:rotate(180deg)">›</span><span style="flex:1;min-width:0"><span class="nome">Painel</span><span class="meta">vitrine, beat tapes e artistas</span></span>';
-      vb.addEventListener('click', voltar); volta.appendChild(vb); raiz.appendChild(volta);
 
       var filtros = el('div', 'an-filtros');
       var abas = el('div', 'an-seg'); abas.setAttribute('role', 'group'); abas.setAttribute('aria-label', 'O que ver');

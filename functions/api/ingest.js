@@ -10,6 +10,10 @@ import { vitrine } from '../_lib/vitrine.js';
 // paramos em 8 pra nunca virar cobrança. A conta cheia do catálogo dá ~3 GB.
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
 
+// Bitrate do MP3 (ouvir no site, nos catálogos e o "baixar MP3"). Faixa guardada com
+// outro valor entra no plano de novo e é refeita a partir do WAV do Drive.
+export const KBPS = 128;
+
 async function usado(d) {
   const r = await d.prepare('SELECT COALESCE(SUM(mp3_bytes), 0) AS n FROM tracks WHERE ready = 1').first();
   return Number(r?.n || 0);
@@ -33,6 +37,7 @@ export async function onRequestPost(context) {
   if (op === 'fila') return fila(d, await request.json());
   if (op === 'exclusivos') return exclusivos(d, await request.json());
   if (op === 'faltando') return faltando(d, request, env);
+  if (op === 'faxina') return faxina(d, env);
   return json({ erro: 'op desconhecida' }, 400);
 }
 
@@ -66,7 +71,7 @@ async function plan(d, body, request, env) {
   const venda = tape ? await marcarVenda(d, tracks, request, env) : null;
 
   const have = await d.prepare(
-    'SELECT id, src_modified, ready FROM tracks WHERE artist_id = ?'
+    'SELECT id, src_modified, ready, mp3_kbps FROM tracks WHERE artist_id = ?'
   ).bind(artist.id).all();
   const byId = new Map((have.results || []).map((r) => [r.id, r]));
 
@@ -77,7 +82,8 @@ async function plan(d, body, request, env) {
   for (const t of tracks) {
     const old = byId.get(t.id);
     const fresh = old && old.ready === 1 && old.src_modified === t.modified;
-    if (!fresh) need.push(t.id);
+    // pronta mas em outro bitrate: continua tocando a antiga até a nova chegar
+    if (!fresh || old.mp3_kbps !== KBPS) need.push(t.id);
     rows.push(
       d.prepare(
         `INSERT INTO tracks (id, artist_id, title, kind, grp, bpm, mkey, tag, wav_bytes, src_modified, ready, revisar, seen_at)
@@ -238,6 +244,7 @@ async function track(d, env, url, request) {
 
   const id = url.searchParams.get('id');
   const dur = Number(url.searchParams.get('dur') || 0);
+  const kbps = Number(url.searchParams.get('kbps') || 0) || null;
   if (!id) return json({ erro: 'faltou id' }, 400);
 
   const body = await request.arrayBuffer();
@@ -256,8 +263,8 @@ async function track(d, env, url, request) {
   });
 
   await d.prepare(
-    'UPDATE tracks SET mp3_bytes = ?, dur = ?, ready = 1 WHERE id = ?'
-  ).bind(body.byteLength, Math.round(dur), id).run();
+    'UPDATE tracks SET mp3_bytes = ?, dur = ?, mp3_kbps = ?, ready = 1 WHERE id = ?'
+  ).bind(body.byteLength, Math.round(dur), kbps, id).run();
 
   await d.prepare(
     `UPDATE artists SET job_feitos = job_feitos + 1, job_at = ?
@@ -354,4 +361,35 @@ async function fila(d, body) {
     ).bind(now()).run();
   }
   return json({ ok: true });
+}
+
+// Faxina da prateleira: apaga do R2 o que nenhum catálogo usa mais (faixa que saiu
+// do Drive, capa trocada, miniatura órfã). Só olha arquivo com mais de 1 hora, pra
+// nunca apagar algo que o conversor acabou de subir e ainda não registrou.
+async function faxina(d, env) {
+  if (!env.AUDIO) return json({ erro: 'R2 nao esta ligado (binding AUDIO)' }, 500);
+  const faixas = new Set(((await d.prepare('SELECT id FROM tracks').all()).results || []).map((r) => 'mp3/' + r.id + '.mp3'));
+  const capas = new Set();
+  for (const r of (await d.prepare('SELECT cover_key FROM artists WHERE cover_key IS NOT NULL').all()).results || []) {
+    capas.add('capa/' + r.cover_key + '.jpg');
+    capas.add('capa/' + r.cover_key + '-p.jpg');
+  }
+  const limite = Date.now() - 3600e3;
+  const apagar = [];
+  let vistos = 0, bytes = 0;
+  for (const prefixo of ['mp3/', 'capa/']) {
+    let cursor;
+    do {
+      const pag = await env.AUDIO.list({ prefix: prefixo, cursor, limit: 1000 });
+      for (const o of pag.objects) {
+        vistos++;
+        const usado = prefixo === 'mp3/' ? faixas.has(o.key) : capas.has(o.key);
+        const velho = !o.uploaded || new Date(o.uploaded).getTime() < limite;
+        if (!usado && velho) { apagar.push(o.key); bytes += o.size || 0; }
+      }
+      cursor = pag.truncated ? pag.cursor : undefined;
+    } while (cursor);
+  }
+  for (let i = 0; i < apagar.length; i += 1000) await env.AUDIO.delete(apagar.slice(i, i + 1000));
+  return json({ ok: true, vistos, apagados: apagar.length, liberados: bytes });
 }

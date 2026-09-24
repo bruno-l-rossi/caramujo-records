@@ -446,8 +446,8 @@ footer p{
 }
 .cp-coupon-btn:hover{background:var(--clay);}
 .cp-coupon-msg{font-size:.65rem;margin-top:.35rem;letter-spacing:.05em;min-height:.9rem;}
-.cp-coupon-msg.ok{color:#7ec98a;}
-.cp-coupon-msg.err{color:#e07070;}
+.cp-coupon-msg.ok{color:var(--amber);}
+.cp-coupon-msg.err{color:var(--bone);border-left:2px solid var(--blood);padding-left:.5rem;}
 .cp-tot{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1rem;}
 .cp-tot span:first-child{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);}
 .cp-tv{font-family:'Cormorant Garamond',sans-serif;font-size:2.2rem;color:var(--cream);}
@@ -1096,6 +1096,23 @@ html,body{overflow-x:hidden;}
 .pkg-beat-item.tocando .pkg-play{background:var(--fire);border-color:var(--fire);color:var(--black)}
 .pkg-beat-item.tocando .pkg-beat-name{color:var(--amber)}
 .pkg-corrida{position:absolute;left:0;bottom:-1px;height:2px;width:0;background:var(--fire);pointer-events:none}
+
+/* ══ NOVO v31 — mensagens na paleta, caixinha do pacote à direita, carrinho na barra do celular ══ */
+.msg-ok{color:var(--amber)}
+.msg-err{color:var(--bone);border-left:2px solid var(--blood);padding-left:.5rem}
+.pkg-beat-item .pkg-beat-cb{margin-left:.4rem}
+/* celular: o botão de preço volta pra barra (R$119 -> No carrinho), ao lado do volume,
+   igual ao computador. A ficha continua inteira (conferido em 320-430px). */
+@media(max-width:600px){
+  .pe-dir{gap:6px}
+  .np-bar .pe-dir #npPreco,body.sem-volume .np-bar .pe-dir #npPreco{display:inline-flex}
+  .pe-dir #npPreco{min-height:38px;padding:.45rem .6rem;font-size:.7rem;gap:6px}
+  .pe-dir #npPreco svg{display:block;width:15px;height:15px}
+}
+@media(max-width:359px){
+  .pe-dir #npPreco .rotulo{display:none}          /* abaixo de 360px: só o ícone (aceso quando está no carrinho) */
+  .pe-dir #npPreco{padding:.45rem .55rem}
+}
 </style>
 
 <!-- ═══ EMAILJS (formulário de contato) ══════════════
@@ -1380,7 +1397,7 @@ html,body{overflow-x:hidden;}
   <div class="s-head">
     <span class="s-kicker">Serviços · encomenda</span>
     <h2 class="s-title">Produção <span class="r">completa</span></h2>
-    <p class="s-sub">Do beat ao lançamento. Finalização profissional para artistas independentes.</p>
+    <p class="s-sub">Do beat ao lançamento. Finalização profissional para artistas independentes. Tudo em até 12x no cartão.</p>
   </div>
 
   <div class="svcs">
@@ -2589,11 +2606,11 @@ function renderPkgBeatList(beats) {
     return `
     <div class="pkg-beat-item${sel ? ' selected' : ''}" id="pbi-${b.id}" onclick="togglePkgBeat(${b.id}, '${b.name.replace(/'/g, "\\'")}')">
       ${(window.__VIT&&(window.__VIT[String(b.id)]||{}).mp3) ? `<button class="pkg-play" type="button" data-bid="${b.id}" aria-label="Ouvir ${b.name.replace(/"/g,'&quot;')}" onclick="event.stopPropagation();window.tocarBeat(${b.id})"></button>` : ''}
-      <div class="pkg-beat-cb" id="pbc-${b.id}">${sel ? '✓' : ''}</div>
       <div class="pkg-beat-info">
         <div class="pkg-beat-name">${b.name}</div>
         <div class="pkg-beat-meta">${b.bpm} BPM · ${b.key} · ${GENRE_LABELS[b.genre] || b.genre}</div>
       </div>
+      <div class="pkg-beat-cb" id="pbc-${b.id}">${sel ? '✓' : ''}</div>
       <i class="pkg-corrida"></i>
     </div>`;
   }).join('');
@@ -3237,18 +3254,18 @@ function sendForm(btn){
   const status  = document.getElementById('cfStatus');
 
   if(!name || !email || !message){
-    status.style.color='#e07070';
+    status.className='msg-err';
     status.textContent='Preencha nome, email e mensagem antes de enviar.';
     return;
   }
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-    status.style.color='#e07070';
+    status.className='msg-err';
     status.textContent='Email inválido.';
     return;
   }
 
   btn.disabled=true; btn.textContent='ENVIANDO...';
-  status.style.color='var(--dim)'; status.textContent='';
+  status.className=''; status.textContent='';
 
   carregarEmailJS().then(()=>emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
     from_name:  name,
@@ -3257,7 +3274,7 @@ function sendForm(btn){
     message:    message,
   })).then(()=>{
     btn.disabled=false; btn.textContent='ENVIAR MENSAGEM →';
-    status.style.color='#7ec98a';
+    status.className='msg-ok';
     status.textContent='✓ Mensagem enviada! Fique atento no seu e-mail pois em breve retornaremos seu contato.';
     document.getElementById('cfName').value='';
     document.getElementById('cfEmail').value='';
@@ -3266,7 +3283,7 @@ function sendForm(btn){
     setTimeout(()=>{status.textContent='';},12000);
   }).catch((err)=>{
     btn.disabled=false; btn.textContent='ENVIAR MENSAGEM →';
-    status.style.color='#e07070';
+    status.className='msg-err';
     // Se as chaves ainda são placeholder, mostra instrução útil
     if(EMAILJS_PUBLIC_KEY==='SEU_PUBLIC_KEY_AQUI'){
       status.textContent='Configure o EmailJS no código (ver comentários no <head>).';
@@ -4051,6 +4068,18 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
   // o ?de= já cumpriu o papel: sai da barra de endereço (o #beat= fica)
   try{ if(/[?&]de=/.test(location.search)&&history.replaceState) history.replaceState(null,'',location.pathname+location.hash); }catch(_){}
 
+  // um aviso por beat por visita: quais beats tocaram e quais foram pro carrinho
+  function porBeat(tipo,beatId){
+    var n=Number(beatId); if(!(n>0)) return;
+    if(ls('cr_b_'+tipo+'_'+n)) return;
+    ls('cr_b_'+tipo+'_'+n,'1');
+    var txt=JSON.stringify({s:sessao,e:tipo,a:aparelho,o:origem,b:n});
+    try{
+      if(navigator.sendBeacon && navigator.sendBeacon('/api/funil',txt)) return;
+      fetch('/api/funil',{method:'POST',body:txt,keepalive:true}).catch(function(){});
+    }catch(_){}
+  }
+
   function marca(etapa,beatId){
     if(ls('cr_f_'+etapa)) return;
     ls('cr_f_'+etapa,'1');
@@ -4078,12 +4107,12 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
   // play só conta quando o som sai de verdade: link aberto sem toque (deep-link)
   // pode ter o autoplay barrado pelo celular. O ícone de pause (rect) é a prova.
   var tocandoMesmo=function(){ var b=document.getElementById('npPlay'); return !!(b&&/rect/.test(b.innerHTML)); };
-  var confere=function(id){ [700,2500].forEach(function(t){ setTimeout(function(){ if(tocandoMesmo()) marca('play',id); },t); }); };
+  var confere=function(id){ [700,2500].forEach(function(t){ setTimeout(function(){ if(tocandoMesmo()){ marca('play',id); porBeat('toque',id); } },t); }); };
   envolve('tocarBeat',null,function(_,a){ confere(a[0]); });
   envolve('npToggle',null,function(){ var b=beatAtual(); confere(b&&b.id); });
   ['toggleBeat','addPkg','addSvc'].forEach(function(nome){
     envolve(nome,function(){ return qtd(); },function(antes,a){
-      if(qtd()>antes) marca('carrinho',nome==='toggleBeat'?a[0]:null);
+      if(qtd()>antes){ marca('carrinho',nome==='toggleBeat'?a[0]:null); if(nome==='toggleBeat') porBeat('adicao',a[0]); }
     });
   });
   envolve('openCheckout',null,function(){ try{ if(cart.length) marca('checkout'); }catch(_){} });

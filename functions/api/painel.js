@@ -396,13 +396,15 @@ async function abaVitrine(d, request, env, p) {
       GROUP BY v.origem ORDER BY visitas DESC LIMIT 12`
   ).bind(p.de, p.ate).all()).results || [];
 
-  const top = async (etapa) => (await d.prepare(
-    `SELECT beat_id, COUNT(*) n FROM funil WHERE etapa = ? AND dia BETWEEN ? AND ? AND beat_id IS NOT NULL
-      GROUP BY beat_id ORDER BY n DESC LIMIT 8`
-  ).bind(etapa, p.de, p.ate).all()).results || [];
-  const [tocados, carrinhos] = await Promise.all([top('play'), top('carrinho')]);
-  const nomes = new Map((await vitrine(request, env)).map((b) => [b.id, b.name]));
-  const nomear = (l) => l.map((r) => ({ nome: nomes.get(r.beat_id) || ('beat ' + r.beat_id), n: r.n }));
+  // cada beat da vitrine com quantas visitas tocaram e quantas puseram no carrinho
+  // (inclusive os zerados: a busca do painel acha qualquer um)
+  const conta = async (tipo) => new Map(((await d.prepare(
+    'SELECT beat_id, COUNT(*) n FROM beat_evento WHERE tipo = ? AND dia BETWEEN ? AND ? GROUP BY beat_id'
+  ).bind(tipo, p.de, p.ate).all()).results || []).map((r) => [r.beat_id, r.n]));
+  const [toques, adicoes] = await Promise.all([conta('toque'), conta('adicao')]);
+  const beats = await vitrine(request, env);
+  const lista = (m) => beats.map((b) => ({ nome: b.name, vendido: b.sold ? 1 : 0, n: m.get(b.id) || 0 }))
+    .sort((a, b) => b.n - a.n || a.nome.localeCompare(b.nome, 'pt-BR'));
 
   // origem tape-<slug> ganha o nome da tape
   const nomesTape = new Map(((await d.prepare("SELECT slug, name FROM artists WHERE tipo = 'tape'").all()).results || [])
@@ -412,7 +414,7 @@ async function abaVitrine(d, request, env, p) {
   return {
     etapas: ETAPAS_FUNIL, agora, antes,
     serie: series(p.dias, porDia, ETAPAS_FUNIL),
-    origens, tocados: nomear(tocados), carrinhos: nomear(carrinhos)
+    origens, tocados: lista(toques), carrinhos: lista(adicoes)
   };
 }
 
@@ -451,27 +453,39 @@ async function abaCatalogos(d, p, tipo) {
       GROUP BY dia, chave`
   ).bind(tipo, ini, fim).all()).results || [];
 
+  // todos os catálogos do tipo, inclusive os que não tiveram nada no período
   const lista = (await d.prepare(
     `SELECT a.id, a.name, a.slug,
-            SUM(CASE WHEN e.kind='open' THEN 1 ELSE 0 END) open,
+            COALESCE(SUM(CASE WHEN e.kind='open' THEN 1 ELSE 0 END), 0) open,
             COUNT(DISTINCT CASE WHEN e.kind='open' THEN e.who END) pessoas,
-            SUM(CASE WHEN e.kind='play' THEN 1 ELSE 0 END) play,
-            SUM(CASE WHEN e.kind LIKE 'download%' THEN 1 ELSE 0 END) download,
-            SUM(CASE WHEN e.kind='carrinho' THEN 1 ELSE 0 END) carrinho,
+            COALESCE(SUM(CASE WHEN e.kind='play' THEN 1 ELSE 0 END), 0) play,
+            COALESCE(SUM(CASE WHEN e.kind LIKE 'download%' THEN 1 ELSE 0 END), 0) download,
+            COALESCE(SUM(CASE WHEN e.kind='carrinho' THEN 1 ELSE 0 END), 0) carrinho,
             MAX(e.at) ultima
-       FROM events e JOIN artists a ON a.id = e.artist_id
-      WHERE a.tipo = ? AND e.at >= ? AND e.at < ?
-      GROUP BY a.id ORDER BY open DESC, play DESC LIMIT 60`
-  ).bind(tipo, ini, fim).all()).results || [];
+       FROM artists a LEFT JOIN events e ON e.artist_id = a.id AND e.at >= ? AND e.at < ?
+      WHERE a.tipo = ?
+      GROUP BY a.id ORDER BY open DESC, play DESC, a.name COLLATE NOCASE`
+  ).bind(ini, fim, tipo).all()).results || [];
 
+  // todas as faixas prontas (beats nas tapes; beats e músicas nos artistas) com os plays do período
   const faixas = (await d.prepare(
-    `SELECT t.title, a.name AS onde, COUNT(*) n
-       FROM events e JOIN artists a ON a.id = e.artist_id JOIN tracks t ON t.id = e.track_id
-      WHERE a.tipo = ? AND e.kind = 'play' AND e.at >= ? AND e.at < ?
-      GROUP BY e.track_id ORDER BY n DESC LIMIT 10`
-  ).bind(tipo, ini, fim).all()).results || [];
+    `SELECT t.id, t.title, a.name AS onde, COUNT(e.id) n
+       FROM tracks t JOIN artists a ON a.id = t.artist_id
+       LEFT JOIN events e ON e.track_id = t.id AND e.artist_id = a.id AND e.kind = 'play' AND e.at >= ? AND e.at < ?
+      WHERE a.tipo = ? AND t.ready = 1 ${tipo === 'tape' ? "AND t.kind = 'beat'" : ''}
+      GROUP BY t.id ORDER BY n DESC, t.title COLLATE NOCASE LIMIT 5000`
+  ).bind(ini, fim, tipo).all()).results || [];
 
-  const out = { kinds: KINDS, agora, antes, serie: series(p.dias, porDia, KINDS), lista, faixas };
+  // pessoas diferentes por dia (quem abriu o link)
+  const pessoasDia = (await d.prepare(
+    `SELECT ${DIA_SP} dia, 'pessoas' chave, COUNT(DISTINCT e.who) n
+       FROM events e JOIN artists a ON a.id = e.artist_id
+      WHERE a.tipo = ? AND e.kind = 'open' AND e.at >= ? AND e.at < ?
+      GROUP BY dia`
+  ).bind(tipo, ini, fim).all()).results || [];
+  const serie = series(p.dias, porDia.concat(pessoasDia), KINDS.concat(['pessoas', 'vitrine']));
+
+  const out = { kinds: KINDS, agora, antes, serie, lista, faixas };
 
   // o caminho da tape até a venda: quem saiu da tape pelo botão de carrinho e
   // chegou na vitrine (origem tape-<slug> no funil), e quanto disso pagou
@@ -487,6 +501,12 @@ async function abaCatalogos(d, p, tipo) {
         GROUP BY v.origem`
     ).bind(p.de, p.ate).all()).results || [];
     const porSlug = new Map(vit.map((r) => [r.origem.replace(/^tape-/, ''), r]));
+    const vitDia = (await d.prepare(
+      `SELECT dia, 'vitrine' chave, COUNT(*) n FROM funil
+        WHERE etapa = 'visita' AND dia BETWEEN ? AND ? AND (origem LIKE 'tape-%' OR origem = 'beat-tape')
+        GROUP BY dia`
+    ).bind(p.de, p.ate).all()).results || [];
+    out.serie.vitrine = series(p.dias, vitDia, ['vitrine']).vitrine;
     for (const t of lista) {
       const v = porSlug.get(t.slug);
       t.vitrine = v ? v.visitas : 0;

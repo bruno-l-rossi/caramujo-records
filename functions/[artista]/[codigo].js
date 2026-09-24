@@ -58,8 +58,8 @@ export async function onRequestGet({ params, request, env }) {
     // textos da prévia no Direct/WhatsApp (formato do Bruno, 25/09/2026)
     titulo: tape ? `${artist.name} · @rideblan33` : `${artist.name} · Caramujo Records`,
     descricao: tape
-      ? 'Licença exclusiva para beats e produção completa. © Caramujo Records'
-      : `Beats e Músicas de ${artist.name} com @rideblan33.`,
+      ? 'Catálogo completo com beats exclusivos. © Caramujo Records'
+      : `Beats e músicas de ${artist.name} com @rideblan33.`,
     url: url.origin + url.pathname,
     capa,
     cat: {
