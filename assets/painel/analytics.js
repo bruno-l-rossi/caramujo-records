@@ -5,7 +5,11 @@
    #141414), grade em fio, cruz + balão no hover e no teclado, e a tabela com
    os números por dia logo embaixo de cada gráfico. */
 (function () {
-  var COR = '#b88a3a', LAVAGEM = 'rgba(184,138,58,.12)', GRADE = '#232323', FUNDO = '#141414';
+  // Até 3 linhas no mesmo gráfico. As 3 cores passam no validador do dataviz
+  // em TODOS os pares (fundo #101010): âmbar da casa, azul e verde-água. Cada
+  // métrica tem a sua cor fixa (a cor segue a métrica, não a posição).
+  var CORES = ['#b88a3a', '#3987e5', '#199e70'];
+  var COR = CORES[0], LAVAGEM = 'rgba(184,138,58,.12)', GRADE = '#232323', FUNDO = '#101010';
 
   var CSS = [
     '.an-filtros{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:18px 0 6px}',
@@ -33,7 +37,16 @@
     '.an-graf svg:focus-visible{box-shadow:0 0 0 2px #fff;border-radius:6px}',
     '.an-balao{position:absolute;pointer-events:none;background:#1d1d1d;border:1px solid #333;border-radius:9px;padding:7px 10px;font-size:12px;color:var(--ink2);white-space:nowrap;transform:translate(-50%,-100%);display:none}',
     '.an-balao b{display:block;font-size:15px;color:#fff;font-variant-numeric:tabular-nums}',
-    '.an-balao i{display:inline-block;width:12px;height:2px;background:' + COR + ';vertical-align:middle;margin-right:6px}',
+    '.an-balao i{display:inline-block;width:12px;height:2px;vertical-align:middle;margin-right:6px}',
+    '.an-balao .lin{display:flex;align-items:baseline;gap:8px;margin-top:3px}',
+    '.an-balao .lin b{display:inline;font-size:14px;min-width:26px}',
+    '.an-balao .dia{display:block;font-size:11.5px;color:var(--ink4);margin-bottom:2px}',
+    '.an-chips button .k{display:inline-block;width:12px;height:2px;border-radius:1px;vertical-align:middle;margin-right:7px}',
+    '.an-chips button[aria-pressed="false"] .k{opacity:.35}',
+    '.an-chips .nota{align-self:center;font-size:12px;color:var(--ink4);margin-left:4px}',
+    '.an-chips .nota:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#e8e0cf;margin-right:6px;vertical-align:0}',
+    '.an-busca{display:flex;align-items:center;gap:8px;background:var(--campo);border:1px solid var(--borda);border-radius:10px;padding:8px 11px;margin:4px 0 8px;max-width:320px}',
+    '.an-busca input{flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--ink);font-size:14px}',
     '.an-tab{width:100%;border-collapse:collapse;font-size:13px}',
     '.an-tab th{font-weight:500;color:var(--ink4);text-align:right;padding:6px 0 6px 10px;border-bottom:1px solid var(--linha);font-size:11.5px;white-space:nowrap}',
     '.an-tab th:first-child,.an-tab td:first-child{text-align:left;padding-left:0}',
@@ -89,25 +102,31 @@
   };
   var nomeOrigem = function (o) { return o.nome ? 'Tape: ' + o.nome : (ORIGEM[o.origem] || o.origem); };
 
-  /* ---------- gráfico de área, série única ---------- */
-  function grafico(dias, valores, rotulo) {
+  /* ---------- gráfico de linhas (1 a 3 séries) ---------- */
+  // series: [{nome, cor, valores}]. vendas (opcional): número de vendas por dia,
+  // marcado como ponto claro embaixo do eixo, sem virar uma 4ª linha.
+  function grafico(dias, series, vendas) {
     var caixa = el('div', 'an-graf');
     var balao = el('div', 'an-balao');
     var NS = 'http://www.w3.org/2000/svg';
     var svg = document.createElementNS(NS, 'svg');
     svg.setAttribute('tabindex', '0');
     svg.setAttribute('role', 'img');
-    svg.setAttribute('aria-label', rotulo + ' por dia, de ' + br(dias[0]) + ' a ' + br(dias[dias.length - 1]) + '. Use as setas pra ver cada dia.');
+    svg.setAttribute('aria-label', series.map(function (x) { return x.nome; }).join(', ') + ' por dia, de ' + br(dias[0]) + ' a ' + br(dias[dias.length - 1]) + '. Use as setas pra ver cada dia.');
     caixa.appendChild(svg); caixa.appendChild(balao);
     var geo = null, atual = -1;
+    var uma = series.length === 1;
 
     function desenha() {
-      var W = Math.max(280, (caixa.clientWidth || 600) - 16), H = 190, L = 34, R = 34, T = 14, B = 24;
+      var W = Math.max(280, (caixa.clientWidth || 600) - 16), H = 190, L = 34, R = uma ? 34 : 14, T = 14, B = vendas ? 32 : 24;
       svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-      var max = niceMax(Math.max.apply(null, valores.concat([0])));
-      var n = valores.length;
+      var todos = [0];
+      series.forEach(function (x) { todos = todos.concat(x.valores); });
+      var max = niceMax(Math.max.apply(null, todos));
+      var n = dias.length;
+      var base = H - B;
       var x = function (i) { return L + (n === 1 ? (W - L - R) / 2 : i * (W - L - R) / (n - 1)); };
-      var y = function (v) { return T + (H - T - B) * (1 - v / max); };
+      var y = function (v) { return T + (base - T) * (1 - v / max); };
       geo = { x: x, y: y, L: L, R: R, W: W, n: n };
       var h = '';
       [0, max / 2, max].forEach(function (t) {
@@ -119,42 +138,60 @@
         var anc = k === 0 && n > 1 ? 'start' : k === marcas.length - 1 && n > 1 ? 'end' : 'middle';
         h += '<text x="' + x(i) + '" y="' + (H - 6) + '" text-anchor="' + anc + '" font-size="11" fill="#6a6a6a">' + br(dias[i]) + '</text>';
       });
-      var pts = valores.map(function (v, i) { return x(i).toFixed(1) + ',' + y(v).toFixed(1); });
-      if (n > 1) {
-        h += '<path d="M' + x(0) + ',' + y(0) + ' L' + pts.join(' L') + ' L' + x(n - 1) + ',' + y(0) + ' Z" fill="' + LAVAGEM + '"/>';
-        h += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + COR + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
-      }
-      var ult = n - 1;
-      h += '<circle cx="' + x(ult) + '" cy="' + y(valores[ult]) + '" r="4" fill="' + COR + '" stroke="' + FUNDO + '" stroke-width="2"/>';
-      h += '<text x="' + (x(ult) + 8) + '" y="' + (y(valores[ult]) + 4) + '" font-size="11.5" fill="#d9d9d9">' + num(valores[ult]) + '</text>';
-      h += '<line class="cruz" x1="0" x2="0" y1="' + T + '" y2="' + (H - B) + '" stroke="#5a5a5a" stroke-width="1" visibility="hidden"/>';
-      h += '<circle class="ponto" r="4" fill="' + COR + '" stroke="' + FUNDO + '" stroke-width="2" visibility="hidden"/>';
-      h += '<rect x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (H - T - B) + '" fill="transparent"/>';
+      if (vendas) vendas.forEach(function (v, i) {
+        if (v > 0) h += '<circle cx="' + x(i) + '" cy="' + (base + 9) + '" r="3.5" fill="#e8e0cf"/>';
+      });
+      series.forEach(function (s) {
+        var pts = s.valores.map(function (v, i) { return x(i).toFixed(1) + ',' + y(v).toFixed(1); });
+        if (n > 1) {
+          if (uma) h += '<path d="M' + x(0) + ',' + y(0) + ' L' + pts.join(' L') + ' L' + x(n - 1) + ',' + y(0) + ' Z" fill="' + LAVAGEM + '"/>';
+          h += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + s.cor + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+        }
+        var ult = n - 1;
+        h += '<circle cx="' + x(ult) + '" cy="' + y(s.valores[ult]) + '" r="4" fill="' + s.cor + '" stroke="' + FUNDO + '" stroke-width="2"/>';
+        if (uma) h += '<text x="' + (x(ult) + 8) + '" y="' + (y(s.valores[ult]) + 4) + '" font-size="11.5" fill="#d9d9d9">' + num(s.valores[ult]) + '</text>';
+      });
+      h += '<line class="cruz" x1="0" x2="0" y1="' + T + '" y2="' + base + '" stroke="#5a5a5a" stroke-width="1" visibility="hidden"/>';
+      series.forEach(function (s, k) {
+        h += '<circle class="ponto" data-k="' + k + '" r="4" fill="' + s.cor + '" stroke="' + FUNDO + '" stroke-width="2" visibility="hidden"/>';
+      });
+      h += '<rect x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (base - T) + '" fill="transparent"/>';
       svg.innerHTML = h;
       if (atual >= 0) mostra(atual);
     }
     function mostra(i) {
       if (!geo) return;
       atual = i;
-      var cruz = svg.querySelector('.cruz'), ponto = svg.querySelector('.ponto');
-      var px = geo.x(i), py = geo.y(valores[i]);
+      var px = geo.x(i), topo = Infinity;
+      var cruz = svg.querySelector('.cruz');
       cruz.setAttribute('x1', px); cruz.setAttribute('x2', px); cruz.setAttribute('visibility', 'visible');
-      ponto.setAttribute('cx', px); ponto.setAttribute('cy', py); ponto.setAttribute('visibility', 'visible');
+      [].forEach.call(svg.querySelectorAll('.ponto'), function (p) {
+        var s = series[Number(p.dataset.k)], py = geo.y(s.valores[i]);
+        topo = Math.min(topo, py);
+        p.setAttribute('cx', px); p.setAttribute('cy', py); p.setAttribute('visibility', 'visible');
+      });
       var esc = (svg.getBoundingClientRect().width / geo.W) || 1;
       balao.textContent = '';
-      balao.appendChild(el('b', null, num(valores[i])));
-      var l = el('span'); l.appendChild(el('i')); l.appendChild(document.createTextNode(rotulo + ' · ' + brAno(dias[i]))); balao.appendChild(l);
+      balao.appendChild(el('span', 'dia', brAno(dias[i])));
+      series.forEach(function (s) {           // valor forte, nome discreto, traço da cor
+        var l = el('span', 'lin');
+        l.appendChild(el('b', null, num(s.valores[i])));
+        var k = el('i'); k.style.background = s.cor;
+        var nome = el('span'); nome.appendChild(k); nome.appendChild(document.createTextNode(s.nome));
+        l.appendChild(nome); balao.appendChild(l);
+      });
+      if (vendas) balao.appendChild(el('span', 'dia', vendas[i] ? (vendas[i] + (vendas[i] === 1 ? ' venda' : ' vendas') + ' no dia') : 'sem venda no dia'));
       balao.style.display = 'block';
       var left = 8 + px * esc;
-      left = Math.max(80, Math.min((caixa.clientWidth || 600) - 80, left));
+      left = Math.max(90, Math.min((caixa.clientWidth || 600) - 90, left));
       balao.style.left = left + 'px';
-      balao.style.top = (py * esc) + 'px';
+      balao.style.top = Math.max(60, topo * esc) + 'px';
     }
     function esconde() {
       atual = -1; balao.style.display = 'none';
-      var c = svg.querySelector('.cruz'), p = svg.querySelector('.ponto');
+      var c = svg.querySelector('.cruz');
       if (c) c.setAttribute('visibility', 'hidden');
-      if (p) p.setAttribute('visibility', 'hidden');
+      [].forEach.call(svg.querySelectorAll('.ponto'), function (p) { p.setAttribute('visibility', 'hidden'); });
     }
     svg.addEventListener('pointermove', function (e) {
       if (!geo) return;
@@ -176,41 +213,56 @@
     return caixa;
   }
 
-  // a mesma série em tabela, pra quem não quer (ou não pode) passar o mouse
-  function tabelaDias(dias, valores, rotulo) {
+  // os mesmos números em tabela, pra quem não quer (ou não pode) passar o mouse
+  function tabelaDias(dias, colunas) {
     var d = el('details', 'an-det');
     d.appendChild(el('summary', null, 'Ver os números por dia'));
     var box = el('div', 'an-rolar'), t = el('table', 'an-tab');
-    var cab = el('tr'); cab.appendChild(el('th', null, 'Dia')); cab.appendChild(el('th', null, rotulo)); t.appendChild(cab);
+    var cab = el('tr'); cab.appendChild(el('th', null, 'Dia'));
+    colunas.forEach(function (c) { cab.appendChild(el('th', null, c.nome)); });
+    t.appendChild(cab);
     for (var i = dias.length - 1; i >= 0; i--) {
-      var tr = el('tr'); tr.appendChild(el('td', null, brAno(dias[i]))); tr.appendChild(el('td', null, num(valores[i]))); t.appendChild(tr);
+      var tr = el('tr'); tr.appendChild(el('td', null, brAno(dias[i])));
+      colunas.forEach(function (c) { tr.appendChild(el('td', null, num(c.valores[i]))); });
+      t.appendChild(tr);
     }
     box.appendChild(t); d.appendChild(box);
     return d;
   }
 
-  // bloco: título + botões de métrica + gráfico + tabela
-  function evolucao(titulo, sub, dias, serie, metricas) {
+  // bloco: título + botões de liga/desliga por métrica (cada um com a cor da
+  // sua linha, e juntos são a legenda) + gráfico + tabela
+  function evolucao(titulo, sub, dias, serie, metricas, vendas) {
     var b = el('div', 'an-bloco');
     b.appendChild(el('h3', null, titulo));
     if (sub) b.appendChild(el('p', 'an-sub', sub));
     var chips = el('div', 'an-chips'), alvo = el('div');
-    chips.setAttribute('role', 'group'); chips.setAttribute('aria-label', 'Métrica do gráfico');
+    chips.setAttribute('role', 'group'); chips.setAttribute('aria-label', 'Linhas do gráfico');
     b.appendChild(chips); b.appendChild(alvo);
-    function mostra(k) {
-      [].forEach.call(chips.children, function (c) { c.setAttribute('aria-pressed', c.dataset.k === k ? 'true' : 'false'); });
+    var ligadas = metricas.map(function () { return true; });
+    var valores = function (k) { return serie[k] || dias.map(function () { return 0; }); };
+    function desenha() {
+      [].forEach.call(chips.querySelectorAll('button'), function (c, i) { c.setAttribute('aria-pressed', ligadas[i] ? 'true' : 'false'); });
       alvo.textContent = '';
-      var nome = metricas.filter(function (m) { return m[0] === k; })[0][1];
-      var vals = serie[k] || dias.map(function () { return 0; });
-      alvo.appendChild(grafico(dias, vals, nome));
-      alvo.appendChild(tabelaDias(dias, vals, nome));
+      var vis = [];
+      metricas.forEach(function (m, i) { if (ligadas[i]) vis.push({ nome: m[1], cor: CORES[i], valores: valores(m[0]) }); });
+      alvo.appendChild(grafico(dias, vis, vendas));
+      var cols = metricas.map(function (m) { return { nome: m[1], valores: valores(m[0]) }; });
+      if (vendas) cols.push({ nome: 'Vendas', valores: vendas });
+      alvo.appendChild(tabelaDias(dias, cols));
     }
-    metricas.forEach(function (m) {
-      var c = el('button', null, m[1]); c.type = 'button'; c.dataset.k = m[0];
-      c.addEventListener('click', function () { mostra(m[0]); });
+    metricas.forEach(function (m, i) {
+      var c = el('button'); c.type = 'button';
+      var k = el('span', 'k'); k.style.background = CORES[i];
+      c.appendChild(k); c.appendChild(document.createTextNode(m[1]));
+      c.addEventListener('click', function () {
+        if (ligadas[i] && ligadas.filter(Boolean).length === 1) return;   // sempre fica ao menos uma
+        ligadas[i] = !ligadas[i]; desenha();
+      });
       chips.appendChild(c);
     });
-    mostra(metricas[0][0]);
+    if (vendas) chips.appendChild(el('span', 'nota', 'dia com venda'));
+    desenha();
     return b;
   }
 
@@ -251,15 +303,34 @@
     return b;
   }
 
-  function tabela(titulo, sub, colunas, linhas, vazio) {
+  // mesma busca do catálogo: vai filtrando enquanto digita, sem ligar pra
+  // maiúscula nem acento
+  var normal = function (x) { return String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); };
+  function tabela(titulo, sub, colunas, linhas, vazio, busca) {
     var b = el('div', 'an-bloco');
     b.appendChild(el('h3', null, titulo));
     if (sub) b.appendChild(el('p', 'an-sub', sub));
     if (!linhas.length) { b.appendChild(el('p', 'an-sub', vazio || 'Nada nesse período.')); return b; }
     var box = el('div', 'an-rolar'), t = el('table', 'an-tab');
+    var nada = el('p', 'an-sub', 'Nenhum resultado pra essa busca.'); nada.hidden = true;
+    if (busca) {
+      var campo = el('label', 'an-busca');
+      campo.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6a6a6a" stroke-width="1.9"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg>';
+      var inp = el('input'); inp.type = 'search'; inp.placeholder = busca; inp.setAttribute('aria-label', busca); inp.autocomplete = 'off';
+      campo.appendChild(inp); b.appendChild(campo);
+      inp.addEventListener('input', function () {
+        var q = normal(inp.value.trim()), vis = 0;
+        [].forEach.call(t.querySelectorAll('tr[data-busca]'), function (tr) {
+          var ok = !q || tr.dataset.busca.indexOf(q) > -1;
+          tr.hidden = !ok; if (ok) vis++;
+        });
+        nada.hidden = vis > 0;
+      });
+    }
     var cab = el('tr'); colunas.forEach(function (c) { cab.appendChild(el('th', null, c)); }); t.appendChild(cab);
     linhas.forEach(function (l) {
       var tr = el('tr');
+      tr.dataset.busca = normal(Array.isArray(l[0]) ? l[0].join(' ') : l[0]);
       l.forEach(function (c, i) {
         var td = el('td');
         if (i === 0 && Array.isArray(c)) { td.appendChild(document.createTextNode(c[0])); td.appendChild(el('small', null, c[1])); }
@@ -268,7 +339,7 @@
       });
       t.appendChild(tr);
     });
-    box.appendChild(t); b.appendChild(box);
+    box.appendChild(t); b.appendChild(box); b.appendChild(nada);
     return b;
   }
 
@@ -284,8 +355,8 @@
       ['Conversão', pct(a.pago.total, V), 'visitas que viraram venda']
     ]));
     if (!V) corpo.appendChild(el('div', 'an-vazio', 'Nenhuma visita contada nesse período. O funil da vitrine começou a contar no deploy de 24/09/2026.'));
-    corpo.appendChild(evolucao('Evolução por dia', 'Cada visita conta uma vez por etapa.', j.dias, j.serie,
-      [['visita', 'Visitas'], ['play', 'Deram play'], ['carrinho', 'Carrinho'], ['checkout', 'Checkout'], ['pago', 'Pagaram']]));
+    corpo.appendChild(evolucao('Evolução por dia', 'Cada visita conta uma vez por etapa. Toque numa linha pra esconder ou mostrar.', j.dias, j.serie,
+      [['visita', 'Visitas'], ['play', 'Deram play'], ['carrinho', 'Puseram no carrinho']], j.serie.pago));
     var NOMES = { visita: 'Visitas', play: 'Deram play', carrinho: 'Puseram no carrinho', checkout: 'Abriram o checkout', pagamento: 'Chegaram no pagamento', pago: 'Pagaram' };
     var ant = null;
     var dois = el('div', 'an-dois');
@@ -326,7 +397,7 @@
       ['Vendas', num(v.pagos), 'de quem veio das tapes']
     ]));
     if (!a.open && !a.play) corpo.appendChild(el('div', 'an-vazio', 'Nenhuma beat tape aberta nesse período.'));
-    corpo.appendChild(evolucao('Evolução por dia', null, j.dias, j.serie,
+    corpo.appendChild(evolucao('Evolução por dia', 'Toque numa linha pra esconder ou mostrar.', j.dias, j.serie,
       [['open', 'Aberturas'], ['play', 'Plays'], ['carrinho', 'Cliques no carrinho']]));
     corpo.appendChild(barras('Da tape até a venda', 'Pessoas diferentes em cada etapa. "Chegaram na vitrine" conta quem saiu de uma tape pelo botão de carrinho.', [
       ['Abriram a tape', a.pessoas, '', ''],
@@ -336,7 +407,7 @@
       ['Pagaram', v.pagos, pct(v.pagos, v.visitas), '']
     ]));
     corpo.appendChild(tabela('Por beat tape', null, ['Tape', 'Pessoas', 'Plays', 'Carrinho', 'Vitrine', 'Vendas'],
-      j.lista.map(function (t) { return [t.name, num(t.pessoas), num(t.play), num(t.carrinho), num(t.vitrine), num(t.pagos)]; })));
+      j.lista.map(function (t) { return [t.name, num(t.pessoas), num(t.play), num(t.carrinho), num(t.vitrine), num(t.pagos)]; }), null, 'Buscar beat tape'));
     corpo.appendChild(tabela('Beats mais tocados nas tapes', null, ['Beat', 'Plays'],
       j.faixas.map(function (f) { return [[f.title, f.onde], num(f.n)]; })));
   }
@@ -351,11 +422,11 @@
       ['Artistas ativos', num(a.ativos), 'abriram o link no período']
     ]));
     if (!a.open && !a.play) corpo.appendChild(el('div', 'an-vazio', 'Nenhum link de artista aberto nesse período.'));
-    corpo.appendChild(evolucao('Evolução por dia', null, j.dias, j.serie,
+    corpo.appendChild(evolucao('Evolução por dia', 'Toque numa linha pra esconder ou mostrar.', j.dias, j.serie,
       [['open', 'Aberturas'], ['play', 'Plays'], ['download', 'Downloads']]));
     var ult = function (iso) { if (!iso) return '—'; return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }); };
     corpo.appendChild(tabela('Por artista', 'Ordenado por aberturas no período.', ['Artista', 'Aberturas', 'Pessoas', 'Plays', 'Downloads', 'Última'],
-      j.lista.map(function (t) { return [t.name, num(t.open), num(t.pessoas), num(t.play), num(t.download), ult(t.ultima)]; })));
+      j.lista.map(function (t) { return [t.name, num(t.open), num(t.pessoas), num(t.play), num(t.download), ult(t.ultima)]; }), null, 'Buscar artista'));
     corpo.appendChild(tabela('Faixas mais tocadas', null, ['Faixa', 'Plays'],
       j.faixas.map(function (f) { return [[f.title, f.onde], num(f.n)]; })));
   }

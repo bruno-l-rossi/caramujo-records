@@ -1070,6 +1070,32 @@ html,body{overflow-x:hidden;}
 .pack-parc{margin-top:.55rem;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--read);letter-spacing:.04em}
 /* o botão de preço do pé aceso = já está no carrinho (igual à lista) */
 .pe-dir #npPreco.on{background:var(--fire);border-color:var(--fire)}
+
+/* ══ NOVO v30 — barra do pé em duas linhas no celular, play no modal do pacote ══
+   Celular: nome e ficha inteiros em cima (com o volume no canto), e os 5
+   controles centrados embaixo: aleatório, anterior, PLAY, próxima,
+   compartilhar. Computador: aleatório, anterior, PLAY, próxima, volume;
+   compartilhar à direita, do lado do preço (arrumaBarra move os dois). */
+.pe-dir #npShare{flex:none}
+.transporte .vol-wrap{display:flex}
+@media(max-width:600px){
+  .pe-baixo{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"info dir" "ctl ctl";row-gap:6px;column-gap:10px}
+  .pe-info{grid-area:info}
+  .pe-dir{grid-area:dir}
+  .transporte{grid-area:ctl;justify-content:center;gap:18px}
+  .np-bar #npShuffle{display:flex}
+  html body.tocando{padding-bottom:140px}
+}
+@media(max-width:400px){ .transporte{gap:10px} }
+/* modal do pacote: ouvir antes de escolher */
+.pkg-beat-item{position:relative}
+.pkg-play{flex:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  background:transparent;border:1px solid var(--wire);color:var(--bone);cursor:pointer;padding:0;
+  transition:background .14s,border-color .14s,color .14s;-webkit-tap-highlight-color:transparent}
+.pkg-play:hover{border-color:var(--fire);color:var(--cream)}
+.pkg-beat-item.tocando .pkg-play{background:var(--fire);border-color:var(--fire);color:var(--black)}
+.pkg-beat-item.tocando .pkg-beat-name{color:var(--amber)}
+.pkg-corrida{position:absolute;left:0;bottom:-1px;height:2px;width:0;background:var(--fire);pointer-events:none}
 </style>
 
 <!-- ═══ EMAILJS (formulário de contato) ══════════════
@@ -1306,7 +1332,7 @@ html,body{overflow-x:hidden;}
       <div style="display:flex;gap:0;margin-top:auto;">
         <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('1 Beat',119)">Adicionar · R$119</button>
       </div>
-      <div class="pack-parc">ou em até 12x no cartão</div>
+      <div class="pack-parc">em até 12x no cartão</div>
     </div>
 
     <div class="pack hot">
@@ -1323,7 +1349,7 @@ html,body{overflow-x:hidden;}
       <div style="display:flex;gap:0;margin-top:auto;">
         <button class="btn btn-fire" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('2 Beats',219)">Adicionar · R$219</button>
       </div>
-      <div class="pack-parc">ou em até 12x no cartão</div>
+      <div class="pack-parc">em até 12x no cartão</div>
     </div>
 
     <div class="pack">
@@ -1340,7 +1366,7 @@ html,body{overflow-x:hidden;}
       <div style="display:flex;gap:0;margin-top:auto;">
         <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('3 Beats',299)">Adicionar · R$299</button>
       </div>
-      <div class="pack-parc">ou em até 12x no cartão</div>
+      <div class="pack-parc">em até 12x no cartão</div>
     </div>
   </div>
 </section>
@@ -2562,13 +2588,16 @@ function renderPkgBeatList(beats) {
     const sel = p.selectedBeats.some(s => s.id === b.id);
     return `
     <div class="pkg-beat-item${sel ? ' selected' : ''}" id="pbi-${b.id}" onclick="togglePkgBeat(${b.id}, '${b.name.replace(/'/g, "\\'")}')">
+      ${(window.__VIT&&(window.__VIT[String(b.id)]||{}).mp3) ? `<button class="pkg-play" type="button" data-bid="${b.id}" aria-label="Ouvir ${b.name.replace(/"/g,'&quot;')}" onclick="event.stopPropagation();window.tocarBeat(${b.id})"></button>` : ''}
       <div class="pkg-beat-cb" id="pbc-${b.id}">${sel ? '✓' : ''}</div>
       <div class="pkg-beat-info">
         <div class="pkg-beat-name">${b.name}</div>
         <div class="pkg-beat-meta">${b.bpm} BPM · ${b.key} · ${GENRE_LABELS[b.genre] || b.genre}</div>
       </div>
+      <i class="pkg-corrida"></i>
     </div>`;
   }).join('');
+  if (typeof window.repintarPlayer === 'function') window.repintarPlayer();
 }
 
 function filterPkgBeats(query) {
@@ -3399,6 +3428,15 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
       var c=el.querySelector('.corrida'); if(c) c.style.width=meu?(f*100)+'%':'0';
     }
     pintarHero(f,tocando);
+    // modal do pacote: play/pause em cada beat e a linha de progresso embaixo
+    var pk=document.querySelectorAll('#pkgBeatList .pkg-play');
+    for(var k=0;k<pk.length;k++){
+      var meu2=String(pk[k].dataset.bid)===String(atual), item=pk[k].parentNode;
+      pk[k].innerHTML=(meu2&&tocando)?ICO_PA:ICO_P;
+      pk[k].setAttribute('aria-pressed',meu2&&tocando?'true':'false');
+      item.classList.toggle('tocando',meu2);
+      var cr=item.querySelector('.pkg-corrida'); if(cr) cr.style.width=meu2?(f*100)+'%':'0';
+    }
   }
   window.repintarPlayer=repintar;
 
@@ -3669,8 +3707,22 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
     }catch(_){}
   }
 
+  // No computador o volume fica colado nos controles (ponta direita) e o
+  // compartilhar vai pra direita, do lado do preço. No celular o HTML original
+  // vale: compartilhar no fim dos controles, volume no canto do nome.
+  function arrumaBarra(){
+    var tr=document.querySelector('.np-bar .transporte'), dir=document.querySelector('.np-bar .pe-dir');
+    var vol=$('npVolWrap'), sh=$('npShare');
+    if(!tr||!dir||!vol||!sh) return;
+    var cel=false; try{ cel=matchMedia('(max-width: 600px)').matches; }catch(_){}
+    if(cel){ if(sh.parentNode!==tr) tr.appendChild(sh); if(vol.parentNode!==dir) dir.insertBefore(vol,dir.firstChild); }
+    else { if(vol.parentNode!==tr) tr.appendChild(vol); if(sh.parentNode!==dir) dir.insertBefore(sh,dir.firstChild); }
+  }
+
   function boot(){
     medirMenu();
+    arrumaBarra();
+    window.addEventListener('resize',arrumaBarra);
     window.addEventListener('resize',medirMenu);
     document.body.classList.toggle('sem-volume',!volumeMexe());
     renderFeatured();
@@ -3947,9 +3999,9 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
   window.npCompartilhar=function(){
     var b=beatAtual(); if(!b) return;
     var url=location.origin+'/b/'+slugify(b.name);
-    var lab=(typeof GENRE_LABELS!=='undefined'&&GENRE_LABELS[b.genre])||b.genre||'';
-    var ficha=[lab,b.bpm?b.bpm+' BPM':'',b.key].filter(Boolean).join(' · ');
-    var dados={title:b.name+' · @rideblan33', text:ficha+'. Licença exclusiva para beats e produção completa. © Caramujo Records', url:url};
+    // só o link: o WhatsApp e o Direct montam a prévia (capa, nome, ficha) sozinhos.
+    // Mandar texto junto repetia a legenda da prévia como mensagem.
+    var dados={url:url};
     var computador=false; try{ computador=matchMedia('(hover: hover) and (pointer: fine)').matches; }catch(_){}
     if(navigator.share && !computador){
       navigator.share(dados).catch(function(){});   // cancelar não é erro

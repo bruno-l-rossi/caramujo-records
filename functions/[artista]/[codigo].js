@@ -55,10 +55,11 @@ export async function onRequestGet({ params, request, env }) {
   const tape = artist.tipo === 'tape';
 
   return pagina(request, env, {
-    titulo: `${artist.name} · Caramujo Records`,
+    // textos da prévia no Direct/WhatsApp (formato do Bruno, 25/09/2026)
+    titulo: tape ? `${artist.name} · @rideblan33` : `${artist.name} · Caramujo Records`,
     descricao: tape
-      ? `${artist.name}, beat tape do rideblan33. Toca direto, sem baixar nada.`
-      : `Os beats e as músicas de ${artist.name} com @rideblan33.`,
+      ? 'Licença exclusiva para beats e produção completa. © Caramujo Records'
+      : `Beats e Músicas de ${artist.name} com @rideblan33.`,
     url: url.origin + url.pathname,
     capa,
     cat: {

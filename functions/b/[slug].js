@@ -9,7 +9,7 @@
 import { montarVitrine } from '../api/vitrine.js';
 
 const SITE = 'https://caramujorecords.com.br';
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]).replace(/\n/g, '&#10;');
 
 export async function onRequestGet({ params, request, env }) {
   const pedido = String(params.slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 80);
@@ -19,12 +19,12 @@ export async function onRequestGet({ params, request, env }) {
 
   const destino = '/?de=beat#beat=' + b.slug;
   const ficha = [b.genero, b.bpm ? b.bpm + ' BPM' : '', b.key].filter(Boolean).join(' · ');
-  // Formato do Bruno (24/09/2026):
+  // Formato do Bruno (25/09/2026), com quebra de linha depois da ficha:
   //   FUNERAL · @rideblan33
-  //   Hard · 168 BPM · Gm. Licença exclusiva para beats e produção completa. © Caramujo Records
+  //   Hard · 168 BPM · Gm.
+  //   Beats e produção completa. © Caramujo Records
   const titulo = b.name + ' · @rideblan33';
-  const texto = ficha + (b.sold ? ' · vendido' : '') +
-    '. Licença exclusiva para beats e produção completa. © Caramujo Records';
+  const texto = ficha + (b.sold ? ' · vendido' : '') + '.\nBeats e produção completa. © Caramujo Records';
   const img = b.capa
     ? { url: SITE + b.capa, w: 1000, h: 1000 }
     : { url: SITE + '/og-image.png', w: 1200, h: 630 };
