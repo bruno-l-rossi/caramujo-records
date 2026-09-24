@@ -69,6 +69,21 @@ const SCHEMA = [
      at TEXT NOT NULL
    )`,
   `CREATE INDEX IF NOT EXISTS events_artist ON events (artist_id, at)`,
+  // Funil de venda do site (24/09/2026). Nada pessoal: a sessão é um número
+  // aleatório da aba, que morre quando a aba fecha. Uma linha por etapa por
+  // sessão (o índice único segura repetição e spam de uma aba só).
+  `CREATE TABLE IF NOT EXISTS funil (
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     sessao TEXT NOT NULL,
+     etapa TEXT NOT NULL,
+     aparelho TEXT,
+     origem TEXT,
+     beat_id INTEGER,
+     dia TEXT NOT NULL,
+     at TEXT NOT NULL
+   )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS funil_sessao_etapa ON funil (sessao, etapa)`,
+  `CREATE INDEX IF NOT EXISTS funil_dia ON funil (dia, etapa)`,
   `CREATE TABLE IF NOT EXISTS meta (chave TEXT PRIMARY KEY, valor TEXT NOT NULL)`
 ];
 

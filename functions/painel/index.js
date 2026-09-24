@@ -194,6 +194,23 @@ const BASE = `
   .login button{width:100%;margin-top:12px;padding:14px;border-radius:12px;border:0;background:#fff;color:#000;
     font-size:15px;font-weight:600;cursor:pointer}
   .erro{margin-top:14px;font-size:13px;color:#e08d7e}
+  .periodo{display:flex;gap:8px;margin:14px 0 4px}
+  .periodo .pill{padding:8px 14px;font-size:13px}
+  .etapa{padding:11px 0;border-bottom:1px solid var(--linha)}
+  .etapa-topo{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .etapa-topo b{font-size:14.5px;font-weight:600}
+  .etapa-topo span{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+  .etapa-barra{height:6px;border-radius:3px;background:#1e1e1e;margin:8px 0 6px;overflow:hidden}
+  .etapa-barra i{display:block;height:6px;border-radius:3px;background:#fff}
+  .etapa small{display:block;font-size:12px;color:var(--ink4);font-variant-numeric:tabular-nums}
+  .etapa small em{font-style:normal;color:#e0b155}
+  .tabela{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+  .tabela td{padding:8px 0;border-bottom:1px solid #161616}
+  .tabela td+td{text-align:right;color:var(--ink3);width:70px}
+  .dias{display:flex;align-items:flex-end;gap:2px;height:54px;margin-top:6px}
+  .dias i{flex:1;background:#2c2c2c;border-radius:2px 2px 0 0;min-height:2px;position:relative}
+  .dias i.venda{background:#fff}
+  .dias-leg{display:flex;justify-content:space-between;font-size:11px;color:var(--ink4);margin-top:5px}
 </style>`;
 
 function telaSenha(erro) {
@@ -318,7 +335,7 @@ function pagina() {
     $('lista').innerHTML='';
 
     if(vista==='tapes'){ $('lista').appendChild(voltar()); cartaoRevisar(); pedirVitrine(); cartaoVitrine(); }
-    else if(!filtro) $('lista').appendChild(fixo());
+    else if(!filtro){ $('lista').appendChild(fixo()); $('lista').appendChild(linhaFunil()); }
 
     if(!alvo.length){
       var v=document.createElement('div'); v.className='vazio';
@@ -372,6 +389,86 @@ function pagina() {
     });
     r.appendChild(document.createTextNode(' · '));
     r.appendChild(a);
+  }
+
+  /* ---------- funil de venda do site ---------- */
+  var funilResumo=null, funilPedido=false;
+  var ETAPA_NOME={visita:'Visitas',play:'Deram play',carrinho:'Puseram no carrinho',
+    checkout:'Abriram o checkout',pagamento:'Chegaram no pagamento',pago:'Pagaram'};
+  function pedirResumoFunil(){
+    if(funilPedido) return; funilPedido=true;
+    fetch('/api/painel?op=funil&dias=7').then(function(r){return r.json()}).then(function(j){
+      funilResumo=(j&&j.etapas)?j:{erro:true}; desenhar();
+    }).catch(function(){ funilResumo={erro:true}; desenhar(); });
+  }
+  function nEtapa(j,e){ var x=(j.etapas||[]).filter(function(t){return t.etapa===e})[0]; return x?x.total:0; }
+  function pct(a,b){ return b?Math.round(a*100/b)+'%':'—'; }
+  function linhaFunil(){
+    pedirResumoFunil();
+    var row=document.createElement('div'); row.className='item';
+    var b=document.createElement('button'); b.type='button'; b.className='linha';
+    var meta = !funilResumo ? 'carregando…'
+      : funilResumo.erro ? 'não consegui carregar agora'
+      : 'últimos 7 dias · '+nEtapa(funilResumo,'visita')+' visitas · '+nEtapa(funilResumo,'pago')+
+        (nEtapa(funilResumo,'pago')===1?' venda':' vendas');
+    b.innerHTML='<span class="capa-lista vazia"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" stroke-width="1.8"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg></span>'+
+      '<span style="flex:1;min-width:0"><span class="nome">Funil de venda do site</span>'+
+      '<span class="meta">'+meta+'</span></span><span class="seta">›</span>';
+    b.addEventListener('click',function(){ abrirFunil(7); });
+    row.appendChild(b);
+    return row;
+  }
+  function abrirFunil(dias){
+    var c=$('card');
+    c.innerHTML='<h2>Funil de venda</h2><p>Cada visita contada uma vez por etapa. Sem cookie e sem dado pessoal.</p>'+
+      '<div class="periodo">'+[7,30,90].map(function(d){
+        return '<button type="button" class="pill'+(d===dias?' solid':'')+'" data-dias="'+d+'">'+d+' dias</button>';
+      }).join('')+'</div><div id="funilCorpo" class="vazio">carregando…</div>'+
+      '<button class="pill" data-close type="button" style="width:100%;justify-content:center;margin-top:18px">Fechar</button>';
+    $('veil').hidden=false;
+    c.querySelector('[data-close]').addEventListener('click',fechar);
+    c.querySelectorAll('[data-dias]').forEach(function(x){
+      x.addEventListener('click',function(){ abrirFunil(Number(x.dataset.dias)); });
+    });
+    fetch('/api/painel?op=funil&dias='+dias).then(function(r){return r.json()}).then(function(j){
+      var alvo=$('funilCorpo'); if(!alvo) return;
+      if(!j||!j.etapas){ alvo.textContent='Não consegui carregar o funil.'; return; }
+      alvo.className='';
+      var topo=nEtapa(j,'visita'), ant=null, h='';
+      j.etapas.forEach(function(e){
+        var larg=topo?Math.max(e.total?2:0,Math.round(e.total*100/topo)):0;
+        h+='<div class="etapa"><div class="etapa-topo"><b>'+ETAPA_NOME[e.etapa]+'</b><span>'+e.total+'</span></div>'+
+          '<div class="etapa-barra"><i style="width:'+larg+'%"></i></div><small>'+
+          (e.etapa==='visita'
+            ? 'celular '+pct(e.celular,e.total)+' · computador '+pct(e.computador,e.total)
+            : pct(e.total,topo)+' das visitas · <em>'+pct(e.total,ant)+' de quem passou pela etapa anterior</em>')+
+          '</small></div>';
+        ant=e.total;
+      });
+      if(j.porDia&&j.porDia.length>1){
+        var max=Math.max.apply(null,j.porDia.map(function(d){return d.visitas}))||1;
+        h+='<div class="bloco"><div class="rot">VISITAS POR DIA</div><div class="dias">'+
+          j.porDia.map(function(d){
+            return '<i class="'+(d.pagos?'venda':'')+'" style="height:'+Math.max(4,Math.round(d.visitas*100/max))+'%" title="'+d.dia+': '+d.visitas+' visitas, '+d.pagos+' vendas"></i>';
+          }).join('')+'</div><div class="dias-leg"><span>'+j.porDia[0].dia.split('-').reverse().slice(0,2).join('/')+
+          '</span><span>barra branca = dia com venda</span><span>'+j.porDia[j.porDia.length-1].dia.split('-').reverse().slice(0,2).join('/')+'</span></div></div>';
+      }
+      if(j.origens&&j.origens.length){
+        h+='<div class="bloco"><div class="rot">DE ONDE VIERAM</div><table class="tabela">'+
+          '<tr><td style="color:var(--ink4)">origem</td><td style="color:var(--ink4)">visitas</td><td style="color:var(--ink4)">pagaram</td></tr>'+
+          j.origens.map(function(o){ return '<tr><td>'+esc(o.origem)+'</td><td>'+o.visitas+'</td><td>'+(o.pagos||0)+'</td></tr>'; }).join('')+
+          '</table></div>';
+      }
+      var lista=function(titulo,l){
+        if(!l||!l.length) return '';
+        return '<div class="bloco"><div class="rot">'+titulo+'</div><table class="tabela">'+
+          l.map(function(x){ return '<tr><td>'+esc(x.nome)+'</td><td>'+x.n+'</td></tr>'; }).join('')+'</table></div>';
+      };
+      h+=lista('PRIMEIRO BEAT QUE A VISITA TOCOU',j.tocados);
+      h+=lista('PRIMEIRO BEAT NO CARRINHO',j.carrinhos);
+      if(!topo) h+='<div class="vazio">Nenhuma visita contada nesse período ainda. O funil começou a contar no deploy de 24/09/2026.</div>';
+      alvo.innerHTML=h;
+    }).catch(function(){ var alvo=$('funilCorpo'); if(alvo) alvo.textContent='Não consegui carregar o funil.'; });
   }
 
   // @rideblan33 mora fixo no topo e leva pro portfólio

@@ -10,10 +10,17 @@ const VALIDADE = 5 * 60 * 1000;
 let cache = { at: 0, dados: null };
 
 export async function onRequestGet({ request, env }) {
-  if (cache.dados && Date.now() - cache.at < VALIDADE) return resposta(cache.dados);
+  const dados = await montarVitrine(request, env);
+  if (!dados) return json({ erro: 'nao consegui ler a lista de beats do site' }, 502);
+  return resposta(dados);
+}
+
+// A lista pronta (beat + MP3 + capa). Também usada pelo link de beat (/b/<slug>).
+export async function montarVitrine(request, env) {
+  if (cache.dados && Date.now() - cache.at < VALIDADE) return cache.dados;
 
   const beats = await vitrine(request, env);
-  if (!beats.length) return json({ erro: 'nao consegui ler a lista de beats do site' }, 502);
+  if (!beats.length) return null;
 
   const d = await db(env);
   const { results } = await d.prepare(
@@ -45,7 +52,7 @@ export async function onRequestGet({ request, env }) {
   });
 
   cache = { at: Date.now(), dados };
-  return resposta(dados);
+  return dados;
 }
 
 function resposta(dados) {

@@ -84,7 +84,8 @@ Os 3 primeiros + o contrato seguem a identidade do site (paleta do `docs/DESIGN.
 ### Hero
 - Prova social: 40+ artistas · 200+ faixas lançadas · 2.500.000+ streams
 - CTAs: "Ouvir o catálogo" (#beats) e "Mix & master" (#services)
-- No celular (até 900px) o card do destaque some e entra um botão compacto "Tocar o beat da semana" colado na frase do hero
+- "Ouvir o catálogo" desce pro começo do catálogo e já toca a primeira faixa da lista (celular e computador). No celular o card do destaque some
+- Menu e botões param a seção colada no menu fixo: um recuo só, igual à altura real do menu (`--nav-h`)
 - Beat em destaque com **rodízio semanal automático** (1 por semana, catálogo inteiro, pula vendidos). Pra fixar um beat manualmente: `FEATURED_OVERRIDE_ID` (id do beat) e `FEATURED_OVERRIDE_ATE` ('AAAA-MM-DD', opcional) no index.html — vencido o prazo, o rodízio volta sozinho
 
 ### Catálogo de Beats
@@ -536,6 +537,27 @@ quem ficou faltando.
 - A pasta `functions/_lib/` começa com `_` de propósito: o Pages não transforma em página.
 - Antes de subir mudança em `functions/`, vale compilar com esbuild; o build do Pages
   rejeita o deploy inteiro por um erro de sintaxe em um arquivo só.
+
+---
+
+## Link de beat e funil de venda
+
+### Link de beat: `caramujorecords.com.br/b/<nome-do-beat>`
+`functions/b/[slug].js`. Mandado no Direct, no WhatsApp ou no story, mostra a prévia com a capa da beat tape, o nome, a ficha e o preço. Quem toca cai no site com o beat na barra do player. O botão de compartilhar da barra do pé gera esse link (no celular abre a folha de compartilhar do sistema). O slug é o mesmo do `#beat=`.
+
+### Funil de venda (painel → "Funil de venda do site")
+O site avisa `POST /api/funil` em que etapa cada visita chegou: **visita → play → carrinho → checkout → pagamento → pago**. Uma linha por etapa por visita, na tabela `funil` do D1. Nada pessoal: sem cookie, sem IP; a visita é um número aleatório que morre quando a aba fecha. Robô não conta.
+
+**Origem:** o site lê `?de=<rótulo>` no endereço. Usar rótulos nos links que você divulga pra saber o que traz gente e venda:
+
+| Onde | Link |
+|---|---|
+| Bio do Instagram | `caramujorecords.com.br/?de=bio` |
+| Story | `caramujorecords.com.br/?de=story` |
+| Descrição do YouTube | `caramujorecords.com.br/?de=youtube` |
+| Link de beat | automático (`beat`) |
+
+Sem `?de=`, o site deduz pelo app (Instagram, WhatsApp, TikTok) ou pelo site anterior (google, outro-site); nada disso = `direto`. O "pago" do funil conta cartão aprovado e PIX confirmado com a aba aberta; a venda oficial continua sendo o webhook e o e-mail.
 
 ---
 

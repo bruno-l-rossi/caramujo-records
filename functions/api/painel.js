@@ -22,6 +22,7 @@ export async function onRequest({ request, env }) {
   if (op === 'eventos') return eventos(d, url.searchParams.get('id'), url.searchParams.get('p'));
   if (op === 'revisar') return revisar(d);
   if (op === 'vitrine') return relatorio(d, request, env);
+  if (op === 'funil') return funil(d, request, env, url.searchParams.get('dias'));
   if (request.method !== 'POST') return json({ erro: 'op desconhecida' }, 400);
 
   const body = await request.json().catch(() => ({}));
@@ -267,4 +268,56 @@ async function sync(env, d, body) {
     return json({ erro: 'a chave do GitHub precisa de permissão em Actions' }, 403);
   }
   return json({ erro: 'GitHub respondeu ' + r.status }, 502);
+}
+
+// Funil de venda do site: quantas visitas chegaram em cada etapa no período.
+// Cada linha da tabela já é "uma sessão numa etapa", então contar linha é contar gente.
+const ETAPAS_FUNIL = ['visita', 'play', 'carrinho', 'checkout', 'pagamento', 'pago'];
+
+async function funil(d, request, env, diasTxt) {
+  const dias = [7, 30, 90].includes(Number(diasTxt)) ? Number(diasTxt) : 7;
+  const hojeSP = new Date(Date.now() - 3 * 3600e3);
+  const desde = new Date(hojeSP.getTime() - (dias - 1) * 86400e3).toISOString().slice(0, 10);
+
+  const porEtapa = await d.prepare(
+    'SELECT etapa, aparelho, COUNT(*) n FROM funil WHERE dia >= ? GROUP BY etapa, aparelho'
+  ).bind(desde).all();
+  const etapas = ETAPAS_FUNIL.map((e) => ({ etapa: e, total: 0, celular: 0, computador: 0 }));
+  for (const r of porEtapa.results || []) {
+    const e = etapas.find((x) => x.etapa === r.etapa);
+    if (!e) continue;
+    e.total += r.n;
+    if (r.aparelho === 'celular') e.celular += r.n; else e.computador += r.n;
+  }
+
+  // de onde vieram as visitas, e quantas dessas visitas pagaram
+  const origens = await d.prepare(
+    `SELECT v.origem, COUNT(*) visitas,
+            SUM(CASE WHEN p.sessao IS NOT NULL THEN 1 ELSE 0 END) pagos
+       FROM funil v LEFT JOIN funil p ON p.sessao = v.sessao AND p.etapa = 'pago'
+      WHERE v.etapa = 'visita' AND v.dia >= ?
+      GROUP BY v.origem ORDER BY visitas DESC LIMIT 8`
+  ).bind(desde).all();
+
+  // beat que abriu a escuta e beat que abriu o carrinho (o primeiro de cada visita)
+  const top = async (etapa) => (await d.prepare(
+    `SELECT beat_id, COUNT(*) n FROM funil WHERE etapa = ? AND dia >= ? AND beat_id IS NOT NULL
+      GROUP BY beat_id ORDER BY n DESC LIMIT 5`
+  ).bind(etapa, desde).all()).results || [];
+  const [tocados, carrinhos] = await Promise.all([top('play'), top('carrinho')]);
+  const nomes = new Map((await vitrine(request, env)).map((b) => [b.id, b.name]));
+  const nomear = (l) => l.map((r) => ({ nome: nomes.get(r.beat_id) || ('beat ' + r.beat_id), n: r.n }));
+
+  const porDia = await d.prepare(
+    `SELECT dia, SUM(CASE WHEN etapa='visita' THEN 1 ELSE 0 END) visitas,
+            SUM(CASE WHEN etapa='pago' THEN 1 ELSE 0 END) pagos
+       FROM funil WHERE dia >= ? GROUP BY dia ORDER BY dia`
+  ).bind(desde).all();
+
+  return json({
+    dias, desde, etapas,
+    origens: origens.results || [],
+    tocados: nomear(tocados), carrinhos: nomear(carrinhos),
+    porDia: porDia.results || []
+  });
 }

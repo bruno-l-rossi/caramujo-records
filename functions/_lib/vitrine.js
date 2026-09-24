@@ -9,6 +9,7 @@ import { mesma, limpo, slug } from './casar.js';
 
 const VALIDADE = 10 * 60 * 1000;    // o index.html só muda quando o Bruno publica
 let cache = { at: 0, beats: null };
+let preco = null;   // PRICE_BEAT do index.html, lido junto com a lista
 
 function parse(html) {
   const ini = html.indexOf('const BEATS=[');
@@ -66,6 +67,8 @@ export async function vitrine(request, env) {
     const pagina = await r.text();
     const beats = parse(pagina);
     const rotulos = generos(pagina);
+    const p = pagina.match(/const PRICE_BEAT\s*=\s*(\d+)/);
+    if (p) preco = Number(p[1]);
     for (const b of beats) b.generoLabel = rotulos[b.genre] || b.genre || '';
     if (beats.length) cache = { at: Date.now(), beats };
     return beats.length ? beats : (cache.beats || []);
@@ -73,6 +76,9 @@ export async function vitrine(request, env) {
     return cache.beats || [];      // vitrine fora do ar não pode derrubar o catálogo
   }
 }
+
+// Preço do beat avulso como o site mostra (null antes da primeira leitura).
+export const precoBeat = () => preco;
 
 // Índice por título limpo: achar é direto, e BPM/tom só desempatam nomes repetidos.
 export function indexar(beats) {
