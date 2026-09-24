@@ -20,12 +20,19 @@
 <meta name="twitter:image" content="https://caramujorecords.com.br/og-image.png"/>
 <meta name="theme-color" content="#050403"/>
 <link rel="icon" type="image/svg+xml" href="/assets/brand/selo-creme.svg"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="preconnect" href="https://sdk.mercadopago.com"/>
-<link rel="preconnect" href="https://api.mercadopago.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<!-- Fontes servidas daqui mesmo (subset latin, licença OFL em assets/fonts/).
+     Antes vinham do Google: 2 domínios a mais pra resolver e um CSS que
+     segurava a primeira pintura. As 3 de cima são as que o hero usa. -->
+<link rel="preload" href="/assets/fonts/cormorant-garamond-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="preload" href="/assets/fonts/cormorant-garamond-latin-400-italic.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="preload" href="/assets/fonts/ibm-plex-mono-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin/>
 <style>
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:400;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-400-italic.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-500-italic.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
 :root {
   --black:  #14110d;
   --deep:   #1A1815;
@@ -101,14 +108,6 @@ nav{
   transition:color .15s,background .15s;
 }
 .nav-links a:hover{color:var(--fire);background:rgba(232,76,24,.05);}
-.nav-cta{
-  font-family:'Cormorant Garamond',sans-serif;font-size:1rem;
-  letter-spacing:.1em;text-transform:uppercase;
-  background:var(--ember);color:var(--cream);
-  padding:.3rem 1.3rem;text-decoration:none;border:none;cursor:pointer;
-  transition:background .15s;
-}
-.nav-cta:hover{background:var(--fire);}
 
 /* ═══ HERO ═══════════════════════════════ */
 #hero{
@@ -205,7 +204,7 @@ nav{
 /* SECTION */
 .s{padding:5rem 2.4rem;position:relative;}
 .s-dark{background:var(--deep);}
-.s-mole{background:var(--mole);}
+
 .s-earth{background:var(--dark);}
 
 .s-head{margin-bottom:2.8rem;}
@@ -241,64 +240,12 @@ nav{
 .pg-btn{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.72rem;letter-spacing:.1em;font-weight:700;padding:.3rem .8rem;border:1px solid var(--wire);background:transparent;color:var(--cream);cursor:pointer;transition:background .14s,color .14s;}
 .pg-btn:hover:not(:disabled){background:var(--ember);border-color:var(--ember);color:var(--cream);}
 .pg-btn:disabled{opacity:.3;cursor:default;}
-.pg-goto{display:flex;align-items:center;gap:.35rem;margin-left:.4rem;}
-.pg-goto-label{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.65rem;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;}
-.pg-goto-input{width:3rem;background:var(--mole);border:1px solid var(--wire);color:var(--cream);font-family:'IBM Plex Mono',monospace;font-size:.72rem;padding:.28rem .4rem;text-align:center;outline:none;transition:border-color .14s;}
-.pg-goto-input:focus{border-color:var(--ember);}
-.pg-goto-input::-webkit-inner-spin-button,.pg-goto-input::-webkit-outer-spin-button{-webkit-appearance:none;}
+
 .pg-search{display:flex;align-items:center;gap:.4rem;flex:1;min-width:210px;}
 .pg-search-input{background:var(--mole);border:1px solid var(--clay);color:var(--cream);font-family:'IBM Plex Mono',monospace;font-size:.8rem;padding:.55rem .9rem;outline:none;transition:border-color .14s,box-shadow .14s;width:100%;max-width:none;}
 .pg-search-input::placeholder{color:var(--read);}
 .pg-search-input:focus{border-color:var(--fire);box-shadow:0 0 0 1px var(--fire);}
-.bcard{border-bottom:1px solid var(--wire);transition:background .14s;}
-.bcard:last-child{border-bottom:none;}
-.bcard:hover{background:rgba(30,26,18,.5);}
 
-/* header: num + name + chips */
-.bcard-header{
-  display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;
-  padding:.7rem 1.4rem .55rem;
-  background:var(--mole);
-  border-bottom:1px solid var(--wire);
-}
-.bcard-num{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.62rem;font-weight:700;color:var(--dim);flex-shrink:0;}
-.bcard-name{font-family:'Cormorant Garamond',sans-serif;font-size:1.1rem;letter-spacing:.05em;color:var(--cream);flex-shrink:0;}
-.bcard-chips{display:flex;gap:.4rem;flex-wrap:wrap;flex:1;}
-
-/* SC player */
-
-/* buy bar — prominent, full width */
-.bcard-buybar{
-  display:flex;align-items:stretch;justify-content:flex-end;
-  border-top:1px solid var(--wire);
-}
-.bcard-buybar-label{
-  padding:.7rem 1.4rem;
-  font-family:'IBM Plex Mono',monospace;font-size:.62rem;
-  color:var(--clay);
-  display:flex;align-items:center;flex:1;
-  background:var(--mole);
-  border-right:1px solid var(--wire);
-}
-.bcard-btns{display:flex;flex-shrink:0;}
-.bbtn{
-  font-family:'Cormorant Garamond',sans-serif;font-size:.95rem;
-  letter-spacing:.08em;text-transform:uppercase;
-  padding:.7rem 1.8rem;
-  border:none;border-left:1px solid var(--wire);
-  cursor:pointer;transition:all .14s;
-  white-space:nowrap;display:flex;align-items:center;gap:.5rem;
-  min-width:140px;justify-content:center;
-}
-.bbtn-beat{background:var(--ember);color:var(--cream);}
-.bbtn-beat:hover{background:var(--fire);}
-.bbtn-beat.on{background:var(--fire);color:var(--cream);}
-.bbtn-stems{background:var(--loam);color:var(--bone);}
-.bbtn-stems:hover{background:var(--clay);}
-.bbtn-stems.on{background:var(--clay);color:var(--cream);}
-.bbtn .chk{font-size:.75rem;}
-
-/* filter tabs — full width, flush above cards */
 /* Chips de gênero: wrap em várias linhas — todos visíveis, sem scroll escondido */
 .ftabs{display:flex;flex-wrap:wrap;gap:0;margin-bottom:0;border:1px solid var(--wire);border-bottom:none;}
 .ft{
@@ -312,86 +259,6 @@ nav{
 }
 .ft:last-child{border-right:none;}
 .ft.on,.ft:hover{background:var(--ember);color:var(--cream);}
-
-/* ═══ BEATS TABLE ════════════════════════ */
-.btable{border:1px solid var(--wire);}
-.brow{
-  display:grid;
-  grid-template-columns:2rem 1fr 170px 3.5rem 8rem;
-  align-items:center;gap:1rem;
-  padding:.9rem 1.4rem;
-  border-bottom:1px solid var(--wire);
-  transition:background .14s;
-}
-.brow:last-child{border-bottom:none;}
-.brow:hover{background:var(--mole);}
-.bnum{font-size:.58rem;color:var(--dim);text-align:right;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;}
-.binfo{}
-.bname{
-  font-family:'Cormorant Garamond',sans-serif;font-size:1rem;
-  letter-spacing:.05em;text-transform:uppercase;color:var(--cream);
-}
-.bchips{display:flex;gap:.45rem;margin-top:.2rem;flex-wrap:wrap;}
-.chip{
-  font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.53rem;font-weight:700;
-  letter-spacing:.14em;text-transform:uppercase;
-  padding:.1rem .4rem;border:1px solid var(--wire);color:var(--dim);
-}
-.chip-g{border-color:var(--blood);color:var(--fire);}
-.chip-meta{border-color:var(--loam);color:var(--bone);}
-.chip-sold{border-color:#555;color:#777;background:rgba(0,0,0,.3);}
-.bcard-sold{opacity:.6;}
-.bcard-sold .bcard-name{color:var(--dim);}
-.bbtn:disabled{opacity:.35;cursor:not-allowed;pointer-events:none;}
-
-.mplayer{display:flex;align-items:center;gap:.5rem;}
-.mplaybtn{
-  width:27px;height:27px;flex-shrink:0;
-  background:var(--ember);border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:background .14s;
-}
-.mplaybtn:hover{background:var(--fire);}
-.mplaybtn svg{width:10px;height:10px;fill:var(--cream);}
-.mwave{display:flex;align-items:center;gap:1.5px;height:18px;flex:1;}
-.wb{width:2px;border-radius:1px;background:var(--wire);transition:background .07s;}
-.wb.p{background:var(--fire);}
-
-.btime{font-size:.55rem;color:var(--dim);font-family:'IBM Plex Mono',monospace;text-align:center;}
-.bbuy{display:flex;align-items:center;gap:.6rem;justify-content:flex-end;}
-.bprice{font-family:'Cormorant Garamond',sans-serif;font-size:.95rem;color:var(--bone);}
-.badd{
-  font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.58rem;font-weight:700;
-  letter-spacing:.14em;text-transform:uppercase;
-  padding:.3rem .75rem;background:transparent;
-  border:1px solid var(--wire);color:var(--dim);cursor:pointer;
-  transition:all .14s;white-space:nowrap;
-}
-.badd:hover{border-color:var(--ember);color:var(--fire);}
-.badd.on{background:var(--ember);border-color:var(--ember);color:var(--cream);}
-
-/* TERMS BLOCK */
-.terms{
-  margin-top:2.5rem;
-  border:1px solid var(--wire);
-  border-left:2px solid var(--ember);
-  background:var(--mole);
-}
-.terms-head{
-  padding:.75rem 1.5rem;background:var(--earth);
-  border-bottom:1px solid var(--wire);
-}
-.terms-head span{
-  font-family:'Cormorant Garamond',sans-serif;font-size:.95rem;
-  letter-spacing:.12em;text-transform:uppercase;color:var(--fire);
-}
-.terms-grid{
-  padding:1.4rem 1.5rem;
-  display:grid;grid-template-columns:1fr 1fr;gap:.75rem 2.5rem;
-}
-.tline{display:flex;align-items:flex-start;gap:.6rem;}
-.tline::before{content:'//';color:var(--ember);font-size:.65rem;flex-shrink:0;font-family:'IBM Plex Mono',monospace;margin-top:.05rem;}
-.tline p{font-size:.73rem;color:var(--read);line-height:1.75;}
-.tline strong{color:var(--bone);}
 
 /* ═══ PACKAGES ═══════════════════════════ */
 .packs{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--wire);}
@@ -412,8 +279,7 @@ nav{
 }
 .pack.hot .pack-tag{color:var(--amber);}
 .pack-n{font-family:'Cormorant Garamond',sans-serif;font-size:1.7rem;text-transform:uppercase;color:var(--cream);margin-bottom:.25rem;}
-.pack-p{font-family:'Cormorant Garamond',sans-serif;font-size:3.2rem;line-height:1;color:var(--cream);margin-bottom:.25rem;}
-.pack-p sub{font-size:1.2rem;vertical-align:.35em;}
+
 .pack-eco{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--fire);margin-bottom:1.8rem;letter-spacing:.05em;}
 .pack-sep{height:1px;background:var(--wire);margin-bottom:1.4rem;}
 .pack.hot .pack-sep{background:rgba(255,255,255,.1);}
@@ -446,30 +312,6 @@ nav{
   font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.7rem;font-weight:700;
   letter-spacing:.2em;text-transform:uppercase;color:var(--fire);
 }
-
-/* ═══ SNAIL INTERLUDE ════════════════════ */
-.snail-break{
-  position:relative;overflow:hidden;height:280px;
-  background:var(--dark);
-  display:flex;align-items:center;justify-content:center;
-}
-.snail-break-img{
-  position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;object-position:center 35%;
-  opacity:.18;
-  filter:sepia(80%) contrast(1.5) brightness(.6);
-  transform:scaleX(-1);
-}
-.snail-break-type{
-  position:relative;z-index:2;text-align:center;
-  font-family:'Cormorant Garamond',sans-serif;
-  font-size:clamp(3.5rem,10vw,8.5rem);
-  text-transform:uppercase;line-height:.88;
-  color:transparent;
-  -webkit-text-stroke:1.5px var(--loam);
-  letter-spacing:.06em;
-}
-.snail-break-type .hl{-webkit-text-stroke:1.5px var(--ember);}
 
 /* SNAIL SVG DECORATIONS scattered in sections */
 .snail-svg{
@@ -585,7 +427,7 @@ footer p{
 .ci-qty-btn:hover{background:var(--ember);border-color:var(--ember);}
 .ci-qty-n{font-family:'Cormorant Garamond',sans-serif;font-size:.9rem;color:var(--cream);min-width:22px;text-align:center;border-top:1px solid var(--wire);border-bottom:1px solid var(--wire);height:22px;display:flex;align-items:center;justify-content:center;}
 .cp-foot{padding:1.2rem 1.8rem;border-top:1px solid var(--wire);}
-.cp-note{font-size:.66rem;color:var(--read);line-height:1.7;margin-bottom:1.1rem;border-left:2px solid var(--ember);padding-left:.7rem;}
+
 .cp-coupon{margin-bottom:1rem;}
 .cp-coupon-row{display:flex;gap:.5rem;}
 .cp-coupon-input{
@@ -749,7 +591,6 @@ html { scroll-padding-top: 70px; }
     gap:0;
   }
   .nav-logo{height:54px;flex-shrink:0;}
-  .nav-cta{display:none;} /* CTA já existe no hero; libera espaço no mobile */
   .nav-links{
     display:flex;
     flex:1;
@@ -771,11 +612,6 @@ html { scroll-padding-top: 70px; }
 
   /* Catalog */
   .ftabs{width:100%;}
-  .bcard-header{flex-wrap:wrap;gap:.5rem;}
-  .bcard-chips{flex-wrap:wrap;}
-  .bcard-btns{flex-direction:column;width:100%;}
-  .bbtn{width:100%;min-width:0;border-left:none;border-top:1px solid var(--wire);}
-  .bbtn:first-child{border-top:none;}
 
   /* Packages */
   .packs{grid-template-columns:1fr;}
@@ -789,18 +625,6 @@ html { scroll-padding-top: 70px; }
   /* Contact */
   .contact-wrap{grid-template-columns:1fr;gap:2.5rem;}
   .c-desc{max-width:100%;}
-
-  /* Beats table (legacy) */
-  .brow{grid-template-columns:1fr auto;}
-  .bnum,.btime,.mplayer{display:none;}
-
-  /* Terms */
-  .terms-grid{grid-template-columns:1fr;}
-
-  /* Snail interlude */
-  .snail-break{height:120px;}
-  .snail-break-img{object-fit:cover;object-position:center 18%;transform:scaleX(-1);zoom:4.5;}
-  .snail-break-type{white-space:normal;padding:0 1rem;}
 
   /* Footer */
   footer{flex-direction:column;align-items:flex-start;padding:1.2rem;}
@@ -843,12 +667,10 @@ html { scroll-padding-top: 70px; }
   .nav-wm{font-size:1.05rem;}
   .nav-wm small{font-size:.4rem;letter-spacing:.3em;}
   .nav-links a{font-size:.58rem;padding:0 .65rem;}
-  .bcard-header{padding:.6rem 1rem .5rem;}
-  .chip{font-size:.7rem;padding:.14rem .42rem;} /* piso de legibilidade: ~11px */
-  .bbtn{font-size:.85rem;padding:.65rem 1rem;}
+
   .hero-desc{font-size:.68rem;}
   .s-title{font-size:clamp(2rem,10vw,4rem);}
-  .pack-p{font-size:2.6rem;}
+
   footer{gap:.5rem;}
   .cp-body{padding:.9rem 1rem;}
   .cp-head{padding:.9rem 1rem;}
@@ -896,21 +718,11 @@ body{cursor:auto!important;}
 .btn-fire:hover{background:var(--clay)!important;color:var(--deep)!important;}
 .btn-ghost{border-color:var(--wire)!important;color:var(--bone)!important;}
 .btn-ghost:hover{border-color:var(--clay)!important;color:var(--clay)!important;background:transparent!important;}
-.nav-cta{background:var(--bone)!important;color:var(--deep)!important;font-family:var(--sans)!important;border-radius:0!important;}
-.nav-cta:hover{background:var(--clay)!important;color:var(--deep)!important;}
 
 /* títulos de seção serifados mixed-case */
 .s-title{font-family:var(--serif)!important;text-transform:none!important;font-weight:500!important;letter-spacing:.01em!important;}
 .s-title .r{color:var(--clay)!important;-webkit-text-fill-color:var(--clay)!important;}
 .s-kicker{font-family:var(--sans)!important;color:var(--clay)!important;letter-spacing:.28em!important;}
-
-/* catálogo */
-.bcard{border:1px solid var(--wire)!important;}
-.bcard-name{font-family:var(--serif)!important;font-weight:600!important;text-transform:none!important;font-size:1.5rem!important;letter-spacing:.01em!important;}
-.bbtn{font-family:var(--sans)!important;border-radius:0!important;}
-.bbtn-beat{background:var(--bone)!important;color:var(--deep)!important;}
-.bbtn-beat:hover,.bbtn-beat.on{background:var(--clay)!important;color:var(--deep)!important;}
-.chip-sold,.chip.chip-sold{color:var(--blood)!important;border-color:var(--blood)!important;}
 
 /* pacotes / serviços */
 .pack-n,.svc-name{font-family:var(--serif)!important;font-weight:600!important;text-transform:none!important;}
@@ -936,17 +748,15 @@ body{cursor:auto!important;}
 button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(--black);} /* estado ativo preenchido: dá pra ver que tá ligado */
 .lucky-btn{color:var(--amber);border-color:var(--clay);}
 .lucky-btn:hover{background:var(--clay);color:var(--black);}
-.bcard.lucky-hit{outline:2px solid var(--fire);outline-offset:-2px;}
+
 /* Selo de desconto real (vs preço avulso) nos pacotes e no Mix + Master */
-.off-badge{position:absolute;top:0;right:0;z-index:2;background:var(--fire);color:var(--black);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.14em;padding:.32rem .65rem;}
+
 .cp-upsell{margin-top:1rem;padding:.95rem 1rem;border:1px solid var(--clay);border-left:3px solid var(--fire);background:rgba(168,123,74,.09);font-size:.78rem;line-height:1.65;color:var(--bone);}
 .cp-upsell-tag{display:block;font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--fire);margin-bottom:.45rem;}
 .cp-save{background:var(--fire);color:var(--black);font-weight:700;padding:.1rem .45rem;white-space:nowrap;}
 .cp-upsell-link{display:block;margin-top:.55rem;color:var(--amber);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;}
 .cp-upsell-link:hover{color:var(--fire);}
-.bcard-sold{opacity:1;}
-.bcard-sold .bcard-name{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--blood);text-decoration-thickness:1.5px;}
-.bbtn-soldout,.bbtn-soldout:hover{background:var(--blood)!important;color:var(--cream)!important;cursor:not-allowed!important;letter-spacing:.18em;}
+
 @media(max-width:860px){
   body::before{animation:none;}
   /* O balão da licença abre COLADO no link, igual ao computador. Ele era folha
@@ -964,19 +774,10 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .hero-week{margin-top:1.6rem;width:100%;max-width:380px;border:1px solid var(--clay);background:rgba(34,30,24,.72);backdrop-filter:blur(4px);padding:1rem;}
 .hw-head{display:flex;justify-content:space-between;align-items:center;}
 .hw-kick{font-size:.6rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--fire);}
-.hw-num{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--fire);line-height:1;}
-.hw-name{font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--cream);margin-top:.2rem;}
-.hw-meta{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.14em;color:var(--label);margin-top:.15rem;}
-.hw-add{width:100%;justify-content:center;margin-top:.7rem;font-size:.76rem;}
 
-/* ═══ NOVO: COMO FUNCIONA ═══ */
-.hiw{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;max-width:1100px;margin:0 auto;}
-.hiw-cell{border:1px solid var(--wire);background:var(--mole);padding:1.3rem 1.1rem;}
-.hiw-n{font-family:'Cormorant Garamond',serif;font-size:2.4rem;color:var(--fire);line-height:1;}
-.hiw-t{font-size:.9rem;font-weight:700;color:var(--cream);letter-spacing:.02em;margin-top:.5rem;}
-.hiw-d{font-size:.78rem;color:var(--read);margin-top:.4rem;line-height:1.5;}
-@media(max-width:760px){.hiw{grid-template-columns:1fr 1fr;}}
-@media(max-width:460px){.hiw{grid-template-columns:1fr;}}
+.hw-name{font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--cream);margin-top:.2rem;}
+
+.hw-add{width:100%;justify-content:center;margin-top:.7rem;font-size:.76rem;}
 
 /* ═══ NOVO: NO ESTÚDIO ═══ */
 .studio-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;max-width:1100px;margin:0 auto;}
@@ -989,17 +790,8 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 /* ═══ NOVO: BARRA TOCANDO AGORA ═══ */
 .np-bar{position:fixed;left:50%;bottom:1.1rem;transform:translateX(-50%) translateY(160%);z-index:7000;display:flex;flex-direction:column;align-items:stretch;gap:.5rem;background:rgba(26,24,21,.96);border:1px solid var(--clay);padding:.6rem .9rem;min-width:300px;max-width:min(92vw,460px);backdrop-filter:blur(8px);box-shadow:0 8px 30px rgba(0,0,0,.5);transition:transform .3s cubic-bezier(.4,0,.2,1);}
 .np-bar.on{transform:translateX(-50%) translateY(0);}
-.np-eq{display:flex;align-items:flex-end;gap:2px;height:18px;flex:0 0 auto;}
-.np-eq span{width:3px;background:var(--fire);height:5px;animation:npeq .9s ease-in-out infinite;}
-.np-eq span:nth-child(2){animation-delay:.2s;}
-.np-eq span:nth-child(3){animation-delay:.4s;}
-@keyframes npeq{0%,100%{height:5px;}50%{height:18px;}}
-.np-info{min-width:0;flex:1;}
-.np-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;}
-.np-meta{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.1em;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.np-time{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--read);flex:0 0 auto;}
-.np-cta{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:var(--fire);color:var(--black);border:none;padding:.5rem .7rem;cursor:pointer;flex:0 0 auto;}
-@media(max-width:600px){.np-bar{left:0;right:0;bottom:0;transform:translateY(160%);max-width:none;min-width:0;border-left:0;border-right:0;padding-right:.9rem;}.np-bar.on{transform:translateY(0);}.np-cta{display:none;}}
+
+@media(max-width:600px){.np-bar{left:0;right:0;bottom:0;transform:translateY(160%);max-width:none;min-width:0;border-left:0;border-right:0;padding-right:.9rem;}.np-bar.on{transform:translateY(0);}}
 
 /* ═══ AJUSTES v2 ═══ */
 .hero-week{position:absolute;right:4rem;top:52%;transform:translateY(-50%);z-index:4;width:min(430px,42vw);max-width:none;margin:0;padding:1.4rem;background:rgba(20,17,13,.72);border:1px solid var(--clay);backdrop-filter:blur(6px);}
@@ -1009,47 +801,19 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .hw-add{margin-top:.9rem;}
 @media(max-width:900px){.hero-week{position:static;transform:none;width:100%;max-width:430px;margin:1.8rem 0 0;}.hero-week .hw-name{font-size:2rem;}}
 
-.hiw-strip{background:var(--deep);border-top:1px solid var(--wire);border-bottom:1px solid var(--wire);padding:.85rem 1.4rem;}
-.hiw-strip-inner{max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .9rem;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.64rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--read);}
-.hiw-s b{color:var(--fire);margin-right:.4rem;}
-.hiw-arw{color:var(--loam);}
-.hiw-note{color:var(--dim);letter-spacing:.09em;}
-@media(max-width:600px){.hiw-strip-inner{font-size:.56rem;gap:.4rem .55rem;}.hiw-note{width:100%;}}
-
-.off-badge{font-size:.74rem!important;padding:.42rem .8rem!important;box-shadow:0 4px 16px rgba(185,143,94,.45);letter-spacing:.12em!important;}
 .svc-flag{display:inline-block;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.55rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:.26rem .55rem;margin-left:.5rem;vertical-align:middle;color:var(--black);}
 .svc-flag-fire{background:var(--fire);}
 .svc-flag-amber{background:var(--amber);}
 
-.np-ctls{display:flex;gap:.35rem;flex:0 0 auto;}
-.np-ctl{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.8rem;line-height:1;background:transparent;color:var(--bone);border:1px solid var(--wire);width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;padding:0;transition:border-color .15s,color .15s;}
-.np-ctl:hover{border-color:var(--fire);color:var(--fire);}
-.np-ctl.np-play{background:var(--fire);color:var(--black);border-color:var(--fire);}
-@media(max-width:600px){.np-ctl{width:34px;height:34px;}}
-
 /* ═══ AJUSTES v3 ═══ */
 .hero-logo-wrap{justify-content:flex-start;padding-left:1vw;}
 .hero-week{right:auto;left:50%;top:46%;transform:translate(-50%,-50%);width:min(440px,46vw);}
-.hiw-strip{padding:1.4rem 1.4rem;}
-.hiw-strip-inner{max-width:1400px;justify-content:space-between;align-items:flex-start;gap:1.6rem;text-transform:none;font-weight:400;letter-spacing:.01em;font-size:.74rem;color:var(--read);}
-.hiw-s{flex:1;line-height:1.55;color:var(--read);}
-.hiw-n{display:block;font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--fire);line-height:1;margin-bottom:.35rem;}
+
 .disc-pill{display:inline-block;background:var(--fire);color:var(--black);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.1em;padding:.2rem .5rem;vertical-align:middle;margin-left:.4rem;box-shadow:0 2px 10px rgba(185,143,94,.4);}
-.np-ctl svg{display:block;}
-.ic-pause{display:none;}
-.np-ctl.is-playing .ic-play{display:none;}
-.np-ctl.is-playing .ic-pause{display:block;}
+
 @media(max-width:900px){.hero-week{position:static;left:auto;top:auto;transform:none;width:100%;max-width:430px;margin:1.8rem 0 0;}.hero-logo-wrap{justify-content:center;padding-left:0;}}
-@media(max-width:680px){.hiw-strip-inner{flex-direction:column;gap:.9rem;font-size:.72rem;}}
 
 /* ═══ AJUSTES v4 (mobile + refinamentos) ═══ */
-.hiw-strip{padding:.85rem 1.2rem;}
-.hiw-strip-inner{max-width:1300px;margin:0 auto;display:flex;flex-wrap:nowrap;align-items:center;justify-content:center;gap:.85rem;white-space:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;text-transform:none;font-weight:600;letter-spacing:.02em;font-size:.7rem;color:var(--read);flex-direction:row;}
-.hiw-strip-inner::-webkit-scrollbar{display:none;}
-.hiw-s{flex:0 0 auto;color:var(--read);line-height:1.2;}
-.hiw-n{display:inline;font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;color:var(--fire);margin:0 .3rem 0 0;}
-.hiw-arw{flex:0 0 auto;color:var(--loam);}
-@media(max-width:600px){.hiw-strip-inner{justify-content:flex-start;font-size:.66rem;gap:.7rem;}}
 
 .svc-flag{display:inline-block;background:none;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.58rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;padding:0;margin-left:.55rem;vertical-align:middle;}
 .svc-flag-fire{color:var(--fire);background:none;}
@@ -1057,10 +821,9 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 
 @media(max-width:600px){
   .np-bar{padding-right:.9rem;gap:.55rem;}
-  .np-ctl{width:40px;height:40px;}
+
   .np-bar.on ~ .cart-btn{bottom:5.4rem;}
-  .np-time{font-size:.6rem;}
-  .np-name{font-size:1rem;}
+
 }
 @media(max-width:600px){
   .nav-links{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;justify-content:flex-start;}
@@ -1068,7 +831,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 }
 #hero,#beats,#packages,#services,#estudio,#contact{scroll-margin-top:60px;}
 @media(max-width:860px){ body::before{display:none!important;} }
-@media(max-width:860px){ .ft{min-height:40px;} .np-ctl{width:44px;height:44px;} }
+@media(max-width:860px){ .ft{min-height:40px;} }
 
 /* ═══ MENU HAMBÚRGUER (variante) ═══ */
 .nav-right{display:flex;align-items:center;gap:.2rem;}
@@ -1085,8 +848,7 @@ html,body{overflow-x:hidden;}
   .pg-nums{flex-wrap:nowrap;}
   .pagination-btns{flex-wrap:wrap;row-gap:.5rem;align-items:center;}
   .ft{padding:.4rem .6rem;font-size:.56rem;min-height:32px;letter-spacing:.08em;}
-  .bcard-chips{flex-basis:100%;flex-wrap:nowrap;gap:.3rem;margin-top:.15rem;}
-  .chip{font-size:.58rem;padding:.12rem .32rem;letter-spacing:.05em;white-space:nowrap;}
+
   .hero-lede{margin-bottom:1.5rem;}
 }
 
@@ -1121,7 +883,7 @@ html,body{overflow-x:hidden;}
 .nav-burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
 @media(max-width:600px){
   .nav-burger{display:flex;}
-  .nav-cta{display:none!important;}
+
   .nav-links{position:fixed!important;top:54px;left:0;right:0;flex-direction:column!important;background:rgba(5,4,3,.98);border-bottom:1px solid var(--wire);overflow:hidden!important;max-height:0;transition:max-height .3s ease;justify-content:flex-start!important;}
   .nav-links.open{max-height:82vh;border-bottom:1px solid var(--wire);}
   .nav-links a{width:100%;height:54px;line-height:54px;border-left:none!important;border-right:none!important;border-bottom:1px solid var(--wire);padding:0 1.4rem!important;font-size:.74rem!important;justify-content:flex-start;}
@@ -1151,9 +913,6 @@ html,body{overflow-x:hidden;}
 .lb-x{position:absolute;top:16px;right:18px;width:46px;height:46px;border:1px solid var(--wire);background:rgba(0,0,0,.55);color:var(--bone);font-size:1.05rem;border-radius:50%;cursor:pointer;z-index:2;}
 .lb-x:hover{background:var(--ember);}
 
-.studio-hint{display:none;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;margin-top:.9rem;}
-
-
 /* desktop: 4 mídias na MESMA linha, altura igual, largura proporcional ao aspect-ratio */
 @media(min-width:761px){
   .studio-strip{flex-wrap:nowrap;gap:1rem;max-width:1260px;align-items:flex-start;}
@@ -1161,22 +920,6 @@ html,body{overflow-x:hidden;}
   .studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb,.studio-ph .vid-thumb>img{height:auto;width:100%;}
   .sp-1{flex-grow:1;} .sp-2{flex-grow:.6957;} .sp-3{flex-grow:.5322;} .sp-4{flex-grow:.7826;}
 }
-
-/* slider de volume na barra "tocando agora" */
-.np-row{display:flex;align-items:center;gap:.7rem;width:100%;}
-.np-seek{position:relative;height:8px;background:var(--wire);border-radius:4px;cursor:pointer;flex:0 0 auto;touch-action:none;}
-.np-seek-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--fire);border-radius:3px;pointer-events:none;}
-.np-seek-knob{position:absolute;top:50%;left:0;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:var(--fire);pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 1px 4px rgba(0,0,0,.5);}
-.np-seek:hover .np-seek-knob,.np-seek:focus-visible .np-seek-knob{opacity:1;}
-.np-vol-wrap{position:relative;display:flex;align-items:center;flex:0 0 auto;}
-.np-vol-btn{background:none;border:none;color:var(--bone);cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;}
-.np-vol-btn:hover{color:var(--fire);}
-.np-vol-btn svg{width:16px;height:16px;display:block;}
-.np-vol-pop{position:absolute;bottom:calc(100% + 12px);left:50%;transform:translateX(-50%);background:rgba(26,24,21,.98);border:1px solid var(--clay);padding:12px 10px;border-radius:6px;display:none;box-shadow:0 8px 24px rgba(0,0,0,.55);z-index:5;}
-.np-vol-wrap:hover .np-vol-pop,.np-vol-wrap.open .np-vol-pop{display:block;}
-.np-vol-slider{-webkit-appearance:none;appearance:none;writing-mode:vertical-lr;direction:rtl;width:6px;height:96px;background:var(--wire);border-radius:3px;outline:none;cursor:pointer;padding:0;margin:0;}
-.np-vol-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;background:var(--fire);border:none;cursor:pointer;}
-.np-vol-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--fire);border:none;cursor:pointer;}
 
 @media(max-width:760px){
   .studio-strip{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:.9rem;padding:0 9vw .4rem;justify-content:flex-start;scrollbar-width:none;}
@@ -1312,50 +1055,65 @@ html,body{overflow-x:hidden;}
   .pe-dir{flex:none}
   .pe-dir .vol-wrap{display:none}
 }
+
+/* ══ NOVO v27 — play do destaque no hero do celular ═══════════════════════
+   Abaixo de 900px o card do destaque some, e a frase "você está ouvindo um
+   beat do Rideblan" ficava prometendo um som sem botão. Esse é o botão:
+   colado na frase, uma linha, e vira "tocando agora" enquanto roda. */
+.hero-tocar{display:none}
+@media(max-width:900px){
+  .hero-tocar{display:flex;align-items:center;gap:.85rem;width:100%;max-width:360px;min-height:56px;
+    margin:0 0 1.6rem;padding:.55rem .9rem .55rem .55rem;background:rgba(34,30,24,.72);
+    border:1px solid var(--clay);color:var(--cream);text-align:left;cursor:pointer;
+    font:inherit;-webkit-tap-highlight-color:transparent;transition:border-color .14s,background .14s}
+  .hero-tocar[hidden]{display:none}
+  .hero-tocar:active{background:var(--mole)}
+  .hero-tocar .ht-ico{flex:none;width:42px;height:42px;display:flex;align-items:center;justify-content:center;
+    background:var(--fire);color:var(--black)}
+  .hero-tocar .ht-txt{display:flex;flex-direction:column;gap:.18rem;min-width:0}
+  .hero-tocar .ht-kick{font-family:var(--sans);font-size:.62rem;font-weight:700;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--amber)}
+  .hero-tocar .ht-nome{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--read);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hero-tocar.rodando{border-color:var(--fire)}
+  .hero-lede{margin-bottom:1rem}
+}
 </style>
 
-<!-- ═══ GA4 ═════════════════════════════════════════
-  COMO CONFIGURAR:
-  1. Acesse analytics.google.com e crie uma conta/propriedade
-  2. Em "Fluxos de dados" copie o Measurement ID (formato G-82NFJ3LW3J)
-  3. Substitua 'G-82NFJ3LW3J' pelo seu ID abaixo
-  Gratuito e sem limites de pageviews.
+<!-- ═══ EMAILJS (formulário de contato) ══════════════
+  Chaves em emailjs.com: Account > Public Key, Email Services > Service ID,
+  Email Templates > Template ID. Variáveis do template: {{from_name}},
+  {{from_email}}, {{subject}}, {{message}}.
+  O script só baixa quando a pessoa mexe no formulário: antes ele vinha
+  síncrono no <head> e segurava a primeira pintura do site inteiro.
 ════════════════════════════════════════════════════ -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-82NFJ3LW3J"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-82NFJ3LW3J');
-</script>
-
-<!-- ═══ EMAILJS ══════════════════════════════════════
-  COMO CONFIGURAR:
-  1. Crie conta gratuita em emailjs.com (200 emails/mês grátis)
-  2. Em "Email Services" conecte seu Gmail (rideblan33@gmail.com) — o EmailJS usa seu Gmail como relay, mas o destino configurado no template será contato@caramujorecords.com.br
-  3. Em "Email Templates" crie template e anote o Template ID
-  4. Em "Account" copie o Public Key
-  5. Substitua os valores abaixo:
-     EMAILJS_PUBLIC_KEY  → Account > Public Key
-     EMAILJS_SERVICE_ID  → Email Services > Service ID
-     EMAILJS_TEMPLATE_ID → Email Templates > Template ID
-  No template do EmailJS use as variáveis:
-  {{from_name}}, {{from_email}}, {{subject}}, {{message}}
-════════════════════════════════════════════════════ -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script>
-  // ▼ SUBSTITUA PELOS SEUS VALORES DO EMAILJS
   const EMAILJS_PUBLIC_KEY  = 'TECsmRQF1iQ0I0YdY';
   const EMAILJS_SERVICE_ID  = 'service_lsk2azj';
   const EMAILJS_TEMPLATE_ID = 'template_5ps4hob';
-  (function(){ emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY }); })();
+  let emailjsPronto=null;
+  function carregarEmailJS(){
+    if(!emailjsPronto) emailjsPronto=new Promise(function(ok,falha){
+      var s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+      s.onload=function(){ try{ emailjs.init({publicKey:EMAILJS_PUBLIC_KEY}); ok(); }catch(e){ emailjsPronto=null; falha(e); } };
+      s.onerror=function(){ emailjsPronto=null; falha(new Error('EmailJS nao carregou')); };
+      document.head.appendChild(s);
+    });
+    return emailjsPronto;
+  }
+  // tocou num campo do contato: já vai buscando, pra estar pronto no ENVIAR
+  document.addEventListener('focusin',function(e){
+    if(e.target&&/^cf[A-Z]/.test(e.target.id||'')) carregarEmailJS().catch(function(){});
+  });
 </script>
 
 <link rel="canonical" href="https://caramujorecords.com.br"/>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"ProfessionalService","name":"Caramujo Records","url":"https://caramujorecords.com.br","logo":"https://caramujorecords.com.br/assets/brand/Caramujo_Records.png","image":"https://caramujorecords.com.br/og-image.png","description":"Estúdio de rap/hip hop popular e independente. Beats exclusivos, mixagem e masterização por @rideblan33. São Carlos, SP, desde 2018.","email":"contato@caramujorecords.com.br","foundingDate":"2018","founder":{"@type":"Person","name":"rideblan","alternateName":"@rideblan33"},"address":{"@type":"PostalAddress","addressLocality":"São Carlos","addressRegion":"SP","addressCountry":"BR"},"sameAs":["https://soundcloud.com/rideblan33","https://www.instagram.com/rideblan33"],"priceRange":"R$79-R$299","makesOffer":[{"@type":"Offer","priceCurrency":"BRL","price":"119","itemOffered":{"@type":"Service","name":"Beat exclusivo do catálogo","description":"Licença exclusiva, MP3 320kbps + WAV, contrato digital. O beat sai do catálogo após a venda."}},{"@type":"Offer","priceCurrency":"BRL","price":"219","itemOffered":{"@type":"Service","name":"Pacote 2 beats"}},{"@type":"Offer","priceCurrency":"BRL","price":"299","itemOffered":{"@type":"Service","name":"Pacote 3 beats"}},{"@type":"Offer","priceCurrency":"BRL","price":"149","itemOffered":{"@type":"Service","name":"Beat personalizado"}},{"@type":"Offer","priceCurrency":"BRL","price":"149","itemOffered":{"@type":"Service","name":"Mixagem"}},{"@type":"Offer","priceCurrency":"BRL","price":"79","itemOffered":{"@type":"Service","name":"Masterização"}},{"@type":"Offer","priceCurrency":"BRL","price":"199","itemOffered":{"@type":"Service","name":"Mix + Master"}}]}
 </script>
-<link rel="icon" type="image/png" href="/assets/brand/Caramujo_Records.png"/>
+<link rel="icon" type="image/png" sizes="180x180" href="/assets/brand/icone-180.png"/>
+<link rel="apple-touch-icon" href="/assets/brand/icone-180.png"/>
 </head>
 <body>
 
@@ -1402,6 +1160,14 @@ html,body{overflow-x:hidden;}
     </h1>
 
     <p class="hero-lede">Atenção! Você está ouvindo um beat do Rideblan</p>
+
+    <button class="hero-tocar" id="heroTocar" type="button" hidden>
+      <span class="ht-ico" id="heroTocarIco" aria-hidden="true"></span>
+      <span class="ht-txt">
+        <span class="ht-kick" id="heroTocarKick">Tocar o beat da semana</span>
+        <span class="ht-nome" id="heroTocarNome"></span>
+      </span>
+    </button>
 
     <p class="hero-desc">
       Estúdio popular e independente.<br/>
@@ -1672,7 +1438,7 @@ html,body{overflow-x:hidden;}
       <figcaption>Parcerias de destaque</figcaption>
     </figure>
     <figure class="studio-ph sp-4" tabindex="0" role="button" aria-label="Ampliar sessão ao vivo" onclick="openLB('video-loop','assets/sessao.mp4')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLB('video-loop','assets/sessao.mp4');}">
-      <video autoplay loop muted playsinline preload="metadata" poster="assets/sessao-poster.jpg">
+      <video data-loop loop muted playsinline preload="none" poster="assets/sessao-poster.jpg">
         <source src="assets/sessao.mp4" type="video/mp4">
       </video>
       <figcaption>Sessão de studio</figcaption>
@@ -2194,11 +1960,27 @@ body.vol-aberto .cart-btn{transform:translateY(-76px)}
 }
 </style>
 
-<script src="https://sdk.mercadopago.com/js/v2" defer></script>
 <script>
 /* ── MERCADO PAGO ─────────────────────────────────── */
 const MP_PUBLIC_KEY = 'APP_USR-31288966-8cae-422f-abe4-09ef24baaeb6';
 let mp, brickController, contractPdfData = null;
+
+// O SDK do Mercado Pago só baixa quando a pessoa abre o checkout. Quem entra
+// só pra ouvir beat não paga esse peso. Abrir o checkout já dispara o
+// download; o CONTINUAR espera ele terminar. Se falhar, o catch do
+// goToPayment mostra o PIX manual, como sempre mostrou.
+let mpPronto=null;
+function carregarMP(){
+  if(window.MercadoPago) return Promise.resolve();
+  if(!mpPronto) mpPronto=new Promise(function(ok,falha){
+    var s=document.createElement('script');
+    s.src='https://sdk.mercadopago.com/js/v2';
+    s.onload=function(){ window.MercadoPago?ok():(mpPronto=null,falha(new Error('SDK do Mercado Pago veio vazio'))); };
+    s.onerror=function(){ mpPronto=null; falha(new Error('SDK do Mercado Pago nao carregou')); };
+    document.head.appendChild(s);
+  });
+  return mpPronto;
+}
 
 function downloadContract() {
   if (!contractPdfData) return;
@@ -2232,142 +2014,142 @@ document.addEventListener('mousemove',e=>{
 
 /* beats data */
 const BEATS=[
-  {id:135, name:'GANA',  bpm:140,  key:'Dm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/gana-8'},
-  {id:136, name:'FUNERAL',  bpm:168,  key:'Gm',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/funeral-1'},
-  {id:122, name:'ARREPIO',  bpm:125,  key:'Gbm',  genre:'experimental',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/arrepio-1'},
-  {id:123, name:'LEGO',  bpm:135,  key:'Gm',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/lego-2'},
-  {id:124, name:'FUNDO DO FUNDO',  bpm:152,  key:'Dm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/fundo-do-fundo-4'},
-  {id:125, name:'ONÇA LIMPA',  bpm:128,  key:'Bm',  genre:'funk',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/onca-limpa-5'},
-  {id:126, name:'BLUES',  bpm:120,  key:'Dbm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/blues-6'},
-  {id:127, name:'PABLO FREESTYLE 2',  bpm:144,  key:'Gbm',  genre:'trap',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/pablo-freestyle-2-7'},
-  {id:128, name:'VAI NA FÉ',  bpm:162,  key:'Bm',  genre:'funk',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/vai-na-fe-8'},
-  {id:129, name:'TIRO',  bpm:192,  key:'Dbm',  genre:'detroit',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/tiro-9'},
-  {id:130, name:'SCOOBY DOO',  bpm:130,  key:'Dm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/scooby-doo-10'},
-  {id:131, name:'CAIXA',  bpm:120,  key:'Gbm',  genre:'nomelody',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/caixa-11'},
-  {id:132, name:'GRUTA',  bpm:110,  key:'Dbm',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/gruta-12'},
-  {id:133, name:'DÍGITOS',  bpm:132,  key:'Abmaj',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/digitos-13'},
-  {id:134, name:'FUGA',  bpm:170,  key:'Dm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/fuga-14'},
-  {id:114, name:'NEGO EU SIGO MOVIMENTANDO',  bpm:128,  key:'Emaj',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/nego-eu-sigo-movimentando-1'},
-  {id:117, name:'MEC',  bpm:148,  key:'Bm',  genre:'pluggnb',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/mec-2'},
-  {id:116, name:'BAZUCA',  bpm:150,  key:'Abm',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/bazuca-3'},
-  {id:109, name:'DAZED AND CONFUSED',  bpm:120,  key:'Gbm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/dazed-and-confused-4'},
-  {id:112, name:'DIGITAL',  bpm:124,  key:'Bbm',  genre:'trap',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/digital-6'},
-  {id:115, name:'GUEPARDO',  bpm:85,  key:'Fm',  genre:'funk',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/guepardo-7'},
-  {id:110, name:'NATA DE SÃO CARLOS',  bpm:125,  key:'Am',  genre:'funk',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/nata-de-sao-carlos-9'},
-  {id:121, name:'EXIT',  bpm:160,  key:'Bbm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/exit-10'},
-  {id:111, name:'SIX SEVEN',  bpm:130,  key:'Bm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/six-seven-11'},
-  {id:119, name:'SE O MUNDO SOUBESSE',  bpm:128,  key:'Cm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/se-o-mundo-soubesse-12'},
-  {id:120, name:'PLUG DA MEIA NOITE',  bpm:140,  key:'Bbm',  genre:'plug',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/plug-da-meia-noite-13'},
-  {id:113, name:'NARCO',  bpm:140,  key:'Abmaj',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/narco-14'},
-  {id:118, name:'TROPICAL',  bpm:124,  key:'Bbm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/tropical-15'},
-  {id:103, name:'NOCAUTE',  bpm:120,  key:'Bm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/nocaute-1'},
-  {id:106, name:'RETRO',  bpm:124,  key:'Bbm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/retro-2'},
-  {id:94, name:'9:30 NO BUSÃO',  bpm:113,  key:'Gm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/930-no-busao-3'},
-  {id:95, name:'AQUELA SORTE',  bpm:172,  key:'Abm',  genre:'boombap',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/aquela-sorte-4'},
-  {id:99, name:'KANARIO',  bpm:117,  key:'Bm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/kanario-5'},
-  {id:98, name:'KAI É SÓ BOOMBAPÃO JHOW',  bpm:178,  key:'Abm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/kai-e-so-boombapao-jhow-6'},
-  {id:107, name:'RIP LIL KEED',  bpm:122,  key:'Dbm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/rip-lil-keed-7'},
-  {id:104, name:'PINGOS',  bpm:158,  key:'Abm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/pingos-8'},
-  {id:100, name:'LEMBRANÇAS',  bpm:120,  key:'Fm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/lembrancas-9'},
-  {id:102, name:'NEUROSE',  bpm:188,  key:'Gbm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/neurose-10'},
-  {id:108, name:'TU QUE FAZ SEU CORRE',  bpm:115,  key:'Dm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/tu-que-faz-seu-corre-11'},
-  {id:96, name:'CLÁSSICO COMO LINCOLN',  bpm:180,  key:'Ebm',  genre:'boombap',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/classico-como-lincoln-12'},
-  {id:105, name:'PREMONIÇÃO',  bpm:122,  key:'Ebm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/premonicao-13'},
-  {id:97, name:'JONATHAN',  bpm:156,  key:'Dbm',  genre:'nomelody',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/jonathan-14'},
-  {id:101, name:'LONG LIVE POP SMOKE',  bpm:143,  key:'Gm',  genre:'drill',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/long-live-pop-smoke-15'},
-  {id:1, name:'NUVEM',                   bpm:160,  key:'Am',    genre:'plug',     sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/nuvem-12'},
-  {id:2, name:'COLA',                    bpm:147,  key:'Ebm',   genre:'hoodtrap', sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/cola-5'},
-  {id:3, name:'ORAÇÃO',                  bpm:160,  key:'Em',    genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/oracao-11'},
-  {id:4, name:'GRAVIDADE',               bpm:128,  key:'Gm',    genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/gravidade-4'},
-  {id:5, name:'LARANJA',                 bpm:132,  key:'Gm',    genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/laranja-15'},
-  {id:6, name:'HOOD STARS',              bpm:148,  key:'Bbm',   genre:'hoodtrap', sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/hood-stars-10'},
-  {id:7, name:'REGALIA',                 bpm:140,  key:'Bm',   genre:'experimental',    sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/regalia-16'},
-  {id:8, name:'ALOE',                    bpm:125,  key:'Dm',    genre:'experimental',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/aloe-2'},
-  {id:9, name:'FLASHBACK',               bpm:132,  key:'Cm',    genre:'experimental',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/flashback-9'},
-  {id:10,name:'RIDING',                  bpm:160,  key:'Bm',    genre:'experimental',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/riding-14'},
-  {id:11,name:'FINO',                    bpm:190,  key:'Gm',    genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/fino-1'},
-  {id:12,name:'PIXEL',                   bpm:124,  key:'Em',    genre:'experimental',     sold:false,scUrl:'https%3A//soundcloud.com/rideblan33/pixel-6'},
-  {id:13,name:'IMERSO',                  bpm:160,  key:'Cmaj',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/imerso-9'},
-  {id:14,name:'VIGILANTE',               bpm:160,  key:'Cmaj',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/vigilante-13'},
-  {id:15,name:'EXPERIÊNCIA',             bpm:160,  key:'Fm',    genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/experiencia-1'},
-  {id:16,name:'VIBRAÇÕES',               bpm:142,  key:'Gbm',   genre:'plug',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/vibracoes-7'},
-  {id:17,name:'BI',                      bpm:130,  key:'Abm',   genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/bi-3'},
-  {id:18,name:'PENSAMENTOS INTRUSIVOS',  bpm:132,  key:'Ebm',   genre:'experimental',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/pensamentos-intrusivos-2'},
-  {id:19,name:'VÁRIAS FITA NOIS QUE TÁ',bpm:156,  key:'Amaj',  genre:'boombap',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/varias-fita-nois-que-ta-5'},
-  {id:20,name:'RESERVA',                 bpm:174,  key:'Bm',    genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/reserva-11'},
-  {id:21,name:'AR',                      bpm:190,  key:'Abm',   genre:'experimental',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/ar-12'},
-  {id:22,name:'COLHE O QUE PLANTA',      bpm:160,  key:'Cmaj',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/colhe-o-que-planta-4'},
-  {id:23,name:'FLUINDO',                 bpm:150,  key:'Dmaj',  genre:'experimental',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/fluindo-5'},
-  {id:24,name:'PÚRPURA',                 bpm:132,  key:'Gm',    genre:'boombap',  sold:true, scUrl:'https%3A//soundcloud.com/rideblan33/purpura-9'},
-  {id:25,name:'PRESSÃO',                 bpm:186,  key:'Bbm',   genre:'hard',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/pressao-6'},
-  {id:26,name:'PORTAL',                  bpm:155,  key:'Fmaj',  genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/portal-13'},
-  {id:27,name:'ANSIEDADE',               bpm:163,  key:'Ebm',   genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/ansiedade-8'},
-  {id:28,name:'PANE NO SISTEMA',         bpm:196,  key:'Gbmaj', genre:'trap',     sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/pane-no-sistema-2'},
-  {id:29, name:'66',  bpm:104,  key:'Bbm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/66a1'},
-  {id:30, name:'ACHILES',  bpm:130,  key:'Dbm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/achiles-16'},
-  {id:31, name:'ADEMAR',  bpm:158,  key:'Fm',  genre:'plug',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/ademar'},
-  {id:32, name:'ANDARILHO',  bpm:132,  key:'Ebm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/andarilho-1'},
-  {id:33, name:'BLANK',  bpm:178,  key:'Dbm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/blank'},
-  {id:34, name:'CAT',  bpm:160,  key:'Cm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/cat'},
-  {id:35, name:'CISJORDÂNIA',  bpm:190,  key:'Fmaj',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/cisjordania-8'},
-  {id:36, name:'CÓDIGO DE HONRA',  bpm:176,  key:'Cm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/codigo-de-honra-2'},
-  {id:37, name:'CORRE DO DIN',  bpm:112,  key:'Gbm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/corre-do-din'},
-  {id:38, name:'DESVIANDO',  bpm:130,  key:'Fm',  genre:'funk',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/desviando-8'},
-  {id:39, name:'DETROITÃO',  bpm:204,  key:'Dm',  genre:'detroit',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/detroitao'},
-  {id:40, name:'DOMINGÃO',  bpm:165,  key:'Fm',  genre:'plug',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/domingao'},
-  {id:41, name:'ESCADINHA',  bpm:98,  key:'Ebm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/escadinha'},
-  {id:42, name:'EU AMO ESSE MEME',  bpm:140,  key:'Bm',  genre:'plug',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/eu-amo-esse-meme'},
-  {id:43, name:'F1',  bpm:141,  key:'Cm',  genre:'plug',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/formula1'},
-  {id:44, name:'FICOU VAZIO',  bpm:120,  key:'Bm',  genre:'drumless',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/ficou-vazio'},
-  {id:45, name:'FLY ME TO THE MOON',  bpm:124,  key:'Fm',  genre:'drumless',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/fly-me-to-the-moon'},
-  {id:46, name:'JIBOIA',  bpm:176,  key:'Ebm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/jiboia'},
-  {id:47, name:'JOHANESBURGO',  bpm:186,  key:'Cm',  genre:'drumless',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/johanesburgo-14'},
-  {id:48, name:'KILLA',  bpm:131,  key:'Bbm',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/killa'},
-  {id:49, name:'LAGOA',  bpm:115,  key:'Abm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/lagoa'},
-  {id:50, name:'LASER',  bpm:160,  key:'Fmaj',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/laser-9'},
-  {id:51, name:'LOCK',  bpm:176,  key:'Fm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/lock-11'},
-  {id:52, name:'LONG LIVE MEXIKO',  bpm:148,  key:'Abm',  genre:'plug',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/long-live-mexiko'},
-  {id:53, name:'LUIGI',  bpm:200,  key:'Bm',  genre:'detroit',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/luigi'},
-  {id:54, name:'MADRUGADA RJ',  bpm:124,  key:'Bm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/madrugada-rj'},
-  {id:55, name:'MÁFIA',  bpm:210,  key:'Cm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/mafia-5'},
-  {id:56, name:'MARCO POLO',  bpm:170,  key:'Ebm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/marco-polo'},
-  {id:57, name:'MIDI',  bpm:130,  key:'Amaj',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/midi-9'},
-  {id:58, name:'MUDDY',  bpm:145,  key:'Ebm',  genre:'plug',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/lama'},
-  {id:59, name:'NASCAR',  bpm:200,  key:'Ebm',  genre:'detroit',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/nascar'},
-  {id:60, name:'NÚMEROS',  bpm:176,  key:'Gm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/n-meros'},
-  {id:61, name:'ÓBVIO',  bpm:152,  key:'Bbm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/obvio'},
-  {id:62, name:'OK',  bpm:130,  key:'Dbm',  genre:'funk',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/ok-3'},
-  {id:63, name:'PÁSSARO',  bpm:146,  key:'Gbm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/passaro-4'},
-  {id:64, name:'PEGAR OU LARGAR',  bpm:186,  key:'Bm',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/pegar-ou-largar-2'},
-  {id:65, name:'PERDAS',  bpm:113,  key:'Bm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/perdas'},
-  {id:66, name:'PIT STOP',  bpm:182,  key:'Bbm',  genre:'bounce',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/pit-stop'},
-  {id:67, name:'PLUG DO JAZZ',  bpm:142,  key:'Bm',  genre:'pluggnb',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/plug-do-jazz'},
-  {id:68, name:'PONTA',  bpm:150,  key:'Fm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/ponta'},
-  {id:69, name:'PRESENTE',  bpm:130,  key:'Dbm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/presente-11'},
-  {id:70, name:'RELAÇÃO',  bpm:142,  key:'Emaj',  genre:'plug',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/relacao'},
-  {id:71, name:'REP',  bpm:130,  key:'Amaj',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/rep-11'},
-  {id:72, name:'RODA DE FREE',  bpm:178,  key:'Cm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/roda-de-free-7'},
-  {id:73, name:'ROSA',  bpm:90,  key:'Dm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/rosa'},
-  {id:74, name:'SCAR',  bpm:152,  key:'Bm',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/scar-13'},
-  {id:75, name:'SEM MANDAR RECADO',  bpm:156,  key:'Ebm',  genre:'hard',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/sem-mandar-recado-6'},
-  {id:76, name:'SI',  bpm:186,  key:'Em',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/si'},
-  {id:77, name:'SOZINHO',  bpm:135,  key:'Am',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/sozinho-9'},
-  {id:78, name:'TIRO QUENTE',  bpm:198,  key:'Bm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/tiro-quente-6'},
-  {id:79, name:'TOMADA',  bpm:148,  key:'Gbm',  genre:'pluggnb',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/tomada'},
-  {id:80, name:'TRATO FEITO',  bpm:117,  key:'Dbm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/trato-feito-11'},
-  {id:81, name:'TRAVESSA 7',  bpm:111,  key:'Am',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/travessa-7-3'},
-  {id:82, name:'TUIN',  bpm:192,  key:'Fm',  genre:'detroit',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/tuin-3'},
-  {id:83, name:'TÚNEL',  bpm:155,  key:'Ebm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/t-nel'},
-  {id:84, name:'UFO',  bpm:150,  key:'Bbm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/ufo'},
-  {id:85, name:'VALEU',  bpm:110,  key:'Dbm',  genre:'funk',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/valeu-12'},
-  {id:86, name:'VELOZES',  bpm:174,  key:'Em',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/velozes'},
-  {id:87, name:'VERDADEIRO',  bpm:160,  key:'Ebm',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/verdadeiro-5'},
-  {id:88, name:'VIBES',  bpm:170,  key:'Ebm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/vibes'},
-  {id:89, name:'VIDREK',  bpm:146,  key:'Ebm',  genre:'boombap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/vidrek'},
-  {id:90, name:'VOAR',  bpm:106,  key:'Gm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/voar'},
-  {id:91, name:'VOLTA',  bpm:204,  key:'Dm',  genre:'detroit',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/c-meras'},
-  {id:92, name:'WIFI',  bpm:120,  key:'Am',  genre:'trap',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/wifi'},
-  {id:93, name:'WINNING',  bpm:145,  key:'Dbm',  genre:'experimental',  sold:false, scUrl:'https%3A//soundcloud.com/rideblan33/winning'}
+  {id:135, name:'GANA',  bpm:140,  key:'Dm',  genre:'trap',  sold:false},
+  {id:136, name:'FUNERAL',  bpm:168,  key:'Gm',  genre:'hard',  sold:false},
+  {id:122, name:'ARREPIO',  bpm:125,  key:'Gbm',  genre:'experimental',  sold:true},
+  {id:123, name:'LEGO',  bpm:135,  key:'Gm',  genre:'hard',  sold:false},
+  {id:124, name:'FUNDO DO FUNDO',  bpm:152,  key:'Dm',  genre:'boombap',  sold:false},
+  {id:125, name:'ONÇA LIMPA',  bpm:128,  key:'Bm',  genre:'funk',  sold:true},
+  {id:126, name:'BLUES',  bpm:120,  key:'Dbm',  genre:'boombap',  sold:false},
+  {id:127, name:'PABLO FREESTYLE 2',  bpm:144,  key:'Gbm',  genre:'trap',  sold:true},
+  {id:128, name:'VAI NA FÉ',  bpm:162,  key:'Bm',  genre:'funk',  sold:true},
+  {id:129, name:'TIRO',  bpm:192,  key:'Dbm',  genre:'detroit',  sold:false},
+  {id:130, name:'SCOOBY DOO',  bpm:130,  key:'Dm',  genre:'trap',  sold:false},
+  {id:131, name:'CAIXA',  bpm:120,  key:'Gbm',  genre:'nomelody',  sold:false},
+  {id:132, name:'GRUTA',  bpm:110,  key:'Dbm',  genre:'hard',  sold:false},
+  {id:133, name:'DÍGITOS',  bpm:132,  key:'Abmaj',  genre:'trap',  sold:false},
+  {id:134, name:'FUGA',  bpm:170,  key:'Dm',  genre:'trap',  sold:false},
+  {id:114, name:'NEGO EU SIGO MOVIMENTANDO',  bpm:128,  key:'Emaj',  genre:'trap',  sold:false},
+  {id:117, name:'MEC',  bpm:148,  key:'Bm',  genre:'pluggnb',  sold:false},
+  {id:116, name:'BAZUCA',  bpm:150,  key:'Abm',  genre:'hard',  sold:false},
+  {id:109, name:'DAZED AND CONFUSED',  bpm:120,  key:'Gbm',  genre:'trap',  sold:false},
+  {id:112, name:'DIGITAL',  bpm:124,  key:'Bbm',  genre:'trap',  sold:true},
+  {id:115, name:'GUEPARDO',  bpm:85,  key:'Fm',  genre:'funk',  sold:false},
+  {id:110, name:'NATA DE SÃO CARLOS',  bpm:125,  key:'Am',  genre:'funk',  sold:true},
+  {id:121, name:'EXIT',  bpm:160,  key:'Bbm',  genre:'boombap',  sold:false},
+  {id:111, name:'SIX SEVEN',  bpm:130,  key:'Bm',  genre:'trap',  sold:false},
+  {id:119, name:'SE O MUNDO SOUBESSE',  bpm:128,  key:'Cm',  genre:'trap',  sold:false},
+  {id:120, name:'PLUG DA MEIA NOITE',  bpm:140,  key:'Bbm',  genre:'plug',  sold:true},
+  {id:113, name:'NARCO',  bpm:140,  key:'Abmaj',  genre:'trap',  sold:false},
+  {id:118, name:'TROPICAL',  bpm:124,  key:'Bbm',  genre:'experimental',  sold:false},
+  {id:103, name:'NOCAUTE',  bpm:120,  key:'Bm',  genre:'trap',  sold:false},
+  {id:106, name:'RETRO',  bpm:124,  key:'Bbm',  genre:'boombap',  sold:false},
+  {id:94, name:'9:30 NO BUSÃO',  bpm:113,  key:'Gm',  genre:'trap',  sold:false},
+  {id:95, name:'AQUELA SORTE',  bpm:172,  key:'Abm',  genre:'boombap',  sold:true},
+  {id:99, name:'KANARIO',  bpm:117,  key:'Bm',  genre:'trap',  sold:false},
+  {id:98, name:'KAI É SÓ BOOMBAPÃO JHOW',  bpm:178,  key:'Abm',  genre:'boombap',  sold:false},
+  {id:107, name:'RIP LIL KEED',  bpm:122,  key:'Dbm',  genre:'experimental',  sold:false},
+  {id:104, name:'PINGOS',  bpm:158,  key:'Abm',  genre:'boombap',  sold:false},
+  {id:100, name:'LEMBRANÇAS',  bpm:120,  key:'Fm',  genre:'experimental',  sold:false},
+  {id:102, name:'NEUROSE',  bpm:188,  key:'Gbm',  genre:'boombap',  sold:false},
+  {id:108, name:'TU QUE FAZ SEU CORRE',  bpm:115,  key:'Dm',  genre:'trap',  sold:false},
+  {id:96, name:'CLÁSSICO COMO LINCOLN',  bpm:180,  key:'Ebm',  genre:'boombap',  sold:true},
+  {id:105, name:'PREMONIÇÃO',  bpm:122,  key:'Ebm',  genre:'trap',  sold:false},
+  {id:97, name:'JONATHAN',  bpm:156,  key:'Dbm',  genre:'nomelody',  sold:false},
+  {id:101, name:'LONG LIVE POP SMOKE',  bpm:143,  key:'Gm',  genre:'drill',  sold:false},
+  {id:1, name:'NUVEM',                   bpm:160,  key:'Am',    genre:'plug',     sold:true},
+  {id:2, name:'COLA',                    bpm:147,  key:'Ebm',   genre:'hoodtrap', sold:true},
+  {id:3, name:'ORAÇÃO',                  bpm:160,  key:'Em',    genre:'boombap',  sold:false},
+  {id:4, name:'GRAVIDADE',               bpm:128,  key:'Gm',    genre:'trap',     sold:false},
+  {id:5, name:'LARANJA',                 bpm:132,  key:'Gm',    genre:'trap',  sold:false},
+  {id:6, name:'HOOD STARS',              bpm:148,  key:'Bbm',   genre:'hoodtrap', sold:true},
+  {id:7, name:'REGALIA',                 bpm:140,  key:'Bm',   genre:'experimental',    sold:true},
+  {id:8, name:'ALOE',                    bpm:125,  key:'Dm',    genre:'experimental',     sold:false},
+  {id:9, name:'FLASHBACK',               bpm:132,  key:'Cm',    genre:'experimental',     sold:false},
+  {id:10,name:'RIDING',                  bpm:160,  key:'Bm',    genre:'experimental',     sold:false},
+  {id:11,name:'FINO',                    bpm:190,  key:'Gm',    genre:'boombap',  sold:false},
+  {id:12,name:'PIXEL',                   bpm:124,  key:'Em',    genre:'experimental',     sold:false},
+  {id:13,name:'IMERSO',                  bpm:160,  key:'Cmaj',  genre:'boombap',  sold:false},
+  {id:14,name:'VIGILANTE',               bpm:160,  key:'Cmaj',  genre:'boombap',  sold:false},
+  {id:15,name:'EXPERIÊNCIA',             bpm:160,  key:'Fm',    genre:'boombap',  sold:false},
+  {id:16,name:'VIBRAÇÕES',               bpm:142,  key:'Gbm',   genre:'plug',     sold:false},
+  {id:17,name:'BI',                      bpm:130,  key:'Abm',   genre:'trap',     sold:false},
+  {id:18,name:'PENSAMENTOS INTRUSIVOS',  bpm:132,  key:'Ebm',   genre:'experimental',     sold:false},
+  {id:19,name:'VÁRIAS FITA NOIS QUE TÁ',bpm:156,  key:'Amaj',  genre:'boombap',  sold:true},
+  {id:20,name:'RESERVA',                 bpm:174,  key:'Bm',    genre:'boombap',  sold:false},
+  {id:21,name:'AR',                      bpm:190,  key:'Abm',   genre:'experimental',     sold:false},
+  {id:22,name:'COLHE O QUE PLANTA',      bpm:160,  key:'Cmaj',  genre:'boombap',  sold:false},
+  {id:23,name:'FLUINDO',                 bpm:150,  key:'Dmaj',  genre:'experimental',     sold:false},
+  {id:24,name:'PÚRPURA',                 bpm:132,  key:'Gm',    genre:'boombap',  sold:true},
+  {id:25,name:'PRESSÃO',                 bpm:186,  key:'Bbm',   genre:'hard',     sold:false},
+  {id:26,name:'PORTAL',                  bpm:155,  key:'Fmaj',  genre:'trap',     sold:false},
+  {id:27,name:'ANSIEDADE',               bpm:163,  key:'Ebm',   genre:'trap',     sold:false},
+  {id:28,name:'PANE NO SISTEMA',         bpm:196,  key:'Gbmaj', genre:'trap',     sold:false},
+  {id:29, name:'66',  bpm:104,  key:'Bbm',  genre:'experimental',  sold:false},
+  {id:30, name:'ACHILES',  bpm:130,  key:'Dbm',  genre:'boombap',  sold:false},
+  {id:31, name:'ADEMAR',  bpm:158,  key:'Fm',  genre:'plug',  sold:false},
+  {id:32, name:'ANDARILHO',  bpm:132,  key:'Ebm',  genre:'experimental',  sold:false},
+  {id:33, name:'BLANK',  bpm:178,  key:'Dbm',  genre:'experimental',  sold:false},
+  {id:34, name:'CAT',  bpm:160,  key:'Cm',  genre:'boombap',  sold:false},
+  {id:35, name:'CISJORDÂNIA',  bpm:190,  key:'Fmaj',  genre:'hard',  sold:false},
+  {id:36, name:'CÓDIGO DE HONRA',  bpm:176,  key:'Cm',  genre:'boombap',  sold:false},
+  {id:37, name:'CORRE DO DIN',  bpm:112,  key:'Gbm',  genre:'trap',  sold:false},
+  {id:38, name:'DESVIANDO',  bpm:130,  key:'Fm',  genre:'funk',  sold:false},
+  {id:39, name:'DETROITÃO',  bpm:204,  key:'Dm',  genre:'detroit',  sold:false},
+  {id:40, name:'DOMINGÃO',  bpm:165,  key:'Fm',  genre:'plug',  sold:false},
+  {id:41, name:'ESCADINHA',  bpm:98,  key:'Ebm',  genre:'experimental',  sold:false},
+  {id:42, name:'EU AMO ESSE MEME',  bpm:140,  key:'Bm',  genre:'plug',  sold:false},
+  {id:43, name:'F1',  bpm:141,  key:'Cm',  genre:'plug',  sold:false},
+  {id:44, name:'FICOU VAZIO',  bpm:120,  key:'Bm',  genre:'drumless',  sold:false},
+  {id:45, name:'FLY ME TO THE MOON',  bpm:124,  key:'Fm',  genre:'drumless',  sold:false},
+  {id:46, name:'JIBOIA',  bpm:176,  key:'Ebm',  genre:'boombap',  sold:false},
+  {id:47, name:'JOHANESBURGO',  bpm:186,  key:'Cm',  genre:'drumless',  sold:false},
+  {id:48, name:'KILLA',  bpm:131,  key:'Bbm',  genre:'hard',  sold:false},
+  {id:49, name:'LAGOA',  bpm:115,  key:'Abm',  genre:'experimental',  sold:false},
+  {id:50, name:'LASER',  bpm:160,  key:'Fmaj',  genre:'hard',  sold:false},
+  {id:51, name:'LOCK',  bpm:176,  key:'Fm',  genre:'experimental',  sold:false},
+  {id:52, name:'LONG LIVE MEXIKO',  bpm:148,  key:'Abm',  genre:'plug',  sold:false},
+  {id:53, name:'LUIGI',  bpm:200,  key:'Bm',  genre:'detroit',  sold:false},
+  {id:54, name:'MADRUGADA RJ',  bpm:124,  key:'Bm',  genre:'trap',  sold:false},
+  {id:55, name:'MÁFIA',  bpm:210,  key:'Cm',  genre:'experimental',  sold:false},
+  {id:56, name:'MARCO POLO',  bpm:170,  key:'Ebm',  genre:'trap',  sold:false},
+  {id:57, name:'MIDI',  bpm:130,  key:'Amaj',  genre:'trap',  sold:false},
+  {id:58, name:'MUDDY',  bpm:145,  key:'Ebm',  genre:'plug',  sold:false},
+  {id:59, name:'NASCAR',  bpm:200,  key:'Ebm',  genre:'detroit',  sold:false},
+  {id:60, name:'NÚMEROS',  bpm:176,  key:'Gm',  genre:'boombap',  sold:false},
+  {id:61, name:'ÓBVIO',  bpm:152,  key:'Bbm',  genre:'boombap',  sold:false},
+  {id:62, name:'OK',  bpm:130,  key:'Dbm',  genre:'funk',  sold:false},
+  {id:63, name:'PÁSSARO',  bpm:146,  key:'Gbm',  genre:'boombap',  sold:false},
+  {id:64, name:'PEGAR OU LARGAR',  bpm:186,  key:'Bm',  genre:'hard',  sold:false},
+  {id:65, name:'PERDAS',  bpm:113,  key:'Bm',  genre:'trap',  sold:false},
+  {id:66, name:'PIT STOP',  bpm:182,  key:'Bbm',  genre:'bounce',  sold:false},
+  {id:67, name:'PLUG DO JAZZ',  bpm:142,  key:'Bm',  genre:'pluggnb',  sold:false},
+  {id:68, name:'PONTA',  bpm:150,  key:'Fm',  genre:'experimental',  sold:false},
+  {id:69, name:'PRESENTE',  bpm:130,  key:'Dbm',  genre:'boombap',  sold:false},
+  {id:70, name:'RELAÇÃO',  bpm:142,  key:'Emaj',  genre:'plug',  sold:false},
+  {id:71, name:'REP',  bpm:130,  key:'Amaj',  genre:'boombap',  sold:false},
+  {id:72, name:'RODA DE FREE',  bpm:178,  key:'Cm',  genre:'boombap',  sold:false},
+  {id:73, name:'ROSA',  bpm:90,  key:'Dm',  genre:'experimental',  sold:false},
+  {id:74, name:'SCAR',  bpm:152,  key:'Bm',  genre:'hard',  sold:false},
+  {id:75, name:'SEM MANDAR RECADO',  bpm:156,  key:'Ebm',  genre:'hard',  sold:false},
+  {id:76, name:'SI',  bpm:186,  key:'Em',  genre:'experimental',  sold:false},
+  {id:77, name:'SOZINHO',  bpm:135,  key:'Am',  genre:'boombap',  sold:false},
+  {id:78, name:'TIRO QUENTE',  bpm:198,  key:'Bm',  genre:'boombap',  sold:false},
+  {id:79, name:'TOMADA',  bpm:148,  key:'Gbm',  genre:'pluggnb',  sold:false},
+  {id:80, name:'TRATO FEITO',  bpm:117,  key:'Dbm',  genre:'trap',  sold:false},
+  {id:81, name:'TRAVESSA 7',  bpm:111,  key:'Am',  genre:'experimental',  sold:false},
+  {id:82, name:'TUIN',  bpm:192,  key:'Fm',  genre:'detroit',  sold:false},
+  {id:83, name:'TÚNEL',  bpm:155,  key:'Ebm',  genre:'trap',  sold:false},
+  {id:84, name:'UFO',  bpm:150,  key:'Bbm',  genre:'trap',  sold:false},
+  {id:85, name:'VALEU',  bpm:110,  key:'Dbm',  genre:'funk',  sold:false},
+  {id:86, name:'VELOZES',  bpm:174,  key:'Em',  genre:'trap',  sold:false},
+  {id:87, name:'VERDADEIRO',  bpm:160,  key:'Ebm',  genre:'trap',  sold:false},
+  {id:88, name:'VIBES',  bpm:170,  key:'Ebm',  genre:'experimental',  sold:false},
+  {id:89, name:'VIDREK',  bpm:146,  key:'Ebm',  genre:'boombap',  sold:false},
+  {id:90, name:'VOAR',  bpm:106,  key:'Gm',  genre:'experimental',  sold:false},
+  {id:91, name:'VOLTA',  bpm:204,  key:'Dm',  genre:'detroit',  sold:false},
+  {id:92, name:'WIFI',  bpm:120,  key:'Am',  genre:'trap',  sold:false},
+  {id:93, name:'WINNING',  bpm:145,  key:'Dbm',  genre:'experimental',  sold:false}
 ];
 
 const PRICE_BEAT=119, PRICE_STEMS=144;
@@ -3065,6 +2847,7 @@ function closeAll(){
 
 /* ── CHECKOUT FLOW ───────────────────────────────── */
 function openCheckout(){
+  carregarMP().catch(function(){});
   if(cart.length===0){
     showToast('Adicione pelo menos um item ao carrinho.');
     return;
@@ -3162,7 +2945,7 @@ async function goToPayment(){
 
   try{
     // init MP SDK
-    if(!mp) mp=new MercadoPago(MP_PUBLIC_KEY,{locale:'pt-BR'});
+    if(!mp){ await carregarMP(); mp=new MercadoPago(MP_PUBLIC_KEY,{locale:'pt-BR'}); }
 
     document.getElementById('mpStep1').style.display='none';
     document.getElementById('mpStep2').style.display='block';
@@ -3448,12 +3231,12 @@ function sendForm(btn){
   btn.disabled=true; btn.textContent='ENVIANDO...';
   status.style.color='var(--dim)'; status.textContent='';
 
-  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+  carregarEmailJS().then(()=>emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
     from_name:  name,
     from_email: email,
     subject:    subject,
     message:    message,
-  }).then(()=>{
+  })).then(()=>{
     btn.disabled=false; btn.textContent='ENVIAR MENSAGEM →';
     status.style.color='#7ec98a';
     status.textContent='✓ Mensagem enviada! Fique atento no seu e-mail pois em breve retornaremos seu contato.';
@@ -3600,7 +3383,7 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
       if(!('mediaSession' in navigator)) return;
       navigator.mediaSession.metadata=new MediaMetadata({
         title:b.name, artist:'@rideblan33', album:'Caramujo Records',
-        artwork:f.capa?[{src:f.capa,sizes:'512x512',type:'image/jpeg'}]:[]
+        artwork:f.capa?[{src:f.capaG||f.capa,sizes:'1000x1000',type:'image/jpeg'}]:[]
       });
       navigator.mediaSession.setActionHandler('play',function(){som.play().catch(nada);});
       navigator.mediaSession.setActionHandler('pause',function(){som.pause();});
@@ -3631,8 +3414,16 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
   window.repintarPlayer=repintar;
 
   function pintarHero(f,tocando){
-    var bt=$('hwBtn'); if(!bt) return;
     var meu=String(atual)===String(FEATURED_BEAT_ID);
+    var ht=$('heroTocar');
+    if(ht){
+      var roda=meu&&tocando;
+      ht.classList.toggle('rodando',roda);
+      if($('heroTocarIco')) $('heroTocarIco').innerHTML=roda?ICO_PA:ICO_P;
+      if($('heroTocarKick')) $('heroTocarKick').textContent=roda?'Tocando agora':(meu?'Continuar o beat da semana':'Tocar o beat da semana');
+      ht.setAttribute('aria-label',roda?'Pausar o beat da semana':'Tocar o beat da semana');
+    }
+    var bt=$('hwBtn'); if(!bt) return;
     bt.innerHTML=(meu&&tocando)?ICO_PA:ICO_P;
     if($('hwFill')) $('hwFill').style.width=meu?(f*100)+'%':'0';
     if($('hwSeek')) $('hwSeek').classList.toggle('zerada',!(meu&&f>0.004));
@@ -3669,10 +3460,6 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
     if(som.paused) som.play().catch(nada); else som.pause();
   };
   window.npSet=function(_,bid){ window.__npCurrent={widget:null,bid:bid}; };
-  window.npFromBid=function(bid){ var b=beat(bid); if(b&&$('npName')) $('npName').textContent=b.name; };
-  window.npShow=function(){};
-  window.npBindProgress=function(){};
-  window.pauseCatalog=function(){ som.pause(); };
   window.pausarBeat=function(){ if(!som.paused){ window.__npResume=true; som.pause(); } };
   window.retomarBeat=function(){ if(window.__npResume){ window.__npResume=false; som.play().catch(nada); } };
   window.npSetVolume=function(v){
@@ -3797,21 +3584,37 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
         else { cp.className='hw-capa vazia'; cp.innerHTML='<img src="assets/brand/selo-creme.svg" alt="" width="34" height="34">'; }
       }
       var bloco=$('hwPlay'); if(bloco) bloco.style.display=(f&&f.mp3)?'':'none';
+      var ht=$('heroTocar');
+      if(ht){
+        ht.hidden=!(f&&f.mp3);
+        if($('heroTocarNome')) $('heroTocarNome').textContent=b.name+'  ·  '+gl+(b.bpm?'  ·  '+b.bpm+' BPM':'');
+      }
       pintarHero(0,false);
     }catch(_){}
   }
   function initHero(){
     var bt=$('hwBtn');
     if(bt&&!bt.__ligado){ bt.__ligado=true; bt.addEventListener('click',function(){ window.tocarBeat(FEATURED_BEAT_ID); }); }
+    var ht=$('heroTocar');
+    if(ht&&!ht.__ligado){ ht.__ligado=true; ht.addEventListener('click',function(){ window.tocarBeat(FEATURED_BEAT_ID); }); }
     ligarSeek($('hwSeek'));
   }
 
+  // O loop mudo da sessão só baixa e roda quando aparece na tela, e para
+  // quando sai. Antes ele baixava 143 KB no load, lá do fim da página.
   function initStudioVideos(){
-    document.querySelectorAll('#estudio video.has-audio').forEach(function(v){
-      v.addEventListener('play',function(){ window.pausarBeat(); });
-      v.addEventListener('pause',window.retomarBeat);
-      v.addEventListener('ended',window.retomarBeat);
-    });
+    var vs=document.querySelectorAll('#estudio video[data-loop]');
+    if(!vs.length) return;
+    var quieto=false;
+    try{ quieto=matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(_){}
+    if(quieto) return;                        // fica o poster parado
+    function roda(v){ var p=v.play(); if(p&&p.catch) p.catch(nada); }
+    // navegador sem IntersectionObserver: volta o autoplay de antes
+    if(!('IntersectionObserver' in window)){ vs.forEach(function(v){ v.preload='auto'; v.autoplay=true; try{ v.load(); }catch(_){} }); return; }
+    var io=new IntersectionObserver(function(ents){
+      ents.forEach(function(en){ if(en.isIntersecting) roda(en.target); else if(!en.target.paused) en.target.pause(); });
+    },{rootMargin:'200px 0px',threshold:0.01});
+    vs.forEach(function(v){ io.observe(v); });
   }
 
   window.toggleFilters=function(){var p=document.getElementById('filtersPanel'),b=document.getElementById('filtersToggle');if(!p)return;var open=p.classList.toggle('open');if(b)b.setAttribute('aria-expanded',open?'true':'false');};
@@ -3823,7 +3626,7 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
     if(typeof fetch!=='function') return;      // navegador muito velho: loja segue de pé
     fetch('/api/vitrine').then(function(r){return r.json();}).then(function(j){
       var m={};
-      (j.beats||[]).forEach(function(b){ m[String(b.id)]={mp3:b.mp3,capa:b.capa,dur:b.dur}; });
+      (j.beats||[]).forEach(function(b){ m[String(b.id)]={mp3:b.mp3,capa:b.capa?b.capa+'?p':null,capaG:b.capa,dur:b.dur}; });
       window.__VIT=m; window.__VIT_OK=true;
       if(typeof renderCards==='function') renderCards();
       renderFeatured();

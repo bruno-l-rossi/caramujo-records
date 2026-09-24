@@ -48,7 +48,7 @@ const BASE = `
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="/assets/brand/selo-creme.svg">
-<link rel="icon" type="image/png" href="/assets/brand/Caramujo_Records.png">
+<link rel="icon" type="image/png" sizes="180x180" href="/assets/brand/icone-180.png">
 <meta name="theme-color" content="#0a0a0a">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -544,13 +544,13 @@ function pagina() {
 
   function capaLista(a){
     return a.cover_key
-      ? '<span class="capa-lista"><img src="/capa/'+esc(a.cover_key)+'" alt="" loading="lazy"></span>'
+      ? '<span class="capa-lista"><img src="/capa/'+esc(a.cover_key)+'?p" alt="" loading="lazy"></span>'
       : '<span class="capa-lista vazia"><img src="/assets/brand/selo-creme.svg" alt="" width="18" height="18"></span>';
   }
 
   function capaMini(a){
     return a.cover_key
-      ? '<div class="capa-mini"><img src="/capa/'+esc(a.cover_key)+'" alt="capa de '+esc(a.name)+'" loading="lazy"></div>'
+      ? '<div class="capa-mini"><img src="/capa/'+esc(a.cover_key)+'?p" alt="capa de '+esc(a.name)+'" loading="lazy"></div>'
       : '<div class="capa-mini vazia">sem capa</div>';
   }
 

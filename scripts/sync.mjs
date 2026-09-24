@@ -351,10 +351,16 @@ async function capinha(arquivo, dir) {
     '-vf', 'scale=1000:1000:force_original_aspect_ratio=increase,crop=1000:1000',
     '-q:v', '4', quadrado]);
 
-  const buf = await fs.promises.readFile(quadrado);
-  await fs.promises.rm(bruto, { force: true });
-  await fs.promises.rm(quadrado, { force: true });
-  return buf;
+  // a miniatura sai da grande já recortada: 200px cobre a capa de 96px do
+  // destaque em tela de celular (2x) e sobra pras de 34-46px da lista
+  const pequena = path.join(dir, arquivo.id + '.capa-p.jpg');
+  await run('ffmpeg', ['-y', '-loglevel', 'error', '-i', quadrado,
+    '-vf', 'scale=200:200', '-q:v', '5', pequena]);
+
+  const grande = await fs.promises.readFile(quadrado);
+  const mini = await fs.promises.readFile(pequena);
+  for (const f of [bruto, quadrado, pequena]) await fs.promises.rm(f, { force: true });
+  return { grande, mini };
 }
 
 /* ---------- conversa com o site ---------- */
@@ -477,10 +483,20 @@ async function umaPasta(pasta, dir) {
   let capaChave = null;
   if (capa && capa.id === p.capaAtual) {
     capaChave = capa.id;                       // já está na prateleira, não baixa de novo
+    if (p.capaMini === false) {                // subiu antes de existir miniatura
+      try {
+        const { mini } = await capinha(capa, dir);
+        await ingest('capa', { folderId: pasta.id, chave: capa.id, tam: 'p' }, mini, true);
+        console.log(`    miniatura da capa: ${capa.name}`);
+      } catch (e) {
+        console.log(`    miniatura falhou (${capa.name}): ${e.message}`);
+      }
+    }
   } else if (capa) {
     try {
-      const buf = await capinha(capa, dir);
-      await ingest('capa', { folderId: pasta.id, chave: capa.id }, buf, true);
+      const { grande, mini } = await capinha(capa, dir);
+      await ingest('capa', { folderId: pasta.id, chave: capa.id }, grande, true);
+      await ingest('capa', { folderId: pasta.id, chave: capa.id, tam: 'p' }, mini, true);
       capaChave = capa.id;
       console.log(`    capa: ${capa.name}`);
     } catch (e) {

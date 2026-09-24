@@ -31,7 +31,7 @@ export async function onRequestPost({ request, env }) {
   });
 
   if (artist.cover_key) {
-    await env.AUDIO.delete(`capa/${artist.cover_key}.jpg`).catch(() => {});
+    await env.AUDIO.delete([`capa/${artist.cover_key}.jpg`, `capa/${artist.cover_key}-p.jpg`]).catch(() => {});
   }
   await d.prepare(
     "UPDATE artists SET cover_key = ?, cover_origem = 'artista' WHERE id = ?"
@@ -67,7 +67,7 @@ export async function onRequestDelete({ request, env }) {
   }
   if (!artist) return json({ erro: 'artista nao encontrado' }, 404);
 
-  if (artist.cover_key) await env.AUDIO.delete(`capa/${artist.cover_key}.jpg`).catch(() => {});
+  if (artist.cover_key) await env.AUDIO.delete([`capa/${artist.cover_key}.jpg`, `capa/${artist.cover_key}-p.jpg`]).catch(() => {});
   await d.prepare('UPDATE artists SET cover_key = NULL, cover_origem = NULL WHERE id = ?')
     .bind(artist.id).run();
 

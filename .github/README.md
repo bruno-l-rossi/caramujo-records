@@ -8,9 +8,9 @@ Site oficial do estúdio Caramujo Records — beats exclusivos, mixagem e master
 
 ## Visão Geral
 
-Single-page application (SPA) em HTML/CSS/JS puro, sem frameworks. Hospedado no **Cloudflare Pages** com deploy automático via GitHub. Integra **SoundCloud** (preview dos beats + player contínuo via Widget API) e **Mercado Pago** para pagamentos via cartão de crédito e PIX.
+Single-page application (SPA) em HTML/CSS/JS puro, sem frameworks. Hospedado no **Cloudflare Pages** com deploy automático via GitHub. O som dos beats vem do **R2** (MP3 convertido do Drive, `/audio/<id>`, um `<audio>` só pra página inteira) e o pagamento é **Mercado Pago** (cartão e PIX). O SoundCloud saiu em 23/09/2026.
 
-Jornada do site: **hero → pacotes → catálogo de beats → serviços → contato**. Os pacotes vêm antes do catálogo de propósito: o visitante ancora o preço antes de mergulhar nos beats.
+Jornada do site: **hero → catálogo de beats → pacotes → serviços → sobre nós → contato**.
 
 ---
 
@@ -84,10 +84,11 @@ Os 3 primeiros + o contrato seguem a identidade do site (paleta do `docs/DESIGN.
 ### Hero
 - Prova social: 40+ artistas · 200+ faixas lançadas · 2.500.000+ streams
 - CTAs: "Ouvir o catálogo" (#beats) e "Mix & master" (#services)
+- No celular (até 900px) o card do destaque some e entra um botão compacto "Tocar o beat da semana" colado na frase do hero
 - Beat em destaque com **rodízio semanal automático** (1 por semana, catálogo inteiro, pula vendidos). Pra fixar um beat manualmente: `FEATURED_OVERRIDE_ID` (id do beat) e `FEATURED_OVERRIDE_ATE` ('AAAA-MM-DD', opcional) no index.html — vencido o prazo, o rodízio volta sozinho
 
 ### Catálogo de Beats
-- Listagem paginada (9 por página) com player SoundCloud integrado
+- Listagem paginada (10 por página): linha com número/play, capa da beat tape, nome, ficha e preço
 - **Player contínuo / modo rádio:** dar play num beat pausa os demais; quando um beat termina, o próximo toca automaticamente — inclusive virando de página sozinho até o fim do catálogo
 - Adicionar/tirar do carrinho **não interrompe o beat tocando** (os botões dos cards sincronizam sem re-renderizar os players)
 - Filtro por gênero (Trap, Boom Bap, Plug, Hood Trap, Drill, etc.)
@@ -177,7 +178,7 @@ git push
 
 O webhook de pagamento também dispara commits automáticos (marcação de beats vendidos e controle de cupons), o que aciona um novo redeploy.
 
-> **Atenção:** o `_headers` precisa liberar `https://w.soundcloud.com` no `script-src` da CSP. Sem isso, o player contínuo não funciona em produção (o script da Widget API é bloqueado pelo navegador).
+> **CSP (`_headers`):** script externo só entra se estiver na lista do `script-src`. Hoje a lista é Mercado Pago, EmailJS (jsdelivr) e o Web Analytics do Cloudflare (`static.cloudflareinsights.com`, com `cloudflareinsights.com` no `connect-src`). CSP quebra calada: depois de mexer, testar o checkout de ponta a ponta e olhar o console.
 
 ---
 
@@ -186,8 +187,7 @@ O webhook de pagamento também dispara commits automáticos (marcação de beats
 Os beats são definidos diretamente no `index.html`, no array `BEATS`:
 
 ```js
-{ id: 112, name: 'NOME DO BEAT', bpm: 140, key: 'Am', genre: 'trap',
-  sold: false, scUrl: 'https%3A//soundcloud.com/rideblan33/slug-da-faixa' }
+{id:137, name:'NOME DO BEAT', bpm:140, key:'Am', genre:'trap', sold:false},
 ```
 
 | Campo | Descrição |
@@ -198,7 +198,8 @@ Os beats são definidos diretamente no `index.html`, no array `BEATS`:
 | `key` | Tom (ex: `Am`, `Ebm`) |
 | `genre` | Um dos: `trap` `boombap` `plug` `hoodtrap` `experimental` `hard` `detroit` `drumless` `funk` `pluggnb` `bounce` `nomelody` `drill` |
 | `sold` | `false` disponível · `true` vendido (fica visível, riscado e sem compra) |
-| `scUrl` | URL da faixa no SoundCloud com `https:` codificado como `https%3A` |
+
+O áudio não vai aqui: a `/api/vitrine` casa o beat pelo nome, BPM e tom com o MP3 que o conversor guardou no R2. Beat sem MP3 não aparece na lista. O webhook marca `sold:true` procurando `{id:N, name:'NOME'...sold:false`, então manter essa ordem dos campos.
 
 ---
 
@@ -244,7 +245,7 @@ Os 3 primeiros e o contrato seguem a identidade visual do site (paleta do `docs/
 - `<title>` descritivo: "Caramujo Records — Beats exclusivos, mix e master por @rideblan33"
 - Meta description vendedora (preço, serviços, cidade, tamanho do catálogo) — é o texto que aparece no Google e que as IAs leem primeiro
 - **Schema.org (JSON-LD), 2 blocos:** um `ProfessionalService` **estático** no `<head>` (negócio, preços, contato, sameAs — visível pra bots de IA que não executam JS) e o catálogo como `ItemList` de `Product` injetado via JS (Googlebot renderiza; atende as Listagens do Comerciante do GSC)
-- **robots.txt:** busca, agentes e treinamento de IA liberados; `/api/` e pastas internas bloqueados. **Pendência:** desligar o robots.txt gerenciado do Cloudflare no painel, senão ele continua prefixando bloqueios de IA (política completa em `docs/politica-crawlers-ia.md`)
+- **robots.txt:** busca, agentes e treinamento de IA liberados; `/api/` e pastas internas bloqueados. O robots.txt gerenciado do Cloudflare está desligado e os crawlers liberados no AI Crawl Control (conferido em 23/09/2026; política completa em `docs/politica-crawlers-ia.md`)
 - **llms.txt** na raiz: resumo do estúdio pra agentes de IA
 - Meta tags Open Graph no `<head>` para WhatsApp, Instagram e demais redes (og-image comprimida: 111 KB)
 
@@ -256,8 +257,12 @@ Após atualizar o `og-image.png`, forçar releitura em
 ## Acessibilidade e Performance
 
 - Grão de filme animado desligado no mobile e sob `prefers-reduced-motion` (bateria e acessibilidade); a textura estática permanece
-- Iframes do SoundCloud com lazy loading
 - Cursor customizado desativado em dispositivos touch
+- **Nada de terceiro no load.** Fontes servidas do próprio site (`assets/fonts/`, subset latin, `font-display:swap`, preload das 3 que o hero usa; licença OFL na mesma pasta). O SDK do Mercado Pago só baixa quando o checkout abre (`carregarMP()`); o EmailJS só quando a pessoa toca no formulário de contato (`carregarEmailJS()`). Se o SDK do MP falhar, o checkout cai no PIX manual, como sempre caiu.
+- **Capa pequena na lista.** A lista, a barra do player, o destaque e o painel pedem `/capa/<id>?p` (200×200, uns 10 KB). A arte de 1000×1000 fica pra página da tape e pra tela de bloqueio do celular.
+- Vídeo da sessão (`video[data-loop]`) com `preload="none"`: só baixa e roda quando aparece na tela, e para quando sai.
+- Cache: `/assets/*` e `og-image.png` ficam 1 dia frescos e mais 7 servidos enquanto revalidam. `/capa/` e `/audio/` são imutáveis por 1 ano; a capa também fica guardada na borda do Cloudflare.
+- Analytics: só o Web Analytics do Cloudflare (sem cookie). O Google Analytics saiu em 23/09/2026.
 
 ---
 
@@ -330,7 +335,9 @@ arruma o nome de todos os catálogos sem reconverter áudio nenhum.
 Qualquer imagem solta na pasta do artista (`Projetos > [artista] > capa.jpg`, o nome não
 importa) vira a capa. Se houver mais de uma, vale a mais recente. O conversor recorta num
 quadrado de 1000×1000 e guarda em `capa/<id do arquivo>.jpg` no R2; a página serve por
-`/capa/<id>`. Sem imagem na pasta, aparece o logo vertical da Caramujo. A mesma arte vira o
+`/capa/<id>`. Junto sai a miniatura de 200×200 (`capa/<id>-p.jpg`, servida em `/capa/<id>?p`).
+Capa que subiu antes de existir miniatura ganha a pequena na próxima conversão, sem baixar a
+grande de novo; enquanto isso, `?p` devolve a grande com cache de 1 hora. Sem imagem na pasta, aparece o logo vertical da Caramujo. A mesma arte vira o
 borrão do fundo no computador e a mini-capa do player.
 
 ### Nome do arquivo baixado

@@ -103,9 +103,12 @@ async function plan(d, body, request, env) {
   ).bind(need.length, stamp, artist.id).run();
 
   const usadoBytes = await usado(d);
+  const capaAtual = artist.cover_origem === 'artista' ? null : (artist.cover_key || null);
+  // capa que subiu antes de existir miniatura: o conversor gera só a pequena
+  const capaMini = capaAtual ? !!(await env.AUDIO.head(`capa/${capaAtual}-p.jpg`).catch(() => null)) : false;
   return json({
     artistId: artist.id, slug: artist.slug, code: artist.code, need, venda,
-    capaAtual: artist.cover_origem === 'artista' ? null : (artist.cover_key || null),
+    capaAtual, capaMini,
     prateleira: { usado: usadoBytes, teto: TETO_BYTES, folga: TETO_BYTES - usadoBytes }
   });
 }
@@ -273,7 +276,7 @@ async function done(d, env, url, body) {
   // a capa saiu da pasta do Drive: some daqui também, e volta o logo da casa
   const capaAgora = body.capa || null;
   if (!capaAgora && artist.cover_key && artist.cover_origem !== 'artista') {
-    await env.AUDIO.delete(`capa/${artist.cover_key}.jpg`).catch(() => {});
+    await env.AUDIO.delete([`capa/${artist.cover_key}.jpg`, `capa/${artist.cover_key}-p.jpg`]).catch(() => {});
     await d.prepare('UPDATE artists SET cover_key = NULL WHERE id = ?').bind(artist.id).run();
   }
 
@@ -317,12 +320,20 @@ async function capa(d, env, url, request) {
   const body = await request.arrayBuffer();
   if (!body.byteLength) return json({ erro: 'imagem vazia' }, 400);
 
+  // tam=p: a miniatura de 200px da mesma capa. Só guarda, não mexe no banco.
+  if (url.searchParams.get('tam') === 'p') {
+    await env.AUDIO.put(`capa/${chave}-p.jpg`, body, {
+      httpMetadata: { contentType: 'image/jpeg', cacheControl: 'public, max-age=31536000, immutable' }
+    });
+    return json({ ok: true, chave, mini: true });
+  }
+
   await env.AUDIO.put(`capa/${chave}.jpg`, body, {
     httpMetadata: { contentType: 'image/jpeg', cacheControl: 'public, max-age=31536000, immutable' }
   });
 
   if (artist.cover_key && artist.cover_key !== chave) {
-    await env.AUDIO.delete(`capa/${artist.cover_key}.jpg`).catch(() => {});
+    await env.AUDIO.delete([`capa/${artist.cover_key}.jpg`, `capa/${artist.cover_key}-p.jpg`]).catch(() => {});
   }
   await d.prepare(
     "UPDATE artists SET cover_key = ?, cover_origem = 'drive' WHERE id = ?"
