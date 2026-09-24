@@ -7,7 +7,8 @@ export async function onRequestPost({ request, env }) {
   let body;
   try { body = await request.json(); } catch { return json({ erro: 'json' }, 400); }
 
-  const kind = body.kind === 'open' ? 'open' : 'play';
+  // open = abriu o catálogo, play = ouviu uma faixa, carrinho = clicou no carrinho de um beat da tape
+  const kind = ['open', 'play', 'carrinho'].includes(body.kind) ? body.kind : 'play';
   const d = await db(env);
 
   await d.prepare(

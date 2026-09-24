@@ -50,10 +50,14 @@ const BASE = `
 <link rel="icon" type="image/svg+xml" href="/assets/brand/selo-creme.svg">
 <link rel="icon" type="image/png" sizes="180x180" href="/assets/brand/icone-180.png">
 <meta name="theme-color" content="#0a0a0a">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap">
+<!-- fonte servida daqui (assets/fonts, licença OFL): sem Google no caminho -->
+<link rel="preload" href="/assets/fonts/schibsted-grotesk-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/schibsted-grotesk-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+@font-face{font-family:'Schibsted Grotesk';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/schibsted-grotesk-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Schibsted Grotesk';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/schibsted-grotesk-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Schibsted Grotesk';font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/schibsted-grotesk-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Schibsted Grotesk';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/schibsted-grotesk-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
   :root{--ink:#fff;--ink2:#b7b7b7;--ink3:#8a8a8a;--ink4:#6a6a6a;--linha:#1f1f1f;--campo:#141414;--borda:#252525}
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -73,6 +77,7 @@ const BASE = `
   .sub{font-size:14px;color:var(--ink4)}
   .barra{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
   .barra .pill{flex:0 0 auto}
+  .barra[hidden],#resumo[hidden],#lista[hidden],#analytics[hidden]{display:none}
   @media (max-width:560px){
     .campo{flex:1 1 100%}
     .barra .pill{margin-left:auto}
@@ -194,6 +199,16 @@ const BASE = `
   .login button{width:100%;margin-top:12px;padding:14px;border-radius:12px;border:0;background:#fff;color:#000;
     font-size:15px;font-weight:600;cursor:pointer}
   .erro{margin-top:14px;font-size:13px;color:#e08d7e}
+  .home{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}
+  @media (max-width:640px){.home{grid-template-columns:1fr}}
+  .home button{display:flex;flex-direction:column;align-items:flex-start;gap:14px;min-height:150px;padding:18px;
+    background:#111;border:1px solid var(--borda);border-radius:16px;color:var(--ink);text-align:left;cursor:pointer;
+    transition:background .15s,border-color .15s}
+  .home button:hover{background:#161616;border-color:#343434}
+  .home .ico{width:40px;height:40px;border-radius:11px;background:#1b1b1b;display:flex;align-items:center;justify-content:center}
+  .home b{font-size:20px;font-weight:700;letter-spacing:-.01em}
+  .home small{display:block;margin-top:4px;font-size:13px;color:var(--ink3);line-height:1.4}
+  .home small em{font-style:normal;color:#e0b155}
   .periodo{display:flex;gap:8px;margin:14px 0 4px}
   .periodo .pill{padding:8px 14px;font-size:13px}
   .etapa{padding:11px 0;border-bottom:1px solid var(--linha)}
@@ -233,10 +248,10 @@ function pagina() {
 <body>
 <div class="wrap">
   <div class="topo"><a class="marca" href="/" aria-label="Voltar pro site"></a></div>
-  <h1>Seus artistas</h1>
+  <h1 id="titulo">Painel</h1>
   <div class="sub" id="resumo">carregando…</div>
 
-  <div class="barra">
+  <div class="barra" id="barra" hidden>
     <div class="campo">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6a6a6a" stroke-width="1.9"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg>
       <label for="q" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Buscar artista</label>
@@ -250,7 +265,9 @@ function pagina() {
   </div>
 
   <div id="lista"><div class="vazio">carregando…</div></div>
+  <div id="analytics" hidden></div>
 </div>
+<script src="/assets/painel/analytics.js?v=2026-09-24" defer></script>
 
 <div class="veil" id="veil" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>
@@ -258,7 +275,7 @@ function pagina() {
 <script>
 (function(){
   var $=function(i){return document.getElementById(i)};
-  var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='artistas', filtro='', ordem='modificado';
+  var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='home', filtro='', ordem='modificado';
   var vitri=null, vitriPedida=false;
   var ORDENS={modificado:'Modificação', atividade:'Atividade', az:'A a Z', faixas:'Mais faixas'};
 
@@ -311,7 +328,66 @@ function pagina() {
     });
   }
 
+  var TITULOS={home:'Painel',artistas:'Artistas',tapes:'Beat tapes',analytics:'Analytics'};
+  function irPara(v){
+    vista=v; filtro=''; $('q').value='';
+    $('q').placeholder = v==='tapes' ? 'Buscar beat tape' : 'Buscar artista';
+    desenhar(); window.scrollTo(0,0);
+  }
+  window.__painelIr=irPara;
+
+  function home(){
+    var box=document.createElement('div'); box.className='home';
+    var r=funilResumo;
+    var itens=[
+      ['artistas','Artistas',
+        artistas.length+(artistas.length===1?' artista no ar':' artistas no ar')+' · links, downloads e capas',
+        '<path d="M16 20v-1.5a4 4 0 00-4-4H7a4 4 0 00-4 4V20"/><circle cx="9.5" cy="7.5" r="3.5"/><path d="M21 20v-1.5a4 4 0 00-3-3.87"/><path d="M15.5 4.1a3.5 3.5 0 010 6.8"/>'],
+      ['tapes','Beat tapes',
+        tapes.length+(tapes.length===1?' beat tape':' beat tapes')+
+          (revisarErro?'':(revisar.length?' · <em>'+revisar.length+' pra revisar</em>':' · nada pra revisar')),
+        '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M8.5 14h7"/>'],
+      ['analytics','Analytics',
+        (!r?'carregando…':r.erro?'vitrine, beat tapes e artistas':
+          'últimos 7 dias · '+nEtapa(r,'visita')+' visitas · '+nEtapa(r,'pago')+(nEtapa(r,'pago')===1?' venda':' vendas')),
+        '<path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l4-4 3 3 5-6"/>']
+    ];
+    itens.forEach(function(it){
+      var b=document.createElement('button'); b.type='button'; b.dataset.ir=it[0];
+      b.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+it[3]+'</svg></span>'+
+        '<span><b>'+it[1]+'</b><small>'+it[2]+'</small></span>';
+      b.addEventListener('click',function(){ irPara(it[0]); });
+      box.appendChild(b);
+    });
+    return box;
+  }
+  function voltarHome(rotulo){
+    var row=document.createElement('div'); row.className='item';
+    var b=document.createElement('button'); b.type='button'; b.className='linha';
+    b.innerHTML='<span class="seta" style="transform:rotate(180deg)">›</span>'+
+      '<span style="flex:1;min-width:0"><span class="nome">Painel</span><span class="meta">'+rotulo+'</span></span>';
+    b.addEventListener('click',function(){ irPara('home'); });
+    row.appendChild(b);
+    return row;
+  }
+
   function desenhar(){
+    $('titulo').textContent=TITULOS[vista];
+    $('barra').hidden = !(vista==='artistas'||vista==='tapes');
+    $('resumo').hidden = vista==='analytics';
+    $('lista').hidden = vista==='analytics';
+    $('analytics').hidden = vista!=='analytics';
+    if(vista==='home'){ pedirResumoFunil(); $('lista').innerHTML=''; $('lista').appendChild(home()); return; }
+    if(vista==='analytics'){
+      // monta uma vez só: a lista recarrega sozinha durante conversão e não pode
+      // derrubar o período nem a aba que você escolheu
+      if(!$('analytics').dataset.montado && window.CaramujoAnalytics){
+        $('analytics').dataset.montado='1';
+        window.CaramujoAnalytics.abrir($('analytics'),function(){ irPara('home'); });
+      }
+      if(!window.CaramujoAnalytics) $('analytics').innerHTML='<div class="vazio">carregando…</div>';
+      return;
+    }
     var fonte = vista==='tapes' ? tapes : artistas;
     var alvo=fonte.filter(function(a){
       return !filtro || a.name.toLowerCase().indexOf(filtro)>-1;
@@ -335,7 +411,7 @@ function pagina() {
     $('lista').innerHTML='';
 
     if(vista==='tapes'){ $('lista').appendChild(voltar()); cartaoRevisar(); pedirVitrine(); cartaoVitrine(); }
-    else if(!filtro){ $('lista').appendChild(fixo()); $('lista').appendChild(linhaFunil()); }
+    else $('lista').appendChild(voltarHome('artistas, links e downloads'));
 
     if(!alvo.length){
       var v=document.createElement('div'); v.className='vazio';
@@ -383,8 +459,7 @@ function pagina() {
     a.type='button'; a.className='aviso';
     a.textContent=revisar.length+(revisar.length===1?' beat pra revisar':' beats pra revisar');
     a.addEventListener('click',function(){
-      vista='tapes'; filtro=''; $('q').value=''; $('q').placeholder='Buscar beat tape';
-      desenhar();
+      irPara('tapes');
       var b=document.querySelector('.revisar'); if(b) b.scrollIntoView({block:'center'});
     });
     r.appendChild(document.createTextNode(' · '));
@@ -393,115 +468,21 @@ function pagina() {
 
   /* ---------- funil de venda do site ---------- */
   var funilResumo=null, funilPedido=false;
-  var ETAPA_NOME={visita:'Visitas',play:'Deram play',carrinho:'Puseram no carrinho',
-    checkout:'Abriram o checkout',pagamento:'Chegaram no pagamento',pago:'Pagaram'};
   function pedirResumoFunil(){
     if(funilPedido) return; funilPedido=true;
     fetch('/api/painel?op=funil&dias=7').then(function(r){return r.json()}).then(function(j){
-      funilResumo=(j&&j.etapas)?j:{erro:true}; desenhar();
-    }).catch(function(){ funilResumo={erro:true}; desenhar(); });
+      funilResumo=(j&&j.etapas)?j:{erro:true}; if(vista==='home') desenhar();
+    }).catch(function(){ funilResumo={erro:true}; if(vista==='home') desenhar(); });
   }
   function nEtapa(j,e){ var x=(j.etapas||[]).filter(function(t){return t.etapa===e})[0]; return x?x.total:0; }
-  function pct(a,b){ return b?Math.round(a*100/b)+'%':'—'; }
-  function linhaFunil(){
-    pedirResumoFunil();
-    var row=document.createElement('div'); row.className='item';
-    var b=document.createElement('button'); b.type='button'; b.className='linha';
-    var meta = !funilResumo ? 'carregando…'
-      : funilResumo.erro ? 'não consegui carregar agora'
-      : 'últimos 7 dias · '+nEtapa(funilResumo,'visita')+' visitas · '+nEtapa(funilResumo,'pago')+
-        (nEtapa(funilResumo,'pago')===1?' venda':' vendas');
-    b.innerHTML='<span class="capa-lista vazia"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" stroke-width="1.8"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg></span>'+
-      '<span style="flex:1;min-width:0"><span class="nome">Funil de venda do site</span>'+
-      '<span class="meta">'+meta+'</span></span><span class="seta">›</span>';
-    b.addEventListener('click',function(){ abrirFunil(7); });
-    row.appendChild(b);
-    return row;
-  }
-  function abrirFunil(dias){
-    var c=$('card');
-    c.innerHTML='<h2>Funil de venda</h2><p>Cada visita contada uma vez por etapa. Sem cookie e sem dado pessoal.</p>'+
-      '<div class="periodo">'+[7,30,90].map(function(d){
-        return '<button type="button" class="pill'+(d===dias?' solid':'')+'" data-dias="'+d+'">'+d+' dias</button>';
-      }).join('')+'</div><div id="funilCorpo" class="vazio">carregando…</div>'+
-      '<button class="pill" data-close type="button" style="width:100%;justify-content:center;margin-top:18px">Fechar</button>';
-    $('veil').hidden=false;
-    c.querySelector('[data-close]').addEventListener('click',fechar);
-    c.querySelectorAll('[data-dias]').forEach(function(x){
-      x.addEventListener('click',function(){ abrirFunil(Number(x.dataset.dias)); });
-    });
-    fetch('/api/painel?op=funil&dias='+dias).then(function(r){return r.json()}).then(function(j){
-      var alvo=$('funilCorpo'); if(!alvo) return;
-      if(!j||!j.etapas){ alvo.textContent='Não consegui carregar o funil.'; return; }
-      alvo.className='';
-      var topo=nEtapa(j,'visita'), ant=null, h='';
-      j.etapas.forEach(function(e){
-        var larg=topo?Math.max(e.total?2:0,Math.round(e.total*100/topo)):0;
-        h+='<div class="etapa"><div class="etapa-topo"><b>'+ETAPA_NOME[e.etapa]+'</b><span>'+e.total+'</span></div>'+
-          '<div class="etapa-barra"><i style="width:'+larg+'%"></i></div><small>'+
-          (e.etapa==='visita'
-            ? 'celular '+pct(e.celular,e.total)+' · computador '+pct(e.computador,e.total)
-            : pct(e.total,topo)+' das visitas · <em>'+pct(e.total,ant)+' de quem passou pela etapa anterior</em>')+
-          '</small></div>';
-        ant=e.total;
-      });
-      if(j.porDia&&j.porDia.length>1){
-        var max=Math.max.apply(null,j.porDia.map(function(d){return d.visitas}))||1;
-        h+='<div class="bloco"><div class="rot">VISITAS POR DIA</div><div class="dias">'+
-          j.porDia.map(function(d){
-            return '<i class="'+(d.pagos?'venda':'')+'" style="height:'+Math.max(4,Math.round(d.visitas*100/max))+'%" title="'+d.dia+': '+d.visitas+' visitas, '+d.pagos+' vendas"></i>';
-          }).join('')+'</div><div class="dias-leg"><span>'+j.porDia[0].dia.split('-').reverse().slice(0,2).join('/')+
-          '</span><span>barra branca = dia com venda</span><span>'+j.porDia[j.porDia.length-1].dia.split('-').reverse().slice(0,2).join('/')+'</span></div></div>';
-      }
-      if(j.origens&&j.origens.length){
-        h+='<div class="bloco"><div class="rot">DE ONDE VIERAM</div><table class="tabela">'+
-          '<tr><td style="color:var(--ink4)">origem</td><td style="color:var(--ink4)">visitas</td><td style="color:var(--ink4)">pagaram</td></tr>'+
-          j.origens.map(function(o){ return '<tr><td>'+esc(o.origem)+'</td><td>'+o.visitas+'</td><td>'+(o.pagos||0)+'</td></tr>'; }).join('')+
-          '</table></div>';
-      }
-      var lista=function(titulo,l){
-        if(!l||!l.length) return '';
-        return '<div class="bloco"><div class="rot">'+titulo+'</div><table class="tabela">'+
-          l.map(function(x){ return '<tr><td>'+esc(x.nome)+'</td><td>'+x.n+'</td></tr>'; }).join('')+'</table></div>';
-      };
-      h+=lista('PRIMEIRO BEAT QUE A VISITA TOCOU',j.tocados);
-      h+=lista('PRIMEIRO BEAT NO CARRINHO',j.carrinhos);
-      if(!topo) h+='<div class="vazio">Nenhuma visita contada nesse período ainda. O funil começou a contar no deploy de 24/09/2026.</div>';
-      alvo.innerHTML=h;
-    }).catch(function(){ var alvo=$('funilCorpo'); if(alvo) alvo.textContent='Não consegui carregar o funil.'; });
-  }
-
-  // @rideblan33 mora fixo no topo e leva pro portfólio
-  function fixo(){
-    var row=document.createElement('div'); row.className='item';
-    var b=document.createElement('button');
-    b.type='button'; b.className='linha';
-    b.innerHTML='<span class="capa-lista vazia"><img src="/assets/brand/selo-creme.svg" alt="" width="18" height="18"></span>'+
-      '<span style="flex:1;min-width:0"><span class="nome">@rideblan33</span>'+
-      '<span class="meta">'+(tapes.length
-        ? tapes.length+(tapes.length===1?' beat tape':' beat tapes')+
-          (revisar.length
-            ? ' · '+revisar.length+' pra revisar'
-            : (revisarErro ? '' : ' · nada pra revisar'))
-        : 'beat tapes — nenhuma convertida ainda')+'</span></span>'+
-      '<span class="seta">›</span>';
-    b.addEventListener('click',function(){
-      vista='tapes'; filtro=''; $('q').value=''; $('q').placeholder='Buscar beat tape'; desenhar();
-    });
-    row.appendChild(b);
-    return row;
-  }
-
   function voltar(){
     var row=document.createElement('div'); row.className='item';
     var b=document.createElement('button');
     b.type='button'; b.className='linha';
     b.innerHTML='<span class="seta" style="transform:rotate(180deg)">›</span>'+
-      '<span style="flex:1;min-width:0"><span class="nome">Beat tapes</span>'+
-      '<span class="meta">@rideblan33 · voltar pros artistas</span></span>';
-    b.addEventListener('click',function(){
-      vista='artistas'; filtro=''; $('q').value=''; $('q').placeholder='Buscar artista'; desenhar();
-    });
+      '<span style="flex:1;min-width:0"><span class="nome">Painel</span>'+
+      '<span class="meta">@rideblan33 · beat tapes</span></span>';
+    b.addEventListener('click',function(){ irPara('home'); });
     row.appendChild(b);
     return row;
   }

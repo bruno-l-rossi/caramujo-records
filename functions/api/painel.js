@@ -23,6 +23,7 @@ export async function onRequest({ request, env }) {
   if (op === 'revisar') return revisar(d);
   if (op === 'vitrine') return relatorio(d, request, env);
   if (op === 'funil') return funil(d, request, env, url.searchParams.get('dias'));
+  if (op === 'analytics') return analytics(d, request, env, url.searchParams);
   if (request.method !== 'POST') return json({ erro: 'op desconhecida' }, 400);
 
   const body = await request.json().catch(() => ({}));
@@ -320,4 +321,179 @@ async function funil(d, request, env, diasTxt) {
     tocados: nomear(tocados), carrinhos: nomear(carrinhos),
     porDia: porDia.results || []
   });
+}
+
+/* ---------- analytics: vitrine, beat tapes e artistas ---------- */
+// Período em dias de São Paulo (AAAA-MM-DD). events.at é UTC; funil.dia já é SP.
+// O mesmo tamanho de período, logo antes, vira a comparação dos números do topo.
+
+const DIA_MS = 864e5;
+const hojeSP = () => new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10);
+const somaDias = (dia, n) => new Date(Date.parse(dia + 'T00:00:00Z') + n * DIA_MS).toISOString().slice(0, 10);
+const inicioUTC = (dia) => dia + 'T03:00:00.000Z';            // 00h em SP
+const DIA_SP = "substr(datetime(e.at, '-3 hours'), 1, 10)";
+
+function periodo(params) {
+  const ok = (x) => /^\d{4}-\d{2}-\d{2}$/.test(x || '') && !isNaN(Date.parse(x + 'T00:00:00Z'));
+  let ate = ok(params.get('ate')) ? params.get('ate') : hojeSP();
+  let de = ok(params.get('de')) ? params.get('de') : somaDias(ate, -29);
+  if (de > ate) [de, ate] = [ate, de];
+  if ((Date.parse(ate) - Date.parse(de)) / DIA_MS > 400) de = somaDias(ate, -400);
+  const n = Math.round((Date.parse(ate) - Date.parse(de)) / DIA_MS) + 1;
+  const dias = Array.from({ length: n }, (_, i) => somaDias(de, i));
+  return { de, ate, dias, antesDe: somaDias(de, -n), antesAte: somaDias(de, -1) };
+}
+
+// linhas {dia, chave, n} viram {chave: [n por dia]} com zero onde não teve nada
+function series(dias, linhas, chaves) {
+  const pos = new Map(dias.map((d, i) => [d, i]));
+  const out = {};
+  for (const c of chaves) out[c] = dias.map(() => 0);
+  for (const r of linhas) {
+    const i = pos.get(r.dia);
+    if (i === undefined || !out[r.chave]) continue;
+    out[r.chave][i] += r.n;
+  }
+  return out;
+}
+
+async function analytics(d, request, env, params) {
+  const p = periodo(params);
+  const aba = params.get('aba');
+  if (aba === 'tapes') return json({ ...p, aba, ...(await abaCatalogos(d, p, 'tape')) });
+  if (aba === 'artistas') return json({ ...p, aba, ...(await abaCatalogos(d, p, 'artista')) });
+  return json({ ...p, aba: 'vitrine', ...(await abaVitrine(d, request, env, p)) });
+}
+
+async function abaVitrine(d, request, env, p) {
+  const tot = async (de, ate) => {
+    const { results } = await d.prepare(
+      'SELECT etapa, aparelho, COUNT(*) n FROM funil WHERE dia BETWEEN ? AND ? GROUP BY etapa, aparelho'
+    ).bind(de, ate).all();
+    const o = {};
+    for (const e of ETAPAS_FUNIL) o[e] = { total: 0, celular: 0, computador: 0 };
+    for (const r of results || []) {
+      if (!o[r.etapa]) continue;
+      o[r.etapa].total += r.n;
+      o[r.etapa][r.aparelho === 'celular' ? 'celular' : 'computador'] += r.n;
+    }
+    return o;
+  };
+  const [agora, antes] = await Promise.all([tot(p.de, p.ate), tot(p.antesDe, p.antesAte)]);
+
+  const porDia = (await d.prepare(
+    'SELECT dia, etapa AS chave, COUNT(*) n FROM funil WHERE dia BETWEEN ? AND ? GROUP BY dia, etapa'
+  ).bind(p.de, p.ate).all()).results || [];
+
+  const origens = (await d.prepare(
+    `SELECT v.origem, COUNT(*) visitas,
+            SUM(CASE WHEN c.sessao IS NOT NULL THEN 1 ELSE 0 END) carrinho,
+            SUM(CASE WHEN g.sessao IS NOT NULL THEN 1 ELSE 0 END) pagos
+       FROM funil v
+       LEFT JOIN funil c ON c.sessao = v.sessao AND c.etapa = 'carrinho'
+       LEFT JOIN funil g ON g.sessao = v.sessao AND g.etapa = 'pago'
+      WHERE v.etapa = 'visita' AND v.dia BETWEEN ? AND ?
+      GROUP BY v.origem ORDER BY visitas DESC LIMIT 12`
+  ).bind(p.de, p.ate).all()).results || [];
+
+  const top = async (etapa) => (await d.prepare(
+    `SELECT beat_id, COUNT(*) n FROM funil WHERE etapa = ? AND dia BETWEEN ? AND ? AND beat_id IS NOT NULL
+      GROUP BY beat_id ORDER BY n DESC LIMIT 8`
+  ).bind(etapa, p.de, p.ate).all()).results || [];
+  const [tocados, carrinhos] = await Promise.all([top('play'), top('carrinho')]);
+  const nomes = new Map((await vitrine(request, env)).map((b) => [b.id, b.name]));
+  const nomear = (l) => l.map((r) => ({ nome: nomes.get(r.beat_id) || ('beat ' + r.beat_id), n: r.n }));
+
+  // origem tape-<slug> ganha o nome da tape
+  const nomesTape = new Map(((await d.prepare("SELECT slug, name FROM artists WHERE tipo = 'tape'").all()).results || [])
+    .map((r) => ['tape-' + r.slug, r.name]));
+  for (const o of origens) if (nomesTape.has(o.origem)) o.nome = nomesTape.get(o.origem);
+
+  return {
+    etapas: ETAPAS_FUNIL, agora, antes,
+    serie: series(p.dias, porDia, ETAPAS_FUNIL),
+    origens, tocados: nomear(tocados), carrinhos: nomear(carrinhos)
+  };
+}
+
+// Beat tapes e artistas moram na mesma tabela (artists.tipo) e contam os mesmos
+// eventos: open (abriu o link), play (ouviu uma faixa), download-*, carrinho (só tape).
+async function abaCatalogos(d, p, tipo) {
+  const ini = inicioUTC(p.de), fim = inicioUTC(somaDias(p.ate, 1));
+  const iniA = inicioUTC(p.antesDe), fimA = ini;
+  const KINDS = tipo === 'tape' ? ['open', 'play', 'carrinho'] : ['open', 'play', 'download'];
+  const chaveKind = "CASE WHEN e.kind LIKE 'download%' THEN 'download' ELSE e.kind END";
+
+  const tot = async (a, b) => {
+    const r = await d.prepare(
+      `SELECT
+         SUM(CASE WHEN e.kind='open' THEN 1 ELSE 0 END) open,
+         SUM(CASE WHEN e.kind='play' THEN 1 ELSE 0 END) play,
+         SUM(CASE WHEN e.kind LIKE 'download%' THEN 1 ELSE 0 END) download,
+         SUM(CASE WHEN e.kind='carrinho' THEN 1 ELSE 0 END) carrinho,
+         COUNT(DISTINCT CASE WHEN e.kind='open' THEN e.who END) pessoas,
+         COUNT(DISTINCT CASE WHEN e.kind='play' THEN e.who END) ouviram,
+         COUNT(DISTINCT CASE WHEN e.kind='carrinho' THEN e.who END) clicaram,
+         COUNT(DISTINCT CASE WHEN e.kind='open' THEN e.artist_id END) ativos
+         FROM events e JOIN artists a ON a.id = e.artist_id
+        WHERE a.tipo = ? AND e.at >= ? AND e.at < ?`
+    ).bind(tipo, a, b).first();
+    const o = {};
+    for (const k of Object.keys(r || {})) o[k] = Number(r[k] || 0);
+    return o;
+  };
+  const [agora, antes] = await Promise.all([tot(ini, fim), tot(iniA, fimA)]);
+
+  const porDia = (await d.prepare(
+    `SELECT ${DIA_SP} dia, ${chaveKind} chave, COUNT(*) n
+       FROM events e JOIN artists a ON a.id = e.artist_id
+      WHERE a.tipo = ? AND e.at >= ? AND e.at < ?
+      GROUP BY dia, chave`
+  ).bind(tipo, ini, fim).all()).results || [];
+
+  const lista = (await d.prepare(
+    `SELECT a.id, a.name, a.slug,
+            SUM(CASE WHEN e.kind='open' THEN 1 ELSE 0 END) open,
+            COUNT(DISTINCT CASE WHEN e.kind='open' THEN e.who END) pessoas,
+            SUM(CASE WHEN e.kind='play' THEN 1 ELSE 0 END) play,
+            SUM(CASE WHEN e.kind LIKE 'download%' THEN 1 ELSE 0 END) download,
+            SUM(CASE WHEN e.kind='carrinho' THEN 1 ELSE 0 END) carrinho,
+            MAX(e.at) ultima
+       FROM events e JOIN artists a ON a.id = e.artist_id
+      WHERE a.tipo = ? AND e.at >= ? AND e.at < ?
+      GROUP BY a.id ORDER BY open DESC, play DESC LIMIT 60`
+  ).bind(tipo, ini, fim).all()).results || [];
+
+  const faixas = (await d.prepare(
+    `SELECT t.title, a.name AS onde, COUNT(*) n
+       FROM events e JOIN artists a ON a.id = e.artist_id JOIN tracks t ON t.id = e.track_id
+      WHERE a.tipo = ? AND e.kind = 'play' AND e.at >= ? AND e.at < ?
+      GROUP BY e.track_id ORDER BY n DESC LIMIT 10`
+  ).bind(tipo, ini, fim).all()).results || [];
+
+  const out = { kinds: KINDS, agora, antes, serie: series(p.dias, porDia, KINDS), lista, faixas };
+
+  // o caminho da tape até a venda: quem saiu da tape pelo botão de carrinho e
+  // chegou na vitrine (origem tape-<slug> no funil), e quanto disso pagou
+  if (tipo === 'tape') {
+    const vit = (await d.prepare(
+      `SELECT v.origem, COUNT(*) visitas,
+              SUM(CASE WHEN c.sessao IS NOT NULL THEN 1 ELSE 0 END) carrinho,
+              SUM(CASE WHEN g.sessao IS NOT NULL THEN 1 ELSE 0 END) pagos
+         FROM funil v
+         LEFT JOIN funil c ON c.sessao = v.sessao AND c.etapa = 'carrinho'
+         LEFT JOIN funil g ON g.sessao = v.sessao AND g.etapa = 'pago'
+        WHERE v.etapa = 'visita' AND v.dia BETWEEN ? AND ? AND (v.origem LIKE 'tape-%' OR v.origem = 'beat-tape')
+        GROUP BY v.origem`
+    ).bind(p.de, p.ate).all()).results || [];
+    const porSlug = new Map(vit.map((r) => [r.origem.replace(/^tape-/, ''), r]));
+    for (const t of lista) {
+      const v = porSlug.get(t.slug);
+      t.vitrine = v ? v.visitas : 0;
+      t.pagos = v ? v.pagos : 0;
+    }
+    out.vitrine = vit.reduce((o, r) => ({ visitas: o.visitas + r.visitas, carrinho: o.carrinho + r.carrinho, pagos: o.pagos + r.pagos }),
+      { visitas: 0, carrinho: 0, pagos: 0 });
+  }
+  return out;
 }

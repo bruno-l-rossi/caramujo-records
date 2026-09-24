@@ -1062,6 +1062,14 @@ html,body{overflow-x:hidden;}
 }
 
 
+
+/* ══ NOVO v29 — parcelamento visível, carrinho do pé e barra simétrica ══════
+   Parcelar em até 12x aparece no total do carrinho e embaixo do botão de cada
+   pacote. Na linha de cada beat, não: a lista fica limpa. */
+.cp-parc{margin:-.6rem 0 1rem;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--read);letter-spacing:.04em}
+.pack-parc{margin-top:.55rem;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--read);letter-spacing:.04em}
+/* o botão de preço do pé aceso = já está no carrinho (igual à lista) */
+.pe-dir #npPreco.on{background:var(--fire);border-color:var(--fire)}
 </style>
 
 <!-- ═══ EMAILJS (formulário de contato) ══════════════
@@ -1298,6 +1306,7 @@ html,body{overflow-x:hidden;}
       <div style="display:flex;gap:0;margin-top:auto;">
         <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('1 Beat',119)">Adicionar · R$119</button>
       </div>
+      <div class="pack-parc">ou em até 12x no cartão</div>
     </div>
 
     <div class="pack hot">
@@ -1314,6 +1323,7 @@ html,body{overflow-x:hidden;}
       <div style="display:flex;gap:0;margin-top:auto;">
         <button class="btn btn-fire" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('2 Beats',219)">Adicionar · R$219</button>
       </div>
+      <div class="pack-parc">ou em até 12x no cartão</div>
     </div>
 
     <div class="pack">
@@ -1330,6 +1340,7 @@ html,body{overflow-x:hidden;}
       <div style="display:flex;gap:0;margin-top:auto;">
         <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('3 Beats',299)">Adicionar · R$299</button>
       </div>
+      <div class="pack-parc">ou em até 12x no cartão</div>
     </div>
   </div>
 </section>
@@ -1505,11 +1516,11 @@ html,body{overflow-x:hidden;}
       <div class="pe-nome"><div class="t" id="npName">—</div><small id="npMeta"></small></div>
     </div>
     <div class="transporte">
+      <button class="tb" id="npShuffle" onclick="feelingLucky()" aria-label="Faixa aleatória"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg></button>
       <button class="tb" id="npPrev" onclick="npPrev()" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M7 5v14h2.6V5zM19 5l-9 7 9 7z"/></svg></button>
       <button class="tb principal" id="npPlay" onclick="npToggle()" aria-label="Tocar"></button>
       <button class="tb" id="npNext" onclick="npNext()" aria-label="Próxima"><svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M17 5v14h-2.6V5zM5 5l9 7-9 7z"/></svg></button>
       <button class="tb" id="npShare" type="button" onclick="npCompartilhar()" aria-label="Compartilhar este beat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg></button>
-      <button class="tb" id="npShuffle" onclick="feelingLucky()" aria-label="Faixa aleatória"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg></button>
     </div>
     <div class="pe-dir">
       <div class="vol-wrap" id="npVolWrap">
@@ -1549,6 +1560,7 @@ html,body{overflow-x:hidden;}
       <span>Total</span>
       <span class="cp-tv" id="cpTot">R$ 0</span>
     </div>
+    <div class="cp-parc">PIX ou cartão em até 12x</div>
     <button class="cp-add-more" onclick="addMoreItems()">← ADICIONAR MAIS ITENS</button>
     <button class="cp-ck" id="checkoutBtn" onclick="openCheckout()">FINALIZAR COMPRA →</button>
   </div>
@@ -2327,6 +2339,7 @@ function gotoPage(p){
 // Sincroniza os botões dos cards sem re-render: adicionar/tirar do carrinho
 // não recria os iframes, então o beat que estiver tocando segue tocando.
 function syncBeatButtons(){
+  if(typeof window.pintarPrecoPe==='function') window.pintarPrecoPe();
   document.querySelectorAll('#beatCards .preco').forEach(btn=>{
     const m=(btn.id||'').match(/^bb(\d+)$/); if(!m) return;
     const id=Number(m[1]);
@@ -3347,8 +3360,7 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
       glab(b)+(b.bpm?'  ·  '+b.bpm+' BPM':'')+(b.key?'  ·  '+b.key:'');
     var c=$('npCapa'); if(c) c.outerHTML=capaHTML(f,'npCapa');
     if($('npTime')) $('npTime').textContent=mm(f.dur);
-    var pr=$('npPreco');
-    if(pr){ pr.style.display=b.sold?'none':''; pr.innerHTML=ICO_CART+'<span class="rotulo">R$'+PRICE_BEAT+'</span>'; }
+    window.pintarPrecoPe();
     sistema(b,f);
     try{ if(typeof window.npSet==='function') window.npSet(null,b.id); }catch(_){}
     repintar();
@@ -3482,7 +3494,19 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
       if(!$('npVolPop').classList.contains('on')) document.body.classList.remove('vol-aberto');
     });
   })();
-  window.npAddCurrent=function(){ var bid=$('npBar').dataset.bid; if(bid){ try{toggleBeat(Number(bid),false);}catch(_){} } };
+  window.npAddCurrent=function(){ var bid=$('npBar').dataset.bid; if(bid){ try{toggleBeat(Number(bid),false);}catch(_){} } window.pintarPrecoPe(); };
+  // O botão de preço da barra do pé segue o da lista: "R$119" antes, "No carrinho"
+  // (aceso) depois. Assim não se confunde com o botão CARRINHO, que abre o carrinho.
+  window.pintarPrecoPe=function(){
+    var pr=$('npPreco'), bid=$('npBar')&&$('npBar').dataset.bid; if(!pr) return;
+    var b=bid?beat(bid):null;
+    if(!b||b.sold){ pr.style.display='none'; return; }
+    pr.style.display='';
+    var no=false; try{ no=cart.some(function(c){return c.beatId===b.id&&c.stems===false;}); }catch(_){}
+    pr.classList.toggle('on',no);
+    pr.setAttribute('aria-label',no?'Tirar '+b.name+' do carrinho':'Pôr '+b.name+' no carrinho');
+    pr.innerHTML=ICO_CART+'<span class="rotulo">'+(no?'No carrinho':'R$'+PRICE_BEAT)+'</span>';
+  };
   window.npAddFeatured=function(){ try{toggleBeat(FEATURED_BEAT_ID,false);}catch(_){} };
 
   /* seek: clique e arrasto, no pé e no destaque */
@@ -3923,8 +3947,11 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
   window.npCompartilhar=function(){
     var b=beatAtual(); if(!b) return;
     var url=location.origin+'/b/'+slugify(b.name);
-    var dados={title:b.name+' · beat do Rideblan', text:'Escuta esse beat do @rideblan33', url:url};
-    if(navigator.share){
+    var lab=(typeof GENRE_LABELS!=='undefined'&&GENRE_LABELS[b.genre])||b.genre||'';
+    var ficha=[lab,b.bpm?b.bpm+' BPM':'',b.key].filter(Boolean).join(' · ');
+    var dados={title:b.name+' · @rideblan33', text:ficha+'. Licença exclusiva para beats e produção completa. © Caramujo Records', url:url};
+    var computador=false; try{ computador=matchMedia('(hover: hover) and (pointer: fine)').matches; }catch(_){}
+    if(navigator.share && !computador){
       navigator.share(dados).catch(function(){});   // cancelar não é erro
       return;
     }
@@ -3952,7 +3979,7 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
   if(!origem){
     var de=null; try{ de=new URLSearchParams(location.search).get('de'); }catch(_){}
     var ua=navigator.userAgent||'', ref=''; try{ ref=document.referrer?new URL(document.referrer).hostname:''; }catch(_){}
-    if(de) origem=de.toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,24)||'direto';
+    if(de) origem=de.toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,40)||'direto';
     else if(/^#add=/i.test(location.hash)) origem='beat-tape';
     else if(/Instagram/i.test(ua)||/instagram\.com$/.test(ref)) origem='instagram';
     else if(/FBAN|FBAV/i.test(ua)||/facebook\.com$/.test(ref)) origem='facebook';
@@ -3961,7 +3988,10 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     else if(/youtube\.com$|youtu\.be$/.test(ref)) origem='youtube';
     else if(/(^|\.)google\./.test(ref)) origem='google';
     else if(/bing\.com$|duckduckgo\.com$/.test(ref)) origem='busca';
-    else if(ref && ref===location.hostname) origem='beat-tape';   // veio de uma página de tape
+    else if(ref && ref===location.hostname){                     // veio de uma página de tape
+      var cam=''; try{ cam=new URL(document.referrer).pathname.split('/').filter(Boolean); }catch(_){ cam=[]; }
+      origem=(cam.length===2 && cam[0]!=='b') ? ('tape-'+cam[0]).slice(0,40) : 'beat-tape';
+    }
     else if(ref) origem='outro-site';
     else origem='direto';
     ls('cr_origem',origem);
@@ -4013,6 +4043,7 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     if(r&&typeof r.then==='function') r.then(function(){ if(passo2()) marca('pagamento'); },function(){});
   });
   envolve('showPixConfirmed',null,function(){ marca('pago'); });
+  envolve('updateCart',null,function(){ if(window.pintarPrecoPe) window.pintarPrecoPe(); });
 
   if(document.readyState==='complete') marca('visita');
   else window.addEventListener('load',function(){ marca('visita'); });

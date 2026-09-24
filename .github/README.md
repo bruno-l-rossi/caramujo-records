@@ -545,7 +545,7 @@ quem ficou faltando.
 ### Link de beat: `caramujorecords.com.br/b/<nome-do-beat>`
 `functions/b/[slug].js`. Mandado no Direct, no WhatsApp ou no story, mostra a prévia com a capa da beat tape, o nome, a ficha e o preço. Quem toca cai no site com o beat na barra do player. O botão de compartilhar da barra do pé gera esse link (no celular abre a folha de compartilhar do sistema). O slug é o mesmo do `#beat=`.
 
-### Funil de venda (painel → "Funil de venda do site")
+### Funil de venda (painel → Analytics → Vitrine)
 O site avisa `POST /api/funil` em que etapa cada visita chegou: **visita → play → carrinho → checkout → pagamento → pago**. Uma linha por etapa por visita, na tabela `funil` do D1. Nada pessoal: sem cookie, sem IP; a visita é um número aleatório que morre quando a aba fecha. Robô não conta.
 
 **Origem:** o site lê `?de=<rótulo>` no endereço. Usar rótulos nos links que você divulga pra saber o que traz gente e venda:
@@ -558,6 +558,14 @@ O site avisa `POST /api/funil` em que etapa cada visita chegou: **visita → pla
 | Link de beat | automático (`beat`) |
 
 Sem `?de=`, o site deduz pelo app (Instagram, WhatsApp, TikTok) ou pelo site anterior (google, outro-site); nada disso = `direto`. O "pago" do funil conta cartão aprovado e PIX confirmado com a aba aberta; a venda oficial continua sendo o webhook e o e-mail.
+
+---
+
+### Painel: Artistas, Beat tapes e Analytics
+O `/painel` abre com 3 botões. **Analytics** (`assets/painel/analytics.js`, dados em `GET /api/painel?op=analytics&aba=vitrine|tapes|artistas&de=&ate=`) tem período livre (7/30/90 dias ou datas), números com comparação ao período anterior, gráfico por dia e tabelas:
+- **Vitrine:** o funil do site (visita → play → carrinho → checkout → pagamento → pago), celular x computador, origem das visitas, beats que abrem a escuta e o carrinho.
+- **Beat tapes:** quem abriu, ouviu e clicou no carrinho de cada tape (tabela `events`), e quantos desses chegaram na vitrine e pagaram (origem `tape-<slug>` no funil).
+- **Artistas:** aberturas, pessoas, plays e downloads por artista.
 
 ---
 

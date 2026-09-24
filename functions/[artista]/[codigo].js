@@ -6,7 +6,7 @@ import { vitrine, indexar, achar } from '../_lib/vitrine.js';
 
 // caminhos do site que não são artista
 const RESERVADO = new Set(['api', 'audio', 'assets', 'docs', 'previews', 'functions',
-  'mockups-antigos', 'catalogo', 'painel', 'dl', 'f', 'p', 'cdn-cgi']);
+  'mockups-antigos', 'catalogo', 'painel', 'dl', 'f', 'p', 'b', 'capa', 'cdn-cgi']);
 
 export async function onRequestGet({ params, request, env }) {
   const slug = String(params.artista || '').toLowerCase();
@@ -58,7 +58,7 @@ export async function onRequestGet({ params, request, env }) {
     titulo: `${artist.name} · Caramujo Records`,
     descricao: tape
       ? `${artist.name}, beat tape do rideblan33. Toca direto, sem baixar nada.`
-      : `Os beats e as músicas de ${artist.name} com o rideblan33. Toca direto, sem baixar nada.`,
+      : `Os beats e as músicas de ${artist.name} com @rideblan33.`,
     url: url.origin + url.pathname,
     capa,
     cat: {

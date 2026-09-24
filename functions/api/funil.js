@@ -24,7 +24,7 @@ export async function onRequestPost({ request, env }) {
   const etapa = String(b.e || '');
   if (!/^[a-z0-9]{10,32}$/.test(sessao) || !ETAPAS.includes(etapa)) return vazio();
   const aparelho = b.a === 'celular' ? 'celular' : 'computador';
-  const origem = /^[a-z0-9-]{1,24}$/.test(String(b.o || '')) ? String(b.o) : 'direto';
+  const origem = /^[a-z0-9-]{1,40}$/.test(String(b.o || '')) ? String(b.o) : 'direto';
   const beat = Number.isInteger(b.b) && b.b > 0 && b.b < 100000 ? b.b : null;
 
   // robô declarado não conta
