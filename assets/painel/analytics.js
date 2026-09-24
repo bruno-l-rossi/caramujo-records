@@ -12,13 +12,30 @@
   var COR = CORES[0], LAVAGEM = 'rgba(184,138,58,.12)', GRADE = '#232323', FUNDO = '#101010';
 
   var CSS = [
-    '.an-filtros{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:18px 0 6px}',
+    '.an-filtros{position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 6px;margin:18px 0 6px}',
+    '.an-seg button{white-space:nowrap}',
     '.an-seg{display:flex;background:#111;border:1px solid var(--borda);border-radius:999px;padding:3px}',
     '.an-seg button{border:0;background:transparent;color:var(--ink3);font-size:13.5px;font-weight:500;padding:8px 14px;border-radius:999px;cursor:pointer}',
     '.an-seg button[aria-pressed="true"]{background:#fff;color:#000}',
-    '.an-dir{margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px}',
-    '.an-datas{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink3)}',
-    '.an-datas input{background:var(--campo);border:1px solid var(--borda);border-radius:10px;color:var(--ink);padding:7px 9px;font-size:13px;color-scheme:dark}',
+    '.an-per{flex:none;margin-left:auto;display:inline-flex;align-items:center;gap:8px;background:#111;border:1px solid var(--borda);border-radius:999px;color:var(--ink);font-size:13.5px;font-weight:500;padding:9px 14px;cursor:pointer;white-space:nowrap}',
+    '.an-per svg{flex:none}',
+    '.an-per .seta{transition:transform .15s}',
+    '.an-per[aria-expanded="true"] .seta{transform:rotate(180deg)}',
+    '.an-pop{position:absolute;right:0;top:calc(100% + 8px);z-index:20;width:300px;max-width:100%;background:#141414;border:1px solid #2c2c2c;border-radius:14px;padding:12px;box-shadow:0 18px 40px rgba(0,0,0,.55)}',
+    '.an-pop[hidden]{display:none}',
+    '.an-pop .an-rot{font-size:11.5px;color:var(--ink4);margin:2px 2px 8px}',
+    '.an-pres{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}',
+    '.an-pres button{border:1px solid var(--borda);background:#101010;color:var(--ink2);font-size:13px;padding:9px 6px;border-radius:10px;cursor:pointer}',
+    '.an-pres button[aria-pressed="true"]{background:#fff;border-color:#fff;color:#000;font-weight:600}',
+    '.an-pop hr{border:0;border-top:1px solid var(--linha);margin:12px 0}',
+    '.an-datas{display:grid;grid-template-columns:1fr 1fr;gap:8px}',
+    '.an-datas label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--ink4)}',
+    '.an-datas input{background:var(--campo);border:1px solid var(--borda);border-radius:10px;color:var(--ink);padding:8px 9px;font-size:13px;color-scheme:dark;min-width:0;width:100%;box-sizing:border-box}',
+    '.an-aplicar{margin-top:10px;width:100%;border:0;border-radius:10px;background:#fff;color:#000;font-size:13.5px;font-weight:600;padding:10px;cursor:pointer}',
+    '.an-aplicar:disabled{opacity:.4;cursor:not-allowed}',
+    '.an-pop .erro{font-size:12px;color:#e8e0cf;margin:8px 2px 0}',
+    '@media (max-width:420px){.an-seg button{padding:8px 11px;font-size:13px}.an-per{padding:9px 11px;font-size:13px;gap:6px}.an-per .ico{display:none}}',
+    '@media (max-width:360px){.an-seg{padding:2px}.an-seg button{padding:8px 8px;font-size:12.5px}.an-per{padding:9px 10px;font-size:12.5px}.an-per .seta{display:none}}',
     '.an-corpo{transition:opacity .2s}',
     '.an-corpo.carregando{opacity:.45}',
     '.an-periodo{font-size:12.5px;color:var(--ink4);margin:2px 0 14px}',
@@ -90,7 +107,9 @@
   var br = function (d) { var p = d.split('-'); return p[2] + '/' + p[1]; };
   var brAno = function (d) { var p = d.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; };
   function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+  var semComparar = false;
   function delta(a, b) {
+    if (semComparar) return 'desde o começo';
     if (!b && !a) return 'igual ao período anterior';
     if (!b) return 'antes: 0';
     var d = Math.round((a - b) * 100 / b);
@@ -486,12 +505,19 @@
   }
 
   /* ---------- montagem ---------- */
+  // atalho escolhido vira as datas (sempre contando até hoje)
+  function acertaPreset(e) {
+    if (e.preset === 'tudo') { e.ate = hoje(); return; }
+    var n = Number(e.preset);
+    if (n > 0) { e.ate = hoje(); e.de = soma(e.ate, -(n - 1)); }
+  }
+
   window.CaramujoAnalytics = {
     abrir: function (raiz, voltar) {
       if (!document.getElementById('an-css')) { var st = el('style'); st.id = 'an-css'; st.textContent = CSS; document.head.appendChild(st); }
       var estado = { aba: 'vitrine', de: soma(hoje(), -29), ate: hoje(), preset: 30 };
       try { var s = JSON.parse(sessionStorage.getItem('an-estado') || 'null'); if (s && s.aba) estado = s; } catch (_) {}
-      if (estado.preset) { estado.ate = hoje(); estado.de = soma(estado.ate, -(estado.preset - 1)); }
+      acertaPreset(estado);
       raiz.textContent = '';
 
 
@@ -502,39 +528,75 @@
         b.addEventListener('click', function () { estado.aba = x[0]; puxa(); });
         abas.appendChild(b);
       });
-      var per = el('div', 'an-seg'); per.setAttribute('role', 'group'); per.setAttribute('aria-label', 'Período');
-      [[7, '7 dias'], [30, '30 dias'], [90, '90 dias'], [0, 'Escolher']].forEach(function (x) {
-        var b = el('button', null, x[1]); b.type = 'button'; b.dataset.p = x[0];
-        b.addEventListener('click', function () {
-          estado.preset = x[0];
-          if (x[0]) { estado.ate = hoje(); estado.de = soma(estado.ate, -(x[0] - 1)); puxa(); } else pinta();
-        });
-        per.appendChild(b);
+      // Período: um botão só no canto direito (mesma linha das abas). Ele abre
+      // um seletor com os atalhos e as datas personalizadas.
+      var PRESETS = [[7, '7 dias'], [30, '30 dias'], [90, '90 dias'], [180, '180 dias'], [365, '1 ano'], ['tudo', 'Tudo']];
+      var per = el('button', 'an-per'); per.type = 'button';
+      per.setAttribute('aria-haspopup', 'dialog'); per.setAttribute('aria-expanded', 'false');
+      var pop = el('div', 'an-pop'); pop.hidden = true; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Escolher período');
+      pop.appendChild(el('div', 'an-rot', 'Atalhos'));
+      var pres = el('div', 'an-pres');
+      PRESETS.forEach(function (x) {
+        var b = el('button', null, x[1]); b.type = 'button'; b.dataset.p = String(x[0]);
+        b.addEventListener('click', function () { estado.preset = x[0]; acertaPreset(estado); fecha(); puxa(); });
+        pres.appendChild(b);
       });
+      pop.appendChild(pres);
+      pop.appendChild(el('hr'));
+      pop.appendChild(el('div', 'an-rot', 'Personalizado'));
       var datas = el('div', 'an-datas');
-      var iDe = el('input'); iDe.type = 'date'; iDe.setAttribute('aria-label', 'De');
-      var iAte = el('input'); iAte.type = 'date'; iAte.setAttribute('aria-label', 'Até');
-      datas.appendChild(iDe); datas.appendChild(document.createTextNode('até')); datas.appendChild(iAte);
-      [iDe, iAte].forEach(function (i) {
-        i.addEventListener('change', function () {
-          if (!iDe.value || !iAte.value) return;
-          estado.de = iDe.value <= iAte.value ? iDe.value : iAte.value;
-          estado.ate = iDe.value <= iAte.value ? iAte.value : iDe.value;
-          puxa();
-        });
+      var lDe = el('label', null, 'De'), lAte = el('label', null, 'Até');
+      var iDe = el('input'); iDe.type = 'date';
+      var iAte = el('input'); iAte.type = 'date';
+      lDe.appendChild(iDe); lAte.appendChild(iAte);
+      datas.appendChild(lDe); datas.appendChild(lAte);
+      pop.appendChild(datas);
+      var erro = el('p', 'erro'); erro.hidden = true; pop.appendChild(erro);
+      var aplicar = el('button', 'an-aplicar', 'Aplicar'); aplicar.type = 'button';
+      pop.appendChild(aplicar);
+      function confereDatas() {
+        var ok = iDe.value && iAte.value;
+        aplicar.disabled = !ok;
+        erro.hidden = true;
+      }
+      iDe.addEventListener('input', confereDatas); iAte.addEventListener('input', confereDatas);
+      iDe.addEventListener('change', confereDatas); iAte.addEventListener('change', confereDatas);
+      aplicar.addEventListener('click', function () {
+        if (!iDe.value || !iAte.value) return;
+        var a = iDe.value <= iAte.value ? iDe.value : iAte.value, b = iDe.value <= iAte.value ? iAte.value : iDe.value;
+        if (b > hoje()) b = hoje();
+        estado.preset = 0; estado.de = a; estado.ate = b;
+        fecha(); puxa();
       });
-      // período e datas no canto direito, alinhados com o fim dos gráficos
-      var dir = el('div', 'an-dir'); dir.appendChild(datas); dir.appendChild(per);
-      filtros.appendChild(abas); filtros.appendChild(dir);
+      function abre() {
+        pop.hidden = false; per.setAttribute('aria-expanded', 'true');
+        iDe.value = estado.de; iAte.value = estado.ate; iDe.max = iAte.max = hoje(); confereDatas();
+        var ativo = pres.querySelector('[aria-pressed="true"]') || aplicar;
+        try { ativo.focus(); } catch (_) {}
+      }
+      function fecha() { pop.hidden = true; per.setAttribute('aria-expanded', 'false'); }
+      per.addEventListener('click', function () { if (pop.hidden) abre(); else fecha(); });
+      document.addEventListener('click', function (e) { if (!pop.hidden && !pop.contains(e.target) && !per.contains(e.target)) fecha(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !pop.hidden) { fecha(); try { per.focus(); } catch (_) {} } });
+
+      filtros.appendChild(abas); filtros.appendChild(per); filtros.appendChild(pop);
       raiz.appendChild(filtros);
       var legenda = el('div', 'an-periodo'); raiz.appendChild(legenda);
       var corpo = el('div', 'an-corpo'); raiz.appendChild(corpo);
 
+      var ICO_CAL = '<svg class="ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
+      var ICO_SETA = '<svg class="seta" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+      function rotulo() {
+        var x = PRESETS.filter(function (p) { return String(p[0]) === String(estado.preset); })[0];
+        if (x) return x[1];
+        return br(estado.de) + ' a ' + br(estado.ate);
+      }
       function pinta() {
         [].forEach.call(abas.children, function (b) { b.setAttribute('aria-pressed', b.dataset.aba === estado.aba ? 'true' : 'false'); });
-        [].forEach.call(per.children, function (b) { b.setAttribute('aria-pressed', Number(b.dataset.p) === Number(estado.preset) ? 'true' : 'false'); });
-        datas.style.display = Number(estado.preset) === 0 ? 'flex' : 'none';
-        iDe.value = estado.de; iAte.value = estado.ate; iDe.max = iAte.max = hoje();
+        [].forEach.call(pres.children, function (b) { b.setAttribute('aria-pressed', b.dataset.p === String(estado.preset) ? 'true' : 'false'); });
+        per.innerHTML = ICO_CAL + '<span></span>' + ICO_SETA;
+        per.querySelector('span').textContent = rotulo();
+        per.setAttribute('aria-label', 'Período: ' + rotulo() + '. Trocar');
       }
       var pedido = 0;
       function puxa() {
@@ -542,15 +604,19 @@
         try { sessionStorage.setItem('an-estado', JSON.stringify(estado)); } catch (_) {}
         corpo.classList.add('carregando');          // o quadro antigo fica, mais apagado
         var meu = ++pedido;
-        fetch('/api/painel?op=analytics&aba=' + estado.aba + '&de=' + estado.de + '&ate=' + estado.ate)
+        var de = estado.preset === 'tudo' ? 'tudo' : estado.de;
+        fetch('/api/painel?op=analytics&aba=' + estado.aba + '&de=' + de + '&ate=' + estado.ate)
           .then(function (r) { return r.json(); })
           .then(function (j) {
             if (meu !== pedido) return;
             corpo.classList.remove('carregando');
             corpo.textContent = '';
             if (!j || !j.dias) { corpo.appendChild(el('div', 'vazio', 'Não consegui carregar. Tenta de novo.')); return; }
-            legenda.textContent = brAno(j.de) + ' a ' + brAno(j.ate) + ' · ' + j.dias.length + (j.dias.length === 1 ? ' dia' : ' dias') +
-              ', comparado com os ' + j.dias.length + (j.dias.length === 1 ? ' dia' : ' dias') + ' antes';
+            var nd = j.dias.length + (j.dias.length === 1 ? ' dia' : ' dias');
+            semComparar = !!j.tudo;
+            legenda.textContent = j.tudo
+              ? 'Tudo que tem guardado: ' + brAno(j.de) + ' a ' + brAno(j.ate) + ' · ' + nd
+              : brAno(j.de) + ' a ' + brAno(j.ate) + ' · ' + nd + ', comparado com os ' + nd + ' antes';
             (j.aba === 'tapes' ? tapes : j.aba === 'artistas' ? artistas : vitrine)(j, corpo);
           })
           .catch(function () {

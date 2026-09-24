@@ -333,12 +333,12 @@ const somaDias = (dia, n) => new Date(Date.parse(dia + 'T00:00:00Z') + n * DIA_M
 const inicioUTC = (dia) => dia + 'T03:00:00.000Z';            // 00h em SP
 const DIA_SP = "substr(datetime(e.at, '-3 hours'), 1, 10)";
 
-function periodo(params) {
+function periodo(params, teto = 400) {
   const ok = (x) => /^\d{4}-\d{2}-\d{2}$/.test(x || '') && !isNaN(Date.parse(x + 'T00:00:00Z'));
   let ate = ok(params.get('ate')) ? params.get('ate') : hojeSP();
   let de = ok(params.get('de')) ? params.get('de') : somaDias(ate, -29);
   if (de > ate) [de, ate] = [ate, de];
-  if ((Date.parse(ate) - Date.parse(de)) / DIA_MS > 400) de = somaDias(ate, -400);
+  if ((Date.parse(ate) - Date.parse(de)) / DIA_MS > teto) de = somaDias(ate, -teto);
   const n = Math.round((Date.parse(ate) - Date.parse(de)) / DIA_MS) + 1;
   const dias = Array.from({ length: n }, (_, i) => somaDias(de, i));
   return { de, ate, dias, antesDe: somaDias(de, -n), antesAte: somaDias(de, -1) };
@@ -357,8 +357,28 @@ function series(dias, linhas, chaves) {
   return out;
 }
 
+// "Tudo": do primeiro dia com algum dado (funil ou link aberto) até hoje.
+// Sem comparação: não existe período anterior. Teto de ~3 anos pro gráfico.
+async function primeiroDia(d) {
+  const [f, e] = await Promise.all([
+    d.prepare('SELECT MIN(dia) m FROM funil').first(),
+    d.prepare('SELECT MIN(at) m FROM events').first()
+  ]);
+  const dias = [];
+  if (f && f.m) dias.push(f.m);
+  if (e && e.m) dias.push(new Date(Date.parse(e.m) - 3 * 3600e3).toISOString().slice(0, 10));
+  return dias.sort()[0] || null;
+}
+
 async function analytics(d, request, env, params) {
-  const p = periodo(params);
+  let p;
+  if (params.get('de') === 'tudo') {
+    const q = new URLSearchParams(params);
+    q.set('de', (await primeiroDia(d)) || hojeSP());
+    p = { ...periodo(q, 1100), tudo: true };
+  } else {
+    p = periodo(params);
+  }
   const aba = params.get('aba');
   if (aba === 'tapes') return json({ ...p, aba, ...(await abaCatalogos(d, p, 'tape')) });
   if (aba === 'artistas') return json({ ...p, aba, ...(await abaCatalogos(d, p, 'artista')) });

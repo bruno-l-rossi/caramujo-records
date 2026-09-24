@@ -273,7 +273,7 @@ function pagina() {
   <div id="lista"><div class="vazio">carregando…</div></div>
   <div id="analytics" hidden></div>
 </div>
-<script src="/assets/painel/analytics.js?v=2026-09-27" defer></script>
+<script src="/assets/painel/analytics.js?v=2026-09-27b" defer></script>
 
 <div class="veil" id="veil" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>

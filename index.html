@@ -1114,9 +1114,14 @@ html,body{overflow-x:hidden;}
   .pe-dir #npPreco{padding:.45rem .55rem}
 }
 
-/* ══ NOVO v32 — serviços numa linha, aviso de fora do ar ══════════════════
-   Computador: o subtítulo dos serviços cabe numa linha só (com o 12x no fim). */
-@media(min-width:1000px){#services .s-sub{max-width:none}}
+/* ══ NOVO v32 — aviso de fora do ar, carrinho com +, nome que rola ══════════
+   O "em até 12x" saiu da home (27/09): fica só no carrinho. */
+/* Nome do beat na barra do pé: se não cabe, desliza devagar pra um lado e
+   volta, com pausa nas pontas. Quem prefere sem movimento vê as reticências. */
+.pe-nome .t.rola{text-overflow:clip;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 6px,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 6px,#000 calc(100% - 16px),transparent)}
+.pe-nome .t.rola>span{display:inline-block;animation:np-rola var(--dur,8s) linear infinite;will-change:transform}
+@keyframes np-rola{0%,15%{transform:translateX(0)}45%,60%{transform:translateX(var(--d,0))}90%,100%{transform:translateX(0)}}
+@media(prefers-reduced-motion:reduce){.pe-nome .t.rola{text-overflow:ellipsis;-webkit-mask-image:none;mask-image:none}.pe-nome .t.rola>span{display:inline;animation:none}}
 /* botão do carrinho: ícone de + (ou ✓ quando já está no carrinho) também no celular */
 .preco svg{flex:none}
 @media(max-width:760px){#beatCards .preco{gap:6px;padding:.5rem .6rem}#beatCards .preco svg{display:block;width:14px;height:14px}}
@@ -1378,7 +1383,6 @@ html,body{overflow-x:hidden;}
       <div style="display:flex;gap:0;margin-top:auto;">
         <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('1 Beat',119)">Adicionar · R$119</button>
       </div>
-      <div class="pack-parc">em até 12x no cartão</div>
     </div>
 
     <div class="pack hot">
@@ -1395,7 +1399,6 @@ html,body{overflow-x:hidden;}
       <div style="display:flex;gap:0;margin-top:auto;">
         <button class="btn btn-fire" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('2 Beats',219)">Adicionar · R$219</button>
       </div>
-      <div class="pack-parc">em até 12x no cartão</div>
     </div>
 
     <div class="pack">
@@ -1412,7 +1415,6 @@ html,body{overflow-x:hidden;}
       <div style="display:flex;gap:0;margin-top:auto;">
         <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.82rem;padding:.65rem .8rem;" onclick="addPkg('3 Beats',299)">Adicionar · R$299</button>
       </div>
-      <div class="pack-parc">em até 12x no cartão</div>
     </div>
   </div>
 </section>
@@ -1426,7 +1428,7 @@ html,body{overflow-x:hidden;}
   <div class="s-head">
     <span class="s-kicker">Serviços · encomenda</span>
     <h2 class="s-title">Produção <span class="r">completa</span></h2>
-    <p class="s-sub">Do beat ao lançamento. Finalização profissional para artistas independentes. Tudo em até 12x no cartão.</p>
+    <p class="s-sub">Do beat ao lançamento. Finalização profissional para artistas independentes.</p>
   </div>
 
   <div class="svcs">
@@ -3432,7 +3434,7 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
     window.__npCurrent={widget:null,bid:b.id};
     var bar=$('npBar'); if(bar){ bar.dataset.bid=String(b.id); bar.classList.add('on'); }
     document.body.classList.add('tocando');   // abre espaço embaixo pra barra não cobrir faixa
-    if($('npName')) $('npName').textContent=b.name;
+    if($('npName')){ var nm=$('npName'); nm.textContent=''; var sp=document.createElement('span'); sp.textContent=b.name; nm.appendChild(sp); rolaNome(); }
     if($('npMeta')) $('npMeta').innerHTML='<span class="quem">@rideblan33  ·  </span>'+
       glab(b)+(b.bpm?'  ·  '+b.bpm+' BPM':'')+(b.key?'  ·  '+b.key:'');
     var c=$('npCapa'); if(c) c.outerHTML=capaHTML(f,'npCapa');
@@ -3776,6 +3778,27 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
       return ok;
     }catch(_){ return false; }
   }
+
+  // nome grande na barra do pé: mede quanto sobra e liga o deslizar (CSS v32)
+  function rolaNome(){
+    var nm=$('npName'); if(!nm) return;
+    var ajusta=function(){
+      nm.classList.remove('rola');
+      var sobra=nm.scrollWidth-nm.clientWidth;
+      if(sobra>2){
+        nm.style.setProperty('--d',-(sobra+6)+'px');
+        // ~30px por segundo em cada ida (30% do ciclo), no mínimo 7s
+        nm.style.setProperty('--dur',Math.max(7,(sobra+6)/30/0.3).toFixed(1)+'s');
+        nm.classList.add('rola');
+      }
+    };
+    if(window.requestAnimationFrame) requestAnimationFrame(ajusta); else ajusta();
+  }
+  window.rolaNome=rolaNome;
+  (function(){
+    var t; window.addEventListener('resize',function(){ clearTimeout(t); t=setTimeout(rolaNome,150); });
+    try{ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(rolaNome); }catch(_){}
+  })();
 
   // altura real do menu fixo vira o recuo das âncoras (ver CSS v28)
   function medirMenu(){
