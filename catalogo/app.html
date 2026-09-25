@@ -811,8 +811,51 @@ __META__
     enterSel('send');
   });
 
-  // beat tape se manda inteira: o link é a própria página
+  // Beat tape se manda inteira: o link é a própria página. Desde 25/09/2026 com
+  // a folha de compartilhar do site (assets/story.js): arte pro story, enviar e copiar.
+  var storyJs=null;
+  function carregarStory(){
+    if(window.CaramujoStory) return Promise.resolve();
+    if(storyJs) return storyJs;
+    storyJs=new Promise(function(ok,falha){
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25a';
+      s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
+      document.head.appendChild(s);
+    });
+    return storyJs;
+  }
   function linkDaTape(){
+    var u = location.origin + location.pathname;
+    var n = rows.filter(function(t){return t.kind==='beat'}).length;
+    carregarStory().then(function(){
+      window.CaramujoStory.abrir({
+        tema:'catalogo', titulo:CAT.artist.name,
+        texto:'Arte da tape pronta pro story. Ao postar, o link já vai copiado: no Instagram, cola no sticker de link.',
+        url:u, nomeArquivo:'caramujo-'+slugTape()+'.jpg',
+        arte:{ capa:CAT.artist.cover||null, titulo:CAT.artist.name, kicker:'Beat tape',
+          ficha:[n+(n===1?' beat':' beats')], rodape:u.replace(/^https?:\/\//,'') },
+        avisar:flash
+      });
+    }).catch(linkSimples);
+  }
+  // O beat da tape que também está à venda no site: arte do beat, link do site.
+  function storyDoBeat(t){
+    var u = location.origin + '/b/' + t.buy;
+    carregarStory().then(function(){
+      var nome = String(t.title||'').toLocaleUpperCase('pt-BR');
+      window.CaramujoStory.abrir({
+        tema:'catalogo', titulo:nome,
+        texto:'Arte do beat pronta pro story. Ao postar, o link do beat já vai copiado: no Instagram, cola no sticker de link.',
+        url:u, urlStory:u+'?de=story', nomeArquivo:'caramujo-'+t.buy+'.jpg',
+        arte:{ capa:CAT.artist.cover||null, titulo:nome, kicker:'Beat exclusivo',
+          ficha:[t.bpm?t.bpm+' BPM':'', t.key||''], rodape:'caramujorecords.com.br/b/'+t.buy },
+        avisar:flash
+      });
+    }).catch(function(){ if(navigator.clipboard) navigator.clipboard.writeText(u); flash('Link do beat copiado.'); });
+  }
+  function slugTape(){ return (location.pathname.split('/')[1]||'tape').replace(/[^a-z0-9-]/gi,''); }
+  // sem a folha (arquivo não carregou): o de antes, link copiado
+  function linkSimples(){
     var u = location.origin + location.pathname;
     if(navigator.clipboard) navigator.clipboard.writeText(u).catch(function(){});
     open('<h2 id="cardTitle">Enviar a tape</h2>'+
@@ -849,6 +892,7 @@ __META__
   function trackSheet(t){
     var linhas =
       (t.buy ? item('buy',ICON_CART,'Comprar esse beat') : '') +
+      (t.buy && CAT.artist.tape ? item('story',ICON_SEND,'Postar esse beat no story') : '') +
       (!CAT.artist.tape && (CAT.owner || (!preview && !CAT.preview)) ? item('send',ICON_SEND,'Enviar só essa faixa') : '') +
       (podeBaixar() ? item('down',ICON_DOWN,'Baixar') : '');
     if(!linhas){ flash('Essa faixa está só pra ouvir.'); return; }
@@ -856,6 +900,8 @@ __META__
       '<div class="card-list">'+linhas+'</div><button class="card-close" data-close>Fechar</button>');
     var s0=card.querySelector('[data-act=buy]');
     if(s0) s0.addEventListener('click',function(){close();comprar(t)});
+    var sS=card.querySelector('[data-act=story]');
+    if(sS) sS.addEventListener('click',function(){close();storyDoBeat(t)});
     var s1=card.querySelector('[data-act=send]');
     if(s1) s1.addEventListener('click',function(){sendSheet([t])});
     var s2=card.querySelector('[data-act=down]');

@@ -20,6 +20,29 @@ export function parseGeneros(html) {
   return mapa;
 }
 
+// A tabela de preço que a página mostra: PRICE_BEAT/PRICE_STEMS e os botões
+// addPkg('2 Beats',219) / addSvc('Mixagem',149). O servidor refaz a conta do
+// carrinho com ela (create-payment), então a página e a cobrança nunca divergem.
+// Nome com dois preços diferentes na página vira null (ambíguo: recusa).
+export function parsePrecos(html) {
+  const num = (re) => { const m = html.match(re); return m ? Number(m[1]) : null; };
+  const tabela = (fn) => {
+    const achados = {};
+    const re = new RegExp('onclick="[^"]*' + fn + "\\(\\s*'([^']*)'\\s*,\\s*(\\d+(?:\\.\\d+)?)", 'g');
+    let m;
+    while ((m = re.exec(html))) (achados[m[1]] = achados[m[1]] || new Set()).add(Number(m[2]));
+    const mapa = {};
+    for (const [k, v] of Object.entries(achados)) mapa[k] = v.size === 1 ? [...v][0] : null;
+    return mapa;
+  };
+  return {
+    beat: num(/const PRICE_BEAT\s*=\s*(\d+(?:\.\d+)?)/),
+    stems: num(/PRICE_STEMS\s*=\s*(\d+(?:\.\d+)?)/),
+    pacotes: tabela('addPkg'),
+    servicos: tabela('addSvc')
+  };
+}
+
 const VALIDADE_ESTATICO = 10 * 60 * 1000;     // o index.html só muda quando o Bruno publica
 let estatico = { at: 0, dados: null };
 
@@ -38,7 +61,7 @@ export async function lerEstatico(request, env) {
   if (estatico.dados && Date.now() - estatico.at < VALIDADE_ESTATICO) return estatico.dados;
   const html = await paginaEstatica(request, env);
   const p = html.match(/const PRICE_BEAT\s*=\s*(\d+)/);
-  const dados = { html, generos: parseGeneros(html), preco: p ? Number(p[1]) : null };
+  const dados = { html, generos: parseGeneros(html), preco: p ? Number(p[1]) : null, precos: parsePrecos(html) };
   estatico = { at: Date.now(), dados };
   return dados;
 }

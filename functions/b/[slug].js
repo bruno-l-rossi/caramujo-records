@@ -17,7 +17,9 @@ export async function onRequestGet({ params, request, env }) {
   const b = dados && dados.find((x) => x.slug === pedido);
   if (!b) return Response.redirect(SITE + '/', 302);
 
-  const destino = '/?de=beat#beat=' + b.slug;
+  // ?de=story (link do sticker do story) chega no funil como "story"; o resto, "beat"
+  const de = (new URL(request.url).searchParams.get('de') || 'beat').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 30) || 'beat';
+  const destino = '/?de=' + de + '#beat=' + b.slug;
   const ficha = [b.genero, b.bpm ? b.bpm + ' BPM' : '', b.key].filter(Boolean).join(' · ');
   // Formato do Bruno (25/09/2026):
   //   FUNERAL · @rideblan33

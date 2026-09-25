@@ -2857,6 +2857,20 @@ function mpToggleTerms(){
   }
 }
 
+// Recado do servidor no pagamento (25/09/2026), na mesma caixa dos erros do cartão.
+function avisoPagamento(msg){
+  try{
+    let box=document.getElementById('mpBrickError');
+    if(!box){
+      box=document.createElement('div'); box.id='mpBrickError';
+      box.style.cssText='margin:-.5rem 0 .8rem;padding:.7rem 1rem;background:#3a1008;border:1px solid var(--rust);color:#f5a090;font-size:.74rem;font-family:"IBM Plex Mono",monospace;line-height:1.5;';
+      const c=document.getElementById('mpBrickContainer'); if(!c) return; c.before(box);
+    }
+    box.textContent=msg; box.style.display='block';
+    clearTimeout(box._t); box._t=setTimeout(()=>{ box.style.display='none'; },12000);
+  }catch(_){}
+}
+
 async function goToPayment(){
   const emailOk=mpValidateEmail();
   const cpfOk=mpValidateCpf();
@@ -2979,6 +2993,8 @@ async function goToPayment(){
               });
               const data = await res.json();
               if (!res.ok || !data.success) {
+                // mostra o motivo (beat que saiu, valor que mudou, cupom): o Brick só diz "erro"
+                avisoPagamento(data.error || 'Erro ao processar pagamento.');
                 reject(data.error || 'Erro ao processar pagamento.');
                 return;
               }
@@ -3975,20 +3991,43 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
   }
 
   /* ---------- compartilhar ---------- */
-  window.npCompartilhar=function(){
-    var b=beatAtual(); if(!b) return;
-    var url=location.origin+'/b/'+slugify(b.name);
-    // só o link: o WhatsApp e o Direct montam a prévia (capa, nome, ficha) sozinhos.
-    // Mandar texto junto repetia a legenda da prévia como mensagem.
-    var dados={url:url};
+  // Folha com a arte pro story (assets/story.js, carregado só no primeiro toque):
+  // postar no story (o Instagram só aparece recebendo imagem), enviar o link,
+  // copiar o link. O link do story leva ?de=story pro funil saber de onde veio.
+  var storyJs=null;
+  function carregarStory(){
+    if(window.CaramujoStory) return Promise.resolve();
+    if(storyJs) return storyJs;
+    storyJs=new Promise(function(ok,falha){
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25a';
+      s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
+      document.head.appendChild(s);
+    });
+    return storyJs;
+  }
+  function soLink(url){
     var computador=false; try{ computador=matchMedia('(hover: hover) and (pointer: fine)').matches; }catch(_){}
-    if(navigator.share && !computador){
-      navigator.share(dados).catch(function(){});   // cancelar não é erro
-      return;
-    }
+    if(navigator.share && !computador){ navigator.share({url:url}).catch(function(){}); return; }
     var aviso=function(){ try{ showToast('Link do beat copiado'); }catch(_){} };
     if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(aviso,function(){ prompt('Copia o link do beat:',url); });
     else prompt('Copia o link do beat:',url);
+  }
+  window.npCompartilhar=function(){
+    var b=beatAtual(); if(!b) return;
+    var sl=slugify(b.name);
+    var url=location.origin+'/b/'+sl;
+    var f=(window.__VIT||{})[String(b.id)]||{};
+    carregarStory().then(function(){
+      window.CaramujoStory.abrir({
+        tema:'site', titulo:b.name,
+        texto:'Arte pronta pro story. Ao postar, o link já vai copiado: no Instagram, cola no sticker de link.',
+        url:url, urlStory:url+'?de=story', nomeArquivo:'caramujo-'+sl+'.jpg',
+        arte:{ capa:f.capaG||null, titulo:b.name, kicker:'Beat exclusivo',
+          ficha:[(typeof GENRE_LABELS!=='undefined'&&GENRE_LABELS[b.genre])||b.genre, b.bpm?b.bpm+' BPM':'', b.key],
+          vendido:!!b.sold, rodape:'caramujorecords.com.br/b/'+sl },
+        avisar:function(m){ try{ showToast(m); }catch(_){} }
+      });
+    }).catch(function(){ soLink(url); });   // sem a arte, o compartilhar de sempre
   };
 
   /* ---------- funil ---------- */

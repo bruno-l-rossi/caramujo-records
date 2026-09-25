@@ -42,6 +42,7 @@ O GitHub recebe **só o que o site e o backend usam**. O apoio que precisa exist
 │   ├── index.js                   # A página inicial: põe a lista de beats do banco (D1) dentro do index.html
 │   ├── _lib/loja.js               # A loja no D1: beats, cupons, destaque do hero, reserva
 │   ├── _lib/tom.js                # Tom/BPM que faltam no arquivo da tape, achados em outra cópia do beat
+│   ├── _lib/emails.js             # Contrato e e-mail do comprador (usados no cartão e no PIX)
 │   └── api/
 │       ├── create-payment.js      # Pagamento + e-mails + contrato; recusa beat já vendido e cupom esgotado
 │       ├── check-payment.js       # Consulta status de um pagamento
@@ -209,6 +210,14 @@ sem cópia nenhuma, a página sai com a lista vazia e o aviso de fora do ar.
 **Beat tape nova:** pasta em `@rideblan33 / Beat tapes` com a capa e os beats (nome no
 padrão `nome Tom 140bpm`) → painel > Vitrine > Fila > Buscar tapes novas → marcar os
 novos como disponíveis → gênero → Publicar marcados. Copiar pra Exclusivos virou opcional.
+
+**Preço conferido no servidor (25/09/2026):** o pagamento refaz a conta do carrinho com os
+preços que a própria página mostra (`PRICE_BEAT`, `PRICE_STEMS`, botões `addPkg`/`addSvc`) e o
+cupom do banco. Se o valor do navegador não bater, recusa. Mudou preço no HTML, o servidor acompanha.
+
+**Compartilhar com arte pro story:** o botão de compartilhar (barra do player e ENVIAR das
+beat tapes) abre uma folha com a arte vertical do beat/tape (`assets/story.js`), "Postar no
+story" (manda a imagem; o link vai copiado pro sticker), "Enviar o link" e "Copiar o link".
 
 **Limite do banco:** o plano gratuito do D1 lê até 5 milhões de linhas por dia. A home do
 painel mostra o consumo do dia ("Banco hoje"). Passou do limite, o banco trava até as 21h
