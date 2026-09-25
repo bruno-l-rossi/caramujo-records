@@ -196,15 +196,15 @@
         t = String(t);
         return { texto: /^[A-G](#|b)?(m|maj)?$/.test(t) ? t : t.toUpperCase() };
       });
-      if (opts.vendido) fichas.push({ texto: 'VENDIDO', cor: COR.blood, corTexto: COR.bone });
+      // sem etiqueta de vendido no compartilhar (pedido do Bruno, 25/09)
 
       // mede o bloco todo: a capa cresce até ocupar a altura (sem sobra embaixo)
       // e o conjunto fica centrado entre as barras do Instagram (topo ~170, resposta ~1720)
       var mt = medirTitulo(ctx, opts.titulo || '', 900);
       var TOPO = 170;
-      // ordem embaixo da capa (pedido do Bruno, 25/09): ficha, nome, prod. @rideblan33
-      var CHIPS = fichas.length ? 48 + 58 : 0;
-      var resto = TOPO + CHIPS + 10 + mt.alt + 72 + (opts.onda ? 70 + ONDA_A : 0);
+      // ordem embaixo da capa (pedido do Bruno, 25/09): nome, prod. @rideblan33, ficha
+      var CHIPS = fichas.length ? 36 + 58 : 0;
+      var resto = TOPO + 24 + mt.alt + 72 + CHIPS + (opts.onda ? 70 + ONDA_A : 0);
       var lado = Math.round(Math.max(680, Math.min(900, 1530 - resto)));
       var bloco = resto + lado;
       var y0 = 170 + Math.max(0, (1720 - 170 - bloco) / 2);
@@ -228,14 +228,13 @@
       }
       ctx.strokeStyle = COR.wire; ctx.lineWidth = 2; ctx.strokeRect(cx + 1, cy + 1, lado - 2, lado - 2);
 
-      // ficha (BPM, tom, beat tape...), nome, e o prod. @rideblan33 do jeito que se escreve
-      var y = cy + lado;
-      if (fichas.length) { chips(ctx, fichas, W / 2, y + 48); y += CHIPS; }
-      var fim = titulo(ctx, mt, W / 2, y + (fichas.length ? -8 : 24));
+      // nome, o prod. @rideblan33 do jeito que se escreve, e a ficha (gênero, BPM, tom, beat tape...)
+      var fim = titulo(ctx, mt, W / 2, cy + lado + 24);
       ctx.fillStyle = COR.fire;
       ctx.font = '400 30px "IBM Plex Mono", ui-monospace, monospace';
       espacado(ctx, String(opts.kicker || 'prod. @rideblan33'), W / 2, fim + 62, 4);
       fim += 72;
+      if (fichas.length) { chips(ctx, fichas, W / 2, fim + 36); fim += CHIPS; }
       if (opts.onda) { cv.ondaY = fim + 70 + ONDA_A / 2; cv.ondaL = lado; }
       return cv;
     });
@@ -429,12 +428,19 @@
     var aenc = new AudioEncoder({ output: function (c, m) { muxer.addAudioChunk(c, m); }, error: function (e) { falha = e; } });
     aenc.configure({ codec: acfg.codec, sampleRate: TAXA, numberOfChannels: 2, bitrate: 128000 });
 
-    var n = som.length, L = som.getChannelData(0), R = som.getChannelData(1), passo = 4800;
-    for (var i = 0; i < n; i += passo) {
-      var k = Math.min(passo, n - i), d = new Float32Array(k * 2);
-      d.set(L.subarray(i, i + k), 0); d.set(R.subarray(i, i + k), k);
-      var ad = new AudioData({ format: 'f32-planar', sampleRate: TAXA, numberOfFrames: k, numberOfChannels: 2, timestamp: Math.round(i / TAXA * 1e6), data: d });
-      aenc.encode(ad); ad.close();
+    // o som entra junto com a imagem, em pedaços de 4096 amostras (múltiplo do quadro do AAC)
+    // e esperando o codificador esvaziar: codificador de celular com a fila cheia pode perder
+    // pedaço, e aí o story fica mudo no fim (25/09/2026)
+    var n = som.length, L = som.getChannelData(0), R = som.getChannelData(1), passo = 4096, i = 0;
+    async function somAte(amostra) {
+      while (i < n && i < amostra) {
+        var k = Math.min(passo, n - i), d = new Float32Array(k * 2);
+        d.set(L.subarray(i, i + k), 0); d.set(R.subarray(i, i + k), k);
+        var ad = new AudioData({ format: 'f32-planar', sampleRate: TAXA, numberOfFrames: k, numberOfChannels: 2, timestamp: Math.round(i / TAXA * 1e6), data: d });
+        aenc.encode(ad); ad.close();
+        i += k;
+        while (aenc.encodeQueueSize > 4) await espera(2);
+      }
     }
 
     var cv = document.createElement('canvas'); cv.width = vcfg.width; cv.height = vcfg.height;
@@ -442,12 +448,14 @@
     for (var f = 0; f < total; f++) {
       if (falha) throw falha;
       if (!segue()) { try { venc.close(); aenc.close(); } catch (_) {} throw new Error('cancelado'); }
+      await somAte(Math.round((f + 1) / FPS * TAXA) + passo);
       desenhar(ctx, cv.width / W, f / (total - 1));
       var vf = new VideoFrame(cv, { timestamp: Math.round(f * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
       venc.encode(vf, { keyFrame: f % (FPS * 2) === 0 }); vf.close();
       while (venc.encodeQueueSize > 6) await espera(4);
       if (f % 15 === 0) { prog(f / total); await espera(0); }
     }
+    await somAte(n);
     await venc.flush(); await aenc.flush();
     venc.close(); aenc.close();
     if (falha) throw falha;
@@ -477,16 +485,23 @@
           ok(new Blob(partes, { type: 'video/mp4' }));
         };
         rec.onerror = function (e) { erro(e.error || e); };
+        // o gravador do iPhone demora pra começar a pegar o som: se o som sai antes,
+        // o começo se perde e o vídeo termina mudo. Espera o "start" + 0,3s.
+        var t0 = 0, comecou = false;
+        var soltar = function () {
+          if (comecou) return; comecou = true;
+          setTimeout(function () { t0 = ac.currentTime + 0.05; s.start(t0); laco(); }, 300);
+        };
+        rec.onstart = soltar;
         rec.start();
-        var t0 = ac.currentTime + 0.05;
-        s.start(t0);
-        (function laco() {
+        setTimeout(soltar, 1500);   // navegador que não avisa o start
+        function laco() {
           var p = (ac.currentTime - t0) / DUR;
           if (!segue()) { try { s.stop(); } catch (_) {} rec.onstop = function () { st.getTracks().forEach(function (t) { t.stop(); }); erro(new Error('cancelado')); }; rec.stop(); return; }
-          if (p >= 1) { desenhar(ctx, cv.width / W, 1); setTimeout(function () { rec.stop(); }, 150); return; }
+          if (p >= 1) { desenhar(ctx, cv.width / W, 1); setTimeout(function () { rec.stop(); }, 500); return; }
           desenhar(ctx, cv.width / W, Math.max(0, p)); prog(Math.max(0, p));
           setTimeout(laco, 1000 / FPS);
-        })();
+        }
       });
     });
   }
@@ -505,13 +520,25 @@
         onda(ctx, pk, p, base.ondaY, base.ondaL);
         ctx.setTransform(1, 0, 0, 1, 0, 0);
       };
-      var feito = temWebCodecs()
-        ? porWebCodecs(base, desenhar, som, prog, segue).catch(function (e) { if (segue() && mimeGravacao()) return porGravacao(desenhar, som, prog, segue); throw e; })
-        : porGravacao(desenhar, som, prog, segue);
-      return feito.then(function (blob) {
+      // Confere o arquivo pronto antes de oferecer: o som tem que ir até onde o trecho vai.
+      // Se o caminho rápido (WebCodecs) sair com o fim mudo, tenta gravando; se ainda
+      // assim falhar, vai a arte (nunca um story mudo no fim).
+      var esperado = fimAudivel(som);
+      var conferir = function (blob, caminho) {
         if (!blob || blob.size < 20000) throw new Error('vídeo vazio');
-        return { blob: blob, picos: pk };
-      });
+        return blob.arrayBuffer().then(decodificar).then(function (b) {
+          var fim = fimAudivel(b);
+          window.__csDiag = { caminho: caminho, esperado: +esperado.toFixed(2), veio: +fim.toFixed(2), dur: +b.duration.toFixed(2) };
+          if (fim < esperado - 1) throw new Error('som cortado (' + caminho + '): ' + fim.toFixed(1) + 's de ' + esperado.toFixed(1) + 's');
+          return blob;
+        }, function () { window.__csDiag = { caminho: caminho, conferido: false }; return blob; });   // navegador que não lê o próprio mp4: segue
+      };
+      var gravando = function () { return porGravacao(desenhar, som, prog, segue).then(function (b) { return conferir(b, 'gravacao'); }); };
+      var feito = temWebCodecs()
+        ? porWebCodecs(base, desenhar, som, prog, segue).then(function (b) { return conferir(b, 'webcodecs'); })
+            .catch(function (e) { if (segue() && mimeGravacao()) return gravando(); throw e; })
+        : gravando();
+      return feito.then(function (blob) { return { blob: blob, picos: pk }; });
     });
   }
 
@@ -584,8 +611,10 @@
 
   var TEXTO = 'Nos marque e receba um cupom exclusivo!\n@rideblan33 · © Caramujo Records';
 
+  // A prévia do trecho toca num player só da folha. Quem chama destrava ele no toque de
+  // compartilhar (window.__csPrevia, tocando mudo): o celular só deixa tocar som depois de um toque.
   var veu = null, vez = 0, previa = null;
-  function pararPrevia() { if (previa) { try { previa.pause(); } catch (_) {} } }
+  function pararPrevia() { if (previa) { try { previa.pause(); previa.ontimeupdate = null; } catch (_) {} } }
   function fechar() { vez++; pararPrevia(); if (veu) { veu.hidden = true; veu.innerHTML = ''; } }
   function mmss(t) { t = Math.max(0, Math.round(t)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); }
 
@@ -608,13 +637,13 @@
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fechar(); });
       document.body.appendChild(veu);
     }
-    pararPrevia();
     var minha = ++vez;
     var vivo = function () { return minha === vez; };
     var avisar = opts.avisar || function () {};
     var pausar = function () { try { if (opts.pausar) opts.pausar(); } catch (_) {} };
     var linhas = String(opts.texto || TEXTO).split('\n');
-    var comSom = !!(opts.audio && opts.audio.src) && podeVideo();
+    var temTrecho = !!(opts.audio && opts.audio.src);
+    var comSom = temTrecho && podeVideo();
     var catalogo = opts.tema === 'catalogo';
     var nome = String(opts.nomeArquivo || 'caramujo-story').replace(/\.(jpe?g|mp4)$/i, '');
     veu.className = 'cs-veu cs-' + (catalogo ? 'catalogo' : 'site');
@@ -624,7 +653,7 @@
       esc(linhas.slice(1).join(' ')) + '</p></div></div>' +
       '<div class="cs-trecho" id="csTrecho" hidden><div class="cs-trecho-topo"><span>Trecho do story</span><b id="csTempo"></b></div>' +
       '<canvas id="csFaixa" aria-label="Arrasta pra escolher o trecho de 15 segundos"></canvas>' +
-      '<p class="cs-dica">Arrasta pra escolher o trecho. Solta pra ouvir.</p></div>' +
+      '<p class="cs-dica">Arrasta pra escolher o trecho que vai no story.</p></div>' +
       '<div class="cs-acoes">' +
         '<button type="button" class="cs-forte" id="csStory" disabled>Postar no story<small id="csSom"></small></button>' +
         '<button type="button" id="csLink">Enviar o link</button>' +
@@ -656,11 +685,35 @@
       if (!f) semArte();
     }).catch(semArte);
 
-    // 2) com som: acha o trecho, monta o vídeo e deixa a pessoa trocar o trecho
-    if (comSom) {
+    // 2) com trecho: acha os 15s (onda), toca a prévia em loop, monta o vídeo e deixa trocar
+    if (temTrecho) {
       var src = opts.audio.src, dur = Number(opts.audio.dur) || 0, inicio = Number(opts.audio.inicio) || 0;
-      var base = null, ger = 0, timer = null, onda0 = null;
-      legenda('preparando o som…');
+      var base = null, ger = 0, timer = null, onda0 = null, pintar = function () {};
+      var tocando = -1;
+      if (comSom) legenda('preparando o som…');
+
+      // toca o trecho escolhido, em loop, até a folha fechar ou a pessoa postar
+      var tocarTrecho = function () {
+        if (!vivo()) return;
+        pausar();                                            // o beat da página para
+        previa = window.__csPrevia || previa || new Audio();
+        window.__csPrevia = previa;
+        if (previa.__src !== src) { previa.src = src; previa.__src = src; }
+        var ini = inicio;
+        var pular = function () { try { previa.currentTime = ini; } catch (_) {} };
+        previa.muted = true;                                 // mudo até chegar no trecho
+        previa.onseeked = function () { if (Math.abs(previa.currentTime - ini) < 1) previa.muted = false; };
+        previa.ontimeupdate = function () {
+          if (!vivo()) return pararPrevia();
+          var t = previa.currentTime;
+          if (t < ini - 0.5 || t > ini + DUR + 1) return;    // ainda pulando
+          if (t >= ini + DUR) { pular(); return; }           // volta pro começo do trecho
+          tocando = t; pintar();
+        };
+        previa.onpause = function () { tocando = -1; if (vivo()) pintar(); };
+        if (previa.readyState >= 1) pular(); else previa.onloadedmetadata = pular;
+        var p = previa.play(); if (p && p.catch) p.catch(function () {});
+      };
 
       var gerar = function () {
         var meu = ++ger;
@@ -677,14 +730,16 @@
         }).catch(function () { if (segue()) legenda(''); });   // sem som: segue a arte
       };
 
-      Promise.all([lerOnda(src), arte(Object.assign({}, opts.arte, { onda: true }))]).then(function (r) {
+      Promise.all([lerOnda(src), comSom ? arte(Object.assign({}, opts.arte, { onda: true })) : null]).then(function (r) {
         if (!vivo()) return;
         onda0 = r[0]; base = r[1];
-        mostrar(base);
         if (onda0) {
           dur = dur || onda0.dur || onda0.p.length * (onda0.passo || 0.5);
           inicio = maisForte(onda0);        // os 15s mais fortes do beat
         } else if (dur && inicio > dur - DUR) inicio = Math.max(0, dur - DUR);
+        tocarTrecho();
+        if (!comSom) return;               // aparelho sem vídeo: toca a prévia e posta a arte
+        mostrar(base);
         if (dur > DUR + 1) montarEscolha();
         gerar();
       }).catch(function () { legenda(''); });
@@ -709,8 +764,7 @@
           for (var j = a0; j < a1 && j < p.length; j++) if (p[j] > m) m = p[j];
           barras.push(0.12 + 0.88 * m / 255);
         }
-        var tocando = -1;
-        var pintar = function () {
+        pintar = function () {
           var c = cx.getContext('2d');
           c.setTransform(dpr, 0, 0, dpr, 0, 0);
           c.clearRect(0, 0, larg, alt);
@@ -727,31 +781,6 @@
         };
         pintar();
 
-        // ouvir o trecho: um player só da folha (o da página para)
-        var ouvir = function () {
-          pausar();
-          if (!previa) { previa = new Audio(); previa.preload = 'auto'; }
-          if (previa.__src !== src) { previa.src = src; previa.__src = src; }
-          var ini = inicio;
-          previa.ontimeupdate = function () {
-            if (!vivo()) return pararPrevia();
-            var t = previa.currentTime;
-            if (t < ini - 0.5) return;                    // ainda pulando pro trecho
-            tocando = t;
-            if (t >= ini + DUR) { pararPrevia(); tocando = -1; }
-            pintar();
-          };
-          previa.onpause = function () { tocando = -1; if (vivo()) pintar(); };
-          // o play sai no toque (o celular exige); o pulo pro trecho, assim que der
-          if (previa.readyState >= 1) { try { previa.currentTime = ini; } catch (_) {} }
-          else {
-            previa.muted = true;                           // mudo até chegar no trecho
-            previa.onloadedmetadata = function () { try { previa.currentTime = ini; } catch (_) {} };
-            previa.onseeked = function () { previa.muted = false; previa.onseeked = null; };
-          }
-          var p = previa.play(); if (p && p.catch) p.catch(function () {});
-        };
-
         var arrasto = null;
         var posicao = function (e) { var r = cx.getBoundingClientRect(); return (e.clientX - r.left) / r.width * dur; };
         cx.addEventListener('pointerdown', function (e) {
@@ -759,7 +788,7 @@
           arrasto = (t >= inicio && t <= inicio + DUR) ? t - inicio : DUR / 2;   // fora da janela: centra no toque
           inicio = Math.max(0, Math.min(maxInicio, t - arrasto));
           try { cx.setPointerCapture(e.pointerId); } catch (_) {}
-          pararPrevia(); pintar();
+          tocando = -1; pintar();
         });
         cx.addEventListener('pointermove', function (e) {
           if (arrasto === null) return;
@@ -771,7 +800,7 @@
           arrasto = null;
           inicio = Math.round(inicio * 2) / 2;
           pintar();
-          ouvir();
+          tocarTrecho();
           // o vídeo refaz quando a pessoa para de mexer; até lá, "Postar" manda a arte
           arqVideo = null;
           legenda('preparando o som…');

@@ -47,6 +47,9 @@ export async function onRequestGet({ params, request, env }) {
       if (t.kind !== 'beat') continue;
       const b = achar(mapa, t);
       if (!b) continue;
+      // o gênero só existe na loja: beat da tape com par lá leva o gênero pro compartilhar
+      // (beat sem par fica sem, nunca adivinhado)
+      if (b.generoLabel) t.genero = b.generoLabel;
       if (b.sold) { t.tag = 'vendido'; continue; }
       if (!artist.dl_beats && t.tag === 'disponivel') t.buy = b.slug;
     }

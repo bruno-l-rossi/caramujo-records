@@ -128,6 +128,11 @@ __META__
   .txt-btn{display:flex;align-items:center;gap:8px;padding:8px 0;background:transparent;border:0;
     font-size:13px;font-weight:500;letter-spacing:.1em;color:#dcdcdc;cursor:pointer}
   .txt-btn:active{opacity:.6}
+  .shuf{width:40px;height:40px;margin:0 -8px;padding:0;background:transparent;border:0;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;color:#9a9a9a;position:relative}
+  .shuf.on{color:#fff}
+  .shuf.on::after{content:"";position:absolute;bottom:3px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:#fff}
+  .shuf:active{opacity:.6}
 
   .navwrap{position:sticky;top:0;z-index:7;background:#000;margin-top:14px}
   .tabsbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:8px}
@@ -370,6 +375,9 @@ __META__
         <div class="actions">
           <button class="play-all" id="playAll" type="button" aria-label="Tocar tudo">
             <svg width="34" height="36" viewBox="0 0 24 24" fill="#9a9a9a" aria-hidden="true"><path d="M6 3l15 9-15 9z"/></svg>
+          </button>
+          <button class="shuf" id="shuffleAll" type="button" aria-label="Tocar em ordem aleatória" aria-pressed="false">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
           </button>
           <button class="txt-btn" id="pickSend" type="button">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.9" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg>
@@ -651,8 +659,23 @@ __META__
     paint();render();
     if('mediaSession' in navigator) navigator.mediaSession.playbackState='paused';
   });
+  // Aleatório (25/09/2026): sorteia a ordem de tudo que está na lista e segue ela até o
+  // fim. Tocar numa faixa no meio continua o sorteio dali. O play grande volta pra ordem.
+  var aleatorio=false, sorteio=[];
+  function idxDe(id){ for(var i=0;i<rows.length;i++) if(rows[i].id===id) return i; return -1; }
+  function vizinho(passo){
+    if(!aleatorio) { var j=cur+passo; return j>=0&&j<rows.length?j:-1; }
+    var t=rows[cur], k=t?sorteio.indexOf(t.id):-1;
+    for(k+=passo;k>=0&&k<sorteio.length;k+=passo){ var i=idxDe(sorteio[k]); if(i>-1) return i; }
+    return -1;
+  }
+  function marcaAleatorio(){
+    var b=$('shuffleAll'); if(!b) return;
+    b.classList.toggle('on',aleatorio); b.setAttribute('aria-pressed',aleatorio?'true':'false');
+  }
   audio.addEventListener('ended',function(){
-    if(cur+1<rows.length) pick(cur+1);
+    var n=vizinho(1);
+    if(n>-1) pick(n);
     else { pos=0; paint(); render(); }
   });
   audio.addEventListener('error',function(){
@@ -680,7 +703,18 @@ __META__
       paint();
     });
   });
-  $('playAll').addEventListener('click',function(){if(rows.length){exitSel();pick(0)}});
+  $('playAll').addEventListener('click',function(){if(rows.length){exitSel();aleatorio=false;marcaAleatorio();pick(0)}});
+  $('shuffleAll').addEventListener('click',function(){
+    if(!rows.length) return;
+    if(aleatorio){ aleatorio=false; marcaAleatorio(); flash('Ordem normal.'); return; }
+    exitSel();
+    sorteio=rows.map(function(t){return t.id});
+    for(var i=sorteio.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var x=sorteio[i]; sorteio[i]=sorteio[j]; sorteio[j]=x; }
+    aleatorio=true; marcaAleatorio();
+    var primeiro=idxDe(sorteio[0]);
+    if(primeiro===cur){ audio.currentTime=0; audio.play().catch(function(){}); } else pick(primeiro);
+    flash('Tocando em ordem aleatória.');
+  });
 
   /* ---------- a tarja do sistema (tela de bloqueio, notificação) ---------- */
   function arteDoSistema(){
@@ -706,9 +740,9 @@ __META__
     liga('pause', function(){ audio.pause() });
     liga('previoustrack', function(){
       if(audio.currentTime > 4){ audio.currentTime = 0; return; }
-      if(cur > 0) pick(cur - 1);
+      var a = vizinho(-1); if(a > -1) pick(a);
     });
-    liga('nexttrack', function(){ if(cur + 1 < rows.length) pick(cur + 1) });
+    liga('nexttrack', function(){ var n = vizinho(1); if(n > -1) pick(n) });
     liga('seekbackward', function(d){ nudge(-(d && d.seekOffset || 15)) });
     liga('seekforward', function(d){ nudge(d && d.seekOffset || 15) });
     liga('seekto', function(d){ if(d && d.seekTime != null) audio.currentTime = d.seekTime });
@@ -829,7 +863,7 @@ __META__
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25d';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25e';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });
@@ -854,6 +888,18 @@ __META__
     if(!t) return null;
     return { src:'/audio/'+t.id+'.mp3', inicio:(rows[cur]===t?audio.currentTime:0)||0, dur:t.dur||0 };
   }
+  // a prévia do trecho toca num player da folha; o celular só deixa tocar depois de um
+  // toque, então ele nasce aqui, no toque de compartilhar (mudo até a folha achar o trecho)
+  function destravarPrevia(src){
+    try{
+      var a=window.__csPrevia||(window.__csPrevia=new Audio());
+      a.preload='auto';
+      if(a.__src!==src){ a.src=src; a.__src=src; }
+      a.muted=true;
+      var p=a.play(); if(p&&p.catch) p.catch(function(){});
+    }catch(_){}
+  }
+  function soltarPrevia(){ try{ if(window.__csPrevia) window.__csPrevia.pause(); }catch(_){} }
   function pausar(){ if(!audio.paused) audio.pause(); }   // não toca junto com o Instagram
   // ENVIAR da tape: a pessoa escolhe se manda a tape inteira ou uma faixa (sem adivinhar
   // pelo que está tocando)
@@ -895,6 +941,8 @@ __META__
   // senão, o link da própria tape.
   function storyDaFaixa(t){
     destravarSom();
+    pausar();                                   // a faixa da página para e a folha toca o trecho
+    destravarPrevia('/audio/'+t.id+'.mp3');
     var u = t.buy ? location.origin + '/b/' + t.buy : location.origin + location.pathname;
     carregarStory().then(function(){
       var nome = String(t.title||'').toLocaleUpperCase('pt-BR');
@@ -902,11 +950,11 @@ __META__
         tema:'catalogo', titulo:nome,
         url:u, urlStory:t.buy ? u+'?de=story' : u, nomeArquivo:'caramujo-'+(t.buy||slugTape()),
         arte:{ capa:CAT.artist.cover||null, titulo:nome,
-          ficha:[t.bpm?t.bpm+' BPM':'', t.key||''], vendido:t.tag==='vendido' },
+          ficha:[t.genero||'', t.bpm?t.bpm+' BPM':'', t.key||''] },
         audio:trechoDe(t),
         pausar:pausar, avisar:flash
       });
-    }).catch(function(){ if(navigator.clipboard) navigator.clipboard.writeText(u); flash('Link copiado.'); });
+    }).catch(function(){ soltarPrevia(); if(navigator.clipboard) navigator.clipboard.writeText(u); flash('Link copiado.'); });
   }
   function slugTape(){ return (location.pathname.split('/')[1]||'tape').replace(/[^a-z0-9-]/gi,''); }
   // sem a folha (arquivo não carregou): o de antes, link copiado

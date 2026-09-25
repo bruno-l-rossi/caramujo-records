@@ -4002,7 +4002,7 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25d';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25e';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });
@@ -4017,6 +4017,18 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
       if(window.__csAC.state==='suspended') window.__csAC.resume();
     }catch(_){}
   }
+  // a prévia do trecho toca num player da folha; o celular só deixa tocar depois de um
+  // toque, então ele nasce aqui, no toque de compartilhar (mudo até a folha achar o trecho)
+  function destravarPrevia(src){
+    try{
+      var a=window.__csPrevia||(window.__csPrevia=new Audio());
+      a.preload='auto';
+      if(a.__src!==src){ a.src=src; a.__src=src; }
+      a.muted=true;
+      var p=a.play(); if(p&&p.catch) p.catch(function(){});
+    }catch(_){}
+  }
+  function soltarPrevia(){ try{ if(window.__csPrevia) window.__csPrevia.pause(); }catch(_){} }
   function soLink(url){
     var computador=false; try{ computador=matchMedia('(hover: hover) and (pointer: fine)').matches; }catch(_){}
     if(navigator.share && !computador){ navigator.share({url:url}).catch(function(){}); return; }
@@ -4036,19 +4048,21 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     var url=location.origin+'/b/'+sl;
     var f=(window.__VIT||{})[String(b.id)]||{};
     var som=window.__npSom&&window.__npSom();
+    // o beat do site para e a folha toca o trecho que vai pro story
+    if(som&&!som.paused) som.pause();
+    if(f.mp3) destravarPrevia(f.mp3);
     carregarStory().then(function(){
       window.CaramujoStory.abrir({
         tema:'site', titulo:b.name,
         url:url, urlStory:url+'?de=story', nomeArquivo:'caramujo-'+sl,
         arte:{ capa:f.capaG||null, titulo:b.name,
-          ficha:[(typeof GENRE_LABELS!=='undefined'&&GENRE_LABELS[b.genre])||b.genre, b.bpm?b.bpm+' BPM':'', b.key],
-          vendido:!!b.sold },
+          ficha:[(typeof GENRE_LABELS!=='undefined'&&GENRE_LABELS[b.genre])||b.genre, b.bpm?b.bpm+' BPM':'', b.key] },
         // o trecho sai dos 15s mais fortes do beat (onda); sem onda, de onde está tocando
         audio:f.mp3?{ src:f.mp3, inicio:(som&&som.currentTime)||0, dur:f.dur||(som&&som.duration)||0 }:null,
         pausar:function(){ if(som&&!som.paused) som.pause(); },   // não toca junto com o Instagram nem com a prévia do trecho
         avisar:function(m){ try{ showToast(m); }catch(_){} }
       });
-    }).catch(function(){ soLink(url); });   // sem a folha, o compartilhar de sempre
+    }).catch(function(){ soltarPrevia(); soLink(url); });   // sem a folha, o compartilhar de sempre
   };
 
   /* ---------- funil ---------- */
