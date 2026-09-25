@@ -1,15 +1,16 @@
-/* Compartilhar (25/09/2026, 3ª versão no mesmo dia).
-   Folha com a prévia, o texto do cupom e 2 botões:
-   - Postar no story: manda só o arquivo. Beat tocando = vídeo de 15s (720p, ~2MB) com o
-     trecho e a onda andando, montado no aparelho (só ~265KB de áudio vêm da rede). A arte
-     parada fica pronta antes e o botão nunca trava: o vídeo entra quando termina.
-     Pausa o player do site e copia o link pro sticker de link.
+/* Compartilhar (25/09/2026).
+   Folha com a prévia, o texto e os botões:
+   - Postar no story: manda só o arquivo. Faixa com som (beat da vitrine, beat da tape,
+     faixa da pasta de artista) = SÓ vídeo, com o trecho e a onda andando, montado no
+     aparelho (só o pedaço do áudio vem da rede). O botão mostra o andamento e, tocado
+     antes da hora, avisa "Quase lá! Preparando seu vídeo". Falhou = "Tentar de novo".
+     A arte parada ficou só pra tape inteira. Pausa o player e copia o link pro sticker.
    - Enviar o link: manda só o link (a prévia da conversa já mostra capa, nome e ficha).
    Story clicável automático (como SoundCloud/Spotify) só existe pra app nativo parceiro da
    Meta; pela web o caminho é o sticker de link.
-   Pastas de artista: 30s (opts.duracao), só o vídeo (soVideo: o botão espera, mostrando o
-   andamento) e sem link (semLink: mandar a faixa é o ENVIAR da pasta).
-   Usado pelo site (index.html) e pelas páginas de beat tape (catalogo/app.html).
+   Pastas de artista: 30s (opts.duracao), sem link (semLink: mandar a faixa é o ENVIAR
+   da pasta) e o nome do artista no lugar do texto do cupom (opts.texto).
+   Usado pelo site (index.html) e pelas páginas de beat tape e de artista (catalogo/app.html).
    Carregado sob demanda (ou uns segundos depois do primeiro play, pra folha abrir na hora). */
 (function () {
   if (window.CaramujoStory) return;
@@ -654,14 +655,20 @@
     '.cs-catalogo .cs-trecho-topo b{color:#fff;font-weight:600}',
     '.cs-acoes button{width:100%;padding:15px 16px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}',
     '.cs-acoes button:disabled{opacity:.45;cursor:default}',
-    // pasta de artista (soVideo): o botão espera o vídeo e mostra o andamento enchendo
+    // faixa com som (soVideo): o botão espera o vídeo e mostra o andamento enchendo
     '.cs-acoes .cs-forte{position:relative;isolation:isolate;overflow:hidden}',
     '.cs-barra{display:none;position:absolute;left:0;top:0;bottom:0;width:0;z-index:-1;pointer-events:none;transition:width .35s linear}',
-    '.cs-acoes .cs-espera:disabled{opacity:1;cursor:progress}',
-    '.cs-espera:disabled .cs-barra{display:block}',
-    '.cs-catalogo .cs-acoes .cs-espera:disabled{background:#1b1b1b;border-color:#2a2a2a;color:#fff}',
+    '.cs-acoes .cs-espera{opacity:1;cursor:progress}',
+    '.cs-espera .cs-barra{display:block}',
+    '.cs-catalogo .cs-acoes .cs-forte.cs-espera{background:#1b1b1b;border-color:#2a2a2a;color:#fff}',
     '.cs-catalogo .cs-espera .cs-barra{background:rgba(255,255,255,.16)}',
-    '.cs-site .cs-acoes .cs-espera:disabled{background:transparent;border-color:#332c22;color:#E8E0CF}',
+    '.cs-site .cs-acoes .cs-forte.cs-espera{background:transparent;border-color:#332c22;color:#E8E0CF}',
+    // "Quase lá!": aviso rápido em cima do botão quando tocam antes do vídeo sair
+    '.cs-acoes{position:relative}',
+    '.cs-aviso{position:absolute;left:50%;top:-44px;transform:translate(-50%,6px);opacity:0;pointer-events:none;white-space:nowrap;padding:9px 16px;font-size:13px;transition:opacity .18s,transform .18s;z-index:2}',
+    '.cs-aviso.on{opacity:1;transform:translate(-50%,0)}',
+    '.cs-catalogo .cs-aviso{background:#fff;color:#000;border-radius:999px;font-weight:600}',
+    '.cs-site .cs-aviso{background:#1e1a12;border:1px solid #A87B4A;color:#E8E0CF;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}',
     '.cs-site .cs-espera .cs-barra{background:rgba(185,143,94,.3)}',
     // cara do site: paleta da casa, cantos retos
     '.cs-site .cs-folha{background:#1A1815;border:1px solid #332c22;border-bottom:none;color:#E8E0CF}',
@@ -717,8 +724,8 @@
   //         nomeArquivo, pausar() (para o player da página), avisar(msg),
   //         soVideo (só posta o vídeo: o botão espera ele ficar pronto mostrando o andamento),
   //         semLink (sem "Enviar o link" e sem copiar link pro sticker) }
-  // Pasta de artista (25/09): soVideo + semLink. Prévia de música sem som não serve, e
-  // mandar a faixa é trabalho do ENVIAR da pasta.
+  // Faixa com som vira soVideo sozinha (vitrine, tape, pasta de artista). Pasta de artista
+  // também vai semLink: mandar a faixa é trabalho do ENVIAR da pasta.
   // Dois caminhos, porque a web não sabe qual app a pessoa escolhe na tela do aparelho:
   //   Postar no story: manda SÓ o arquivo (vídeo com som, ou a arte). Nunca trava: a arte fica
   //     pronta em menos de 1s e o vídeo entra no lugar quando termina (a legenda do botão conta).
@@ -744,7 +751,9 @@
     var temTrecho = !!(opts.audio && opts.audio.src);
     var comSom = temTrecho && podeVideo();
     var catalogo = opts.tema === 'catalogo';
-    var soVideo = !!opts.soVideo, semLink = !!opts.semLink || !opts.url, falhou = false;
+    // Faixa com som = só vídeo (decisão de 25/09 noite, vitrine, tape e pastas de artista):
+    // prévia de música em imagem parada não vai mais. A arte parada fica pra tape inteira.
+    var soVideo = !!opts.soVideo || temTrecho, semLink = !!opts.semLink || !opts.url, falhou = false;
     var nome = String(opts.nomeArquivo || 'caramujo-story').replace(/\.(jpe?g|mp4)$/i, '');
     veu.className = 'cs-veu cs-' + (catalogo ? 'catalogo' : 'site');
     veu.innerHTML = '<div class="cs-folha" role="dialog" aria-modal="true" aria-label="Compartilhar">' +
@@ -754,7 +763,7 @@
       '<div class="cs-trecho" id="csTrecho" hidden><div class="cs-trecho-topo"><span>Trecho do story</span><b id="csTempo"></b></div>' +
       '<canvas id="csFaixa" aria-label="Arrasta pra escolher o trecho de ' + DUR + ' segundos"></canvas>' +
       '<p class="cs-dica">Arrasta pra escolher o trecho que vai no story.</p></div>' +
-      '<div class="cs-acoes">' +
+      '<div class="cs-acoes"><div class="cs-aviso" id="csAviso" role="status" aria-live="polite"></div>' +
         '<button type="button" class="cs-forte' + (soVideo ? ' cs-espera' : '') + '" id="csStory" disabled>Postar no story<small id="csSom"></small><span class="cs-barra" id="csBarra"></span></button>' +
         (semLink ? '' : '<button type="button" id="csLink">Enviar o link</button>') +
         '<button type="button" class="cs-fechar" id="csFechar">Fechar</button>' +
@@ -767,7 +776,9 @@
       var b = $('csStory'); if (!b || !vivo()) return;
       b.firstChild.nodeValue = estado === 'falhou' ? 'Tentar de novo' : 'Postar no story';
       b.classList.toggle('cs-espera', estado === 'espera');
-      b.disabled = estado === 'espera' || estado === 'sem';
+      // esperando, o botão segue tocável: o toque mostra o "Quase lá!" (pedido de 25/09)
+      b.disabled = estado === 'sem';
+      if (estado === 'espera') b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled');
       falhou = estado === 'falhou';
       $('csBarra').style.width = Math.round(Math.max(0, Math.min(1, p || 0)) * 100) + '%';
       legenda(texto);
@@ -789,7 +800,7 @@
     if (soVideo) {
       if (!comSom) {
         arte(Object.assign({}, opts.arte, { onda: false })).then(function (cv) { mostrar(cv); }).catch(semArte);
-        botao('sem', temTrecho ? 'esse navegador não monta vídeo: abre a pasta no Chrome ou no Safari atualizado' : 'essa faixa não tem som pra prévia', 0);
+        botao('sem', temTrecho ? 'esse navegador não monta vídeo: abre no Chrome ou no Safari atualizado' : 'essa faixa não tem som pra prévia', 0);
       } else botao('espera', 'preparando…', 0.02);
     } else arte(Object.assign({}, opts.arte, { onda: false })).then(function (cv) {
       if (!comSom) mostrar(cv);
@@ -946,8 +957,16 @@
       };
     }
 
+    var tAviso = null;
+    var quaseLa = function () {
+      var a = $('csAviso'); if (!a) return;
+      a.textContent = 'Quase lá! Preparando seu vídeo';
+      a.classList.add('on');
+      clearTimeout(tAviso); tAviso = setTimeout(function () { a.classList.remove('on'); }, 1800);
+    };
     $('csStory').addEventListener('click', function () {
       if (falhou) { if (gerar) gerar(); return; }        // "Tentar de novo"
+      if (soVideo && !arqVideo) { quaseLa(); return; }
       var f = soVideo ? arqVideo : (arqVideo || arqImagem);
       if (!f) return;
       pararPrevia();

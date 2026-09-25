@@ -932,7 +932,7 @@ __META__
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25h';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25i';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });
@@ -1027,18 +1027,18 @@ __META__
   }
   // PRÉVIA (topo da pasta de artista): escolhe a faixa e cai no compartilhar dela.
   // O ENVIAR segue o de sempre: marca as faixas e manda o link (feat, amigo que opina).
-  // Beats e Músicas separados em abas, como na página (pedido de 25/09); abre na aba
-  // aberta na página (trocar de aba na página para o som, então quem toca está nela).
+  // Beats e Músicas separados em abas, como na página (pedido de 25/09); abre sempre em
+  // Músicas, que é o que o artista mais posta.
   function escolherPrevia(){
     if(!BEATS.length && !SONS.length){ flash('Nenhuma faixa pra mostrar.'); return; }
-    var tocando=cur>-1?rows[cur]:null, aba=tab;
+    var tocando=cur>-1?rows[cur]:null, aba='sons';
     if(aba==='beats'&&!BEATS.length) aba='sons';
     if(aba==='sons'&&!SONS.length) aba='beats';
     var duas=BEATS.length&&SONS.length, lista=[];
     var abas=duas?'<div class="card-abas" role="tablist">'+
       '<button class="tab" type="button" role="tab" data-aba="beats">Beats</button>'+
       '<button class="tab" type="button" role="tab" data-aba="sons">Músicas</button></div>':'';
-    open('<h2 id="cardTitle">Prévia pro story</h2><p>Escolhe a faixa. Vão 30 segundos dela, com a arte da Caramujo.</p>'+
+    open('<h2 id="cardTitle">Prévia</h2><p>Escolha a faixa para postar nas redes sociais</p>'+
       abas+'<div class="card-list card-rolo" id="prevLista"></div>'+
       '<button class="card-close" data-close>Fechar</button>');
     function mostrar(qual){
@@ -1074,6 +1074,8 @@ __META__
       var nome = String(t.title||'').toLocaleUpperCase('pt-BR');
       window.CaramujoStory.abrir({
         tema:'catalogo', titulo:nome, duracao:30, soVideo:true, semLink:true,
+        // no lugar do "Nos marque e receba um cupom" (que é pra quem compra beat), o artista
+        texto:(CAT.artist.name||'Caramujo Records')+'\n@rideblan33 · © Caramujo Records',
         nomeArquivo:'caramujo-'+(norm(t.title||'musica').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'musica'),
         arte:{ capa:CAT.artist.cover||null, titulo:nome, ficha:[CAT.artist.name||''] },
         audio:trechoDe(t),
