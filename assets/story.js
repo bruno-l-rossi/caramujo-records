@@ -190,7 +190,7 @@
     }
   }
 
-  // opts: { capa, titulo, kicker, ficha:[...], vendido, onda (deixa lugar pra onda do vídeo) }
+  // opts: { capa, titulo, artista (pasta de artista: nome em âmbar logo acima do título), kicker, ficha:[...], onda (deixa lugar pra onda do vídeo) }
   // A arte sai centrada na altura, fora das barras do Instagram (topo e resposta).
   function arte(opts) {
     return Promise.resolve().then(function () { return Promise.all([fontes(), selo(), imagem(opts.capa)]); }).then(function (r) {
@@ -222,7 +222,16 @@
       var TOPO = 170;
       // ordem embaixo da capa (pedido do Bruno, 25/09): nome, prod. @rideblan33, ficha
       var CHIPS = fichas.length ? 36 + 58 : 0;
-      var resto = TOPO + 24 + mt.alt + 72 + CHIPS + (opts.onda ? 70 + ONDA_A : 0);
+      // artista (opção 2 escolhida pelo Bruno, 25/09): caixa alta, âmbar, espaçado, em cima
+      // do nome da música. Nome comprido diminui até caber em 900px.
+      var artista = String(opts.artista || '').trim().toLocaleUpperCase('pt-BR'), ART = artista ? 78 : 0, tamArt = 44;
+      if (artista) {
+        for (; tamArt > 28; tamArt -= 2) {
+          ctx.font = '600 ' + tamArt + 'px "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif';
+          if (ctx.measureText(artista).width + (artista.length - 1) * tamArt * 0.23 <= 900) break;
+        }
+      }
+      var resto = TOPO + 24 + ART + mt.alt + 72 + CHIPS + (opts.onda ? 70 + ONDA_A : 0);
       var lado = Math.round(Math.max(680, Math.min(900, 1530 - resto)));
       var bloco = resto + lado;
       var y0 = 170 + Math.max(0, (1720 - 170 - bloco) / 2);
@@ -247,7 +256,14 @@
       ctx.strokeStyle = COR.wire; ctx.lineWidth = 2; ctx.strokeRect(cx + 1, cy + 1, lado - 2, lado - 2);
 
       // nome, o prod. @rideblan33 do jeito que se escreve, e a ficha (gênero, BPM, tom, beat tape...)
-      var fim = titulo(ctx, mt, W / 2, cy + lado + 24);
+      var yt = cy + lado + 24;
+      if (artista) {
+        ctx.fillStyle = COR.amber;
+        ctx.font = '600 ' + tamArt + 'px "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif';
+        espacado(ctx, artista, W / 2, yt + 62, Math.round(tamArt * 0.23));
+        yt += ART;
+      }
+      var fim = titulo(ctx, mt, W / 2, yt);
       ctx.fillStyle = COR.fire;
       ctx.font = '400 30px "IBM Plex Mono", ui-monospace, monospace';
       espacado(ctx, String(opts.kicker || 'prod. @rideblan33'), W / 2, fim + 62, 4);

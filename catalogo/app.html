@@ -932,7 +932,7 @@ __META__
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25i';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25j';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });
@@ -1077,7 +1077,8 @@ __META__
         // no lugar do "Nos marque e receba um cupom" (que é pra quem compra beat), o artista
         texto:(CAT.artist.name||'Caramujo Records')+'\n@rideblan33 · © Caramujo Records',
         nomeArquivo:'caramujo-'+(norm(t.title||'musica').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'musica'),
-        arte:{ capa:CAT.artist.cover||null, titulo:nome, ficha:[CAT.artist.name||''] },
+        // artista em âmbar em cima do nome da música (opção 2, escolha do Bruno); sem a etiqueta embaixo
+        arte:{ capa:CAT.artist.cover||null, titulo:nome, artista:CAT.artist.name||'' },
         audio:trechoDe(t),
         pausar:pausar, avisar:flash
       });
