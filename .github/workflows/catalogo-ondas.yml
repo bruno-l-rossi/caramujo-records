@@ -1,0 +1,33 @@
+name: Catálogo — ondas dos beats
+
+# Mede o volume de cada meio segundo dos beats que já estão no site (scripts/onda.mjs)
+# e guarda no R2. O compartilhar usa isso pra achar o trecho mais forte do beat e pra
+# pessoa escolher o pedaço do story. Rodar uma vez depois do deploy de 25/09/2026;
+# dali pra frente o conversor já faz junto. Quem já tem onda é pulado.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: catalogo
+  cancel-in-progress: false
+
+jobs:
+  ondas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Garantir ffmpeg
+        run: ffmpeg -version >/dev/null 2>&1 || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+
+      - name: Medir as ondas
+        env:
+          INGEST_TOKEN: ${{ secrets.INGEST_TOKEN }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://caramujorecords.com.br' }}
+        run: node scripts/sync.mjs "--ondas"

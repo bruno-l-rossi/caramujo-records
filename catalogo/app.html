@@ -767,6 +767,7 @@ __META__
   var ICON_CART='<circle cx="9.5" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/>'+
     '<path d="M2.5 3.5h2.3l2.4 11.1a1.8 1.8 0 001.8 1.4h7.6a1.8 1.8 0 001.8-1.4L21.5 7.4H5.6"/>';
   var ICON_SEND='<path d="M7 17L17 7"/><path d="M9 7h8v8"/>';
+  var ICON_SHARE='<circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 13.3l7.4 4.4"/><path d="M15.7 6.3l-7.4 4.4"/>';
 
   $('orderBtn').addEventListener('click',function(){
     open('<h2 id="cardTitle">Ordem</h2><p>Como a lista aparece</p>'+
@@ -812,6 +813,9 @@ __META__
     if(preview){downSheet(preview);return}
     enterSel('down');
   });
+  // na tape o botão é de compartilhar (tape inteira ou uma faixa), com o ícone de compartilhar
+  if(CAT.artist.tape) $('pickSend').innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.9" aria-hidden="true">'+
+    '<circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 13.3l7.4 4.4"/><path d="M15.7 6.3l-7.4 4.4"/></svg> COMPARTILHAR';
   $('pickSend').addEventListener('click',function(){
     if(CAT.artist.tape) return linkDaTape();
     enterSel('send');
@@ -825,7 +829,7 @@ __META__
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25c';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25d';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });
@@ -866,7 +870,7 @@ __META__
         '<span class="fx"><b>'+esc(t.title)+'</b>'+(info?'<small>'+esc(info)+'</small>':'')+'</span></button>';
     }).join('');
     open('<h2 id="cardTitle">Compartilhar</h2><p>A tape inteira ou uma faixa só.</p>'+
-      '<div class="card-list">'+item('tape',ICON_SEND,'A beat tape inteira')+'</div>'+
+      '<div class="card-list">'+item('tape',ICON_SHARE,'A beat tape inteira')+'</div>'+
       (faixas?'<p class="card-sep">Uma faixa</p><div class="card-list card-rolo">'+faixas+'</div>':'')+
       '<button class="card-close" data-close>Fechar</button>');
     card.querySelector('[data-act=tape]').addEventListener('click',function(){close();storyDaTape()});
@@ -883,7 +887,7 @@ __META__
         url:u, nomeArquivo:'caramujo-'+slugTape(),
         arte:{ capa:CAT.artist.cover||null, titulo:CAT.artist.name,
           ficha:['beat tape', n+(n===1?' faixa':' faixas')] },
-        aoPostar:pausar, avisar:flash
+        pausar:pausar, avisar:flash
       });
     }).catch(linkSimples);
   }
@@ -900,7 +904,7 @@ __META__
         arte:{ capa:CAT.artist.cover||null, titulo:nome,
           ficha:[t.bpm?t.bpm+' BPM':'', t.key||''], vendido:t.tag==='vendido' },
         audio:trechoDe(t),
-        aoPostar:pausar, avisar:flash
+        pausar:pausar, avisar:flash
       });
     }).catch(function(){ if(navigator.clipboard) navigator.clipboard.writeText(u); flash('Link copiado.'); });
   }
@@ -943,7 +947,7 @@ __META__
   function trackSheet(t){
     var linhas =
       (t.buy ? item('buy',ICON_CART,'Comprar esse beat') : '') +
-      (CAT.artist.tape && t.kind==='beat' ? item('story',ICON_SEND,'Compartilhar esse beat') : '') +
+      (CAT.artist.tape && t.kind==='beat' ? item('story',ICON_SHARE,'Compartilhar esse beat') : '') +
       (!CAT.artist.tape && (CAT.owner || (!preview && !CAT.preview)) ? item('send',ICON_SEND,'Enviar só essa faixa') : '') +
       (podeBaixar() ? item('down',ICON_DOWN,'Baixar') : '');
     if(!linhas){ flash('Essa faixa está só pra ouvir.'); return; }

@@ -210,11 +210,13 @@ novos como disponíveis → gênero → Publicar marcados. Copiar pra Exclusivos
 preços que a própria página mostra (`PRICE_BEAT`, `PRICE_STEMS`, botões `addPkg`/`addSvc`) e o
 cupom do banco. Se o valor do navegador não bater, recusa. Mudou preço no HTML, o servidor acompanha.
 
-**Compartilhar (story ou link):** o botão de compartilhar (barra do player e ENVIAR das
+**Compartilhar (story ou link):** o botão de compartilhar (barra do player e COMPARTILHAR das
 beat tapes) abre uma prévia com o texto do cupom e 2 botões. "Postar no story" manda só o
-arquivo: com beat tocando, um vídeo de 15s com o trecho e a onda andando; sem beat, a arte
-(`assets/story.js`). Pausa o player e copia o link pro sticker. "Enviar o link" manda só o
-link. Na tape, o ENVIAR pergunta se vai a tape inteira ou uma faixa.
+arquivo: com beat, um vídeo de 15s dos trechos mais fortes (a pessoa pode arrastar pra outro
+trecho e ouvir antes); sem beat, a arte (`assets/story.js`). Pausa o player e copia o link pro
+sticker. "Enviar o link" manda só o link. Na tape, pergunta se vai a tape inteira ou uma faixa.
+O trecho mais forte vem da "onda" de cada beat (volume a cada meio segundo, `scripts/onda.mjs`),
+guardada no R2 pelo conversor. Beats antigos: rodar uma vez o workflow "Catálogo — ondas dos beats".
 
 **Limite do banco:** o plano gratuito do D1 lê até 5 milhões de linhas por dia. A home do
 painel mostra o consumo do dia ("Banco hoje"). Passou do limite, o banco trava até as 21h

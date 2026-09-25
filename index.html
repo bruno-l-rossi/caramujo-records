@@ -1593,7 +1593,7 @@ html,body{overflow-x:hidden;}
       <button class="tb" id="npPrev" onclick="npPrev()" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M7 5v14h2.6V5zM19 5l-9 7 9 7z"/></svg></button>
       <button class="tb principal" id="npPlay" onclick="npToggle()" aria-label="Tocar"></button>
       <button class="tb" id="npNext" onclick="npNext()" aria-label="Próxima"><svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M17 5v14h-2.6V5zM5 5l9 7-9 7z"/></svg></button>
-      <button class="tb" id="npShare" type="button" onclick="npCompartilhar()" aria-label="Compartilhar este beat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg></button>
+      <button class="tb" id="npShare" type="button" onclick="npCompartilhar()" aria-label="Compartilhar este beat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 13.3l7.4 4.4"/><path d="M15.7 6.3l-7.4 4.4"/></svg></button>
     </div>
     <div class="pe-dir">
       <div class="vol-wrap" id="npVolWrap">
@@ -4002,7 +4002,7 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25c';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25d';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });
@@ -4043,8 +4043,9 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
         arte:{ capa:f.capaG||null, titulo:b.name,
           ficha:[(typeof GENRE_LABELS!=='undefined'&&GENRE_LABELS[b.genre])||b.genre, b.bpm?b.bpm+' BPM':'', b.key],
           vendido:!!b.sold },
+        // o trecho sai dos 15s mais fortes do beat (onda); sem onda, de onde está tocando
         audio:f.mp3?{ src:f.mp3, inicio:(som&&som.currentTime)||0, dur:f.dur||(som&&som.duration)||0 }:null,
-        aoPostar:function(){ if(som&&!som.paused) som.pause(); },   // não toca junto com o Instagram
+        pausar:function(){ if(som&&!som.paused) som.pause(); },   // não toca junto com o Instagram nem com a prévia do trecho
         avisar:function(m){ try{ showToast(m); }catch(_){} }
       });
     }).catch(function(){ soLink(url); });   // sem a folha, o compartilhar de sempre

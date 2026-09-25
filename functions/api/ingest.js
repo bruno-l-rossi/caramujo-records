@@ -58,6 +58,8 @@ async function rodar(request, env) {
   if (op === 'fila') return fila(d, await request.json());
   if (op === 'exclusivos') return exclusivos(d, await request.json());
   if (op === 'faltando') return faltando(d, request, env);
+  if (op === 'onda') return onda(env, url, await request.json());
+  if (op === 'semonda') return semonda(d, env);
   if (op === 'faxina') return faxina(d, env);
   return json({ erro: 'op desconhecida' }, 400);
 }
@@ -308,6 +310,38 @@ async function track(d, env, url, request) {
   return json({ ok: true, bytes: body.byteLength });
 }
 
+// A onda do beat (volume de cada meio segundo, scripts/onda.mjs): o compartilhar usa pra
+// achar o trecho mais forte e pra pessoa escolher o pedaço. Fica no R2, não no banco:
+// o site lê direto de /audio/<id>.onda sem gastar leitura do D1.
+async function onda(env, url, body) {
+  if (!env.AUDIO) return json({ erro: 'R2 nao esta ligado (binding AUDIO)' }, 500);
+  const id = url.searchParams.get('id') || '';
+  if (!/^[A-Za-z0-9_-]{10,80}$/.test(id)) return json({ erro: 'id invalido' }, 400);
+  const p = Array.isArray(body && body.p) ? body.p : null;
+  if (!p || !p.length || p.length > 4000 || p.some((v) => !Number.isInteger(v) || v < 0 || v > 255)) {
+    return json({ erro: 'onda invalida' }, 400);
+  }
+  const passo = Number(body.passo) > 0 ? Number(body.passo) : 0.5;
+  await env.AUDIO.put(`onda/${id}.json`, JSON.stringify({ v: 1, passo, dur: Number(body.dur) || p.length * passo, p }), {
+    httpMetadata: { contentType: 'application/json', cacheControl: 'public, max-age=86400' }
+  });
+  return json({ ok: true, barras: p.length });
+}
+
+// Beats prontos que ainda não têm onda (pra primeira carga, sync.mjs --ondas)
+async function semonda(d, env) {
+  if (!env.AUDIO) return json({ erro: 'R2 nao esta ligado (binding AUDIO)' }, 500);
+  const { results } = await d.prepare(`SELECT id FROM tracks WHERE kind = 'beat' AND ready = 1`).all();
+  const tem = new Set();
+  let cursor;
+  do {
+    const pag = await env.AUDIO.list({ prefix: 'onda/', cursor, limit: 1000 });
+    for (const o of pag.objects) tem.add(o.key.slice(5, -5));
+    cursor = pag.truncated ? pag.cursor : undefined;
+  } while (cursor);
+  return json({ ids: (results || []).map((r) => r.id).filter((id) => !tem.has(id)) });
+}
+
 async function done(d, env, url, body) {
   const folderId = url.searchParams.get('folderId');
   const keep = new Set(body.ids || []);
@@ -402,7 +436,9 @@ async function fila(d, body) {
 // nunca apagar algo que o conversor acabou de subir e ainda não registrou.
 async function faxina(d, env) {
   if (!env.AUDIO) return json({ erro: 'R2 nao esta ligado (binding AUDIO)' }, 500);
-  const faixas = new Set(((await d.prepare('SELECT id FROM tracks').all()).results || []).map((r) => 'mp3/' + r.id + '.mp3'));
+  const ids = ((await d.prepare('SELECT id FROM tracks').all()).results || []).map((r) => r.id);
+  const faixas = new Set(ids.map((id) => 'mp3/' + id + '.mp3'));
+  const ondas = new Set(ids.map((id) => 'onda/' + id + '.json'));
   const capas = new Set();
   for (const r of (await d.prepare('SELECT cover_key FROM artists WHERE cover_key IS NOT NULL').all()).results || []) {
     capas.add('capa/' + r.cover_key + '.jpg');
@@ -411,13 +447,13 @@ async function faxina(d, env) {
   const limite = Date.now() - 3600e3;
   const apagar = [];
   let vistos = 0, bytes = 0;
-  for (const prefixo of ['mp3/', 'capa/']) {
+  for (const prefixo of ['mp3/', 'capa/', 'onda/']) {
     let cursor;
     do {
       const pag = await env.AUDIO.list({ prefix: prefixo, cursor, limit: 1000 });
       for (const o of pag.objects) {
         vistos++;
-        const usado = prefixo === 'mp3/' ? faixas.has(o.key) : capas.has(o.key);
+        const usado = prefixo === 'mp3/' ? faixas.has(o.key) : prefixo === 'onda/' ? ondas.has(o.key) : capas.has(o.key);
         const velho = !o.uploaded || new Date(o.uploaded).getTime() < limite;
         if (!usado && velho) { apagar.push(o.key); bytes += o.size || 0; }
       }

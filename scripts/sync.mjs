@@ -5,6 +5,8 @@
 //   node scripts/sync.mjs                 -> todos os artistas + as beat tapes
 //   node scripts/sync.mjs "nico2b,PUMA"   -> só esses
 //   node scripts/sync.mjs "tapes"         -> só as beat tapes do @rideblan33
+//   node scripts/sync.mjs "--ondas"       -> só a onda (volume) dos beats que ainda não têm
+//                                            (lê o MP3 do próprio site; não precisa do Drive)
 //
 // Precisa de: GDRIVE_SA_JSON, INGEST_TOKEN, SITE_URL
 // Opcional: PROJETOS_FOLDER_ID (padrão: a pasta Projetos do rideblan33)
@@ -16,6 +18,7 @@ import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { parseName } from './parse.mjs';
+import { ondaDe } from './onda.mjs';
 import { mesma } from '../functions/_lib/casar.js';   // o mesmo cruzamento que o site usa
 
 const run = promisify(execFile);
@@ -272,8 +275,9 @@ async function vitrineAvulsa(pasta, dir) {
   for (const id of p.need) {
     const faixa = faixas.find((f) => f.id === id);
     try {
-      const { buf, dur, bytes } = await converter(faixa, dir);
+      const { buf, dur, bytes, onda } = await converter(faixa, dir);
       await ingest('track', { id, dur: String(dur), kbps: String(KBPS) }, buf, true);
+      if (onda) await ingest('onda', { id }, onda).catch((e) => console.log(`    onda falhou: ${e.message}`));
       console.log(`    ok  ${faixa.title}  ${Math.round(dur)}s  ${(bytes / 1048576).toFixed(1)} MB`);
     } catch (e) {
       if (e.parar) throw e;                    // banco no limite: não adianta seguir
@@ -335,9 +339,11 @@ async function converter(faixa, dir) {
 
   const bytes = (await fs.promises.stat(leve)).size;
   const buf = await fs.promises.readFile(leve);
+  // volume de cada meio segundo, pro compartilhar achar o trecho mais forte
+  const onda = faixa.kind === 'beat' ? await ondaDe(leve).catch(() => null) : null;
   await fs.promises.rm(bruto, { force: true });
   await fs.promises.rm(leve, { force: true });
-  return { buf, dur: Number(stdout.trim()) || 0, bytes };
+  return { buf, dur: Number(stdout.trim()) || 0, bytes, onda };
 }
 
 async function capinha(arquivo, dir) {
@@ -391,8 +397,41 @@ async function ingest(op, params, body, binario = false) {
 
 /* ---------- principal ---------- */
 
+// Só a onda dos beats que já estão no R2 e ainda não têm (primeira carga, 25/09/2026).
+// Baixa o MP3 do próprio site, mede e manda. Quem já tem é pulado: dá pra rodar de novo.
+async function ondas() {
+  const { ids } = await ingest('semonda', {}, {});
+  console.log(`Ondas: ${ids.length} beat(s) sem onda`);
+  const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'caramujo-onda-'));
+  let feitos = 0, falhas = 0;
+  const fila = ids.slice();
+  async function trabalhador() {
+    while (fila.length) {
+      const id = fila.shift();
+      const arq = path.join(dir, id + '.mp3');
+      try {
+        const r = await insiste(() => fetch(`${SITE}/audio/${id}.mp3`));
+        if (!r.ok) throw new Error('mp3 ' + r.status);
+        await fs.promises.writeFile(arq, Buffer.from(await r.arrayBuffer()));
+        await ingest('onda', { id }, await ondaDe(arq));
+        feitos++;
+        if (feitos % 50 === 0) console.log(`    ${feitos} de ${ids.length}`);
+      } catch (e) {
+        if (e.parar) throw e;
+        falhas++;
+        console.log(`    falhou ${id}: ${e.message}`);
+      } finally {
+        await fs.promises.rm(arq, { force: true });
+      }
+    }
+  }
+  await Promise.all([trabalhador(), trabalhador(), trabalhador(), trabalhador()]);
+  console.log(`Ondas: ${feitos} feitas, ${falhas} falharam`);
+}
+
 async function main() {
   if (!TOKEN) throw new Error('falta INGEST_TOKEN');
+  if (alvo[0] === '--ondas') return ondas();
   if (!process.env.GDRIVE_SA_JSON) throw new Error('falta GDRIVE_SA_JSON');
 
   const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'caramujo-'));
@@ -500,8 +539,9 @@ async function umaPasta(pasta, dir) {
   for (const id of p.need) {
     const faixa = faixas.find((f) => f.id === id);
     try {
-      const { buf, dur, bytes } = await converter(faixa, dir);
+      const { buf, dur, bytes, onda } = await converter(faixa, dir);
       await ingest('track', { id, dur: String(dur), kbps: String(KBPS) }, buf, true);
+      if (onda) await ingest('onda', { id }, onda).catch((e) => console.log(`    onda falhou: ${e.message}`));
       console.log(`    ok  ${faixa.title}  ${Math.round(dur)}s  ${(bytes / 1048576).toFixed(1)} MB`);
     } catch (e) {
       if (e.parar) throw e;                    // banco no limite: não adianta seguir
