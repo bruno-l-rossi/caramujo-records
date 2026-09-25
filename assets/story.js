@@ -1,9 +1,9 @@
-/* Compartilhar com arte pro story (25/09/2026).
-   O Instagram só oferece "Stories" no menu de compartilhar quando recebe uma
-   IMAGEM; link sozinho não aparece. Aqui eu desenho a arte vertical do beat ou
-   da beat tape (1080x1920, cara da Caramujo: capa, nome em serifa, ficha em mono,
-   selo) e abro uma folha com: postar no story, enviar o link, copiar o link.
-   O link já vai copiado na hora do story: no Instagram é só colar no sticker.
+/* Compartilhar com arte pro story (25/09/2026, refeito em 25/09 à tarde).
+   Folha com a prévia, o texto do cupom e UM botão: Compartilhar, que abre a tela
+   do aparelho (story, WhatsApp, copiar...). Vai o arquivo + a mensagem com o link.
+   Beat tocando: o arquivo é um vídeo de 15s com o trecho que tava tocando e a onda
+   andando (Instagram aceita vídeo no story). Sem beat tocando ou sem suporte: a arte
+   1080x1920 parada. O link também vai copiado, pro sticker de link do story.
    Usado pelo site (index.html) e pelas páginas de beat tape (catalogo/app.html).
    Carregado sob demanda: ninguém baixa isso sem tocar em compartilhar. */
 (function () {
@@ -98,20 +98,24 @@
   }
 
   // quebra o nome em até 2 linhas, diminuindo a fonte até caber
-  function titulo(ctx, texto, cx, y, larg) {
+  function medirTitulo(ctx, texto, larg) {
     var tam = 112, linhas;
     for (; tam >= 64; tam -= 6) {
       ctx.font = '600 ' + tam + 'px "Cormorant Garamond", Georgia, serif';
       linhas = quebrar(ctx, texto, larg);
       if (linhas.length <= 2 && linhas.every(function (l) { return ctx.measureText(l).width <= larg; })) break;
     }
+    if (tam < 64) tam = 64;
     if (linhas.length > 2) linhas = [linhas[0], linhas.slice(1).join(' ')];
+    return { tam: tam, linhas: linhas, alt: tam + (linhas.length - 1) * tam * 1.02 };
+  }
+  function titulo(ctx, m, cx, y) {
+    ctx.font = '600 ' + m.tam + 'px "Cormorant Garamond", Georgia, serif';
     ctx.fillStyle = COR.cream;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
-    var alt = tam * 1.02;
-    linhas.forEach(function (l, i) { ctx.fillText(l, cx, y + tam + i * alt); });
-    return y + tam + (linhas.length - 1) * alt;
+    m.linhas.forEach(function (l, i) { ctx.fillText(l, cx, y + m.tam + i * m.tam * 1.02); });
+    return y + m.alt;
   }
   function quebrar(ctx, texto, larg) {
     var palavras = String(texto).split(/\s+/), linhas = [], atual = '';
@@ -152,9 +156,22 @@
     ctx.textBaseline = 'alphabetic';
   }
 
-  // opts: { capa, titulo, kicker, ficha:[...], vendido, rodape }
+  // a onda do som: barras do trecho de verdade, o que já tocou em fire
+  var ONDA_L = 760, ONDA_A = 96;
+  function onda(ctx, pk, prog, y) {
+    var n = pk.length, gap = 6, bw = (ONDA_L - gap * (n - 1)) / n, x = (W - ONDA_L) / 2;
+    var corte = prog * n;
+    for (var i = 0; i < n; i++) {
+      var h = Math.max(6, pk[i] * ONDA_A);
+      ctx.fillStyle = i < corte ? COR.fire : 'rgba(232,224,207,.2)';
+      ctx.fillRect(x + i * (bw + gap), y - h / 2, bw, h);
+    }
+  }
+
+  // opts: { capa, titulo, kicker, ficha:[...], vendido, onda (deixa lugar pra onda do vídeo) }
+  // A arte sai centrada na altura, fora das barras do Instagram (topo e resposta).
   function arte(opts) {
-    return Promise.all([fontes(), selo(), imagem(opts.capa)]).then(function (r) {
+    return Promise.resolve().then(function () { return Promise.all([fontes(), selo(), imagem(opts.capa)]); }).then(function (r) {
       var path = r[1], img = r[2];
       var cv = document.createElement('canvas');
       cv.width = W; cv.height = H;
@@ -170,14 +187,26 @@
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
       grao(ctx);
 
-      // topo: selo + CARAMUJO RECORDS (abaixo da barra do Instagram)
-      desenharSelo(ctx, path, W / 2 - 30, 200, 60, COR.cream, 4);
+      // tom fica como se escreve (Am, Abm, F#m); o resto em caixa alta
+      var fichas = (opts.ficha || []).filter(Boolean).map(function (t) {
+        t = String(t);
+        return { texto: /^[A-G](#|b)?(m|maj)?$/.test(t) ? t : t.toUpperCase() };
+      });
+      if (opts.vendido) fichas.push({ texto: 'VENDIDO', cor: COR.blood, corTexto: COR.bone });
+
+      // mede o bloco todo pra centrar: selo + nome da casa, capa, kicker, nome, ficha, onda
+      var mt = medirTitulo(ctx, opts.titulo || '', 900);
+      var lado = 760, TOPO = 170;
+      var bloco = TOPO + lado + 96 + mt.alt + (fichas.length ? 44 + 58 : 0) + (opts.onda ? 70 + ONDA_A : 0);
+      var y0 = 150 + Math.max(0, (1650 - 150 - bloco) / 2);
+
+      desenharSelo(ctx, path, W / 2 - 30, y0, 60, COR.cream, 4);
       ctx.fillStyle = COR.cream;
       ctx.font = '600 28px "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif';
-      espacado(ctx, 'CARAMUJO RECORDS', W / 2, 310, 9);
+      espacado(ctx, 'CARAMUJO RECORDS', W / 2, y0 + 110, 9);
 
       // capa (ou o selo grande, quando não tem capa)
-      var lado = 760, cx = (W - lado) / 2, cy = 370;
+      var cx = (W - lado) / 2, cy = y0 + TOPO;
       ctx.save();
       ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 60; ctx.shadowOffsetY = 24;
       ctx.fillStyle = COR.deep; ctx.fillRect(cx, cy, lado, lado);
@@ -190,27 +219,13 @@
       }
       ctx.strokeStyle = COR.wire; ctx.lineWidth = 2; ctx.strokeRect(cx + 1, cy + 1, lado - 2, lado - 2);
 
-      // kicker, nome, ficha
+      // kicker (prod. @rideblan33, do jeito que se escreve), nome, ficha
       ctx.fillStyle = COR.fire;
-      ctx.font = '400 28px "IBM Plex Mono", ui-monospace, monospace';
-      espacado(ctx, String(opts.kicker || '').toUpperCase(), W / 2, cy + lado + 80, 8);
-      var fim = titulo(ctx, opts.titulo || '', W / 2, cy + lado + 96, 900);
-      // tom fica como se escreve (Am, Abm, F#m); o resto em caixa alta
-      var fichas = (opts.ficha || []).filter(Boolean).map(function (t) {
-        t = String(t);
-        return { texto: /^[A-G](#|b)?(m|maj)?$/.test(t) ? t : t.toUpperCase() };
-      });
-      if (opts.vendido) fichas.push({ texto: 'VENDIDO', cor: COR.blood, corTexto: COR.bone });
-      if (fichas.length) chips(ctx, fichas, W / 2, fim + 44);
-
-      // rodapé: o endereço (o sticker de link vai por cima, onde você quiser)
-      ctx.fillStyle = COR.read;
-      ctx.font = '400 28px "IBM Plex Mono", ui-monospace, monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(opts.rodape || 'caramujorecords.com.br', W / 2, 1640);
-      ctx.fillStyle = COR.dim;
-      ctx.font = '400 24px "IBM Plex Mono", ui-monospace, monospace';
-      espacado(ctx, 'PROD. @RIDEBLAN33', W / 2, 1684, 6);
+      ctx.font = '400 30px "IBM Plex Mono", ui-monospace, monospace';
+      espacado(ctx, String(opts.kicker || 'prod. @rideblan33'), W / 2, cy + lado + 80, 4);
+      var fim = titulo(ctx, mt, W / 2, cy + lado + 96);
+      if (fichas.length) { chips(ctx, fichas, W / 2, fim + 44); fim += 44 + 58; }
+      if (opts.onda) cv.ondaY = fim + 70 + ONDA_A / 2;
       return cv;
     });
   }
@@ -220,9 +235,221 @@
       try {
         cv.toBlob(function (b) {
           if (!b) return ok(null);
-          try { ok(new File([b], nome, { type: 'image/jpeg' })); } catch (_) { b.name = nome; ok(b); }
+          ok(comoArquivo(b, nome + '.jpg', 'image/jpeg'));
         }, 'image/jpeg', 0.92);
       } catch (_) { ok(null); }
+    });
+  }
+  function comoArquivo(blob, nome, tipo) {
+    try { return new File([blob], nome, { type: tipo }); } catch (_) { blob.name = nome; return blob; }
+  }
+
+  /* ---------- vídeo com som ----------
+     15s do beat (a partir de onde está tocando) + a arte com a onda andando.
+     Caminho 1: WebCodecs (Chrome, Android, Safari novo), mais rápido que o tempo real.
+     Caminho 2: gravar a tela da arte em tempo real (Safari antigo), ~15s.
+     Sem nenhum dos dois, ou se algo falhar: fica a imagem parada. */
+  var DUR = 15, FPS = 30, TAXA = 48000, BPS = 16000;   // mp3 de 128k = 16 mil bytes por segundo
+
+  function espera(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
+  function offline(canais, amostras) {
+    var C = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    return new C(canais, amostras, TAXA);
+  }
+  function decodificar(buf) {
+    var ctx = offline(2, TAXA);
+    return new Promise(function (ok, erro) {
+      var p = ctx.decodeAudioData(buf, ok, erro);
+      if (p && p.then) p.then(ok, erro);
+    });
+  }
+  // pede só o pedaço do mp3 que interessa (com folga); se o servidor mandar tudo, serve também
+  function baixarTrecho(src, inicio) {
+    var a = Math.max(0, Math.floor((inicio - 1) * BPS)), b = Math.ceil((inicio + DUR + 2) * BPS);
+    return fetch(src, { headers: { Range: 'bytes=' + a + '-' + b } }).then(function (r) {
+      if (!r.ok) throw new Error('áudio ' + r.status);
+      var desloc = r.status === 206 ? inicio - a / BPS : inicio;
+      return r.arrayBuffer().then(decodificar).then(function (dec) { return { dec: dec, desloc: desloc }; });
+    }).catch(function () {
+      // pedaço solto não decodificou: baixa o arquivo inteiro
+      return fetch(src).then(function (r) { return r.arrayBuffer(); }).then(decodificar)
+        .then(function (dec) { return { dec: dec, desloc: inicio }; });
+    });
+  }
+  // 15s em estéreo 48k, entrando e saindo suave
+  function trecho(audio) {
+    var inicio = Math.max(0, Number(audio.inicio) || 0);
+    if (audio.dur && inicio > audio.dur - DUR) inicio = Math.max(0, audio.dur - DUR);
+    return baixarTrecho(audio.src, inicio).then(function (t) {
+      var desloc = Math.max(0, Math.min(t.desloc, t.dec.duration - DUR));
+      var ctx = offline(2, DUR * TAXA);
+      var s = ctx.createBufferSource(); s.buffer = t.dec;
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0, 0); g.gain.linearRampToValueAtTime(1, 0.3);
+      g.gain.setValueAtTime(1, DUR - 1.2); g.gain.linearRampToValueAtTime(0, DUR);
+      s.connect(g); g.connect(ctx.destination);
+      s.start(0, desloc, DUR);
+      return new Promise(function (ok, erro) {
+        ctx.oncomplete = function (e) { ok(e.renderedBuffer); };
+        var p = ctx.startRendering(); if (p && p.then) p.then(ok, erro);
+      });
+    });
+  }
+  function picos(som, n) {
+    var d = som.getChannelData(0), passo = Math.floor(d.length / n), out = [], max = 0;
+    for (var i = 0; i < n; i++) {
+      var soma = 0;
+      for (var j = i * passo; j < (i + 1) * passo; j += 8) soma += d[j] * d[j];
+      var v = Math.sqrt(soma / (passo / 8)); out.push(v); if (v > max) max = v;
+    }
+    return out.map(function (v) { return max ? 0.12 + 0.88 * (v / max) : 0.12; });
+  }
+
+  var muxerJs = null;
+  function carregarMuxer() {
+    if (window.Mp4Muxer) return Promise.resolve();
+    if (muxerJs) return muxerJs;
+    muxerJs = new Promise(function (ok, falha) {
+      var s = document.createElement('script'); s.src = '/assets/mp4-muxer.js?v=5.2.2';
+      s.onload = ok; s.onerror = function () { muxerJs = null; falha(new Error('muxer')); };
+      document.head.appendChild(s);
+    });
+    return muxerJs;
+  }
+  function temWebCodecs() {
+    return !!(window.VideoEncoder && window.AudioEncoder && window.VideoFrame && window.AudioData);
+  }
+  function mimeGravacao() {
+    try {
+      if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) return null;
+      var l = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2'];
+      for (var i = 0; i < l.length; i++) if (MediaRecorder.isTypeSupported(l[i])) return l[i];
+      // Safari grava mp4 sempre em H.264 + AAC, mesmo sem dizer o codec
+      if (/Apple/.test(navigator.vendor || '') && MediaRecorder.isTypeSupported('video/mp4')) return 'video/mp4';
+    } catch (_) {}
+    return null;   // só webm: o Instagram não aceita, fica a imagem
+  }
+  function podeVideo() { return !!((temWebCodecs() || mimeGravacao()) && (window.OfflineAudioContext || window.webkitOfflineAudioContext)); }
+  // O Safari antigo só grava som com o áudio destravado por um toque: quem abre a folha
+  // chama isso direto no toque de compartilhar (antes de carregar este arquivo, ver index.html).
+  function precisaDestravar() { return !temWebCodecs() && !!mimeGravacao(); }
+
+  function escolherCodec() {
+    var l = [[1080, 1920, 'avc1.640028'], [1080, 1920, 'avc1.4d0028'], [1080, 1920, 'avc1.420028'], [720, 1280, 'avc1.64001f'], [720, 1280, 'avc1.42001f']]
+      .concat(window.__csCodecsTeste || []);   // os testes no Chromium sem H.264 entram com VP9 aqui
+    return l.reduce(function (p, t) {
+      return p.then(function (achou) {
+        if (achou) return achou;
+        var cfg = { codec: t[2], width: t[0], height: t[1], bitrate: t[0] > 720 ? 2500000 : 1800000, framerate: FPS };
+        cfg.mux = t[3] || 'avc';
+        return VideoEncoder.isConfigSupported(cfg).then(function (r) { return r.supported ? cfg : null; }, function () { return null; });
+      });
+    }, Promise.resolve(null));
+  }
+
+  async function porWebCodecs(base, desenhar, som, prog) {
+    var vcfg = await escolherCodec();
+    if (!vcfg) throw new Error('sem codec de vídeo');
+    // AAC (iPhone, Mac, Windows, Android); sem AAC, Opus (o Android lê mp4 com Opus)
+    var acfg = null, sons = [['mp4a.40.2', 'aac'], ['opus', 'opus']];
+    for (var c = 0; c < sons.length && !acfg; c++) {
+      var t = { codec: sons[c][0], sampleRate: TAXA, numberOfChannels: 2, bitrate: 128000 };
+      if (await AudioEncoder.isConfigSupported(t).then(function (r) { return r.supported; }, function () { return false; })) { acfg = t; acfg.mux = sons[c][1]; }
+    }
+    if (!acfg) throw new Error('sem codec de som');
+    await carregarMuxer();
+    var M = window.Mp4Muxer;
+    var muxer = new M.Muxer({
+      target: new M.ArrayBufferTarget(),
+      video: { codec: vcfg.mux, width: vcfg.width, height: vcfg.height, frameRate: FPS },
+      audio: { codec: acfg.mux, sampleRate: TAXA, numberOfChannels: 2 },
+      fastStart: 'in-memory', firstTimestampBehavior: 'offset'
+    });
+    var falha = null;
+    var venc = new VideoEncoder({ output: function (c, m) { muxer.addVideoChunk(c, m); }, error: function (e) { falha = e; } });
+    venc.configure({ codec: vcfg.codec, width: vcfg.width, height: vcfg.height, bitrate: vcfg.bitrate, framerate: FPS });
+    var aenc = new AudioEncoder({ output: function (c, m) { muxer.addAudioChunk(c, m); }, error: function (e) { falha = e; } });
+    aenc.configure({ codec: acfg.codec, sampleRate: TAXA, numberOfChannels: 2, bitrate: 128000 });
+
+    var n = som.length, L = som.getChannelData(0), R = som.getChannelData(1), passo = 4800;
+    for (var i = 0; i < n; i += passo) {
+      var k = Math.min(passo, n - i), d = new Float32Array(k * 2);
+      d.set(L.subarray(i, i + k), 0); d.set(R.subarray(i, i + k), k);
+      var ad = new AudioData({ format: 'f32-planar', sampleRate: TAXA, numberOfFrames: k, numberOfChannels: 2, timestamp: Math.round(i / TAXA * 1e6), data: d });
+      aenc.encode(ad); ad.close();
+    }
+
+    var cv = document.createElement('canvas'); cv.width = vcfg.width; cv.height = vcfg.height;
+    var ctx = cv.getContext('2d'), total = DUR * FPS;
+    for (var f = 0; f < total; f++) {
+      if (falha) throw falha;
+      desenhar(ctx, cv.width / W, f / (total - 1));
+      var vf = new VideoFrame(cv, { timestamp: Math.round(f * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
+      venc.encode(vf, { keyFrame: f % (FPS * 2) === 0 }); vf.close();
+      while (venc.encodeQueueSize > 6) await espera(4);
+      if (f % 15 === 0) { prog(f / total); await espera(0); }
+    }
+    await venc.flush(); await aenc.flush();
+    venc.close(); aenc.close();
+    if (falha) throw falha;
+    muxer.finalize();
+    return new Blob([muxer.target.buffer], { type: 'video/mp4' });
+  }
+
+  function porGravacao(desenhar, som, prog) {
+    var mime = mimeGravacao();
+    var AC = window.AudioContext || window.webkitAudioContext;
+    var ac = window.__csAC || new AC();
+    return (ac.state === 'suspended' ? ac.resume() : Promise.resolve()).then(function () {
+      if (ac.state !== 'running') throw new Error('som travado');
+      var cv = document.createElement('canvas'); cv.width = 720; cv.height = 1280;
+      var ctx = cv.getContext('2d');
+      desenhar(ctx, cv.width / W, 0);
+      var st = cv.captureStream(FPS);
+      var dest = ac.createMediaStreamDestination();
+      var s = ac.createBufferSource(); s.buffer = som; s.connect(dest);   // grava sem tocar no alto-falante
+      st.addTrack(dest.stream.getAudioTracks()[0]);
+      var rec = new MediaRecorder(st, { mimeType: mime, videoBitsPerSecond: 3000000, audioBitsPerSecond: 128000 });
+      var partes = [];
+      rec.ondataavailable = function (e) { if (e.data && e.data.size) partes.push(e.data); };
+      return new Promise(function (ok, erro) {
+        rec.onstop = function () {
+          st.getTracks().forEach(function (t) { t.stop(); });
+          ok(new Blob(partes, { type: 'video/mp4' }));
+        };
+        rec.onerror = function (e) { erro(e.error || e); };
+        rec.start();
+        var t0 = ac.currentTime + 0.05;
+        s.start(t0);
+        (function laco() {
+          var p = (ac.currentTime - t0) / DUR;
+          if (p >= 1) { desenhar(ctx, cv.width / W, 1); setTimeout(function () { rec.stop(); }, 150); return; }
+          desenhar(ctx, cv.width / W, Math.max(0, p)); prog(Math.max(0, p));
+          setTimeout(laco, 1000 / FPS);
+        })();
+      });
+    });
+  }
+
+  // base: a arte com lugar pra onda (cv.ondaY). Devolve { blob, picos }.
+  function video(base, audio, prog, aoTerPicos) {
+    return trecho(audio).then(function (som) {
+      var pk = picos(som, 48);
+      if (aoTerPicos) aoTerPicos(pk);
+      var desenhar = function (ctx, esc, p) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(base, 0, 0, W * esc, H * esc);
+        ctx.setTransform(esc, 0, 0, esc, 0, 0);
+        onda(ctx, pk, p, base.ondaY);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+      };
+      var feito = temWebCodecs()
+        ? porWebCodecs(base, desenhar, som, prog).catch(function (e) { if (mimeGravacao()) return porGravacao(desenhar, som, prog); throw e; })
+        : porGravacao(desenhar, som, prog);
+      return feito.then(function (blob) {
+        if (!blob || blob.size < 20000) throw new Error('vídeo vazio');
+        return { blob: blob, picos: pk };
+      });
     });
   }
 
@@ -236,6 +463,8 @@
     '.cs-arte canvas{width:100%;height:100%;display:block}',
     '.cs-topo h2{margin:0 0 4px;font-size:22px;line-height:1.15}',
     '.cs-topo p{margin:0;font-size:13.5px;line-height:1.45}',
+    '.cs-topo p strong{display:block;font-size:15px;margin-bottom:3px}',
+    '.cs-status{margin:14px 0 0;font-size:12px;line-height:1.4;min-height:1.4em}',
     '.cs-acoes{display:flex;flex-direction:column;gap:10px;margin-top:18px}',
     '.cs-acoes button{width:100%;padding:15px 16px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}',
     '.cs-acoes button:disabled{opacity:.45;cursor:default}',
@@ -244,6 +473,8 @@
     '.cs-site .cs-arte{border:1px solid #332c22;background:#14110d;color:#6f6757}',
     '.cs-site h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;color:#f2ecdf;font-size:26px}',
     '.cs-site p{color:#b89e72;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}',
+    '.cs-site p strong{color:#f2ecdf}',
+    '.cs-site .cs-status{color:#6f6757;font-family:"IBM Plex Mono",ui-monospace,monospace;letter-spacing:.04em}',
     '.cs-site .cs-acoes button{background:transparent;border:1px solid #332c22;color:#E8E0CF;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.16em;text-transform:uppercase}',
     '.cs-site .cs-acoes .cs-forte{background:#b98f5e;border-color:#b98f5e;color:#14110d}',
     '.cs-site .cs-fechar{color:#9e7c48!important;border-color:transparent!important}',
@@ -253,6 +484,7 @@
     '.cs-catalogo .cs-arte{border-radius:10px;background:#0e0e0e;color:#8a8a8a}',
     '.cs-catalogo h2{font-weight:700}',
     '.cs-catalogo p{color:#8a8a8a}',
+    '.cs-catalogo p strong{color:#fff}',
     '.cs-catalogo .cs-acoes button{border-radius:999px;border:1px solid #2a2a2a;background:#1b1b1b;color:#fff;font-weight:600}',
     '.cs-catalogo .cs-acoes .cs-forte{background:#fff;color:#000;border-color:#fff}',
     '.cs-catalogo .cs-fechar{background:transparent!important;border-color:transparent!important;color:#8a8a8a!important}',
@@ -266,13 +498,29 @@
     try { if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t).then(function () { return true; }, function () { return false; }); } catch (_) {}
     return Promise.resolve(false);
   }
+  function podeCompartilhar(dados) {
+    try { return !!(navigator.share && navigator.canShare && navigator.canShare(dados)); } catch (_) { return false; }
+  }
+  function baixar(arquivo) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(arquivo); a.download = arquivo.name || 'caramujo-story';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
-  var veu = null;
-  function fechar() { if (veu) { veu.hidden = true; veu.innerHTML = ''; } }
+  var TEXTO = 'Nos marque e receba um cupom exclusivo!\n@rideblan33 · © Caramujo Records';
 
-  // opts: { tema:'site'|'catalogo', titulo, texto, url (enviar/copiar), urlStory (vai copiado pro sticker),
-  //         arte:{...}, nomeArquivo, avisar(msg) }
+  var veu = null, vez = 0;
+  function fechar() { vez++; if (veu) { veu.hidden = true; veu.innerHTML = ''; } }
+
+  // opts: { tema:'site'|'catalogo', titulo, texto (padrão: o do cupom), url (vai na mensagem),
+  //         urlStory (vai copiado pro sticker), mensagem (texto que acompanha o arquivo),
+  //         arte:{...}, audio:{ src, inicio, dur } (sem audio = só imagem), nomeArquivo, avisar(msg) }
+  // Um botão só: Compartilhar abre a tela do aparelho com tudo (story, WhatsApp, copiar...).
+  // Vai o arquivo (vídeo com som ou arte) + a mensagem com o link; o link também fica
+  // copiado pro sticker do story. A web não sabe qual app a pessoa escolhe: cada app
+  // pega o que usa (o story pega o arquivo, a conversa leva o link junto).
   function abrir(opts) {
     if (!document.getElementById('cs-css')) {
       var st = document.createElement('style'); st.id = 'cs-css'; st.textContent = CSS; document.head.appendChild(st);
@@ -283,62 +531,96 @@
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fechar(); });
       document.body.appendChild(veu);
     }
+    var minha = ++vez;
+    var vivo = function () { return minha === vez; };
     var avisar = opts.avisar || function () {};
-    var noCel = celular();
-    var podeEnviar = noCel && !!navigator.share;
+    var linhas = String(opts.texto || TEXTO).split('\n');
+    var comSom = !!(opts.audio && opts.audio.src) && podeVideo();
+    var nome = String(opts.nomeArquivo || 'caramujo-story').replace(/\.(jpe?g|mp4)$/i, '');
     veu.className = 'cs-veu cs-' + (opts.tema === 'catalogo' ? 'catalogo' : 'site');
     veu.innerHTML = '<div class="cs-folha" role="dialog" aria-modal="true" aria-label="Compartilhar">' +
       '<div class="cs-topo"><div class="cs-arte" id="csArte">preparando a arte…</div><div>' +
-      '<h2>' + esc(opts.titulo || 'Compartilhar') + '</h2><p>' + esc(opts.texto || '') + '</p></div></div>' +
+      '<h2>' + esc(opts.titulo || 'Compartilhar') + '</h2><p><strong>' + esc(linhas[0]) + '</strong>' +
+      esc(linhas.slice(1).join(' ')) + '</p></div></div>' +
+      '<p class="cs-status" id="csStatus" aria-live="polite"></p>' +
       '<div class="cs-acoes">' +
-        '<button type="button" class="cs-forte" id="csStory" disabled>' + (noCel ? 'Postar no story' : 'Baixar a arte pro story') + '</button>' +
-        (podeEnviar ? '<button type="button" id="csEnviar">Enviar o link</button>' : '') +
-        '<button type="button" id="csCopiar">Copiar o link</button>' +
+        '<button type="button" class="cs-forte" id="csIr" disabled>Preparando…</button>' +
         '<button type="button" class="cs-fechar" id="csFechar">Fechar</button>' +
       '</div></div>';
     veu.hidden = false;
     var $ = function (i) { return document.getElementById(i); };
+    var status = function (t) { var e = $('csStatus'); if (e && vivo()) e.textContent = t; };
+    var botao = function (t, pronto) { var b = $('csIr'); if (b && vivo()) { b.textContent = t; b.disabled = !pronto; } };
     $('csFechar').addEventListener('click', fechar);
-    $('csCopiar').addEventListener('click', function () {
-      copiar(opts.url).then(function (ok) { avisar(ok ? 'Link copiado.' : opts.url); });
-    });
-    if (podeEnviar) $('csEnviar').addEventListener('click', function () {
-      navigator.share({ url: opts.url }).catch(function () {});
-    });
 
-    // a arte fica pronta enquanto você lê: o toque em "Postar" já compartilha na hora
-    // (o celular só deixa abrir o compartilhar logo depois de um toque)
+    // prévia pequena (a arte grande fica na memória pro vídeo)
+    var vista = document.createElement('canvas'); vista.width = 216; vista.height = 384;
+    function mostrar(cv, pk) {
+      var c = vista.getContext('2d');
+      c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(cv, 0, 0, 216, 384);
+      if (pk && cv.ondaY) { c.setTransform(0.2, 0, 0, 0.2, 0, 0); onda(c, pk, 0.4, cv.ondaY); c.setTransform(1, 0, 0, 1, 0, 0); }
+      var caixa = $('csArte'); if (caixa && vivo() && !vista.parentNode) { caixa.textContent = ''; caixa.appendChild(vista); }
+    }
+
     var arquivo = null;
-    arte(opts.arte || {}).then(function (cv) {
-      var caixa = $('csArte'); if (!caixa) return;
-      caixa.textContent = ''; caixa.appendChild(cv);
-      return paraArquivo(cv, opts.nomeArquivo || 'caramujo-story.jpg');
-    }).then(function (f) {
+    function pronto(f, textoStatus) {
+      if (!vivo()) return;
       arquivo = f;
-      var b = $('csStory'); if (b && f) b.disabled = false;
-      if (!f && $('csArte')) $('csArte').textContent = 'não consegui montar a arte';
-    }).catch(function () { var c = $('csArte'); if (c) c.textContent = 'não consegui montar a arte'; });
+      if (!f) { status('Não consegui montar a arte.'); botao('Compartilhar o link', true); return; }
+      status(textoStatus);
+      botao('Compartilhar', true);
+    }
+    function soImagem(aviso) {
+      return arte(Object.assign({}, opts.arte, { onda: false })).then(function (cv) {
+        mostrar(cv);
+        return paraArquivo(cv, nome);
+      }).then(function (f) { pronto(f, aviso || 'Arte pronta. O link vai copiado pro sticker do story.'); });
+    }
 
-    $('csStory').addEventListener('click', function () {
-      if (!arquivo) return;
+    if (!comSom) {
+      soImagem().catch(function () { pronto(null); });
+    } else {
+      botao('Preparando o vídeo…', false);
+      status('Montando 15s com o trecho que tava tocando.');
+      arte(Object.assign({}, opts.arte, { onda: true })).then(function (base) {
+        mostrar(base);
+        var limite = espera(45000).then(function () { throw new Error('demorou'); });
+        return Promise.race([video(base, opts.audio, function (p) {
+          botao('Preparando o vídeo · ' + Math.round(p * 100) + '%', false);
+        }, function (pk) { mostrar(base, pk); }), limite]);
+      }).then(function (v) {
+        pronto(comoArquivo(v.blob, nome + '.mp4', 'video/mp4'), 'Vídeo de 15s com som. O link vai copiado pro sticker do story.');
+      }).catch(function () {
+        if (vivo()) soImagem('Sem som dessa vez: vai a arte. O link vai copiado pro sticker do story.').catch(function () { pronto(null); });
+      });
+    }
+
+    $('csIr').addEventListener('click', function () {
       var link = opts.urlStory || opts.url;
-      copiar(link);                       // pro sticker de link do Instagram
-      var comArquivo = false;
-      try { comArquivo = noCel && navigator.canShare && navigator.canShare({ files: [arquivo] }); } catch (_) { comArquivo = false; }
-      if (comArquivo) {
-        navigator.share({ files: [arquivo] }).then(function () {
-          avisar('No story, põe o sticker de link e cola: o link já está copiado.');
-        }).catch(function () {});
+      copiar(link);                        // pro sticker de link do story
+      var msg = opts.mensagem || opts.url;
+      if (!arquivo) {                      // a arte falhou: vai só o link
+        if (navigator.share) navigator.share({ text: msg }).catch(function () {});
+        else avisar('Link copiado.');
         return;
       }
-      // computador (ou celular sem compartilhar arquivo): baixa a arte
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(arquivo); a.download = arquivo.name || 'caramujo-story.jpg';
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
-      avisar('Arte baixada. O link já está copiado pro sticker.');
+      var dados = { files: [arquivo], text: msg };
+      if (!podeCompartilhar(dados)) dados = { files: [arquivo] };
+      if (podeCompartilhar(dados)) {
+        navigator.share(dados).then(function () {
+          fechar();
+          avisar('Link copiado: no story, cola no sticker de link.');
+        }).catch(function (e) {
+          if (e && e.name === 'AbortError') return;   // a pessoa desistiu
+          avisar('Não abriu o compartilhar. O link já está copiado.');
+        });
+        return;
+      }
+      // navegador sem compartilhar arquivo (Firefox no computador): baixa e copia
+      baixar(arquivo);
+      avisar(celular() ? 'Arquivo salvo e link copiado.' : 'Arquivo baixado e link copiado.');
     });
   }
 
-  window.CaramujoStory = { abrir: abrir, arte: arte, fechar: fechar };
+  window.CaramujoStory = { abrir: abrir, arte: arte, fechar: fechar, precisaDestravar: precisaDestravar, video: video, podeVideo: podeVideo };
 })();

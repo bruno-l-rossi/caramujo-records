@@ -21,7 +21,7 @@ O GitHub recebe **só o que o site e o backend usam**. O apoio que precisa exist
 **No GitHub e no deploy:** `index.html`, `404.html`, `og-image.png`, `_headers`, `_routes.json`, `robots.txt`, `llms.txt`, `.gitignore`, `assets/`, `catalogo/app.html`, `functions/` e `scripts/`.
 **No GitHub mas FORA do deploy:** `.github/` — `README.md`, `docs/DESIGN.md`, `docs/DESIGN-catalogo.md`, `previews/preview-email-entrega.html` e os workflows.
 
-**Só local (apoio):** `docs/` (análises, política de crawlers, planos, contexto compilado), `previews/`, `mockups-antigos/` e `testes/` (os 8 arquivos de conferência; ver `testes/LEIAME.md`).
+**Só local (apoio):** `docs/` (análises, política de crawlers, planos, contexto compilado), `previews/` e `testes/` (ver `testes/LEIAME.md`).
 
 ```
 /
@@ -36,6 +36,8 @@ O GitHub recebe **só o que o site e o backend usam**. O apoio que precisa exist
 ├── assets/                        # Tudo que o site referencia, além do og-image
 │   ├── brand/                     # selo-creme.svg · selo-sepia.svg · Caramujo_Records.png
 │   ├── termos-de-licenca.pdf      # Termos de licença (download no checkout)
+│   ├── story.js                   # Compartilhar: prévia, arte 1080x1920 e vídeo de 15s com som
+│   ├── mp4-muxer.js               # Junta vídeo + som num .mp4 (MIT, carregado só na hora do vídeo)
 │   └── (mídia do "Por dentro do estúdio": studio-hero.jpg, depo-*, sessao.mp4, posters)
 │
 ├── functions/                     # Backend (Cloudflare Pages Functions) — GERA os e-mails e o contrato
@@ -53,21 +55,14 @@ O GitHub recebe **só o que o site e o backend usam**. O apoio que precisa exist
 │   ├── DESIGN.md                  # Sistema de marca (paleta, tipografia, tom)
 │   ├── contexto-continuidade-compilado.md  # Contexto pra IA retomar o site de vendas
 │   ├── contexto-catalogo-compilado.md      # Contexto pra IA retomar o catálogo de entrega
-│   └── analise-usabilidade-mobile.md
+│   └── _historico/                # Contexto completo antigo e as análises de usabilidade de julho
 │
 ├── previews/                      # Abrir no navegador pra conferir (fora do deploy)
-│   ├── preview-mobile.html        # Site dentro de molduras de celular (iframe)
-│   ├── preview-comprador.html     # E-mail do comprador (detalhes + prazos)
-│   ├── preview-compra-recebida.html   # E-mail interno: compra criada (pode não estar paga)
-│   ├── preview-compra-confirmada.html # E-mail interno: pagamento aprovado
-│   └── preview-contrato.html
-│
-└── mockups-antigos/               # Referências antigas (só local)
-    ├── (o e-mail de entrega virou previews/preview-email-entrega.html — AINDA usado no disparo manual)
-    └── email-pedido.html          # Mockup antigo (não disparado por código)
+│   └── preview-mobile.html        # Site dentro de molduras de celular (iframe)
+│                                  # (os e-mails e o contrato de verdade saem de functions/_lib/emails.js)
 ```
 
-> **Deploy:** o Cloudflare Pages publica o repositório inteiro, menos o que começa com ponto (por isso `assets/brand/…` funciona nas URLs e `.github/…` não). O apoio que não sobe responde 404 de verdade desde que existe o `404.html` na raiz — sem ele o Pages tratava o site como SPA e devolvia a home com status 200 pra qualquer endereço errado. A `og-image.png` fica na raiz de propósito (URL absoluta nas meta tags + cache das redes sociais). Os e-mails reais são gerados nos `functions/`, não nos arquivos de `mockups-antigos/`. Pra conferir o layout mobile antes de publicar, abra `previews/preview-mobile.html`.
+> **Deploy:** o Cloudflare Pages publica o repositório inteiro, menos o que começa com ponto (por isso `assets/brand/…` funciona nas URLs e `.github/…` não). O apoio que não sobe responde 404 de verdade desde que existe o `404.html` na raiz — sem ele o Pages tratava o site como SPA e devolvia a home com status 200 pra qualquer endereço errado. A `og-image.png` fica na raiz de propósito (URL absoluta nas meta tags + cache das redes sociais). Os e-mails reais são gerados nos `functions/` (`_lib/emails.js`). Pra conferir o layout mobile antes de publicar, abra `previews/preview-mobile.html`.
 
 ### Os 4 e-mails (nomes amigáveis)
 
@@ -215,9 +210,10 @@ novos como disponíveis → gênero → Publicar marcados. Copiar pra Exclusivos
 preços que a própria página mostra (`PRICE_BEAT`, `PRICE_STEMS`, botões `addPkg`/`addSvc`) e o
 cupom do banco. Se o valor do navegador não bater, recusa. Mudou preço no HTML, o servidor acompanha.
 
-**Compartilhar com arte pro story:** o botão de compartilhar (barra do player e ENVIAR das
-beat tapes) abre uma folha com a arte vertical do beat/tape (`assets/story.js`), "Postar no
-story" (manda a imagem; o link vai copiado pro sticker), "Enviar o link" e "Copiar o link".
+**Compartilhar (story, WhatsApp, link):** o botão de compartilhar (barra do player e ENVIAR
+das beat tapes) abre uma prévia com o texto do cupom e um botão só, Compartilhar, que abre a tela
+do aparelho. Com beat tocando vai um vídeo de 15s com o trecho e a onda andando; sem beat, a arte
+parada (`assets/story.js`). A mensagem leva o link e o link também fica copiado pro sticker do story.
 
 **Limite do banco:** o plano gratuito do D1 lê até 5 milhões de linhas por dia. A home do
 painel mostra o consumo do dia ("Banco hoje"). Passou do limite, o banco trava até as 21h

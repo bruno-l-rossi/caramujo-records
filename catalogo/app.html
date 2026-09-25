@@ -812,43 +812,62 @@ __META__
   });
 
   // Beat tape se manda inteira: o link é a própria página. Desde 25/09/2026 com
-  // a folha de compartilhar do site (assets/story.js): arte pro story, enviar e copiar.
+  // a folha de compartilhar do site (assets/story.js): prévia, texto do cupom e um
+  // botão que abre o compartilhar do aparelho. Faixa tocando = vídeo de 15s com som.
   var storyJs=null;
   function carregarStory(){
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25a';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25b';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });
     return storyJs;
   }
+  // Safari antigo só grava o som do vídeo com o áudio destravado NESTE toque
+  function destravarSom(){
+    try{
+      if(window.AudioEncoder||!window.MediaRecorder) return;
+      var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+      if(!window.__csAC) window.__csAC=new AC();
+      if(window.__csAC.state==='suspended') window.__csAC.resume();
+    }catch(_){}
+  }
+  function trechoDe(t){
+    if(!t) return null;
+    return { src:'/audio/'+t.id+'.mp3', inicio:(rows[cur]===t?audio.currentTime:0)||0, dur:t.dur||0 };
+  }
   function linkDaTape(){
+    destravarSom();
     var u = location.origin + location.pathname;
     var n = rows.filter(function(t){return t.kind==='beat'}).length;
+    var tocando = cur>-1 ? rows[cur] : null;
     carregarStory().then(function(){
       window.CaramujoStory.abrir({
         tema:'catalogo', titulo:CAT.artist.name,
-        texto:'Arte da tape pronta pro story. Ao postar, o link já vai copiado: no Instagram, cola no sticker de link.',
-        url:u, nomeArquivo:'caramujo-'+slugTape()+'.jpg',
-        arte:{ capa:CAT.artist.cover||null, titulo:CAT.artist.name, kicker:'Beat tape',
-          ficha:[n+(n===1?' beat':' beats')], rodape:u.replace(/^https?:\/\//,'') },
+        url:u, nomeArquivo:'caramujo-'+slugTape(),
+        mensagem:CAT.artist.name+' · beat tape prod. @rideblan33\n'+u,
+        arte:{ capa:CAT.artist.cover||null, titulo:CAT.artist.name,
+          ficha:['beat tape · '+n+(n===1?' faixa':' faixas')] },
+        audio:trechoDe(tocando),
         avisar:flash
       });
     }).catch(linkSimples);
   }
   // O beat da tape que também está à venda no site: arte do beat, link do site.
   function storyDoBeat(t){
+    destravarSom();
     var u = location.origin + '/b/' + t.buy;
     carregarStory().then(function(){
       var nome = String(t.title||'').toLocaleUpperCase('pt-BR');
       window.CaramujoStory.abrir({
         tema:'catalogo', titulo:nome,
-        texto:'Arte do beat pronta pro story. Ao postar, o link do beat já vai copiado: no Instagram, cola no sticker de link.',
-        url:u, urlStory:u+'?de=story', nomeArquivo:'caramujo-'+t.buy+'.jpg',
-        arte:{ capa:CAT.artist.cover||null, titulo:nome, kicker:'Beat exclusivo',
-          ficha:[t.bpm?t.bpm+' BPM':'', t.key||''], rodape:'caramujorecords.com.br/b/'+t.buy },
+        url:u, urlStory:u+'?de=story', nomeArquivo:'caramujo-'+t.buy,
+        mensagem:nome+' · prod. @rideblan33\n'+u,
+        arte:{ capa:CAT.artist.cover||null, titulo:nome,
+          ficha:[t.bpm?t.bpm+' BPM':'', t.key||''] },
+        audio:trechoDe(t),
         avisar:flash
       });
     }).catch(function(){ if(navigator.clipboard) navigator.clipboard.writeText(u); flash('Link do beat copiado.'); });
@@ -892,7 +911,7 @@ __META__
   function trackSheet(t){
     var linhas =
       (t.buy ? item('buy',ICON_CART,'Comprar esse beat') : '') +
-      (t.buy && CAT.artist.tape ? item('story',ICON_SEND,'Postar esse beat no story') : '') +
+      (t.buy && CAT.artist.tape ? item('story',ICON_SEND,'Compartilhar esse beat') : '') +
       (!CAT.artist.tape && (CAT.owner || (!preview && !CAT.preview)) ? item('send',ICON_SEND,'Enviar só essa faixa') : '') +
       (podeBaixar() ? item('down',ICON_DOWN,'Baixar') : '');
     if(!linhas){ flash('Essa faixa está só pra ouvir.'); return; }
