@@ -17,7 +17,7 @@
  */
 
 import { db } from '../_lib/db.js';
-import { garantirLoja, marcarVendidos, usarCupom } from '../_lib/loja.js';
+import { marcarVendidos, usarCupom, esquecerLoja } from '../_lib/loja.js';
 import { esquecerVitrine } from '../_lib/vitrine.js';
 
 // ── Contrato (mesma geração do create-payment; o webhook reconstrói a partir do metadata) ──
@@ -221,10 +221,10 @@ async function sendApprovalEmail({ env, payment }) {
 
 async function gravarVenda({ request, env, payment, beatNames, couponCode }) {
   const d = await db(env);
-  await garantirLoja(request, env, d);
   if (beatNames.length) {
     const r = await marcarVendidos(d, beatNames, payment.id);
     esquecerVitrine();
+    await esquecerLoja(request);
     if (r.marcados.length) console.log(`[loja] Vendidos: ${r.marcados.join(', ')}`);
     if (r.naoAchei.length) console.error(`[loja] ❌ Beat não encontrado no banco: ${r.naoAchei.join(', ')}`);
   }
@@ -435,16 +435,6 @@ async function sendBuyerConfirmationEmail({ env, payment }) {
     throw new Error(`Resend buyer email error ${res.status}: ${err}`);
   }
   console.log(`[email-buyer] ✅ Confirmação enviada para ${email}${contractHtml ? ' (com contrato em anexo)' : ''}`);
-}
-
-// ── Extrai nome do beat da descrição ────────────────────────────────────────
-
-function extractBeatName(description) {
-  return description
-    .replace('Caramujo Records — ', '')
-    .replace(' + Stems', '')
-    .replace(/ x\d+$/, '')
-    .trim() || null;
 }
 
 // ── Handler principal ────────────────────────────────────────────────────────

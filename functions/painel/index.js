@@ -206,6 +206,8 @@ const BASE = `
   .vit-topo[aria-expanded="true"] .vit-seta{transform:rotate(90deg)}
   .vit-corpo[hidden]{display:none}
   .home{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:22px}
+  .consumo{display:block;margin-top:6px;padding:0;border:0;background:transparent;font-size:13px;color:var(--ink4);cursor:pointer;text-align:left}
+  .consumo.alto{color:#e0b155;text-decoration:underline;text-underline-offset:3px}
   @media (max-width:640px){.home{grid-template-columns:1fr}}
   .home button{display:flex;flex-direction:column;align-items:flex-start;gap:14px;min-height:150px;padding:18px;
     background:#111;border:1px solid var(--borda);border-radius:16px;color:var(--ink);text-align:left;cursor:pointer;
@@ -275,7 +277,7 @@ function pagina() {
   <div id="vitrine" hidden></div>
 </div>
 <script src="/assets/painel/analytics.js?v=2026-09-27b" defer></script>
-<script src="/assets/painel/vitrine.js?v=2026-09-24a" defer></script>
+<script src="/assets/painel/vitrine.js?v=2026-09-24b" defer></script>
 
 <div class="veil" id="veil" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>
@@ -284,7 +286,7 @@ function pagina() {
 (function(){
   var $=function(i){return document.getElementById(i)};
   var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='home', filtro='', ordem='modificado';
-  var lojaResumo=null, lojaPedida=false;
+  var lojaResumo=null, lojaPedida=false, consumoHoje=null, consumoPedido=false;
   var ORDENS={modificado:'Modificação', atividade:'Atividade', az:'A a Z', faixas:'Mais faixas'};
 
   function tempo(iso){
@@ -306,11 +308,31 @@ function pagina() {
   }
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]})}
 
+  // Conversão rodando: a cada 5 s pergunto SÓ o andamento (umas 100 linhas do banco),
+  // e só com a aba à vista. A lista completa recarrega uma vez, quando alguém termina.
+  // (24/09/2026: recarregar tudo a cada 3 s com o painel aberto estourou o limite
+  // diário de leitura do D1 durante a conversão total.)
   var relogio=null;
   function acompanhar(){
-    var ativo = artistas.some(rodando);
-    if(ativo && !relogio) relogio=setInterval(function(){carregar(true)}, 3000);
+    var ativo = artistas.concat(tapes).some(rodando);
+    if(ativo && !relogio) relogio=setInterval(espiar, 5000);
     if(!ativo && relogio){ clearInterval(relogio); relogio=null; }
+  }
+  function espiar(){
+    if(document.hidden) return;
+    fetch('/api/painel?op=andamento').then(function(r){return r.json()}).then(function(j){
+      if(!j||!Array.isArray(j.rodando)) return;
+      var agora={}; j.rodando.forEach(function(x){ agora[x.id]=x; });
+      var terminou=false;
+      artistas.concat(tapes).forEach(function(a){
+        var x=agora[a.id];
+        if(x){ a.job_estado=x.job_estado; a.job_total=x.job_total; a.job_feitos=x.job_feitos; a.job_at=x.job_at; }
+        else if(rodando(a)){ terminou=true; a.job_estado='pronto'; }
+      });
+      if(terminou) carregar(true);
+      else if(vista==='artistas'||vista==='tapes') desenhar();
+      acompanhar();
+    }).catch(function(){});
   }
 
   function carregar(silencioso){
@@ -338,7 +360,7 @@ function pagina() {
 
   var TITULOS={home:'Painel',artistas:'Artistas',tapes:'Beat tapes',vitrine:'Vitrine',analytics:'Analytics'};
   function irPara(v){
-    if(v==='home') lojaPedida=false;          // volta da Vitrine com o número novo
+    if(v==='home'){ lojaPedida=false; consumoPedido=false; }   // volta com os números novos
     vista=v; filtro=''; $('q').value='';
     $('q').placeholder = v==='tapes' ? 'Buscar beat tape' : 'Buscar artista';
     desenhar(); window.scrollTo(0,0);
@@ -387,7 +409,7 @@ function pagina() {
     $('lista').hidden = vista==='analytics'||vista==='vitrine';
     $('analytics').hidden = vista!=='analytics';
     $('vitrine').hidden = vista!=='vitrine';
-    if(vista==='home'){ pedirResumoFunil(); pedirResumoLoja(); $('lista').innerHTML=''; $('lista').appendChild(home()); return; }
+    if(vista==='home'){ pedirResumoFunil(); pedirResumoLoja(); pedirConsumo(); $('lista').innerHTML=''; $('lista').appendChild(home()); pintarConsumo(); return; }
     if(vista==='vitrine'){
       // monta uma vez só (igual ao analytics): a lista de artistas recarrega sozinha
       // durante conversão e não pode apagar o que você está digitando aqui
@@ -495,6 +517,43 @@ function pagina() {
     }).catch(function(){ funilResumo={erro:true}; if(vista==='home') desenhar(); });
   }
   function nEtapa(j,e){ var x=(j.etapas||[]).filter(function(t){return t.etapa===e})[0]; return x?x.total:0; }
+  // Quanto o banco já leu hoje (o limite gratuito é 5 milhões por dia, zera às 21h).
+  function pedirConsumo(){
+    if(consumoPedido) return; consumoPedido=true;
+    fetch('/api/painel?op=consumo').then(function(r){return r.json()}).then(function(j){
+      consumoHoje=(j&&typeof j.hoje==='number')?j:null; if(vista==='home') pintarConsumo();
+    }).catch(function(){});
+  }
+  function milhar(n){
+    if(n>=1e6) return (n/1e6).toFixed(1).replace('.',',').replace(',0','')+' mi';
+    if(n>=1e3) return Math.round(n/1e3)+' mil';
+    return String(n);
+  }
+  function pintarConsumo(){
+    var velho=$('consumo'); if(velho) velho.remove();
+    if(!consumoHoje||vista!=='home') return;
+    var c=consumoHoje, pct=c.hoje/c.teto;
+    var el=document.createElement('button');
+    el.type='button'; el.id='consumo'; el.className='consumo'+(pct>=0.5?' alto':'');
+    el.textContent='Banco hoje: '+milhar(c.hoje)+' de '+milhar(c.teto)+' leituras'+(pct>=0.5?' · passou da metade':'');
+    el.addEventListener('click',abrirConsumo);
+    $('resumo').parentNode.insertBefore(el,$('resumo').nextSibling);
+  }
+  function abrirConsumo(){
+    var c=consumoHoje; if(!c) return;
+    var card=$('card');
+    card.innerHTML='<h2>Banco hoje</h2><p>'+milhar(c.hoje)+' de '+milhar(c.teto)+' linhas lidas (ontem: '+milhar(c.ontem)+'). '+
+      'O limite gratuito zera às 21h. Passou dele, o banco trava até lá: site na lista guardada, painel e cupom fora.</p>'+
+      '<div class="bloco"><div class="rot">O QUE MAIS LEU HOJE</div>'+
+      (c.top&&c.top.length ? c.top.map(function(t){
+        return '<div class="ev"><span>'+milhar(t.linhas)+'</span><span style="word-break:break-all">'+esc(t.rotulo)+' <i style="font-style:normal;color:var(--ink4)">('+t.chamadas+'x)</i></span></div>';
+      }).join('') : '<div class="vazio" style="padding:10px 0">Nada anotado ainda hoje.</div>')+
+      '</div><p style="margin-top:12px;font-size:12px">Conta aproximada, anotada pelo próprio site a cada minuto. Pra conferir: Cloudflare, D1, caramujo, Metrics.</p>'+
+      '<div class="acoes"><button class="pill" data-close type="button">Fechar</button></div>';
+    $('veil').hidden=false;
+    card.querySelector('[data-close]').addEventListener('click',fechar);
+  }
+
   // resumo da loja pro botão da home (a tela Vitrine mora em /assets/painel/vitrine.js)
   function pedirResumoLoja(){
     if(lojaPedida) return; lojaPedida=true;

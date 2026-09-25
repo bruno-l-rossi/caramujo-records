@@ -1067,7 +1067,6 @@ html,body{overflow-x:hidden;}
    Parcelar em até 12x aparece no total do carrinho e embaixo do botão de cada
    pacote. Na linha de cada beat, não: a lista fica limpa. */
 .cp-parc{margin:-.6rem 0 1rem;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--read);letter-spacing:.04em}
-.pack-parc{margin-top:.55rem;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--read);letter-spacing:.04em}
 /* o botão de preço do pé aceso = já está no carrinho (igual à lista) */
 .pe-dir #npPreco.on{background:var(--fire);border-color:var(--fire)}
 
@@ -2076,147 +2075,11 @@ document.addEventListener('mousemove',e=>{
 });
 
 /* beats data
-   Desde 24/09/2026 a lista mora no banco (painel > Vitrine). A cada visita o
-   servidor (functions/index.js) troca esta lista pela do banco. Mexer aqui NÃO
-   muda o site: ela só serviu pra importação da primeira vez. */
+   A lista mora no banco (painel > Vitrine). A cada visita o servidor
+   (functions/index.js) põe aqui dentro os beats do banco. Vazia = loja fora do ar. */
 const BEATS=[
-  {id:135, name:'GANA',  bpm:140,  key:'Dm',  genre:'trap',  sold:false},
-  {id:136, name:'FUNERAL',  bpm:168,  key:'Gm',  genre:'hard',  sold:false},
-  {id:122, name:'ARREPIO',  bpm:125,  key:'Gbm',  genre:'experimental',  sold:true},
-  {id:123, name:'LEGO',  bpm:135,  key:'Gm',  genre:'hard',  sold:false},
-  {id:124, name:'FUNDO DO FUNDO',  bpm:152,  key:'Dm',  genre:'boombap',  sold:false},
-  {id:125, name:'ONÇA LIMPA',  bpm:128,  key:'Bm',  genre:'funk',  sold:true},
-  {id:126, name:'BLUES',  bpm:120,  key:'Dbm',  genre:'boombap',  sold:false},
-  {id:127, name:'PABLO FREESTYLE 2',  bpm:144,  key:'Gbm',  genre:'trap',  sold:true},
-  {id:128, name:'VAI NA FÉ',  bpm:162,  key:'Bm',  genre:'funk',  sold:true},
-  {id:129, name:'TIRO',  bpm:192,  key:'Dbm',  genre:'detroit',  sold:false},
-  {id:130, name:'SCOOBY DOO',  bpm:130,  key:'Dm',  genre:'trap',  sold:false},
-  {id:131, name:'CAIXA',  bpm:120,  key:'Gbm',  genre:'nomelody',  sold:false},
-  {id:132, name:'GRUTA',  bpm:110,  key:'Dbm',  genre:'hard',  sold:false},
-  {id:133, name:'DÍGITOS',  bpm:132,  key:'Abmaj',  genre:'trap',  sold:false},
-  {id:134, name:'FUGA',  bpm:170,  key:'Dm',  genre:'trap',  sold:false},
-  {id:114, name:'NEGO EU SIGO MOVIMENTANDO',  bpm:128,  key:'Emaj',  genre:'trap',  sold:false},
-  {id:117, name:'MEC',  bpm:148,  key:'Bm',  genre:'pluggnb',  sold:false},
-  {id:116, name:'BAZUCA',  bpm:150,  key:'Abm',  genre:'hard',  sold:false},
-  {id:109, name:'DAZED AND CONFUSED',  bpm:120,  key:'Gbm',  genre:'trap',  sold:false},
-  {id:112, name:'DIGITAL',  bpm:124,  key:'Bbm',  genre:'trap',  sold:true},
-  {id:115, name:'GUEPARDO',  bpm:85,  key:'Fm',  genre:'funk',  sold:false},
-  {id:110, name:'NATA DE SÃO CARLOS',  bpm:125,  key:'Am',  genre:'funk',  sold:true},
-  {id:121, name:'EXIT',  bpm:160,  key:'Bbm',  genre:'boombap',  sold:false},
-  {id:111, name:'SIX SEVEN',  bpm:130,  key:'Bm',  genre:'trap',  sold:false},
-  {id:119, name:'SE O MUNDO SOUBESSE',  bpm:128,  key:'Cm',  genre:'trap',  sold:false},
-  {id:120, name:'PLUG DA MEIA NOITE',  bpm:140,  key:'Bbm',  genre:'plug',  sold:true},
-  {id:113, name:'NARCO',  bpm:140,  key:'Abmaj',  genre:'trap',  sold:false},
-  {id:118, name:'TROPICAL',  bpm:124,  key:'Bbm',  genre:'experimental',  sold:false},
-  {id:103, name:'NOCAUTE',  bpm:120,  key:'Bm',  genre:'trap',  sold:false},
-  {id:106, name:'RETRO',  bpm:124,  key:'Bbm',  genre:'boombap',  sold:false},
-  {id:94, name:'9:30 NO BUSÃO',  bpm:113,  key:'Gm',  genre:'trap',  sold:false},
-  {id:95, name:'AQUELA SORTE',  bpm:172,  key:'Abm',  genre:'boombap',  sold:true},
-  {id:99, name:'KANARIO',  bpm:117,  key:'Bm',  genre:'trap',  sold:false},
-  {id:98, name:'KAI É SÓ BOOMBAPÃO JHOW',  bpm:178,  key:'Abm',  genre:'boombap',  sold:false},
-  {id:107, name:'RIP LIL KEED',  bpm:122,  key:'Dbm',  genre:'experimental',  sold:false},
-  {id:104, name:'PINGOS',  bpm:158,  key:'Abm',  genre:'boombap',  sold:false},
-  {id:100, name:'LEMBRANÇAS',  bpm:120,  key:'Fm',  genre:'experimental',  sold:false},
-  {id:102, name:'NEUROSE',  bpm:188,  key:'Gbm',  genre:'boombap',  sold:false},
-  {id:108, name:'TU QUE FAZ SEU CORRE',  bpm:115,  key:'Dm',  genre:'trap',  sold:false},
-  {id:96, name:'CLÁSSICO COMO LINCOLN',  bpm:180,  key:'Ebm',  genre:'boombap',  sold:true},
-  {id:105, name:'PREMONIÇÃO',  bpm:122,  key:'Ebm',  genre:'trap',  sold:false},
-  {id:97, name:'JONATHAN',  bpm:156,  key:'Dbm',  genre:'nomelody',  sold:false},
-  {id:101, name:'LONG LIVE POP SMOKE',  bpm:143,  key:'Gm',  genre:'drill',  sold:false},
-  {id:1, name:'NUVEM',                   bpm:160,  key:'Am',    genre:'plug',     sold:true},
-  {id:2, name:'COLA',                    bpm:147,  key:'Ebm',   genre:'hoodtrap', sold:true},
-  {id:3, name:'ORAÇÃO',                  bpm:160,  key:'Em',    genre:'boombap',  sold:false},
-  {id:4, name:'GRAVIDADE',               bpm:128,  key:'Gm',    genre:'trap',     sold:false},
-  {id:5, name:'LARANJA',                 bpm:132,  key:'Gm',    genre:'trap',  sold:false},
-  {id:6, name:'HOOD STARS',              bpm:148,  key:'Bbm',   genre:'hoodtrap', sold:true},
-  {id:7, name:'REGALIA',                 bpm:140,  key:'Bm',   genre:'experimental',    sold:true},
-  {id:8, name:'ALOE',                    bpm:125,  key:'Dm',    genre:'experimental',     sold:false},
-  {id:9, name:'FLASHBACK',               bpm:132,  key:'Cm',    genre:'experimental',     sold:false},
-  {id:10,name:'RIDING',                  bpm:160,  key:'Bm',    genre:'experimental',     sold:false},
-  {id:11,name:'FINO',                    bpm:190,  key:'Gm',    genre:'boombap',  sold:false},
-  {id:12,name:'PIXEL',                   bpm:124,  key:'Em',    genre:'experimental',     sold:false},
-  {id:13,name:'IMERSO',                  bpm:160,  key:'Cmaj',  genre:'boombap',  sold:false},
-  {id:14,name:'VIGILANTE',               bpm:160,  key:'Cmaj',  genre:'boombap',  sold:false},
-  {id:15,name:'EXPERIÊNCIA',             bpm:160,  key:'Fm',    genre:'boombap',  sold:false},
-  {id:16,name:'VIBRAÇÕES',               bpm:142,  key:'Gbm',   genre:'plug',     sold:false},
-  {id:17,name:'BI',                      bpm:130,  key:'Abm',   genre:'trap',     sold:false},
-  {id:18,name:'PENSAMENTOS INTRUSIVOS',  bpm:132,  key:'Ebm',   genre:'experimental',     sold:false},
-  {id:19,name:'VÁRIAS FITA NOIS QUE TÁ',bpm:156,  key:'Amaj',  genre:'boombap',  sold:true},
-  {id:20,name:'RESERVA',                 bpm:174,  key:'Bm',    genre:'boombap',  sold:false},
-  {id:21,name:'AR',                      bpm:190,  key:'Abm',   genre:'experimental',     sold:false},
-  {id:22,name:'COLHE O QUE PLANTA',      bpm:160,  key:'Cmaj',  genre:'boombap',  sold:false},
-  {id:23,name:'FLUINDO',                 bpm:150,  key:'Dmaj',  genre:'experimental',     sold:false},
-  {id:24,name:'PÚRPURA',                 bpm:132,  key:'Gm',    genre:'boombap',  sold:true},
-  {id:25,name:'PRESSÃO',                 bpm:186,  key:'Bbm',   genre:'hard',     sold:false},
-  {id:26,name:'PORTAL',                  bpm:155,  key:'Fmaj',  genre:'trap',     sold:false},
-  {id:27,name:'ANSIEDADE',               bpm:163,  key:'Ebm',   genre:'trap',     sold:false},
-  {id:28,name:'PANE NO SISTEMA',         bpm:196,  key:'Gbmaj', genre:'trap',     sold:false},
-  {id:29, name:'66',  bpm:104,  key:'Bbm',  genre:'experimental',  sold:false},
-  {id:30, name:'ACHILES',  bpm:130,  key:'Dbm',  genre:'boombap',  sold:false},
-  {id:31, name:'ADEMAR',  bpm:158,  key:'Fm',  genre:'plug',  sold:false},
-  {id:32, name:'ANDARILHO',  bpm:132,  key:'Ebm',  genre:'experimental',  sold:false},
-  {id:33, name:'BLANK',  bpm:178,  key:'Dbm',  genre:'experimental',  sold:false},
-  {id:34, name:'CAT',  bpm:160,  key:'Cm',  genre:'boombap',  sold:false},
-  {id:35, name:'CISJORDÂNIA',  bpm:190,  key:'Fmaj',  genre:'hard',  sold:false},
-  {id:36, name:'CÓDIGO DE HONRA',  bpm:176,  key:'Cm',  genre:'boombap',  sold:false},
-  {id:37, name:'CORRE DO DIN',  bpm:112,  key:'Gbm',  genre:'trap',  sold:false},
-  {id:38, name:'DESVIANDO',  bpm:130,  key:'Fm',  genre:'funk',  sold:false},
-  {id:39, name:'DETROITÃO',  bpm:204,  key:'Dm',  genre:'detroit',  sold:false},
-  {id:40, name:'DOMINGÃO',  bpm:165,  key:'Fm',  genre:'plug',  sold:false},
-  {id:41, name:'ESCADINHA',  bpm:98,  key:'Ebm',  genre:'experimental',  sold:false},
-  {id:42, name:'EU AMO ESSE MEME',  bpm:140,  key:'Bm',  genre:'plug',  sold:false},
-  {id:43, name:'F1',  bpm:141,  key:'Cm',  genre:'plug',  sold:false},
-  {id:44, name:'FICOU VAZIO',  bpm:120,  key:'Bm',  genre:'drumless',  sold:false},
-  {id:45, name:'FLY ME TO THE MOON',  bpm:124,  key:'Fm',  genre:'drumless',  sold:false},
-  {id:46, name:'JIBOIA',  bpm:176,  key:'Ebm',  genre:'boombap',  sold:false},
-  {id:47, name:'JOHANESBURGO',  bpm:186,  key:'Cm',  genre:'drumless',  sold:false},
-  {id:48, name:'KILLA',  bpm:131,  key:'Bbm',  genre:'hard',  sold:false},
-  {id:49, name:'LAGOA',  bpm:115,  key:'Abm',  genre:'experimental',  sold:false},
-  {id:50, name:'LASER',  bpm:160,  key:'Fmaj',  genre:'hard',  sold:false},
-  {id:51, name:'LOCK',  bpm:176,  key:'Fm',  genre:'experimental',  sold:false},
-  {id:52, name:'LONG LIVE MEXIKO',  bpm:148,  key:'Abm',  genre:'plug',  sold:false},
-  {id:53, name:'LUIGI',  bpm:200,  key:'Bm',  genre:'detroit',  sold:false},
-  {id:54, name:'MADRUGADA RJ',  bpm:124,  key:'Bm',  genre:'trap',  sold:false},
-  {id:55, name:'MÁFIA',  bpm:210,  key:'Cm',  genre:'experimental',  sold:false},
-  {id:56, name:'MARCO POLO',  bpm:170,  key:'Ebm',  genre:'trap',  sold:false},
-  {id:57, name:'MIDI',  bpm:130,  key:'Amaj',  genre:'trap',  sold:false},
-  {id:58, name:'MUDDY',  bpm:145,  key:'Ebm',  genre:'plug',  sold:false},
-  {id:59, name:'NASCAR',  bpm:200,  key:'Ebm',  genre:'detroit',  sold:false},
-  {id:60, name:'NÚMEROS',  bpm:176,  key:'Gm',  genre:'boombap',  sold:false},
-  {id:61, name:'ÓBVIO',  bpm:152,  key:'Bbm',  genre:'boombap',  sold:false},
-  {id:62, name:'OK',  bpm:130,  key:'Dbm',  genre:'funk',  sold:false},
-  {id:63, name:'PÁSSARO',  bpm:146,  key:'Gbm',  genre:'boombap',  sold:false},
-  {id:64, name:'PEGAR OU LARGAR',  bpm:186,  key:'Bm',  genre:'hard',  sold:false},
-  {id:65, name:'PERDAS',  bpm:113,  key:'Bm',  genre:'trap',  sold:false},
-  {id:66, name:'PIT STOP',  bpm:182,  key:'Bbm',  genre:'bounce',  sold:false},
-  {id:67, name:'PLUG DO JAZZ',  bpm:142,  key:'Bm',  genre:'pluggnb',  sold:false},
-  {id:68, name:'PONTA',  bpm:150,  key:'Fm',  genre:'experimental',  sold:false},
-  {id:69, name:'PRESENTE',  bpm:130,  key:'Dbm',  genre:'boombap',  sold:false},
-  {id:70, name:'RELAÇÃO',  bpm:142,  key:'Emaj',  genre:'plug',  sold:false},
-  {id:71, name:'REP',  bpm:130,  key:'Amaj',  genre:'boombap',  sold:false},
-  {id:72, name:'RODA DE FREE',  bpm:178,  key:'Cm',  genre:'boombap',  sold:false},
-  {id:73, name:'ROSA',  bpm:90,  key:'Dm',  genre:'experimental',  sold:false},
-  {id:74, name:'SCAR',  bpm:152,  key:'Bm',  genre:'hard',  sold:false},
-  {id:75, name:'SEM MANDAR RECADO',  bpm:156,  key:'Ebm',  genre:'hard',  sold:false},
-  {id:76, name:'SI',  bpm:186,  key:'Em',  genre:'experimental',  sold:false},
-  {id:77, name:'SOZINHO',  bpm:135,  key:'Am',  genre:'boombap',  sold:false},
-  {id:78, name:'TIRO QUENTE',  bpm:198,  key:'Bm',  genre:'boombap',  sold:false},
-  {id:79, name:'TOMADA',  bpm:148,  key:'Gbm',  genre:'pluggnb',  sold:false},
-  {id:80, name:'TRATO FEITO',  bpm:117,  key:'Dbm',  genre:'trap',  sold:false},
-  {id:81, name:'TRAVESSA 7',  bpm:111,  key:'Am',  genre:'experimental',  sold:false},
-  {id:82, name:'TUIN',  bpm:192,  key:'Fm',  genre:'detroit',  sold:false},
-  {id:83, name:'TÚNEL',  bpm:155,  key:'Ebm',  genre:'trap',  sold:false},
-  {id:84, name:'UFO',  bpm:150,  key:'Bbm',  genre:'trap',  sold:false},
-  {id:85, name:'VALEU',  bpm:110,  key:'Dbm',  genre:'funk',  sold:false},
-  {id:86, name:'VELOZES',  bpm:174,  key:'Em',  genre:'trap',  sold:false},
-  {id:87, name:'VERDADEIRO',  bpm:160,  key:'Ebm',  genre:'trap',  sold:false},
-  {id:88, name:'VIBES',  bpm:170,  key:'Ebm',  genre:'experimental',  sold:false},
-  {id:89, name:'VIDREK',  bpm:146,  key:'Ebm',  genre:'boombap',  sold:false},
-  {id:90, name:'VOAR',  bpm:106,  key:'Gm',  genre:'experimental',  sold:false},
-  {id:91, name:'VOLTA',  bpm:204,  key:'Dm',  genre:'detroit',  sold:false},
-  {id:92, name:'WIFI',  bpm:120,  key:'Am',  genre:'trap',  sold:false},
-  {id:93, name:'WINNING',  bpm:145,  key:'Dbm',  genre:'experimental',  sold:false}
 ];
+if(!BEATS.length) window.__LOJA_FORA=true;
 
 const PRICE_BEAT=119, PRICE_STEMS=144;
 let cart=[], curFilt='todos', showAvailOnly=false; // vendidos visíveis por padrão (prova social)
@@ -3383,11 +3246,10 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
 (function(){
   /* ── BEAT EM DESTAQUE ─────────────────────────────────────────────
      Rodízio automático: 1 beat por semana, do catálogo inteiro (pula vendidos).
-     Destaque manual: preencha FEATURED_OVERRIDE_ID com o id do beat (procure
-     o nome no array BEATS) e, se quiser prazo, FEATURED_OVERRIDE_ATE com
-     'AAAA-MM-DD' (vale até o fim desse dia). Vencido o prazo, com o campo
-     vazio (null) ou com o beat vendido, o rodízio volta sozinho. */
-  const FEATURED_OVERRIDE_ID=123;
+     Destaque manual: painel > Vitrine > beat > Pôr no destaque. O servidor
+     escreve os dois valores abaixo a cada visita. Vencido o prazo, sem destaque
+     ou com o beat vendido, o rodízio volta sozinho. */
+  const FEATURED_OVERRIDE_ID=null;
   const FEATURED_OVERRIDE_ATE='';
   const FEATURED_BEAT_ID=(function(){
     if(FEATURED_OVERRIDE_ID){

@@ -115,8 +115,11 @@ const SCHEMA = [
      ordem REAL NOT NULL,
      track_id TEXT,
      criado_em TEXT NOT NULL,
-     mexido_em TEXT
+     mexido_em TEXT,
+     removido_em TEXT
    )`,
+  // "Tirar do site" no painel (24/09/2026): some da vitrine, guarda o histórico
+  `ALTER TABLE beats ADD COLUMN removido_em TEXT`,
   `CREATE INDEX IF NOT EXISTS beats_ordem ON beats (ordem)`,
   `CREATE TABLE IF NOT EXISTS cupons (
      codigo TEXT PRIMARY KEY,
@@ -135,6 +138,19 @@ const SCHEMA = [
      valor REAL,
      at TEXT NOT NULL,
      PRIMARY KEY (codigo, pagamento)
+   )`,
+  // Índices da rodada do limite de leitura (24/09/2026): o analytics filtra events
+  // por data e a vitrine/relatório filtram tracks por tipo, sem varrer a tabela toda.
+  `CREATE INDEX IF NOT EXISTS events_at ON events (at)`,
+  `CREATE INDEX IF NOT EXISTS tracks_kind ON tracks (kind, ready)`,
+  // Contador de consumo: linhas lidas por dia (UTC, o dia do limite da Cloudflare),
+  // por consulta. rotulo '*' = total do dia.
+  `CREATE TABLE IF NOT EXISTS consumo (
+     dia TEXT NOT NULL,
+     rotulo TEXT NOT NULL,
+     linhas INTEGER NOT NULL DEFAULT 0,
+     chamadas INTEGER NOT NULL DEFAULT 0,
+     PRIMARY KEY (dia, rotulo)
    )`
 ];
 
@@ -222,6 +238,83 @@ export const UMA_VEZ = [
 
 let ready = false;
 
+/* ---------- contador de consumo (24/09/2026) ----------
+   O plano gratuito do D1 bloqueia o dia inteiro quando passa de 5 milhões de
+   linhas lidas (aconteceu em 24/09 com o painel aberto durante a conversão total).
+   Toda consulta que passa por db() soma o rows_read que o D1 devolve. A cada
+   minuto, o isolate grava o que juntou numa consulta só (tabela consumo). O painel
+   mostra o dia. É estimativa: o que um isolate juntou e não gravou antes de morrer
+   se perde. */
+export const TETO_LEITURA = 5000000;
+const pendente = new Map();
+let gravadoEm = Date.now();
+let ultimoDia = null;
+const rotular = (sql) => String(sql).replace(/\s+/g, ' ').trim().slice(0, 96);
+
+function anotar(sql, meta) {
+  const linhas = Number(meta && (meta.rows_read ?? meta.rowsRead)) || 0;
+  const k = rotular(sql);
+  const p = pendente.get(k) || { linhas: 0, chamadas: 0 };
+  p.linhas += linhas; p.chamadas += 1;
+  pendente.set(k, p);
+}
+
+// Uma consulta só: o total do dia e as 23 consultas que mais leram (o resto vira
+// 'outras'). O plano gratuito aceita 50 consultas por chamada; não dá pra gastar à toa.
+export async function gravarConsumo(DB, agora = false) {
+  if (!pendente.size) return;
+  if (!agora && Date.now() - gravadoEm < 60e3) return;
+  const lista = [...pendente.entries()].sort((a, b) => b[1].linhas - a[1].linhas);
+  pendente.clear();
+  gravadoEm = Date.now();
+  const dia = new Date().toISOString().slice(0, 10);
+  const soma = (l) => l.reduce((o, [, p]) => ({ linhas: o.linhas + p.linhas, chamadas: o.chamadas + p.chamadas }), { linhas: 0, chamadas: 0 });
+  const linhas = [['*', soma(lista)], ...lista.slice(0, 22)];
+  if (lista.length > 22) linhas.push(['outras', soma(lista.slice(22))]);
+  try {
+    await DB.prepare(
+      'INSERT INTO consumo (dia, rotulo, linhas, chamadas) VALUES ' + linhas.map(() => '(?, ?, ?, ?)').join(', ') +
+      ' ON CONFLICT(dia, rotulo) DO UPDATE SET linhas = linhas + excluded.linhas, chamadas = chamadas + excluded.chamadas'
+    ).bind(...linhas.flatMap(([k, p]) => [dia, k, p.linhas, p.chamadas])).run();
+    if (ultimoDia !== dia) {
+      ultimoDia = dia;
+      const velho = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+      await DB.prepare('DELETE FROM consumo WHERE dia < ?').bind(velho).run();
+    }
+  } catch (_) { /* contador é bônus: nunca derruba a chamada */ }
+}
+
+// O D1 embrulhado: mesma cara (prepare/bind/all/first/run/batch), mas anota o
+// consumo. first() vira all() porque só o all() devolve o rows_read.
+function consulta(DB, cru, sql) {
+  return {
+    __cru: cru, __sql: sql,
+    bind: (...a) => consulta(DB, cru.bind(...a), sql),
+    async all() { const r = await cru.all(); anotar(sql, r && r.meta); await gravarConsumo(DB); return r; },
+    async run() { const r = await cru.run(); anotar(sql, r && r.meta); await gravarConsumo(DB); return r; },
+    async first(col) {
+      const r = await cru.all();
+      anotar(sql, r && r.meta);
+      await gravarConsumo(DB);
+      const l = r && r.results && r.results[0];
+      if (l === undefined || l === null) return null;
+      return col ? l[col] : l;
+    }
+  };
+}
+function embrulhar(DB) {
+  return {
+    prepare: (sql) => consulta(DB, DB.prepare(sql), sql),
+    async batch(lista) {
+      const r = await DB.batch(lista.map((x) => x.__cru || x));
+      (r || []).forEach((x, i) => anotar(lista[i].__sql || '(lote)', x && x.meta));
+      await gravarConsumo(DB);
+      return r;
+    }
+  };
+}
+let embrulhado = null, cruVisto = null;
+
 export async function db(env) {
   if (!env.DB) throw new Error('D1 nao esta ligado (binding DB)');
   if (!ready) {
@@ -251,7 +344,8 @@ export async function db(env) {
     }
     ready = true;
   }
-  return env.DB;
+  if (cruVisto !== env.DB) { cruVisto = env.DB; embrulhado = embrulhar(env.DB); }
+  return embrulhado;
 }
 
 export const now = () => new Date().toISOString();

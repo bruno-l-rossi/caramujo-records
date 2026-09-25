@@ -14,7 +14,7 @@
  */
 
 import { db } from '../_lib/db.js';
-import { garantirLoja, lerCupom, situacaoCupom } from '../_lib/loja.js';
+import { lerCupom, situacaoCupom } from '../_lib/loja.js';
 
 export async function onRequestPost({ request, env }) {
   const cors = {
@@ -32,7 +32,6 @@ export async function onRequestPost({ request, env }) {
 
   try {
     const d = await db(env);
-    await garantirLoja(request, env, d);
     const c = await lerCupom(d, code);
     const situacao = situacaoCupom(c);
     if (situacao !== 'ok') return Response.json({ valid: false, reason: situacao }, { status: 200, headers: cors });

@@ -14,13 +14,12 @@
  */
 
 import { db } from '../_lib/db.js';
-import { garantirLoja, lerCupom, situacaoCupom, vendidosEntre } from '../_lib/loja.js';
+import { lerCupom, situacaoCupom, vendidosEntre } from '../_lib/loja.js';
 
 async function conferirCupom(request, env, couponCode) {
   if (!couponCode) return { valid: false, reason: 'sem cupom' };
   try {
     const d = await db(env);
-    await garantirLoja(request, env, d);
     const situacao = situacaoCupom(await lerCupom(d, couponCode));
     if (situacao === 'not_found') return { valid: false, reason: 'not found' };
     if (situacao === 'expired') return { valid: false, reason: 'expired' };
@@ -35,7 +34,6 @@ async function jaVendidos(request, env, nomes) {
   if (!nomes.length) return [];
   try {
     const d = await db(env);
-    await garantirLoja(request, env, d);
     return await vendidosEntre(d, nomes);
   } catch (e) {
     console.warn('[sold-check] Falha ao conferir vendidos no banco:', e.message);
@@ -572,12 +570,12 @@ export async function onRequestPost({ request, env }) {
       ...(catalogBeatsList.length > 0 ? { catalog_beats: catalogBeatsList.join('||') } : {}),
     };
 
-    // Beat que alguém acabou de comprar não pode ser vendido de novo.
+    // Beat que alguém acabou de comprar (ou que saiu do site) não pode ser vendido.
     const vendidos = await jaVendidos(request, env, [...catalogBeatsList, ...pkgBeatsList]);
     if (vendidos.length) {
       const erro = vendidos.length === 1
-        ? `O beat ${vendidos[0]} acabou de ser vendido. Tira ele do carrinho e tenta de novo.`
-        : `Os beats ${vendidos.slice(0, -1).join(', ')} e ${vendidos[vendidos.length - 1]} acabaram de ser vendidos. Tira eles do carrinho e tenta de novo.`;
+        ? `O beat ${vendidos[0]} acabou de sair do catálogo. Tira ele do carrinho e tenta de novo.`
+        : `Os beats ${vendidos.slice(0, -1).join(', ')} e ${vendidos[vendidos.length - 1]} acabaram de sair do catálogo. Tira eles do carrinho e tenta de novo.`;
       return Response.json({ error: erro, vendidos }, { status: 400, headers: cors });
     }
 

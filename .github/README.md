@@ -40,8 +40,8 @@ O GitHub recebe **só o que o site e o backend usam**. O apoio que precisa exist
 │
 ├── functions/                     # Backend (Cloudflare Pages Functions) — GERA os e-mails e o contrato
 │   ├── index.js                   # A página inicial: põe a lista de beats do banco (D1) dentro do index.html
-│   ├── coupons.json               # Retrato antigo dos cupons: só serviu pra importação (24/09/2026)
-│   ├── _lib/loja.js               # A loja no D1: beats, cupons, destaque do hero, importação, reserva
+│   ├── _lib/loja.js               # A loja no D1: beats, cupons, destaque do hero, reserva
+│   ├── _lib/tom.js                # Tom/BPM que faltam no arquivo da tape, achados em outra cópia do beat
 │   └── api/
 │       ├── create-payment.js      # Pagamento + e-mails + contrato; recusa beat já vendido e cupom esgotado
 │       ├── check-payment.js       # Consulta status de um pagamento
@@ -163,7 +163,7 @@ Configuradas no painel do Cloudflare Pages → **Settings → Environment variab
 | `RESEND_API_KEY` | API Key do [Resend](https://resend.com) para envio de emails |
 | `NOTIFY_EMAIL` | Email do produtor que recebe as notificações de venda |
 | `NOTIFY_FROM` | Email remetente (ex: `rideblan33@caramujorecords.com.br`) |
-| `GITHUB_TOKEN` | Token do GitHub. Hoje só dispara a conversão pelo painel (Actions) e leu o coupons.json na importação |
+| `GITHUB_TOKEN` | Token do GitHub. Só dispara a conversão pelo painel (Actions) |
 
 ---
 
@@ -190,18 +190,29 @@ Desde 24/09/2026 a lista de beats, os cupons e o destaque do hero moram no banco
 e tudo se mexe no **painel > Vitrine**:
 
 - **Beats:** editar nome/BPM/tom/gênero, marcar vendido, desfazer vendido (pede
-  confirmação), subir pro topo, pôr no destaque do hero (com data opcional). Mostra
+  confirmação), subir pro topo, pôr no destaque do hero (com data opcional), tirar do
+  site (volta pra Fila se estiver disponível numa tape; vendido nunca volta). Mostra
   também os beats sem áudio e o motivo.
-- **Fila:** beat disponível numa beat tape paga que ainda não está no site. **Publicar**
-  pede o gênero (obrigatório) e põe o beat no topo da lista.
+- **Fila:** agrupada por beat tape. Beat disponível numa tape paga que ainda não está
+  no site: marca, escolhe o gênero (por beat ou um pra tape toda) e **Publicar
+  marcados**. Tom e BPM que faltam no nome do arquivo vêm de outra cópia do mesmo beat.
+  Beat novo (não aparece em pasta de artista nenhuma) chega sem pastilha, com o botão
+  "Marcar como disponíveis". **Buscar tapes novas** converte só as beat tapes na hora.
 - **Cupons:** criar (% de desconto ou preço fixo, com ou sem limite de usos), pausar,
   ver cada uso (data, valor e pagamento).
 
 Como a página recebe a lista: `functions/index.js` pega o `index.html` e troca o bloco
 `const BEATS=[...]` pela lista do banco a cada visita (cópia de 1 minuto na memória).
-O `const BEATS` escrito no arquivo não manda mais em nada: serviu pra importação da
-primeira vez. Banco fora do ar: entra a última lista boa (cache da Cloudflare, 30 dias);
+No arquivo, o `const BEATS` fica vazio. Banco fora do ar: entra a última lista boa (cache da Cloudflare, 30 dias);
 sem cópia nenhuma, a página sai com a lista vazia e o aviso de fora do ar.
+
+**Beat tape nova:** pasta em `@rideblan33 / Beat tapes` com a capa e os beats (nome no
+padrão `nome Tom 140bpm`) → painel > Vitrine > Fila > Buscar tapes novas → marcar os
+novos como disponíveis → gênero → Publicar marcados. Copiar pra Exclusivos virou opcional.
+
+**Limite do banco:** o plano gratuito do D1 lê até 5 milhões de linhas por dia. A home do
+painel mostra o consumo do dia ("Banco hoje"). Passou do limite, o banco trava até as 21h
+(site na lista guardada, painel e cupom fora) e a conversão para sozinha.
 
 O áudio segue igual: a `/api/vitrine` casa o beat pelo nome, BPM e tom com o MP3 que o
 conversor guardou no R2. Renomeou o beat no painel? Renomeia no Drive também.

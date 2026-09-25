@@ -1,12 +1,14 @@
 // As ações do painel: lista de artistas, permissão por pasta,
 // atividade e o disparo da conversão. Tudo atrás do mesmo cookie do painel.
 
-import { db, json } from '../_lib/db.js';
+import { db, json, TETO_LEITURA } from '../_lib/db.js';
 import { autenticado } from '../_lib/sessao.js';
 import { mesma, mesmoTom, limpo } from '../_lib/casar.js';
 import { vitrine, indexar, achar, esquecerVitrine } from '../_lib/vitrine.js';
-import { garantirLoja, lerBeats, lerDestaque, lerEstatico, esquecerLoja } from '../_lib/loja.js';
+import { lerBeats, lerDestaque, lerEstatico, esquecerLoja } from '../_lib/loja.js';
 import { slug } from '../_lib/casar.js';
+import { tomDeCopia, ehBeatNovo } from '../_lib/tom.js';
+import { esquecerApiVitrine } from './vitrine.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
 
@@ -21,6 +23,8 @@ export async function onRequest({ request, env }) {
   // pedia por GET: voltava 400, a lista chegava vazia e o painel desenhava
   // "nada pra revisar" com beat sem pastilha no catálogo.
   if (op === 'artistas') return artistas(d);
+  if (op === 'andamento') return andamento(d);
+  if (op === 'consumo') return consumo(d);
   if (op === 'eventos') return eventos(d, url.searchParams.get('id'), url.searchParams.get('p'));
   if (op === 'revisar') return revisar(d);
   if (op === 'vitrine') return relatorio(d, request, env);
@@ -36,32 +40,60 @@ export async function onRequest({ request, env }) {
   if (op === 'venda') return venda(d, body);
   if (op === 'sync') return sync(env, d, body);
   if (LOJA_POST[op]) {
-    await garantirLoja(request, env, d);
     const r = await LOJA_POST[op](d, body, request, env);
-    esquecerLoja(); esquecerVitrine();
+    await esquecerLoja(request); esquecerVitrine(); await esquecerApiVitrine(request);
     return r;
   }
   return json({ erro: 'op desconhecida' }, 400);
 }
 
+// Uma passada só em tracks (agrupada por catálogo) no lugar de 3 subconsultas por
+// artista. Antes lia ~4x a tabela inteira a cada abertura (24/09/2026).
 async function artistas(d) {
   const { results } = await d.prepare(
     `SELECT a.id, a.slug, a.name, a.code, a.tipo, a.dl_beats, a.dl_sons, a.synced_at,
             a.job_estado, a.job_total, a.job_feitos, a.job_at, a.cover_origem, a.cover_key, a.descricao,
-            (SELECT MAX(t.src_modified) FROM tracks t WHERE t.artist_id = a.id) AS modificado,
-            (SELECT COUNT(*) FROM tracks t WHERE t.artist_id = a.id AND t.ready = 1 AND t.kind = 'beat') AS nb,
-            (SELECT COUNT(*) FROM tracks t WHERE t.artist_id = a.id AND t.ready = 1 AND t.kind = 'son') AS ns,
+            c.modificado, COALESCE(c.nb, 0) AS nb, COALESCE(c.ns, 0) AS ns, COALESCE(c.bytes, 0) AS bytes,
             (SELECT MAX(at) FROM events e WHERE e.artist_id = a.id) AS visto
-     FROM artists a ORDER BY a.name COLLATE NOCASE`
+       FROM artists a
+       LEFT JOIN (
+         SELECT artist_id, MAX(src_modified) AS modificado,
+                SUM(CASE WHEN ready = 1 AND kind = 'beat' THEN 1 ELSE 0 END) AS nb,
+                SUM(CASE WHEN ready = 1 AND kind = 'son' THEN 1 ELSE 0 END) AS ns,
+                SUM(CASE WHEN ready = 1 THEN COALESCE(mp3_bytes, 0) ELSE 0 END) AS bytes
+           FROM tracks GROUP BY artist_id
+       ) c ON c.artist_id = a.id
+      ORDER BY a.name COLLATE NOCASE`
   ).all();
+  const lista = results || [];
+  const usado = lista.reduce((n, a) => n + Number(a.bytes || 0), 0);
+  for (const a of lista) delete a.bytes;
+  return json({ artistas: lista, prateleira: { usado, teto: TETO_BYTES } });
+}
 
-  const soma = await d.prepare(
-    'SELECT COALESCE(SUM(mp3_bytes), 0) AS n FROM tracks WHERE ready = 1'
-  ).first();
+// O que o painel consulta enquanto tem conversão rodando: só o andamento, sem
+// faixa nenhuma. ~100 linhas lidas (antes eram milhares a cada 3 segundos).
+async function andamento(d) {
+  const { results } = await d.prepare(
+    `SELECT id, name, tipo, job_estado, job_total, job_feitos, job_at FROM artists
+      WHERE job_estado IN ('na fila', 'convertendo')`
+  ).all();
+  const tapes = await d.prepare("SELECT COUNT(*) AS n, MAX(synced_at) AS ultima FROM artists WHERE tipo = 'tape'").first();
+  return json({ rodando: results || [], tapes: Number(tapes?.n || 0), tapeAt: tapes?.ultima || null });
+}
 
+// Linhas lidas no banco hoje (dia UTC, o mesmo do limite) e ontem, e o que mais leu.
+async function consumo(d) {
+  const hoje = new Date().toISOString().slice(0, 10);
+  const ontem = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+  const { results } = await d.prepare(
+    "SELECT dia, rotulo, linhas, chamadas FROM consumo WHERE dia IN (?, ?) ORDER BY linhas DESC"
+  ).bind(hoje, ontem).all();
+  const linhas = results || [];
+  const total = (dia) => Number((linhas.find((r) => r.dia === dia && r.rotulo === '*') || {}).linhas || 0);
   return json({
-    artistas: results || [],
-    prateleira: { usado: Number(soma?.n || 0), teto: TETO_BYTES }
+    hoje: total(hoje), ontem: total(ontem), teto: TETO_LEITURA,
+    top: linhas.filter((r) => r.dia === hoje && r.rotulo !== '*').slice(0, 10)
   });
 }
 
@@ -160,6 +192,7 @@ async function relatorio(d, request, env) {
   // Não achou é pouco: o relatório diz POR QUÊ, que é o que vira conserto no Drive.
   const semAudio = [];
   for (const b of beats) {
+    if (b.removido) continue;               // fora do site: áudio não importa
     const candidatos = porTitulo.get(limpo(b.name)) || [];
     if (candidatos.some((f) => f.ready === 1 && mesma(b, f))) continue;
 
@@ -182,12 +215,15 @@ async function relatorio(d, request, env) {
     semAudio.push({ name: b.name, bpm: b.bpm, key: b.key, sold: b.sold ? 1 : 0, motivo });
   }
 
-  // Beat disponível numa tape que ainda não está à venda no site. Não é erro, é fila:
-  // é o que falta postar. Tape de graça fica fora (não tem carrinho por definição) e
+  // A FILA: beat disponível numa tape paga que ainda não está à venda no site.
+  // Não é erro, é o que falta postar. Tape de graça fica fora (não tem carrinho) e
   // beat vendido no site também (a pastilha dele já vira vendido sozinha).
+  // Tom/BPM que faltam no nome do arquivo vêm de outra cópia do mesmo beat.
+  const copias = (results || []).map((f) => ({ title: f.title, bpm: f.bpm, key: f.key, onde: f.onde }))
+    .concat(exclusivos.map((e) => ({ title: e.title, bpm: e.bpm, key: e.key, onde: 'Exclusivos' })));
   const mapa = indexar(beats);
   const { results: disp } = await d.prepare(
-    `SELECT t.id, t.title, t.bpm, t.mkey AS key, a.name AS tape FROM tracks t
+    `SELECT t.id, t.title, t.bpm, t.mkey AS key, t.src_modified, a.id AS tape_id, a.name AS tape FROM tracks t
        JOIN artists a ON a.id = t.artist_id
       WHERE a.tipo = 'tape' AND a.dl_beats = 0 AND t.kind = 'beat' AND t.tag = 'disponivel'
       ORDER BY t.src_modified DESC`
@@ -201,15 +237,49 @@ async function relatorio(d, request, env) {
     const k = limpo(t.title) + '|' + (t.bpm || '') + '|' + (t.key || '');
     if (vistos.has(k)) continue;
     vistos.add(k);
-    semBotao.push({ id: t.id, title: t.title, tape: t.tape, bpm: t.bpm, key: t.key });
+    const achado = tomDeCopia(t, copias);
+    semBotao.push({
+      id: t.id, title: t.title, tape: t.tape, tape_id: t.tape_id, at: t.src_modified,
+      bpm: achado.bpm, key: achado.key,
+      ...(achado.keyOnde ? { keyOnde: achado.keyOnde } : {}),
+      ...(achado.bpmOnde ? { bpmOnde: achado.bpmOnde } : {}),
+      ...(achado.confere ? { confere: true } : {})
+    });
   }
 
+  // Beat de tape paga ainda sem pastilha. "Beat novo" (não aparece em pasta de
+  // artista nenhuma) a Fila marca em lote; o resto pede olho em Beat tapes.
+  const { results: pend } = await d.prepare(
+    `SELECT t.id, t.title, t.revisar, t.src_modified, a.id AS tape_id, a.name AS tape FROM tracks t
+       JOIN artists a ON a.id = t.artist_id
+      WHERE a.tipo = 'tape' AND a.dl_beats = 0 AND t.kind = 'beat'
+        AND t.tag IS NULL AND t.venda_manual IS NULL`
+  ).all();
+
+  // tudo agrupado por tape, a mais nova primeiro
+  const porTape = new Map();
+  const tapeDe = (id, nome, at) => {
+    if (!porTape.has(id)) porTape.set(id, { tape_id: id, tape: nome, at: at || '', itens: [], novos: [], outros: 0 });
+    const g = porTape.get(id);
+    if ((at || '') > g.at) g.at = at;
+    return g;
+  };
+  for (const t of semBotao) tapeDe(t.tape_id, t.tape, t.at).itens.push(t);
+  for (const p of pend || []) {
+    const g = tapeDe(p.tape_id, p.tape, p.src_modified);
+    if (ehBeatNovo(p.revisar)) g.novos.push({ id: p.id, title: p.title });
+    else g.outros++;
+  }
+  const tapesFila = [...porTape.values()].sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+
+  const noSite = beats.filter((b) => !b.removido);
   return json({
-    total: beats.length,
-    aVenda: beats.filter((b) => !b.sold).length,
-    comAudio: beats.length - semAudio.length,
+    total: noSite.length,
+    aVenda: noSite.filter((b) => !b.sold).length,
+    comAudio: noSite.length - semAudio.length,
     semAudio,
-    semBotao
+    semBotao,
+    tapesFila
   });
 }
 
@@ -254,6 +324,18 @@ async function descricao(d, body) {
 async function sync(env, d, body) {
   if (!env.GITHUB_TOKEN) return json({ erro: 'falta a chave do GitHub' }, 500);
 
+  // Pedido repetido em menos de 10 minutos não sai de novo (24/09/2026: dois
+  // "converter tudo" com 4 s de diferença fizeram o GitHub converter tudo 2 vezes).
+  const alvo = String(body.artista || '');
+  const ultimo = await d.prepare("SELECT valor FROM meta WHERE chave = 'disparo'").first();
+  try {
+    const u = ultimo ? JSON.parse(ultimo.valor) : null;
+    if (u && u.alvo === alvo && Date.now() - Date.parse(u.at) < 10 * 60e3) {
+      const hora = new Date(Date.parse(u.at) - 3 * 3600e3).toISOString().slice(11, 16);
+      return json({ erro: 'essa conversão já foi pedida às ' + hora + ' e está na fila do GitHub' }, 409);
+    }
+  } catch (_) { /* anotação torta: deixa passar */ }
+
   const r = await fetch(
     'https://api.github.com/repos/bruno-l-rossi/caramujo-records/actions/workflows/catalogo.yml/dispatches',
     {
@@ -270,6 +352,8 @@ async function sync(env, d, body) {
 
   if (r.status === 204) {
     const marca = new Date().toISOString();
+    await d.prepare("INSERT OR REPLACE INTO meta (chave, valor) VALUES ('disparo', ?)")
+      .bind(JSON.stringify({ alvo, at: marca })).run();
     if (body.artista) {
       await d.prepare(
         "UPDATE artists SET job_estado = 'na fila', job_total = 0, job_feitos = 0, job_at = ? WHERE name = ?"
@@ -503,14 +587,21 @@ async function abaCatalogos(d, p, tipo) {
       GROUP BY a.id ORDER BY open DESC, play DESC, a.name COLLATE NOCASE`
   ).bind(ini, fim, tipo).all()).results || [];
 
-  // todas as faixas prontas (beats nas tapes; beats e músicas nos artistas) com os plays do período
-  const faixas = (await d.prepare(
-    `SELECT t.id, t.title, t.kind, a.name AS onde, COUNT(e.id) n
+  // todas as faixas prontas (beats nas tapes; beats e músicas nos artistas) com os plays
+  // do período. Conto os plays à parte (índice por data) e junto aqui: o JOIN antigo
+  // relia os eventos do artista pra cada faixa (24/09/2026).
+  const lista0 = (await d.prepare(
+    `SELECT t.id, t.title, t.kind, a.name AS onde
        FROM tracks t JOIN artists a ON a.id = t.artist_id
-       LEFT JOIN events e ON e.track_id = t.id AND e.artist_id = a.id AND e.kind = 'play' AND e.at >= ? AND e.at < ?
-      WHERE a.tipo = ? AND t.ready = 1 ${tipo === 'tape' ? "AND t.kind = 'beat'" : ''}
-      GROUP BY t.id ORDER BY n DESC, t.title COLLATE NOCASE LIMIT 5000`
-  ).bind(ini, fim, tipo).all()).results || [];
+      WHERE a.tipo = ? AND t.ready = 1 ${tipo === 'tape' ? "AND t.kind = 'beat'" : ''}`
+  ).bind(tipo).all()).results || [];
+  const plays = new Map(((await d.prepare(
+    `SELECT track_id, COUNT(*) n FROM events
+      WHERE at >= ? AND at < ? AND kind = 'play' AND track_id IS NOT NULL GROUP BY track_id`
+  ).bind(ini, fim).all()).results || []).map((r) => [r.track_id, r.n]));
+  const faixas = lista0.map((t) => ({ ...t, n: plays.get(t.id) || 0 }))
+    .sort((x, y) => y.n - x.n || String(x.title).localeCompare(String(y.title), 'pt-BR', { sensitivity: 'base' }))
+    .slice(0, 5000);
 
   // pessoas diferentes por dia (quem abriu o link)
   const pessoasDia = (await d.prepare(
@@ -558,7 +649,6 @@ async function abaCatalogos(d, p, tipo) {
 // Tudo que antes era editar o index.html ou o coupons.json e fazer push.
 
 async function loja(d, request, env) {
-  await garantirLoja(request, env, d);
   const [beats, destaque, cupons] = await Promise.all([
     lerBeats(d),
     lerDestaque(d),
@@ -604,22 +694,81 @@ function tomBeat(txt) {
   return { tom: m[1].toUpperCase() + m[2] + q };
 }
 
-async function fichaValida(d, body, request, env, idAtual) {
+// O que a validação precisa, lido uma vez só (lote de 30 beats = as mesmas 2 leituras).
+async function contextoFicha(d, request, env) {
+  let generos = {};
+  try { generos = (await lerEstatico(request, env)).generos; } catch (_) { generos = {}; }
+  const ativos = await lerBeats(d);
+  const { results } = await d.prepare(
+    'SELECT id, name, sold, removido_em FROM beats WHERE removido_em IS NOT NULL'
+  ).all();
+  return { generos, ativos, removidos: results || [] };
+}
+
+function fichaValida(body, ctx, idAtual) {
   const n = nomeBeat(body.name);
   if (n.erro) return n;
   const bpm = Number(body.bpm);
   if (!Number.isInteger(bpm) || bpm < 40 || bpm > 300) return { erro: 'BPM entre 40 e 300' };
   const t = tomBeat(body.key);
   if (t.erro) return t;
-  let generos = {};
-  try { generos = (await lerEstatico(request, env)).generos; } catch (_) { generos = {}; }
   const genre = String(body.genre || '');
   // gênero é SEMPRE escolha do Bruno: sem ele, nada entra
-  if (!genre || !Object.prototype.hasOwnProperty.call(generos, genre)) return { erro: 'escolhe o gênero' };
-  const outros = (await lerBeats(d)).filter((b) => b.id !== idAtual);
-  const igual = outros.find((b) => slug(b.name) === slug(n.nome));
+  if (!genre || !Object.prototype.hasOwnProperty.call(ctx.generos, genre)) return { erro: 'escolhe o gênero' };
+  const igual = ctx.ativos.find((b) => b.id !== idAtual && slug(b.name) === slug(n.nome));
   if (igual) return { erro: 'já tem um beat chamado ' + igual.name + ' no site' };
   return { name: n.nome, bpm, key: t.tom, genre };
+}
+
+// Publica um ou vários (a Fila manda a tape inteira de uma vez). O primeiro do lote
+// fica no topo da lista do site, os outros logo abaixo, na mesma ordem.
+// Beat que já esteve no site e foi tirado volta com o mesmo número (histórico e
+// analytics seguem), menos se tiver sido vendido: esse não volta nunca.
+async function publicarVarios(d, itens, request, env) {
+  const ctx = await contextoFicha(d, request, env);
+  const resultados = [];
+  const aceitos = [];
+  const noLote = new Set();
+  itens.forEach((it, i) => {
+    const f = fichaValida(it || {}, ctx, null);
+    if (f.erro) { resultados.push({ i, erro: f.erro }); return; }
+    const s = slug(f.name);
+    if (noLote.has(s)) { resultados.push({ i, erro: 'nome repetido neste lote' }); return; }
+    const antigo = ctx.removidos.find((b) => slug(b.name) === s);
+    if (antigo && antigo.sold) { resultados.push({ i, erro: antigo.name + ' já foi vendido: não volta pro site' }); return; }
+    noLote.add(s);
+    aceitos.push({ i, f, volta: antigo ? antigo.id : null, track: it.track_id ? String(it.track_id).slice(0, 80) : null });
+  });
+  if (!aceitos.length) return resultados;
+
+  const base = await topoDaLista(d);
+  const prox = await d.prepare('SELECT COALESCE(MAX(id), 0) + 1 AS n FROM beats').first();
+  let id = Number(prox.n);
+  const quando = new Date().toISOString();
+  aceitos.forEach((x, k) => {
+    x.ordem = base - (aceitos.length - 1) + k;
+    if (!x.volta) x.id = id++;
+  });
+
+  const lote = [];
+  const novos = aceitos.filter((x) => !x.volta);
+  for (let i = 0; i < novos.length; i += 9) {        // 10 valores por beat, teto de 100 do D1
+    const parte = novos.slice(i, i + 9);
+    lote.push(d.prepare(
+      'INSERT INTO beats (id, name, bpm, mkey, genre, sold, ordem, track_id, criado_em, mexido_em) VALUES ' +
+      parte.map(() => '(?, ?, ?, ?, ?, 0, ?, ?, ?, ?)').join(', ')
+    ).bind(...parte.flatMap((x) => [x.id, x.f.name, x.f.bpm, x.f.key, x.f.genre, x.ordem, x.track, quando, quando])));
+  }
+  for (const x of aceitos.filter((y) => y.volta)) {
+    x.id = x.volta;
+    lote.push(d.prepare(
+      `UPDATE beats SET name = ?, bpm = ?, mkey = ?, genre = ?, ordem = ?, track_id = COALESCE(?, track_id),
+              removido_em = NULL, mexido_em = ? WHERE id = ?`
+    ).bind(x.f.name, x.f.bpm, x.f.key, x.f.genre, x.ordem, x.track, quando, x.id));
+  }
+  await d.batch(lote);
+  for (const x of aceitos) resultados.push({ i: x.i, ok: true, id: x.id, name: x.f.name, voltou: !!x.volta });
+  return resultados.sort((a, b) => a.i - b.i);
 }
 
 async function topoDaLista(d) {
@@ -635,23 +784,61 @@ async function beatPorId(d, id) {
 
 const LOJA_POST = {
   async 'beat-publicar'(d, body, request, env) {
-    const f = await fichaValida(d, body, request, env, null);
-    if (f.erro) return json({ erro: f.erro }, 400);
-    const prox = await d.prepare('SELECT COALESCE(MAX(id), 0) + 1 AS n FROM beats').first();
-    const id = Number(prox.n);
+    const [r] = await publicarVarios(d, [body], request, env);
+    if (!r.ok) return json({ erro: r.erro }, 400);
+    return json({ ok: true, id: r.id, name: r.name, voltou: r.voltou });
+  },
+
+  // A Fila publica a tape inteira de uma vez: [{track_id, name, bpm, key, genre}]
+  async 'beat-publicar-lote'(d, body, request, env) {
+    const itens = Array.isArray(body.itens) ? body.itens.slice(0, 60) : [];
+    if (!itens.length) return json({ erro: 'nada marcado' }, 400);
+    const resultados = await publicarVarios(d, itens, request, env);
+    return json({ ok: true, resultados, publicados: resultados.filter((r) => r.ok).length });
+  },
+
+  // Tira da lista do site sem vender. O histórico fica; se o beat estiver disponível
+  // numa tape, ele volta pra Fila e dá pra publicar de novo.
+  async 'beat-tirar'(d, body) {
+    if (body.confirmo !== true) return json({ erro: 'precisa confirmar' }, 400);
+    const b = await beatPorId(d, body.id);
+    if (!b || b.removido_em) return json({ erro: 'beat não encontrado' }, 404);
     const quando = new Date().toISOString();
-    await d.prepare(
-      `INSERT INTO beats (id, name, bpm, mkey, genre, sold, ordem, track_id, criado_em, mexido_em)
-       VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`
-    ).bind(id, f.name, f.bpm, f.key, f.genre, await topoDaLista(d),
-      body.track_id ? String(body.track_id).slice(0, 80) : null, quando, quando).run();
-    return json({ ok: true, id, name: f.name });
+    await d.prepare('UPDATE beats SET removido_em = ?, mexido_em = ? WHERE id = ?').bind(quando, quando, b.id).run();
+    const dest = await lerDestaque(d);
+    if (dest && dest.id === b.id) {
+      await d.prepare("UPDATE meta SET valor = ? WHERE chave = 'destaque'").bind(JSON.stringify({ id: null, ate: '' })).run();
+    }
+    return json({ ok: true });
+  },
+
+  // Tape nova: marca DISPONÍVEL os beats que o cruzamento não achou em pasta de artista
+  // nenhuma ("Beat novo"). Pendência de outro tipo (conflito) fica pra Beat tapes.
+  async 'tape-novos'(d, body, request, env) {
+    const tapeId = Number(body.tapeId) || 0;
+    if (!tapeId) return json({ erro: 'sem tape' }, 400);
+    const { results } = await d.prepare(
+      `SELECT t.id, t.title, t.bpm, t.mkey AS key, t.revisar FROM tracks t JOIN artists a ON a.id = t.artist_id
+        WHERE a.id = ? AND a.tipo = 'tape' AND t.kind = 'beat' AND t.tag IS NULL AND t.venda_manual IS NULL`
+    ).bind(tapeId).all();
+    // vendido no site nunca vira disponível, nem aqui
+    const vendidos = (await vitrine(request, env)).filter((b) => b.sold);
+    const ids = (results || [])
+      .filter((t) => ehBeatNovo(t.revisar) && !vendidos.some((b) => mesma(b, t)))
+      .map((t) => t.id);
+    for (let i = 0; i < ids.length; i += 90) {
+      const parte = ids.slice(i, i + 90);
+      await d.prepare(
+        `UPDATE tracks SET venda_manual = 'disponivel', tag = 'disponivel', revisar = NULL WHERE id IN (${parte.map(() => '?').join(', ')})`
+      ).bind(...parte).run();
+    }
+    return json({ ok: true, marcados: ids.length });
   },
 
   async 'beat-editar'(d, body, request, env) {
     const b = await beatPorId(d, body.id);
     if (!b) return json({ erro: 'beat não encontrado' }, 404);
-    const f = await fichaValida(d, body, request, env, b.id);
+    const f = fichaValida(body, await contextoFicha(d, request, env), b.id);
     if (f.erro) return json({ erro: f.erro }, 400);
     await d.prepare('UPDATE beats SET name = ?, bpm = ?, mkey = ?, genre = ?, mexido_em = ? WHERE id = ?')
       .bind(f.name, f.bpm, f.key, f.genre, new Date().toISOString(), b.id).run();

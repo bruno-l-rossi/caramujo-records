@@ -57,7 +57,31 @@
     '.vt-cupom .linha{flex:1;min-width:0}',
     '.vt-cupom.pausado .nome{color:var(--ink3)}',
     '.vt-vazio{padding:28px 0;color:#5a5a5a;font-size:14px;line-height:1.5}',
-    '.vt-usos .ev span:last-child{margin-left:auto;color:var(--ink3)}'
+    '.vt-usos .ev span:last-child{margin-left:auto;color:var(--ink3)}',
+    '.vt-buscar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#101010;border:1px solid var(--borda);border-radius:14px;padding:12px 14px;margin-bottom:16px}',
+    '.vt-buscar small{display:block;font-size:12px;color:var(--ink4);margin-top:3px;line-height:1.4}',
+    '.vt-buscar b{font-size:14px;font-weight:600}',
+    '.vt-buscar .pill{flex:none;padding:9px 14px;font-size:13px}',
+    '.vt-tape{border:1px solid var(--borda);border-radius:16px;padding:14px;margin-bottom:14px;background:#0e0e0e}',
+    '.vt-tape-topo{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px}',
+    '.vt-tape-topo b{font-size:16px;font-weight:700}',
+    '.vt-tape-topo small{font-size:12px;color:var(--ink4);white-space:nowrap}',
+    '.vt-tape .revisar{margin:8px 0 10px}',
+    '.vt-tape .revisar .pill{margin-top:10px;padding:8px 13px;font-size:13px}',
+    '.vt-fl{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--linha)}',
+    '.vt-fl:last-of-type{border-bottom:0}',
+    '.vt-fl input[type=checkbox]{width:20px;height:20px;accent-color:#fff;margin:0}',
+    '.vt-fl .nome{font-size:15px}',
+    '.vt-fl .meta i{font-style:normal;color:#b99a5b}',
+    '.vt-fl .meta em{font-style:normal;color:#e0b155}',
+    '.vt-fl select{background:var(--campo);border:1px solid var(--borda);border-radius:10px;padding:8px 8px;font-size:13px;color:var(--ink);max-width:128px;color-scheme:dark}',
+    '.vt-fl select.falta{border-color:#6b5320}',
+    '.vt-fl .vt-ed{border:1px solid var(--borda);background:#141414;border-radius:10px;width:36px;height:36px;color:var(--ink2);cursor:pointer;font-size:15px}',
+    '.vt-fl-erro{grid-column:2 / -1;font-size:12px;color:#e08d7e}',
+    '.vt-tape-pe{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}',
+    '.vt-tape-pe select{flex:1 1 150px;background:var(--campo);border:1px solid var(--borda);border-radius:999px;padding:10px 14px;font-size:13.5px;color:var(--ink);color-scheme:dark}',
+    '.vt-tape-pe .pill{flex:1 1 180px;justify-content:center}',
+    '@media (max-width:420px){.vt-fl{grid-template-columns:auto 1fr auto}.vt-fl select{grid-column:2 / 3;max-width:none}.vt-fl .vt-ed{grid-row:1;grid-column:3}}'
   ].join('\n');
 
   var $ = function (i) { return document.getElementById(i); };
@@ -275,6 +299,13 @@
         : '<b>' + esc(b.name) + '</b> fica riscado no site e sai do carrinho de quem estiver com ele.') +
         '<div class="vt-acoes"><button class="pill' + (b.sold ? ' vt-perigo' : ' solid') + '" type="button" data-act="sim">' + (b.sold ? 'Sim, voltar pra venda' : 'Sim, marcar vendido') + '</button>' +
         '<button class="pill" type="button" data-act="nao">Cancelar</button></div></div></div>' +
+      '<div class="bloco"><div class="rot">NO SITE</div><div class="vt-acoes">' +
+        '<button class="pill vt-perigo" type="button" data-act="tirar">Tirar do site</button></div>' +
+      '<div class="vt-confirma" id="vtTirar" hidden><b>' + esc(b.name) + '</b> sai da lista do site e do carrinho de quem estiver com ele. ' +
+        (b.sold ? 'Continua vendido: a tape segue com a pastilha de vendido e ele não volta pra Fila.'
+          : 'Se estiver disponível numa beat tape, volta pra Fila e dá pra publicar de novo.') +
+        '<div class="vt-acoes"><button class="pill vt-perigo" type="button" data-act="tirasim">Sim, tirar do site</button>' +
+        '<button class="pill" type="button" data-act="tiranao">Cancelar</button></div></div></div>' +
       '<div class="vt-acoes"><button class="pill" data-close type="button">Fechar</button></div>';
     $('veil').hidden = false;
     c.scrollTop = 0;
@@ -317,6 +348,17 @@
         });
       });
     });
+    var tira = $('vtTirar');
+    c.querySelector('[data-act=tirar]').addEventListener('click', function () { tira.hidden = false; tira.scrollIntoView({ block: 'nearest' }); });
+    tira.querySelector('[data-act=tiranao]').addEventListener('click', function () { tira.hidden = true; });
+    tira.querySelector('[data-act=tirasim]').addEventListener('click', function (e) {
+      var bt = e.currentTarget; bt.disabled = true;
+      acao('beat-tirar', { id: b.id, confirmo: true }).then(function (j) {
+        if (!j.ok) { bt.disabled = false; flash(j.erro || 'Não consegui.'); return; }
+        flash(b.name + ' saiu do site.');
+        fechar(); carregar(true);
+      });
+    });
     var conf = $('vtConfirma');
     var pede = c.querySelector('[data-act=vender],[data-act=desvender]');
     pede.addEventListener('click', function () { conf.hidden = false; conf.scrollIntoView({ block: 'nearest' }); });
@@ -333,37 +375,182 @@
   }
 
   /* ---------- fila de postagem ---------- */
+  // Agrupada por beat tape, a mais nova em cima. Cada beat: marcar, gênero (escolha
+  // sua, nunca adivinho) e editar. "Publicar marcados" manda a tape inteira de uma vez.
+  var escolha = {};            // id da faixa -> { marcado, genre, erro }
+  var vigia = null;            // conferindo o Drive depois do "Buscar tapes novas"
+
+  function estado(t) {
+    if (!escolha[t.id]) escolha[t.id] = { marcado: !!t.bpm, genre: '' };
+    return escolha[t.id];
+  }
+  function metaFila(t) {
+    var p = [];
+    p.push(t.bpm ? t.bpm + ' BPM' + (t.bpmOnde ? ' <i>(de ' + esc(t.bpmOnde) + ')</i>' : '') : '<em>sem BPM: edita antes</em>');
+    p.push(t.key ? esc(t.key) + (t.keyOnde ? ' <i>(tom de ' + esc(t.keyOnde) + (t.confere ? ', confere' : '') + ')</i>' : '') : 'sem tom');
+    return p.join(' · ');
+  }
 
   function abaFila(corpo) {
     if (!rel) {
       corpo.innerHTML = '<div class="vt-vazio">' + (relErro ? 'Não consegui conferir a fila. Recarrega a página.' : 'conferindo as tapes…') + '</div>';
       return;
     }
+    var grupos = rel.tapesFila || [];
     var fila = rel.semBotao || [];
-    $('resumo').textContent = fila.length ? fila.length + (fila.length === 1 ? ' beat esperando' : ' beats esperando') + ' pra entrar no site' : 'fila vazia';
-    if (!fila.length) {
-      corpo.innerHTML = '<div class="vt-vazio">Nada na fila. Todo beat disponível nas tapes pagas já está à venda no site.<br>' +
-        '<small style="color:var(--ink4)">Beat novo numa tape aparece aqui depois da conversão da madrugada (ou do Converter agora).</small></div>';
-      return;
+    var novos = grupos.reduce(function (n, g) { return n + g.novos.length; }, 0);
+    $('resumo').textContent = fila.length || novos
+      ? (fila.length ? fila.length + (fila.length === 1 ? ' beat esperando' : ' beats esperando') + ' pra entrar no site' : 'nenhum beat pronto pra publicar') +
+        (novos ? ' · ' + novos + (novos === 1 ? ' beat novo' : ' beats novos') + ' sem pastilha' : '')
+      : 'fila vazia';
+
+    var h = '<div class="vt-buscar"><div><b>Beat tape nova no Drive?</b><small>' +
+      (vigia ? 'Conferindo o Drive desde ' + vigia.desde + '. A fila atualiza sozinha quando terminar (uns minutos).'
+        : 'Cria a pasta em @rideblan33 / Beat tapes com a capa e os beats, e aperta aqui. Sem esperar a conversão da madrugada.') +
+      '</small></div><button class="pill" type="button" id="vtBuscar"' + (vigia ? ' disabled' : '') + '>' + (vigia ? 'Conferindo…' : 'Buscar tapes novas') + '</button></div>';
+
+    if (!grupos.length) {
+      h += '<div class="vt-vazio">Nada na fila. Todo beat disponível nas tapes pagas já está à venda no site.</div>';
     }
-    corpo.innerHTML = '<p class="vt-nota" style="margin:0 0 6px">Disponível numa beat tape e fora do site. Publicar põe o beat no topo da lista, com player e carrinho. A tape ganha o botão de carrinho sozinha.</p>' +
-      fila.map(function (t, i) {
-        var f = [t.bpm ? t.bpm + ' BPM' : 'sem BPM', t.key || 'sem tom'].join(' · ');
-        return '<div class="item"><div class="linha" style="cursor:default"><span style="flex:1;min-width:0">' +
-          '<span class="nome">' + esc(t.title) + '</span><span class="meta">' + esc(t.tape) + ' · ' + esc(f) + '</span></span></div>' +
-          '<button class="pill" type="button" data-i="' + i + '">Publicar</button></div>';
-      }).join('');
-    corpo.querySelectorAll('[data-i]').forEach(function (b) {
-      b.addEventListener('click', function () { abrirPublicar(fila[Number(b.dataset.i)]); });
+    h += grupos.map(function (g) {
+      var x = '<div class="vt-tape" data-tape="' + g.tape_id + '"><div class="vt-tape-topo"><b>' + esc(g.tape) + '</b><small>' +
+        (g.itens.length ? g.itens.length + ' pra publicar' : '') + '</small></div>';
+      if (g.novos.length) {
+        x += '<div class="revisar"><b>' + g.novos.length + (g.novos.length === 1 ? ' beat novo sem pastilha' : ' beats novos sem pastilha') + '</b>' +
+          '<small>Não aparecem em nenhuma pasta de artista, então ninguém gravou: ' + g.novos.map(function (n) { return esc(n.title); }).join(', ') + '.</small>' +
+          '<button class="pill" type="button" data-novos="' + g.tape_id + '">Marcar ' + (g.novos.length === 1 ? 'como disponível' : 'os ' + g.novos.length + ' como disponíveis') + '</button></div>';
+      }
+      if (g.outros) {
+        x += '<p class="vt-nota" style="margin:6px 0 8px">' + g.outros + (g.outros === 1 ? ' beat dessa tape precisa' : ' beats dessa tape precisam') +
+          ' de você em Beat tapes (aparece numa pasta de artista ou só como música). <button type="button" class="aviso" data-irtapes="1">Abrir Beat tapes</button></p>';
+      }
+      if (g.itens.length) {
+        x += g.itens.map(function (t) {
+          var e = estado(t);
+          return '<div class="vt-fl" data-id="' + esc(t.id) + '">' +
+            '<input type="checkbox" data-chk="' + esc(t.id) + '" aria-label="Publicar ' + esc(t.title) + '"' + (e.marcado ? ' checked' : '') + (t.bpm ? '' : ' disabled') + '>' +
+            '<div style="min-width:0"><span class="nome">' + esc(t.title) + '</span><span class="meta">' + metaFila(t) + '</span></div>' +
+            '<select data-gen="' + esc(t.id) + '" aria-label="Gênero de ' + esc(t.title) + '"' + (e.genre ? '' : ' class="falta"') + '>' +
+              '<option value="">gênero</option>' + opcoesGenero(e.genre, false) + '</select>' +
+            '<button type="button" class="vt-ed" data-ed="' + esc(t.id) + '" aria-label="Editar ficha de ' + esc(t.title) + '">✎</button>' +
+            (e.erro ? '<div class="vt-fl-erro">' + esc(e.erro) + '</div>' : '') + '</div>';
+        }).join('');
+        var marcados = g.itens.filter(function (t) { return estado(t).marcado; }).length;
+        x += '<div class="vt-tape-pe"><select data-todos="' + g.tape_id + '" aria-label="Gênero pra todos da ' + esc(g.tape) + '">' +
+          '<option value="">gênero pra todos</option>' + opcoesGenero('', false) + '</select>' +
+          '<button class="pill solid" type="button" data-publicar="' + g.tape_id + '"' + (marcados ? '' : ' disabled') + '>Publicar ' +
+          (marcados === 1 ? '1 marcado' : marcados + ' marcados') + '</button></div>';
+      }
+      return x + '</div>';
+    }).join('');
+    corpo.innerHTML = h;
+
+    $('vtBuscar').addEventListener('click', buscarTapes);
+    corpo.querySelectorAll('[data-irtapes]').forEach(function (b) {
+      b.addEventListener('click', function () { if (window.__painelIr) window.__painelIr('tapes'); });
+    });
+    corpo.querySelectorAll('[data-novos]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        b.disabled = true; b.textContent = 'Marcando…';
+        acao('tape-novos', { tapeId: Number(b.dataset.novos) }).then(function (j) {
+          if (!j.ok) { b.disabled = false; flash(j.erro || 'Não consegui marcar.'); abaFila(corpo); return; }
+          flash(j.marcados + (j.marcados === 1 ? ' beat marcado' : ' beats marcados') + ' como disponível. Agora é escolher o gênero e publicar.');
+          carregar(true);
+        });
+      });
+    });
+    var porId = {};
+    fila.forEach(function (t) { porId[t.id] = t; });
+    corpo.querySelectorAll('[data-chk]').forEach(function (c) {
+      c.addEventListener('change', function () { escolha[c.dataset.chk].marcado = c.checked; abaFila(corpo); });
+    });
+    corpo.querySelectorAll('[data-gen]').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var e = escolha[sel.dataset.gen]; e.genre = sel.value; e.erro = '';
+        sel.classList.toggle('falta', !sel.value);
+      });
+    });
+    corpo.querySelectorAll('[data-todos]').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        if (!sel.value) return;
+        var g = grupos.filter(function (x) { return String(x.tape_id) === sel.dataset.todos; })[0];
+        g.itens.forEach(function (t) { var e = estado(t); if (e.marcado) { e.genre = sel.value; e.erro = ''; } });
+        abaFila(corpo);
+      });
+    });
+    corpo.querySelectorAll('[data-ed]').forEach(function (b) {
+      b.addEventListener('click', function () { abrirPublicar(porId[b.dataset.ed]); });
+    });
+    corpo.querySelectorAll('[data-publicar]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var g = grupos.filter(function (x) { return String(x.tape_id) === b.dataset.publicar; })[0];
+        var alvo = g.itens.filter(function (t) { return estado(t).marcado; });
+        var semGenero = alvo.filter(function (t) { return !estado(t).genre; });
+        if (semGenero.length) {
+          semGenero.forEach(function (t) { estado(t).erro = 'escolhe o gênero'; });
+          abaFila(corpo);
+          flash(semGenero.length === 1 ? 'Falta o gênero de 1 beat.' : 'Falta o gênero de ' + semGenero.length + ' beats.');
+          return;
+        }
+        b.disabled = true; b.textContent = 'Publicando…';
+        acao('beat-publicar-lote', { itens: alvo.map(function (t) {
+          return { track_id: t.id, name: String(t.title || '').toLocaleUpperCase('pt-BR'), bpm: t.bpm, key: t.key || '', genre: estado(t).genre };
+        }) }).then(function (j) {
+          if (!j.ok) { flash(j.erro || 'Não consegui publicar.'); abaFila(corpo); return; }
+          var erros = 0;
+          (j.resultados || []).forEach(function (r) {
+            var t = alvo[r.i]; if (!t) return;
+            if (r.ok) delete escolha[t.id]; else { estado(t).erro = r.erro; erros++; }
+          });
+          flash(j.publicados + (j.publicados === 1 ? ' beat publicado' : ' beats publicados') + ' no topo do site' + (erros ? '. ' + erros + ' com problema, olha na lista.' : '.'));
+          carregar(true);
+        });
+      });
     });
   }
+
+  // "Buscar tapes novas": dispara a conversão só das beat tapes e fica de olho no
+  // andamento (consulta leve, a cada 15 s, só com a aba à vista, no máximo 30 min).
+  function buscarTapes() {
+    var b = $('vtBuscar'); if (b) { b.disabled = true; b.textContent = 'Mandando…'; }
+    acao('sync', { artista: 'tapes' }).then(function (j) {
+      if (!j.ok) { flash(j.erro || 'Não consegui disparar a conversão.'); if (b) { b.disabled = false; b.textContent = 'Buscar tapes novas'; } return; }
+      var agora = new Date();
+      vigia = { desde: agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), inicio: agora.getTime(), base: null, viuRodar: false };
+      flash('Conversão das tapes começou. A fila atualiza sozinha.');
+      desenhar();
+      vigia.relogio = setInterval(olharAndamento, 15000);
+    });
+  }
+  function olharAndamento() {
+    if (!vigia || document.hidden) return;
+    if (Date.now() - vigia.inicio > 30 * 60 * 1000) { pararVigia(); carregar(true); return; }
+    pedir('andamento').then(function (j) {
+      if (!vigia || !j || !Array.isArray(j.rodando)) return;
+      var tapesRodando = j.rodando.filter(function (x) { return x.tipo === 'tape'; }).length;
+      var marca = j.tapes + '|' + (j.tapeAt || '');
+      if (vigia.base === null) vigia.base = marca;
+      if (tapesRodando) vigia.viuRodar = true;
+      // terminou: alguma tape rodou (ou mudou) e agora nenhuma está rodando
+      if (!tapesRodando && (vigia.viuRodar || marca !== vigia.base)) {
+        pararVigia();
+        flash('Tapes conferidas. A fila atualizou.');
+        carregar(true);
+      }
+    }).catch(function () {});
+  }
+  function pararVigia() { if (vigia && vigia.relogio) clearInterval(vigia.relogio); vigia = null; }
 
   function abrirPublicar(t) {
     if (!t || !loja) return;
     var c = $('card');
-    var b = { name: String(t.title || '').toLocaleUpperCase('pt-BR'), bpm: t.bpm, key: t.key || '', genre: '' };
+    var e = estado(t);
+    var b = { name: String(t.title || '').toLocaleUpperCase('pt-BR'), bpm: t.bpm, key: t.key || '', genre: e.genre };
     c.innerHTML = '<h2>Publicar no site</h2><p>' + esc(t.tape) + ' · confere a ficha e escolhe o gênero</p>' +
-      formFicha(b, true) +
+      formFicha(b, !e.genre) +
+      (t.keyOnde ? '<p class="vt-nota" style="margin-top:10px">O tom não está no nome do arquivo da tape: veio de <b>' + esc(t.keyOnde) + '</b>' +
+        (t.confere ? ', mas outras cópias discordam. Confere antes.' : '.') + '</p>' : '') +
+      (t.bpmOnde ? '<p class="vt-nota" style="margin-top:6px">O BPM veio de <b>' + esc(t.bpmOnde) + '</b>.</p>' : '') +
       '<p class="vt-nota" style="margin-top:10px">Entra no topo da lista, à venda por R$' + esc(loja.preco || '') + '. O nome fica igual ao do Drive, em caixa alta, pro player achar o áudio.</p>' +
       '<div class="vt-acoes"><button class="pill solid" type="button" id="vtPublicar">Publicar</button>' +
       '<button class="pill" data-close type="button">Cancelar</button></div>';
@@ -372,15 +559,16 @@
     c.querySelector('[data-close]').addEventListener('click', fechar);
     var sel = $('vtGenero');
     sel.addEventListener('change', function () { sel.classList.toggle('falta', !sel.value); });
-    $('vtPublicar').addEventListener('click', function (e) {
-      var bt = e.currentTarget, f = lerFicha();
+    $('vtPublicar').addEventListener('click', function (ev) {
+      var bt = ev.currentTarget, f = lerFicha();
       if (!f.genre) { $('vtErro').textContent = 'Escolhe o gênero antes de publicar.'; sel.focus(); return; }
       f.track_id = t.id;
       bt.disabled = true; bt.textContent = 'Publicando…';
       acao('beat-publicar', f).then(function (j) {
         bt.disabled = false; bt.textContent = 'Publicar';
         if (!j.ok) { $('vtErro').textContent = j.erro || 'Não consegui publicar.'; return; }
-        flash(j.name + ' está no site, no topo da lista.');
+        delete escolha[t.id];
+        flash(j.name + (j.voltou ? ' voltou pro site, no topo da lista.' : ' está no site, no topo da lista.'));
         fechar(); carregar(true);
       });
     });

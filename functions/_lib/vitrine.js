@@ -6,11 +6,10 @@
 
 import { mesma, limpo, slug } from './casar.js';
 import { db } from './db.js';
-import { garantirLoja, lerBeats, lerEstatico } from './loja.js';
+import { lerEstatico } from './loja.js';
 
 const VALIDADE = 60 * 1000;        // venda e edição no painel aparecem em até 1 minuto
 let cache = { at: 0, beats: null };
-let preco = null;   // PRICE_BEAT do index.html (o preço segue escrito lá)
 
 export function esquecerVitrine() { cache = { at: 0, beats: null }; }
 
@@ -18,13 +17,17 @@ export async function vitrine(request, env) {
   if (cache.beats && Date.now() - cache.at < VALIDADE) return cache.beats;
   try {
     const d = await db(env);
-    await garantirLoja(request, env, d);
-    const linhas = await lerBeats(d);
+    // Beat tirado do site some da vitrine, MENOS se foi vendido: aí ele continua
+    // aqui pra tape seguir com pastilha de vendido e a Fila não oferecer de novo.
+    const { results } = await d.prepare(
+      `SELECT id, name, bpm, mkey AS key, genre, sold, removido_em FROM beats
+        WHERE removido_em IS NULL OR sold = 1 ORDER BY ordem, id`
+    ).all();
+    const linhas = results || [];
     let rotulos = {};
     try {
       const est = await lerEstatico(request, env);
       rotulos = est.generos;
-      if (est.preco) preco = est.preco;
     } catch (_) { /* sem rótulo, mostra o código do gênero */ }
     const beats = linhas.map((b) => ({
       id: b.id,
@@ -35,7 +38,8 @@ export async function vitrine(request, env) {
       key: b.key,
       genre: b.genre,
       generoLabel: rotulos[b.genre] || b.genre || '',
-      sold: !!b.sold
+      sold: !!b.sold,
+      ...(b.removido_em ? { removido: true } : {})
     }));
     if (beats.length) cache = { at: Date.now(), beats };
     return beats.length ? beats : (cache.beats || []);
@@ -44,9 +48,6 @@ export async function vitrine(request, env) {
     return cache.beats || [];      // vitrine fora do ar não pode derrubar o catálogo
   }
 }
-
-// Preço do beat avulso como o site mostra (null antes da primeira leitura).
-export const precoBeat = () => preco;
 
 // Índice por título limpo: achar é direto, e BPM/tom só desempatam nomes repetidos.
 export function indexar(beats) {

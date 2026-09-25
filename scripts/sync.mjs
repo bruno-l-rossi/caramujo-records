@@ -276,6 +276,7 @@ async function vitrineAvulsa(pasta, dir) {
       await ingest('track', { id, dur: String(dur), kbps: String(KBPS) }, buf, true);
       console.log(`    ok  ${faixa.title}  ${Math.round(dur)}s  ${(bytes / 1048576).toFixed(1)} MB`);
     } catch (e) {
+      if (e.parar) throw e;                    // banco no limite: não adianta seguir
       console.log(`    falhou  ${faixa.title}: ${e.message}`);
     }
   }
@@ -378,7 +379,13 @@ async function ingest(op, params, body, binario = false) {
     body: binario ? body : JSON.stringify(body)
   }));
   const txt = await r.text();
-  if (!r.ok) throw new Error(`site respondeu ${r.status}: ${txt.slice(0, 300)}`);
+  if (!r.ok) {
+    const e = new Error(`site respondeu ${r.status}: ${txt.slice(0, 300)}`);
+    // Banco do site no limite do dia (24/09/2026: a conversão seguiu 1h baixando e
+    // convertendo WAV que o banco recusava). Aí a rodada inteira para na hora.
+    try { if (JSON.parse(txt).limite) e.parar = true; } catch (_) { /* resposta sem JSON */ }
+    throw e;
+  }
   return JSON.parse(txt);
 }
 
@@ -419,7 +426,7 @@ async function main() {
   if (fila.some((f) => f.tipo === 'tape')) {
     if (exclusivos) {
       try { await mandarExclusivos(exclusivos); }
-      catch (e) { console.log(`- Exclusivos: não consegui ler (${e.message}). As tapes vão pra revisão.`); }
+      catch (e) { if (e.parar) throw e; console.log(`- Exclusivos: não consegui ler (${e.message}). As tapes vão pra revisão.`); }
     } else {
       console.log('- não achei a pasta Exclusivos; as tapes vão pra revisão.');
     }
@@ -427,13 +434,23 @@ async function main() {
 
   const tropecos = [];
 
+  let parou = null;
   for (const pasta of fila) {
     try {
       await umaPasta(pasta, dir);
     } catch (e) {
+      if (e.parar) { parou = e; break; }
       tropecos.push(`${pasta.name}: ${e.message}`);
       console.log(`- ${pasta.name}: parou no meio (${e.message}). Sigo com os outros.`);
     }
+  }
+
+  if (parou) {
+    await fs.promises.rm(dir, { recursive: true, force: true });
+    console.log('\nO banco do site bateu o limite de leitura do dia (zera às 21h de São Paulo).');
+    console.log('Parei aqui pra não converter à toa. O que já subiu fica; rodar de novo depois das 21h continua de onde parou.');
+    process.exitCode = 1;
+    return;
   }
 
   // Passada da vitrine: só na rodada inteira ou no job das tapes. Num lote da carga
@@ -487,6 +504,7 @@ async function umaPasta(pasta, dir) {
       await ingest('track', { id, dur: String(dur), kbps: String(KBPS) }, buf, true);
       console.log(`    ok  ${faixa.title}  ${Math.round(dur)}s  ${(bytes / 1048576).toFixed(1)} MB`);
     } catch (e) {
+      if (e.parar) throw e;                    // banco no limite: não adianta seguir
       console.log(`    falhou  ${faixa.title}: ${e.message}`);
     }
   }
@@ -500,6 +518,7 @@ async function umaPasta(pasta, dir) {
         await ingest('capa', { folderId: pasta.id, chave: capa.id, tam: 'p' }, mini, true);
         console.log(`    miniatura da capa: ${capa.name}`);
       } catch (e) {
+        if (e.parar) throw e;
         console.log(`    miniatura falhou (${capa.name}): ${e.message}`);
       }
     }
@@ -511,6 +530,7 @@ async function umaPasta(pasta, dir) {
       capaChave = capa.id;
       console.log(`    capa: ${capa.name}`);
     } catch (e) {
+      if (e.parar) throw e;
       console.log(`    capa falhou (${capa.name}): ${e.message}`);
     }
   } else {

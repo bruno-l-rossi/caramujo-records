@@ -9,10 +9,32 @@ import { mesma, limpo } from '../_lib/casar.js';
 const VALIDADE = 5 * 60 * 1000;
 let cache = { at: 0, dados: null };
 
+// Cópia da região (5 min): todos os isolates daquela região usam a mesma, e o
+// banco (que varre as faixas) é lido uma vez a cada 5 minutos por região.
+const REGIAO = '/__cache/vitrine';
+const regiaoCache = () => (typeof caches !== 'undefined' && caches.default ? caches.default : null);
+
+// O painel publicou/tirou beat: a memória deste isolate e a cópia da região do
+// Bruno caem na hora, pra ele ver o beat novo tocando sem esperar 5 minutos.
+export async function esquecerApiVitrine(request) {
+  cache = { at: 0, dados: null };
+  const c = regiaoCache();
+  if (c && request) { try { await c.delete(new URL(REGIAO, request.url)); } catch (_) { /* bônus */ } }
+}
+
 export async function onRequestGet({ request, env }) {
+  const chave = new URL(REGIAO, request.url);
+  const regiao = regiaoCache();
+  if (regiao) {
+    try { const c = await regiao.match(chave); if (c) return c; } catch (_) { /* segue */ }
+  }
   const dados = await montarVitrine(request, env);
   if (!dados) return json({ erro: 'nao consegui ler a lista de beats do site' }, 502);
-  return resposta(dados);
+  const r = resposta(dados);
+  if (regiao && !dados.reserva) {
+    try { await regiao.put(chave, r.clone()); } catch (_) { /* cópia é bônus */ }
+  }
+  return r;
 }
 
 // A lista pronta (beat + MP3 + capa). Também usada pelo link de beat (/b/<slug>).
@@ -63,7 +85,7 @@ async function lerReserva(request) {
 }
 
 async function montar(request, env) {
-  const beats = await vitrine(request, env);
+  const beats = (await vitrine(request, env)).filter((b) => !b.removido);
   if (!beats.length) return null;
 
   const d = await db(env);

@@ -28,6 +28,12 @@ function tom(k) {
   return { nota, q };
 }
 
+// 'F#m' e 'Gbmin' viram a mesma chave ('gb:m'). null quando não dá pra ler.
+export function chaveTom(k) {
+  const t = tom(k);
+  return t ? t.nota + ':' + (t.q || '') : null;
+}
+
 export function mesmoTom(a, b) {
   const x = tom(a), y = tom(b);
   if (!x || !y) return true;                 // um dos lados não diz o tom: não atrapalha

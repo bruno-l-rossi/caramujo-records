@@ -14,9 +14,16 @@ const TETO_BYTES = 8 * 1024 * 1024 * 1024;
 // outro valor entra no plano de novo e é refeita a partir do WAV do Drive.
 export const KBPS = 128;
 
+// Quanto a prateleira ocupa. Somar a tabela inteira a cada MP3 que subia lia
+// faixas × faixas na conversão total (24/09/2026): agora soma uma vez por minuto
+// por isolate e vai acrescentando o que sobe. Conta pra cima (MP3 refeito conta
+// duas vezes até a próxima soma), que é o lado seguro pro teto.
+let prateleira = { at: 0, n: 0 };
 async function usado(d) {
+  if (Date.now() - prateleira.at < 60e3) return prateleira.n;
   const r = await d.prepare('SELECT COALESCE(SUM(mp3_bytes), 0) AS n FROM tracks WHERE ready = 1').first();
-  return Number(r?.n || 0);
+  prateleira = { at: Date.now(), n: Number(r?.n || 0) };
+  return prateleira.n;
 }
 
 export async function onRequestPost(context) {
@@ -26,6 +33,20 @@ export async function onRequestPost(context) {
     return json({ erro: 'token invalido' }, 401);
   }
 
+  try {
+    return await rodar(request, env);
+  } catch (e) {
+    const msg = String(e && e.message || e);
+    // Limite do dia do D1 (5 mi de linhas lidas no gratuito): o conversor para a
+    // rodada inteira quando vê "limite", em vez de seguir convertendo à toa.
+    if (/exceed|limit|quota|too many|daily/i.test(msg)) {
+      return json({ erro: 'banco do site no limite do dia: ' + msg.slice(0, 200), limite: true }, 503);
+    }
+    throw e;
+  }
+}
+
+async function rodar(request, env) {
   const url = new URL(request.url);
   const op = url.searchParams.get('op');
   const d = await db(env);
@@ -131,6 +152,20 @@ async function exclusivos(d, body) {
   return json({ ok: true, total: lista.length });
 }
 
+// As faixas das pastas de artista, pro cruzamento das tapes. Na conversão as 25
+// tapes chegam em sequência: guardo 1 minuto em vez de ler tudo 25 vezes.
+let dosArtistas = { at: 0, lista: null };
+async function faixasDosArtistas(d) {
+  if (dosArtistas.lista && Date.now() - dosArtistas.at < 60e3) return dosArtistas.lista;
+  const { results } = await d.prepare(
+    `SELECT t.title, t.bpm, t.mkey, t.kind, a.name AS artista
+       FROM tracks t JOIN artists a ON a.id = t.artist_id
+      WHERE a.tipo = 'artista'`
+  ).all();
+  dosArtistas = { at: Date.now(), lista: results || [] };
+  return dosArtistas.lista;
+}
+
 // Escreve t.tag ('disponivel' | 'vendido' | null) e t.revisar nas faixas da tape.
 async function marcarVenda(d, tracks, request, env) {
   // O que eu marquei na mão no painel vence o cruzamento e não volta atrás.
@@ -159,11 +194,7 @@ async function marcarVenda(d, tracks, request, env) {
   // nome repetido entre beat e som acontece e eu não anuncio beat no chute.
   // Puxo a lista inteira porque o LOWER do SQLite não tira acento e "dígitos"
   // não bateria com "digitos"; a comparação boa é aqui, com limpo().
-  const { results } = await d.prepare(
-    `SELECT t.title, t.bpm, t.mkey, t.kind, a.name AS artista
-       FROM tracks t JOIN artists a ON a.id = t.artist_id
-      WHERE a.tipo = 'artista'`
-  ).all();
+  const results = await faixasDosArtistas(d);
   const naMao = [];
   const gravadas = [];
   for (const r of results || []) {
@@ -200,7 +231,9 @@ async function marcarVenda(d, tracks, request, env) {
         : soMusica
           ? 'Aparece só como música gravada, na pasta de ' + soMusica.artista +
             (emExclusivos ? ', e também em Exclusivos' : '')
-          : 'Não está em Exclusivos nem nos beats de nenhum artista';
+          // (24/09/2026) Exclusivos virou opcional: beat que não aparece em pasta de
+          // artista nenhuma é beat novo, e a Fila do painel marca em lote
+          : 'Beat novo: não aparece em nenhuma pasta de artista (nem em Exclusivos)';
       conta.revisar++;
     }
   }
@@ -211,7 +244,7 @@ async function marcarVenda(d, tracks, request, env) {
 // O que o site vende e ainda não tem MP3 guardado em lugar nenhum. O conversor usa
 // isso pra puxar de Exclusivos SÓ esses, sem duplicar o que já está na prateleira.
 async function faltando(d, request, env) {
-  const beats = await vitrine(request, env);
+  const beats = (await vitrine(request, env)).filter((b) => !b.removido);
   if (!beats.length) return json({ erro: 'nao consegui ler a lista de beats do site' }, 502);
 
   const { results } = await d.prepare(
@@ -258,6 +291,7 @@ async function track(d, env, url, request) {
     }, 507);
   }
 
+  prateleira.n += body.byteLength;
   await env.AUDIO.put(`mp3/${id}.mp3`, body, {
     httpMetadata: { contentType: 'audio/mpeg', cacheControl: 'public, max-age=31536000, immutable' }
   });
