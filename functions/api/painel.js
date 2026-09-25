@@ -665,6 +665,22 @@ async function loja(d, request, env) {
   });
 }
 
+// Tipo, valor e limite de um cupom (vale pra criar e pra editar).
+function regraCupom(body) {
+  const tipo = body.tipo === 'fixo' ? 'fixo' : body.tipo === 'pct' ? 'pct' : null;
+  if (!tipo) return { erro: 'escolhe desconto ou preço fixo' };
+  const valor = Number(String(body.valor || '').replace(',', '.'));
+  if (tipo === 'pct' && !(Number.isInteger(valor) && valor >= 1 && valor <= 100)) return { erro: 'desconto entre 1% e 100%' };
+  if (tipo === 'fixo' && !(valor >= 1 && valor <= 100000)) return { erro: 'preço fixo a partir de R$1' };
+  let max = body.max_usos;
+  if (max === '' || max === null || max === undefined) max = null;
+  else {
+    max = Number(max);
+    if (!Number.isInteger(max) || max < 1 || max > 100000) return { erro: 'limite de usos inválido' };
+  }
+  return { tipo, valor, max };
+}
+
 async function cupomUsos(d, codigo) {
   const c = String(codigo || '').trim().toUpperCase().slice(0, 30);
   if (!c) return json({ erro: 'sem cupom' }, 400);
@@ -894,23 +910,30 @@ const LOJA_POST = {
   async 'cupom-criar'(d, body) {
     const codigo = String(body.codigo || '').trim().toUpperCase();
     if (!/^[A-Z0-9]{3,30}$/.test(codigo)) return json({ erro: 'código com 3 a 30 letras ou números, sem espaço' }, 400);
-    const tipo = body.tipo === 'fixo' ? 'fixo' : body.tipo === 'pct' ? 'pct' : null;
-    if (!tipo) return json({ erro: 'escolhe desconto ou preço fixo' }, 400);
-    const valor = Number(String(body.valor || '').replace(',', '.'));
-    if (tipo === 'pct' && !(Number.isInteger(valor) && valor >= 1 && valor <= 100)) return json({ erro: 'desconto entre 1% e 100%' }, 400);
-    if (tipo === 'fixo' && !(valor >= 1 && valor <= 100000)) return json({ erro: 'preço fixo a partir de R$1' }, 400);
-    let max = body.max_usos;
-    if (max === '' || max === null || max === undefined) max = null;
-    else {
-      max = Number(max);
-      if (!Number.isInteger(max) || max < 1 || max > 100000) return json({ erro: 'limite de usos inválido' }, 400);
-    }
+    const v = regraCupom(body);
+    if (v.erro) return json({ erro: v.erro }, 400);
+    const { tipo, valor, max } = v;
     const ja = await d.prepare('SELECT 1 FROM cupons WHERE codigo = ?').bind(codigo).first();
     if (ja) return json({ erro: 'já existe um cupom ' + codigo }, 400);
     await d.prepare(
       'INSERT INTO cupons (codigo, pct, preco_fixo, max_usos, usos, ativo, criado_em) VALUES (?, ?, ?, ?, 0, 1, ?)'
     ).bind(codigo, tipo === 'pct' ? valor : null, tipo === 'fixo' ? Math.round(valor * 100) / 100 : null, max,
       new Date().toISOString()).run();
+    return json({ ok: true, codigo });
+  },
+
+  // Editar (25/09/2026): desconto/preço e limite de usos. O código não muda (quem já
+  // recebeu por DM continua usando o mesmo). O limite não pode ficar abaixo do que já foi usado.
+  async 'cupom-editar'(d, body) {
+    const codigo = String(body.codigo || '').trim().toUpperCase().slice(0, 30);
+    const c = await d.prepare('SELECT usos FROM cupons WHERE codigo = ?').bind(codigo).first();
+    if (!c) return json({ erro: 'cupom não encontrado' }, 404);
+    const v = regraCupom(body);
+    if (v.erro) return json({ erro: v.erro }, 400);
+    const usos = Number(c.usos) || 0;
+    if (v.max !== null && v.max < usos) return json({ erro: 'já foi usado ' + usos + (usos === 1 ? ' vez' : ' vezes') + ': o limite precisa ser ' + usos + ' ou mais' }, 400);
+    await d.prepare('UPDATE cupons SET pct = ?, preco_fixo = ?, max_usos = ? WHERE codigo = ?')
+      .bind(v.tipo === 'pct' ? v.valor : null, v.tipo === 'fixo' ? Math.round(v.valor * 100) / 100 : null, v.max, codigo).run();
     return json({ ok: true, codigo });
   },
 

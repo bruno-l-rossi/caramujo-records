@@ -4,7 +4,7 @@
      destaque do hero) + o que está sem áudio.
    - Fila: beat disponível numa tape paga que ainda não está no site. Publicar
      pede o gênero (nunca adivinho gênero).
-   - Cupons: criar, pausar, ver cada uso.
+   - Cupons: criar, buscar, editar (desconto e limite de usos), pausar, ver cada uso.
    Carregado só pelo /painel. Os dados vêm de /api/painel (exige o login). */
 (function () {
   var CSS = [
@@ -111,7 +111,7 @@
   }
   function reais(n) { return 'R$' + Number(n).toLocaleString('pt-BR', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }); }
 
-  var raiz = null, aba = 'beats', busca = '', filtro = 'todos', mostrar = 30;
+  var raiz = null, aba = 'beats', busca = '', filtro = 'todos', mostrar = 30, buscaCupom = '';
   var loja = null, lojaErro = false, rel = null, relErro = false;
 
   try { aba = sessionStorage.getItem('vt-aba') || 'beats'; } catch (_) {}
@@ -601,12 +601,14 @@
       '<div class="vt-erro" id="cpErro" role="alert"></div>' +
       '<div class="vt-acoes"><button class="pill solid" type="button" id="cpCriar">Criar cupom</button></div></div></div>';
     if (!cupons.length) h += '<div class="vt-vazio">Nenhum cupom ainda.</div>';
-    h += cupons.map(function (c) {
-      return '<div class="vt-cupom' + (c.ativo ? '' : ' pausado') + '"><button type="button" class="linha" data-cod="' + esc(c.codigo) + '">' +
-        '<span style="flex:1;min-width:0"><span class="nome">' + esc(c.codigo) + '</span><span class="meta">' + esc(descCupom(c)) + '</span></span></button>' +
-        '<button class="toggle" type="button" data-ativo="' + esc(c.codigo) + '" aria-pressed="' + (c.ativo ? 'true' : 'false') + '" aria-label="' + (c.ativo ? 'Pausar ' : 'Reativar ') + esc(c.codigo) + '"><i></i></button></div>';
-    }).join('');
+    else h += '<div class="vt-filtros"><div class="campo">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6a6a6a" stroke-width="1.9"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg>' +
+      '<input id="cpBusca" type="search" placeholder="Buscar cupom" autocomplete="off" autocapitalize="characters" aria-label="Buscar cupom" value="' + esc(buscaCupom) + '"></div></div>' +
+      '<div id="cpLista"></div>';
     corpo.innerHTML = h;
+    var bc = $('cpBusca');
+    if (bc) bc.addEventListener('input', function () { buscaCupom = bc.value; pintarCupons(corpo); });
+    pintarCupons(corpo);
 
     corpo.querySelectorAll('[data-tipo]').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -631,6 +633,21 @@
           carregar();
         });
     });
+  }
+
+  // a lista (separada do resto pra busca não perder o foco do campo)
+  function pintarCupons(corpo) {
+    var alvo = $('cpLista'); if (!alvo) return;
+    var q = sem(buscaCupom).replace(/\s+/g, '');
+    var lista = (loja.cupons || []).filter(function (c) { return !q || sem(c.codigo).indexOf(q) > -1; });
+    alvo.innerHTML = (q ? '<div class="vt-conta">' + lista.length + (lista.length === 1 ? ' cupom' : ' cupons') + '</div>' : '') +
+      (lista.length ? '' : '<div class="vt-vazio">Nenhum cupom com "' + esc(buscaCupom) + '".</div>') +
+      lista.map(function (c) {
+        return '<div class="vt-cupom' + (c.ativo ? '' : ' pausado') + '"><button type="button" class="linha" data-cod="' + esc(c.codigo) + '">' +
+          '<span style="flex:1;min-width:0"><span class="nome">' + esc(c.codigo) + '</span><span class="meta">' + esc(descCupom(c)) + '</span></span></button>' +
+          '<button class="toggle" type="button" data-ativo="' + esc(c.codigo) + '" aria-pressed="' + (c.ativo ? 'true' : 'false') + '" aria-label="' + (c.ativo ? 'Pausar ' : 'Reativar ') + esc(c.codigo) + '"><i></i></button></div>';
+      }).join('');
+    corpo = alvo;
     corpo.querySelectorAll('[data-ativo]').forEach(function (t) {
       t.addEventListener('click', function () {
         var on = t.getAttribute('aria-pressed') !== 'true';
@@ -652,12 +669,44 @@
     var c = $('card');
     var cp = (loja.cupons || []).filter(function (x) { return x.codigo === codigo; })[0];
     if (!cp) return;
+    var tipoEd = cp.preco_fixo !== null && cp.preco_fixo !== undefined ? 'fixo' : 'pct';
+    var semLimite = cp.max_usos === null || cp.max_usos === undefined;
     c.innerHTML = '<h2>' + esc(cp.codigo) + '</h2><p>' + esc(descCupom(cp)) + (cp.criado_em ? ' · desde ' + dataBR(cp.criado_em) : '') + '</p>' +
+      '<div class="bloco"><div class="rot">EDITAR</div><div class="vt-form">' +
+        '<div class="vt-tipo" role="group" aria-label="Tipo de cupom">' +
+          '<button type="button" data-tipoed="pct" aria-pressed="' + (tipoEd === 'pct') + '">% de desconto</button>' +
+          '<button type="button" data-tipoed="fixo" aria-pressed="' + (tipoEd === 'fixo') + '">Preço fixo</button></div>' +
+        '<div class="vt-dupla"><label id="cpEdRot">' + (tipoEd === 'pct' ? 'Desconto (%)' : 'Total a pagar (R$)') +
+          '<input id="cpEdValor" inputmode="decimal" maxlength="8" value="' + esc(tipoEd === 'pct' ? cp.pct : String(cp.preco_fixo).replace('.', ',')) + '"></label>' +
+        '<label>Limite de usos<input id="cpEdMax" inputmode="numeric" maxlength="5" placeholder="sem limite" value="' + (semLimite ? '' : esc(cp.max_usos)) + '"></label></div>' +
+        '<p class="vt-nota">Já usado <b>' + cp.usos + (cp.usos === 1 ? ' vez' : ' vezes') + '</b>. Pra liberar mais usos, aumenta o limite; vazio = sem limite. O código não muda.</p>' +
+        '<div class="vt-erro" id="cpEdErro" role="alert"></div>' +
+        '<div class="vt-acoes" style="margin-top:0"><button class="pill solid" type="button" id="cpEdSalvar">Salvar</button></div></div></div>' +
       '<div class="bloco"><div class="rot">USOS</div><div class="vt-usos" id="cpUsos">carregando…</div></div>' +
       '<div class="vt-acoes"><button class="pill" data-close type="button">Fechar</button></div>';
     $('veil').hidden = false;
     c.scrollTop = 0;
     c.querySelector('[data-close]').addEventListener('click', fechar);
+    c.querySelectorAll('[data-tipoed]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (tipoEd === b.dataset.tipoed) return;
+        tipoEd = b.dataset.tipoed;
+        c.querySelectorAll('[data-tipoed]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        $('cpEdRot').firstChild.nodeValue = tipoEd === 'pct' ? 'Desconto (%)' : 'Total a pagar (R$)';
+        $('cpEdValor').value = ''; $('cpEdValor').placeholder = tipoEd === 'pct' ? '20' : '1'; $('cpEdValor').focus();
+      });
+    });
+    $('cpEdSalvar').addEventListener('click', function (e) {
+      var bt = e.currentTarget;
+      bt.disabled = true; bt.textContent = 'Salvando…';
+      acao('cupom-editar', { codigo: cp.codigo, tipo: tipoEd, valor: $('cpEdValor').value, max_usos: $('cpEdMax').value.trim() })
+        .then(function (j) {
+          bt.disabled = false; bt.textContent = 'Salvar';
+          if (!j.ok) { $('cpEdErro').textContent = j.erro || 'Não consegui salvar.'; return; }
+          flash('Cupom ' + cp.codigo + ' atualizado.');
+          fechar(); carregar();
+        });
+    });
     pedir('cupom-usos&codigo=' + encodeURIComponent(codigo)).then(function (j) {
       var box = $('cpUsos'); if (!box) return;
       if (!j || !Array.isArray(j.usos)) { box.textContent = 'Não consegui carregar os usos.'; return; }
