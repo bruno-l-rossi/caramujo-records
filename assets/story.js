@@ -7,7 +7,8 @@
    - Enviar o link: manda só o link (a prévia da conversa já mostra capa, nome e ficha).
    Story clicável automático (como SoundCloud/Spotify) só existe pra app nativo parceiro da
    Meta; pela web o caminho é o sticker de link.
-   Pastas de artista (músicas): o mesmo fluxo com 30s (opts.duracao) e o link da home.
+   Pastas de artista: 30s (opts.duracao), só o vídeo (soVideo: o botão espera, mostrando o
+   andamento) e sem link (semLink: mandar a faixa é o ENVIAR da pasta).
    Usado pelo site (index.html) e pelas páginas de beat tape (catalogo/app.html).
    Carregado sob demanda (ou uns segundos depois do primeiro play, pra folha abrir na hora). */
 (function () {
@@ -160,16 +161,31 @@
     ctx.textBaseline = 'alphabetic';
   }
 
-  // a onda do som: barras do trecho de verdade, o que já tocou em fire
+  // A onda do som (2ª versão, 25/09): barras de ponta redonda desenhadas direto no pixel
+  // do vídeo (sem o borrão de reduzir de 1080 pra 720) e o que já tocou enchendo liso,
+  // quadro a quadro. Antes enchia de barra em barra: nos 30s das músicas era 1,6 barra
+  // por segundo, parecia vídeo travando. s = escala (0,67 no vídeo de 720, 0,2 na miniatura).
   var ONDA_A = 96;
-  function onda(ctx, pk, prog, y, larg) {
-    larg = larg || 760;
-    var n = pk.length, gap = 6, bw = (larg - gap * (n - 1)) / n, x = (W - larg) / 2;
-    var corte = prog * n;
+  var ONDA_VAZIA = 'rgba(232,224,207,.2)';
+  function nBarras(larg) { return Math.max(40, Math.min(72, Math.round((larg || 760) / 13.5))); }
+  function onda(ctx, pk, prog, y, larg, s) {
+    s = s || 1;
+    var L = (larg || 760) * s, n = pk.length, passo = L / n;
+    var bw = Math.max(1, Math.round(passo * 0.56)), r = bw / 2;
+    var x0 = Math.round((W * s - L) / 2 + (passo - bw) / 2), meio = y * s, A = ONDA_A * s;
+    var corte = Math.max(0, Math.min(n, prog * n)), redondo = typeof ctx.roundRect === 'function';
     for (var i = 0; i < n; i++) {
-      var h = Math.max(6, pk[i] * ONDA_A);
-      ctx.fillStyle = i < corte ? COR.fire : 'rgba(232,224,207,.2)';
-      ctx.fillRect(x + i * (bw + gap), y - h / 2, bw, h);
+      var h = Math.max(bw, Math.round(pk[i] * A / 2) * 2);
+      var x = x0 + Math.round(i * passo), topo = Math.round(meio - h / 2);
+      ctx.beginPath();
+      if (redondo) ctx.roundRect(x, topo, bw, h, r); else ctx.rect(x, topo, bw, h);
+      if (i + 1 <= corte) { ctx.fillStyle = COR.fire; ctx.fill(); continue; }
+      ctx.fillStyle = ONDA_VAZIA; ctx.fill();
+      if (i < corte) {                       // a barra da vez: enche até o ponto exato
+        ctx.save(); ctx.clip();
+        ctx.fillStyle = COR.fire; ctx.fillRect(x, topo, bw * (corte - i), h);
+        ctx.restore();
+      }
     }
   }
 
@@ -395,14 +411,23 @@
     return melhor * passo;
   }
 
+  // Altura de cada barra: volume médio do pedaço (os 2 canais). Som masterizado é alto
+  // o tempo todo e as barras saíam quase iguais; agora estica do mais baixo ao mais alto
+  // do trecho (ignorando os 10% mais baixos, que são a entrada e a saída suave).
   function picos(som, n) {
-    var d = som.getChannelData(0), passo = Math.floor(d.length / n), out = [], max = 0;
+    var d = som.getChannelData(0), e = som.numberOfChannels > 1 ? som.getChannelData(1) : d;
+    var passo = Math.floor(d.length / n), v = [];
     for (var i = 0; i < n; i++) {
-      var soma = 0;
-      for (var j = i * passo; j < (i + 1) * passo; j += 8) soma += d[j] * d[j];
-      var v = Math.sqrt(soma / (passo / 8)); out.push(v); if (v > max) max = v;
+      var soma = 0, k = 0;
+      for (var j = i * passo; j < (i + 1) * passo; j += 4) { soma += d[j] * d[j] + e[j] * e[j]; k += 2; }
+      v.push(Math.sqrt(soma / Math.max(1, k)));
     }
-    return out.map(function (v) { return max ? 0.12 + 0.88 * (v / max) : 0.12; });
+    var ord = v.slice().sort(function (a, b) { return a - b; });
+    var lo = ord[Math.floor(n * 0.1)] * 0.8, hi = ord[n - 1];
+    return v.map(function (x) {
+      var t = hi > lo ? Math.max(0, Math.min(1, (x - lo) / (hi - lo))) : 0.5;
+      return 0.14 + 0.86 * Math.pow(t, 0.9);
+    });
   }
 
   var muxerJs = null;
@@ -434,15 +459,18 @@
   // chama isso direto no toque de compartilhar (antes de carregar este arquivo, ver index.html).
   function precisaDestravar() { return !temWebCodecs() && !!mimeGravacao(); }
 
+  // 720x1280 a 1 Mbps nos 15s dos beats (~2MB). Nos 30s das músicas, 800 kbps: com o
+  // quadro-chave a cada 4s a arte sai tão nítida quanto a 1 Mbps com quadro-chave a cada
+  // 2s (medido em 25/09 com x264: mesma nitidez), e o arquivo cai de ~4,2MB pra ~3,4MB.
+  function taxaVideo() { return DUR > 15 ? 800000 : 1000000; }
   function escolherCodec() {
-    // 720x1280 a 1 Mbps: o Instagram recomprime pra isso de qualquer jeito, e o arquivo
-    // fica perto de 2MB (sobe rápido no 3G); a arte quase parada comprime bem
+    // o Instagram recomprime pra 720p de qualquer jeito; a arte quase parada comprime bem
     var l = [[720, 1280, 'avc1.64001f'], [720, 1280, 'avc1.4d001f'], [720, 1280, 'avc1.42001f'], [1080, 1920, 'avc1.640028']]
       .concat(window.__csCodecsTeste || []);   // os testes no Chromium sem H.264 entram com VP9 aqui
     return l.reduce(function (p, t) {
       return p.then(function (achou) {
         if (achou) return achou;
-        var cfg = { codec: t[2], width: t[0], height: t[1], bitrate: 1000000, framerate: FPS };
+        var cfg = { codec: t[2], width: t[0], height: t[1], bitrate: taxaVideo(), framerate: FPS };
         cfg.mux = t[3] || 'avc';
         return VideoEncoder.isConfigSupported(cfg).then(function (r) { return r.supported ? cfg : null; }, function () { return null; });
       });
@@ -496,7 +524,9 @@
       await somAte(Math.round((f + 1) / FPS * TAXA) + passo);
       desenhar(ctx, cv.width / W, f / (total - 1));
       var vf = new VideoFrame(cv, { timestamp: Math.round(f * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
-      venc.encode(vf, { keyFrame: f % (FPS * 2) === 0 }); vf.close();
+      // quadro-chave a cada 4s (era 2s): a arte é parada, então o que sobra de bits vai
+      // pra nitidez dela, sem o arquivo crescer
+      venc.encode(vf, { keyFrame: f % (FPS * 4) === 0 }); vf.close();
       while (venc.encodeQueueSize > 6) await espera(4);
       if (f % 15 === 0) { prog(f / total); await espera(0); }
     }
@@ -521,7 +551,7 @@
       var dest = ac.createMediaStreamDestination();
       var s = ac.createBufferSource(); s.buffer = som; s.connect(dest);   // grava sem tocar no alto-falante
       st.addTrack(dest.stream.getAudioTracks()[0]);
-      var rec = new MediaRecorder(st, { mimeType: mime, videoBitsPerSecond: 1000000, audioBitsPerSecond: 128000 });
+      var rec = new MediaRecorder(st, { mimeType: mime, videoBitsPerSecond: taxaVideo(), audioBitsPerSecond: 128000 });
       var partes = [];
       rec.ondataavailable = function (e) { if (e.data && e.data.size) partes.push(e.data); };
       return new Promise(function (ok, erro) {
@@ -556,14 +586,23 @@
     segue = segue || function () { return true; };
     return trecho(audio).then(function (som) {
       if (!segue()) throw new Error('cancelado');
-      var pk = picos(som, 48);
+      var pk = picos(som, nBarras(base.ondaL));
       if (aoTerPicos) aoTerPicos(pk);
+      // 1º quadro: a arte inteira, reduzida uma vez só. Nos outros só a faixa da onda é
+      // refeita (repõe o fundo dela e desenha as barras): bem menos trabalho por quadro.
       var desenhar = function (ctx, esc, p) {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.drawImage(base, 0, 0, W * esc, H * esc);
-        ctx.setTransform(esc, 0, 0, esc, 0, 0);
-        onda(ctx, pk, p, base.ondaY, base.ondaL);
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        var fx = ctx.__faixa;
+        if (!fx || fx.base !== base) {
+          ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(base, 0, 0, W * esc, H * esc);
+          var m = 10, x = Math.max(0, Math.floor((W - base.ondaL) / 2 * esc) - m), y = Math.max(0, Math.floor((base.ondaY - ONDA_A / 2) * esc) - m);
+          var c = document.createElement('canvas');
+          c.width = Math.ceil(base.ondaL * esc) + m * 2; c.height = Math.ceil(ONDA_A * esc) + m * 2;
+          c.getContext('2d').drawImage(ctx.canvas, x, y, c.width, c.height, 0, 0, c.width, c.height);
+          fx = ctx.__faixa = { base: base, c: c, x: x, y: y };
+        } else ctx.drawImage(fx.c, fx.x, fx.y);
+        onda(ctx, pk, p, base.ondaY, base.ondaL, esc);
       };
       // Confere o arquivo pronto antes de oferecer: o som tem que ir até onde o trecho vai.
       // Se o caminho rápido (WebCodecs) sair com o fim mudo, tenta gravando; se ainda
@@ -571,6 +610,7 @@
       var esperado = fimAudivel(som);
       var conferir = function (blob, caminho) {
         if (!blob || blob.size < 20000) throw new Error('vídeo vazio');
+        prog(1);
         return blob.arrayBuffer().then(decodificar).then(function (b) {
           var fim = fimAudivel(b);
           window.__csDiag = { caminho: caminho, esperado: +esperado.toFixed(2), veio: +fim.toFixed(2), dur: +b.duration.toFixed(2) };
@@ -614,6 +654,15 @@
     '.cs-catalogo .cs-trecho-topo b{color:#fff;font-weight:600}',
     '.cs-acoes button{width:100%;padding:15px 16px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}',
     '.cs-acoes button:disabled{opacity:.45;cursor:default}',
+    // pasta de artista (soVideo): o botão espera o vídeo e mostra o andamento enchendo
+    '.cs-acoes .cs-forte{position:relative;isolation:isolate;overflow:hidden}',
+    '.cs-barra{display:none;position:absolute;left:0;top:0;bottom:0;width:0;z-index:-1;pointer-events:none;transition:width .35s linear}',
+    '.cs-acoes .cs-espera:disabled{opacity:1;cursor:progress}',
+    '.cs-espera:disabled .cs-barra{display:block}',
+    '.cs-catalogo .cs-acoes .cs-espera:disabled{background:#1b1b1b;border-color:#2a2a2a;color:#fff}',
+    '.cs-catalogo .cs-espera .cs-barra{background:rgba(255,255,255,.16)}',
+    '.cs-site .cs-acoes .cs-espera:disabled{background:transparent;border-color:#332c22;color:#E8E0CF}',
+    '.cs-site .cs-espera .cs-barra{background:rgba(185,143,94,.3)}',
     // cara do site: paleta da casa, cantos retos
     '.cs-site .cs-folha{background:#1A1815;border:1px solid #332c22;border-bottom:none;color:#E8E0CF}',
     '.cs-site .cs-arte{border:1px solid #332c22;background:#14110d;color:#6f6757}',
@@ -665,7 +714,11 @@
 
   // opts: { tema:'site'|'catalogo', titulo, texto (padrão: o do cupom), url (o link que vai na conversa),
   //         urlStory (vai copiado pro sticker do story), arte:{...}, audio:{ src, inicio, dur } (sem audio = arte parada),
-  //         nomeArquivo, pausar() (para o player da página), avisar(msg) }
+  //         nomeArquivo, pausar() (para o player da página), avisar(msg),
+  //         soVideo (só posta o vídeo: o botão espera ele ficar pronto mostrando o andamento),
+  //         semLink (sem "Enviar o link" e sem copiar link pro sticker) }
+  // Pasta de artista (25/09): soVideo + semLink. Prévia de música sem som não serve, e
+  // mandar a faixa é trabalho do ENVIAR da pasta.
   // Dois caminhos, porque a web não sabe qual app a pessoa escolhe na tela do aparelho:
   //   Postar no story: manda SÓ o arquivo (vídeo com som, ou a arte). Nunca trava: a arte fica
   //     pronta em menos de 1s e o vídeo entra no lugar quando termina (a legenda do botão conta).
@@ -691,6 +744,7 @@
     var temTrecho = !!(opts.audio && opts.audio.src);
     var comSom = temTrecho && podeVideo();
     var catalogo = opts.tema === 'catalogo';
+    var soVideo = !!opts.soVideo, semLink = !!opts.semLink || !opts.url, falhou = false;
     var nome = String(opts.nomeArquivo || 'caramujo-story').replace(/\.(jpe?g|mp4)$/i, '');
     veu.className = 'cs-veu cs-' + (catalogo ? 'catalogo' : 'site');
     veu.innerHTML = '<div class="cs-folha" role="dialog" aria-modal="true" aria-label="Compartilhar">' +
@@ -701,13 +755,23 @@
       '<canvas id="csFaixa" aria-label="Arrasta pra escolher o trecho de ' + DUR + ' segundos"></canvas>' +
       '<p class="cs-dica">Arrasta pra escolher o trecho que vai no story.</p></div>' +
       '<div class="cs-acoes">' +
-        '<button type="button" class="cs-forte" id="csStory" disabled>Postar no story<small id="csSom"></small></button>' +
-        '<button type="button" id="csLink">Enviar o link</button>' +
+        '<button type="button" class="cs-forte' + (soVideo ? ' cs-espera' : '') + '" id="csStory" disabled>Postar no story<small id="csSom"></small><span class="cs-barra" id="csBarra"></span></button>' +
+        (semLink ? '' : '<button type="button" id="csLink">Enviar o link</button>') +
         '<button type="button" class="cs-fechar" id="csFechar">Fechar</button>' +
       '</div></div>';
     veu.hidden = false;
     var $ = function (i) { return document.getElementById(i); };
     var legenda = function (t) { var e = $('csSom'); if (e && vivo()) e.textContent = t; };
+    // soVideo: o botão fica esperando (barra enchendo) até o vídeo sair; se falhar, vira "Tentar de novo"
+    var botao = function (estado, texto, p) {
+      var b = $('csStory'); if (!b || !vivo()) return;
+      b.firstChild.nodeValue = estado === 'falhou' ? 'Tentar de novo' : 'Postar no story';
+      b.classList.toggle('cs-espera', estado === 'espera');
+      b.disabled = estado === 'espera' || estado === 'sem';
+      falhou = estado === 'falhou';
+      $('csBarra').style.width = Math.round(Math.max(0, Math.min(1, p || 0)) * 100) + '%';
+      legenda(texto);
+    };
     $('csFechar').addEventListener('click', fechar);
 
     // prévia pequena (a arte grande fica na memória)
@@ -715,14 +779,19 @@
     function mostrar(cv, pk) {
       var c = vista.getContext('2d');
       c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(cv, 0, 0, 216, 384);
-      if (pk && cv.ondaY) { c.setTransform(0.2, 0, 0, 0.2, 0, 0); onda(c, pk, 0.4, cv.ondaY, cv.ondaL); c.setTransform(1, 0, 0, 1, 0, 0); }
+      if (pk && cv.ondaY) onda(c, pk, 0.4, cv.ondaY, cv.ondaL, 0.2);
       var caixa = $('csArte'); if (caixa && vivo() && !vista.parentNode) { caixa.textContent = ''; caixa.appendChild(vista); }
     }
 
     // 1) a arte parada: libera o botão na hora
     var arqImagem = null, arqVideo = null;
     var semArte = function () { var c = $('csArte'); if (c && vivo()) c.textContent = 'sem prévia'; };
-    arte(Object.assign({}, opts.arte, { onda: false })).then(function (cv) {
+    if (soVideo) {
+      if (!comSom) {
+        arte(Object.assign({}, opts.arte, { onda: false })).then(function (cv) { mostrar(cv); }).catch(semArte);
+        botao('sem', temTrecho ? 'esse navegador não monta vídeo: abre a pasta no Chrome ou no Safari atualizado' : 'essa faixa não tem som pra prévia', 0);
+      } else botao('espera', 'preparando…', 0.02);
+    } else arte(Object.assign({}, opts.arte, { onda: false })).then(function (cv) {
       if (!comSom) mostrar(cv);
       return paraArquivo(cv, nome);
     }).then(function (f) {
@@ -736,7 +805,7 @@
       var src = opts.audio.src, dur = Number(opts.audio.dur) || 0, inicio = Number(opts.audio.inicio) || 0;
       var base = null, ger = 0, timer = null, onda0 = null, pintar = function () {};
       var tocando = -1;
-      if (comSom) legenda('preparando o som…');
+      if (comSom && !soVideo) legenda('preparando o som…');
 
       // toca o trecho escolhido, em loop, até a folha fechar ou a pessoa postar
       var tocarTrecho = function () {
@@ -765,19 +834,32 @@
         var meu = ++ger;
         var segue = function () { return meu === ger && vivo(); };
         arqVideo = null;
-        legenda('preparando o som…');
-        var limite = espera(DUR * 3000).then(function () { throw new Error('demorou'); });
+        if (soVideo) botao('espera', 'baixando o som…', 0.04); else legenda('preparando o som…');
+        var limite = espera(DUR * (soVideo ? 4000 : 3000)).then(function () { throw new Error('demorou'); });
         var ini = inicio;
         var pedido = { src: src, inicio: ini, dur: dur, fixo: !!onda0,
           somAte: onda0 ? Math.min(DUR, fimDaOnda(onda0) - ini) - 0.5 : 0 };
         Promise.race([video(base, pedido, function (p) {
-          if (segue()) legenda('preparando o som · ' + Math.round(p * 100) + '%');
-        }, function (pk) { if (segue()) mostrar(base, pk); }, segue), limite]).then(function (v) {
+          if (!segue()) return;
+          if (!soVideo) return legenda('preparando o som · ' + Math.round(p * 100) + '%');
+          var t = 0.1 + p * 0.88;   // baixar e cortar o som ≈ 10%, montar ≈ 88%, conferir o resto
+          botao('espera', p >= 1 ? 'conferindo o som…' : 'montando o vídeo · ' + Math.round(t * 100) + '%', t);
+        }, function (pk) {
+          if (!segue()) return;
+          mostrar(base, pk);
+          if (soVideo) botao('espera', 'montando o vídeo · 10%', 0.1);
+        }, segue), limite]).then(function (v) {
           if (!segue()) return;
           arqVideo = comoArquivo(v.blob, nome + '.mp4', 'video/mp4');
           var usado = typeof v.inicio === 'number' ? v.inicio : ini;
-          legenda('com ' + DUR + 's de som · ' + mmss(usado) + ' a ' + mmss(usado + DUR));
-        }).catch(function () { if (segue()) legenda(''); });   // sem som: segue a arte
+          if (soVideo) botao('pronto', 'vídeo de ' + DUR + 's · ' + mmss(usado) + ' a ' + mmss(usado + DUR), 1);
+          else legenda('com ' + DUR + 's de som · ' + mmss(usado) + ' a ' + mmss(usado + DUR));
+        }).catch(function () {
+          if (!segue()) return;
+          ger++;                                          // o que ainda estiver montando para
+          if (soVideo) botao('falhou', 'não deu pra montar o vídeo', 0);
+          else legenda('');                               // sem som: segue a arte
+        });
       };
 
       Promise.all([lerOnda(src), comSom ? arte(Object.assign({}, opts.arte, { onda: true })) : null]).then(function (r) {
@@ -792,7 +874,7 @@
         mostrar(base);
         if (dur > DUR + 1) montarEscolha();
         gerar();
-      }).catch(function () { legenda(''); });
+      }).catch(function () { if (soVideo) botao('falhou', 'não deu pra montar o vídeo', 0); else legenda(''); });
 
       // a faixa inteira com a janela de 15s
       var montarEscolha = function () {
@@ -852,8 +934,10 @@
           pintar();
           tocarTrecho();
           // o vídeo refaz quando a pessoa para de mexer; até lá, "Postar" manda a arte
+          // (no soVideo o botão volta a esperar)
           arqVideo = null;
-          legenda('preparando o som…');
+          ger++;
+          if (soVideo) botao('espera', 'trecho novo: preparando…', 0.02); else legenda('preparando o som…');
           clearTimeout(timer);
           timer = setTimeout(function () { if (vivo()) gerar(); }, 700);
         };
@@ -863,15 +947,16 @@
     }
 
     $('csStory').addEventListener('click', function () {
-      var f = arqVideo || arqImagem;
+      if (falhou) { if (gerar) gerar(); return; }        // "Tentar de novo"
+      var f = soVideo ? arqVideo : (arqVideo || arqImagem);
       if (!f) return;
       pararPrevia();
       pausar();                             // o site para de tocar junto com o Instagram
-      copiar(opts.urlStory || opts.url);    // pro sticker de link do story
+      if (!semLink) copiar(opts.urlStory || opts.url);    // pro sticker de link do story
       if (podeCompartilhar({ files: [f] })) {
         navigator.share({ files: [f] }).then(function () {
           fechar();
-          avisar('Link copiado: no story, cola no sticker de link.');
+          if (!semLink) avisar('Link copiado: no story, cola no sticker de link.');
         }).catch(function (e) {
           if (e && e.name === 'AbortError') return;   // a pessoa desistiu
           avisar('Não abriu o compartilhar. Tenta de novo.');
@@ -880,10 +965,10 @@
       }
       // navegador sem compartilhar arquivo (Firefox no computador): baixa e copia
       baixar(f);
-      avisar('Arquivo baixado e link copiado.');
+      avisar(semLink ? 'Vídeo baixado.' : 'Arquivo baixado e link copiado.');
     });
 
-    $('csLink').addEventListener('click', function () {
+    if (!semLink) $('csLink').addEventListener('click', function () {
       if (navigator.share) {
         navigator.share({ url: opts.url }).then(fechar).catch(function () {});
         return;
@@ -892,7 +977,7 @@
     });
   }
 
-  window.CaramujoStory = { abrir: abrir, arte: arte, fechar: fechar, precisaDestravar: precisaDestravar, video: video, podeVideo: podeVideo, maisForte: maisForte, fimDaOnda: fimDaOnda, primeiroQuadro: primeiroQuadro };
+  window.CaramujoStory = { abrir: abrir, arte: arte, fechar: fechar, precisaDestravar: precisaDestravar, video: video, podeVideo: podeVideo, maisForte: maisForte, fimDaOnda: fimDaOnda, primeiroQuadro: primeiroQuadro, onda: onda, picos: picos, nBarras: nBarras };
 
   // deixa o juntador de mp4 no cache enquanto a pessoa ouve (32KB), pra folha não esperar a rede
   try {

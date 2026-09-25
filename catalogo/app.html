@@ -134,6 +134,7 @@ __META__
   .shuf.on{color:#fff}
   .shuf.on::after{content:"";position:absolute;bottom:3px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:#fff}
   .shuf:active{opacity:.6}
+  .shuf[hidden]{display:none}
 
   .navwrap{position:sticky;top:0;z-index:7;background:#000;margin-top:14px}
   .tabsbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:8px}
@@ -281,6 +282,8 @@ __META__
     background:transparent;border:0;border-radius:12px;font-size:15px;color:#efefef;text-align:left;cursor:pointer}
   .card-list button:active{background:#1d1d1d}
   .card-rolo{max-height:42vh;overflow-y:auto;margin-top:6px}
+  .card-abas{display:flex;gap:26px;margin-top:16px;border-bottom:1px solid rgba(255,255,255,.07)}
+  .card-abas .tab{font-size:15px;padding-bottom:9px;margin-bottom:-1px}
   .card .card-sep{margin:14px 10px 0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-4)}
   .fx{display:flex;flex-direction:column;min-width:0}
   .fx b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -562,6 +565,9 @@ __META__
     if (preview) return preview.slice();
     var src=(tab==='beats'?BEATS:SONS).slice();
     if(query){var q=norm(query);src=src.filter(function(t){return norm(t.title).indexOf(q)>-1})}
+    return ordenar(src);
+  }
+  function ordenar(src){
     if(sort==='az') src.sort(function(a,b){return norm(a.title)<norm(b.title)?-1:1});
     else if(sort==='bpm') src.sort(function(a,b){return (a.bpm||0)-(b.bpm||0)});
     else src.sort(function(a,b){
@@ -731,7 +737,7 @@ __META__
   });
   $('plNext').addEventListener('click',function(){ var n = vizinho(1); if(n > -1) pick(n); });
   // compartilhar: na tape, a folha do story com 15s do beat; na pasta de artista, a mesma
-  // folha com 30s da música e o link da home
+  // folha com 30s da faixa, só o vídeo e sem link
   function podeEnviar(){ return !CAT.artist.tape && (CAT.owner || (!preview && !CAT.preview)); }
   $('plShare').addEventListener('click',function(){
     var t = rows[cur]; if(!t) return;
@@ -926,7 +932,7 @@ __META__
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25g';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25h';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });
@@ -1021,35 +1027,53 @@ __META__
   }
   // PRÉVIA (topo da pasta de artista): escolhe a faixa e cai no compartilhar dela.
   // O ENVIAR segue o de sempre: marca as faixas e manda o link (feat, amigo que opina).
+  // Beats e Músicas separados em abas, como na página (pedido de 25/09); abre na aba
+  // aberta na página (trocar de aba na página para o som, então quem toca está nela).
   function escolherPrevia(){
-    var lista=rows.slice();
-    if(!lista.length){ flash('Nenhuma faixa pra mostrar.'); return; }
-    var faixas=lista.map(function(t,i){
-      var info=(sub(t,false)||'')+(cur>-1&&rows[cur]===t?' · tocando agora':'');
-      return '<button type="button" data-i="'+i+'">'+
-        '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#efefef" stroke-width="1.9">'+ICON_NOTA+'</svg>'+
-        '<span class="fx"><b>'+esc(t.title)+'</b>'+(info?'<small>'+esc(info)+'</small>':'')+'</span></button>';
-    }).join('');
+    if(!BEATS.length && !SONS.length){ flash('Nenhuma faixa pra mostrar.'); return; }
+    var tocando=cur>-1?rows[cur]:null, aba=tab;
+    if(aba==='beats'&&!BEATS.length) aba='sons';
+    if(aba==='sons'&&!SONS.length) aba='beats';
+    var duas=BEATS.length&&SONS.length, lista=[];
+    var abas=duas?'<div class="card-abas" role="tablist">'+
+      '<button class="tab" type="button" role="tab" data-aba="beats">Beats</button>'+
+      '<button class="tab" type="button" role="tab" data-aba="sons">Músicas</button></div>':'';
     open('<h2 id="cardTitle">Prévia pro story</h2><p>Escolhe a faixa. Vão 30 segundos dela, com a arte da Caramujo.</p>'+
-      '<div class="card-list card-rolo">'+faixas+'</div>'+
+      abas+'<div class="card-list card-rolo" id="prevLista"></div>'+
       '<button class="card-close" data-close>Fechar</button>');
-    card.querySelectorAll('[data-i]').forEach(function(b){
-      b.addEventListener('click',function(){close();storyDaMusica(lista[+b.getAttribute('data-i')])});
+    function mostrar(qual){
+      aba=qual;
+      lista=ordenar((qual==='beats'?BEATS:SONS).slice());
+      card.querySelectorAll('[data-aba]').forEach(function(b){ b.setAttribute('aria-selected',String(b.getAttribute('data-aba')===qual)); });
+      var caixa=card.querySelector('#prevLista');
+      caixa.innerHTML=lista.map(function(t,i){
+        var info=(sub(t,false)||'')+(tocando===t?' · tocando agora':'');
+        return '<button type="button" data-i="'+i+'">'+
+          '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#efefef" stroke-width="1.9">'+ICON_NOTA+'</svg>'+
+          '<span class="fx"><b>'+esc(t.title)+'</b>'+(info?'<small>'+esc(info)+'</small>':'')+'</span></button>';
+      }).join('');
+      caixa.scrollTop=0;
+      caixa.querySelectorAll('[data-i]').forEach(function(b){
+        b.addEventListener('click',function(){close();storyDaMusica(lista[+b.getAttribute('data-i')])});
+      });
+    }
+    card.querySelectorAll('[data-aba]').forEach(function(b){
+      b.addEventListener('click',function(){ mostrar(b.getAttribute('data-aba')); });
     });
+    mostrar(aba);
   }
   $('pickPrevia').addEventListener('click',escolherPrevia);
-  // Música da pasta de artista (25/09/2026): o mesmo compartilhar dos beats, com 30s de
-  // trecho e o link da home do site (a pasta é privada: o link dela nunca vai junto).
+  // Faixa da pasta de artista (25/09/2026): o mesmo compartilhar dos beats, com 30s de
+  // trecho. Só o vídeo (arte parada não serve de prévia de música) e sem link: mandar a
+  // faixa é trabalho do ENVIAR. O botão espera o vídeo, mostrando o andamento.
   function storyDaMusica(t){
     destravarSom();
     pausar();
     destravarPrevia('/audio/'+t.id+'.mp3');
-    var casa = location.origin + '/';
     carregarStory().then(function(){
       var nome = String(t.title||'').toLocaleUpperCase('pt-BR');
       window.CaramujoStory.abrir({
-        tema:'catalogo', titulo:nome, duracao:30,
-        url:casa+'?de=artista', urlStory:casa+'?de=story-artista',
+        tema:'catalogo', titulo:nome, duracao:30, soVideo:true, semLink:true,
         nomeArquivo:'caramujo-'+(norm(t.title||'musica').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'musica'),
         arte:{ capa:CAT.artist.cover||null, titulo:nome, ficha:[CAT.artist.name||''] },
         audio:trechoDe(t),
@@ -1318,6 +1342,8 @@ __META__
     $('pickDown').hidden=!podeBaixar();
     // pasta de artista: PRÉVIA escolhe uma faixa e abre o compartilhar de 30s pro story
     $('pickPrevia').hidden=!(!CAT.artist.tape && podeEnviar());
+    // aleatório do topo só na tape (pedido de 25/09: na pasta de artista quase ninguém usa; o da barra fica)
+    $('shuffleAll').hidden=!CAT.artist.tape;
 
     if(CAT.preview){
       document.body.classList.add('is-preview');
