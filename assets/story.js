@@ -273,18 +273,47 @@
       if (p && p.then) p.then(ok, erro);
     });
   }
-  // pede só o pedaço do mp3 que interessa (com folga); se o servidor mandar tudo, serve também
+  // Quadro de MP3 (MPEG-1 camada III, o que o conversor gera): tamanho em bytes, ou 0.
+  function quadro(u, i) {
+    if (i + 4 > u.length || u[i] !== 0xFF || (u[i + 1] & 0xFE) !== 0xFA) return 0;
+    var br = [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320][u[i + 2] >> 4];
+    var sr = [44100, 48000, 32000][(u[i + 2] >> 2) & 3];
+    if (!br || !sr) return 0;
+    return Math.floor(144000 * br / sr) + ((u[i + 2] >> 1) & 1);
+  }
+  // o pedaço baixado começa no meio de um quadro: acha o 1º quadro inteiro (3 seguidos batendo)
+  function primeiroQuadro(u) {
+    for (var i = 0, lim = Math.min(u.length - 4, 8192); i < lim; i++) {
+      var n = quadro(u, i), m = n && quadro(u, i + n);
+      if (n && m && quadro(u, i + n + m)) return i;
+    }
+    return 0;
+  }
+  function baixarInteiro(src, inicio) {
+    return fetch(src, { cache: 'no-store' }).then(function (r) { return r.arrayBuffer(); }).then(decodificar)
+      .then(function (dec) { return { dec: dec, desloc: inicio, noFim: true, inteiro: true }; });
+  }
+  // Pede só o pedaço do mp3 que interessa (~265KB). Até 25/09 o pedaço ia direto pro
+  // decodificador; no Android ele devolvia menos som do que veio (começo no meio de um
+  // quadro) e o story ficava mudo no fim. Agora: corta no 1º quadro inteiro, lê o
+  // Content-Range de verdade, e se o som vier curto baixa o arquivo inteiro.
   function baixarTrecho(src, inicio) {
-    var a = Math.max(0, Math.floor((inicio - 0.5) * BPS)), b = Math.ceil((inicio + DUR + 1) * BPS);   // ~265KB
-    return fetch(src, { headers: { Range: 'bytes=' + a + '-' + b } }).then(function (r) {
+    var a = Math.max(0, Math.floor((inicio - 0.5) * BPS)), b = Math.ceil((inicio + DUR + 1) * BPS);
+    return fetch(src, { headers: { Range: 'bytes=' + a + '-' + b }, cache: 'no-store' }).then(function (r) {
       if (!r.ok) throw new Error('áudio ' + r.status);
-      var desloc = r.status === 206 ? inicio - a / BPS : inicio;
-      return r.arrayBuffer().then(decodificar).then(function (dec) { return { dec: dec, desloc: desloc }; });
-    }).catch(function () {
-      // pedaço solto não decodificou: baixa o arquivo inteiro
-      return fetch(src).then(function (r) { return r.arrayBuffer(); }).then(decodificar)
-        .then(function (dec) { return { dec: dec, desloc: inicio }; });
-    });
+      if (r.status !== 206) return r.arrayBuffer().then(decodificar).then(function (dec) { return { dec: dec, desloc: inicio, noFim: true, inteiro: true }; });
+      var cr = /bytes\s+(\d+)-(\d+)\/(\d+)/.exec(r.headers.get('content-range') || '');
+      if (!cr) throw new Error('sem content-range');
+      var ini = +cr[1], fim = +cr[2], total = +cr[3];
+      return r.arrayBuffer().then(function (buf) {
+        var q = primeiroQuadro(new Uint8Array(buf));
+        var pedaco = q ? buf.slice(q) : buf, bytes = pedaco.byteLength;
+        return decodificar(pedaco).then(function (dec) {
+          if (dec.duration < bytes / BPS - 1) throw new Error('decodificou curto');
+          return { dec: dec, desloc: inicio - (ini + q) / BPS, noFim: fim >= total - 1 };
+        });
+      });
+    }).catch(function () { return baixarInteiro(src, inicio); });
   }
   // Onde o som acaba de verdade dentro do pedaço baixado. Beat costuma terminar com
   // uns segundos de cauda em silêncio; se ela cair dentro dos 15s, o story fica mudo
@@ -296,15 +325,21 @@
     }
     return 0;
   }
-  // 15s em estéreo 48k, entrando e saindo suave. audio: { src, inicio, dur }
-  function trecho(audio, voltou) {
+  // 15s em estéreo 48k, entrando e saindo suave.
+  // audio: { src, inicio, dur, fixo (trecho escolhido pela onda/pessoa: não mexe), somAte (até onde a onda diz que tem som) }
+  // O buffer volta com .inicio = o começo usado de verdade.
+  function trecho(audio, jaInteiro) {
     var inicio = Math.max(0, Number(audio.inicio) || 0);
     if (audio.dur && inicio > audio.dur - DUR) inicio = Math.max(0, audio.dur - DUR);
-    return baixarTrecho(audio.src, inicio).then(function (t) {
-      // o fim do beat (ou do arquivo) caiu dentro dos 15s: volta o começo e baixa de novo
-      var falta = t.desloc + DUR - Math.min(t.dec.duration, fimAudivel(t.dec) + 0.3);
-      if (falta > 0.4 && inicio > 0 && !voltou) {
-        return trecho({ src: audio.src, inicio: Math.max(0, inicio - falta - 0.5), dur: audio.dur }, true);
+    return (jaInteiro ? baixarInteiro(audio.src, inicio) : baixarTrecho(audio.src, inicio)).then(function (t) {
+      // pedaço curto no meio da faixa = problema de download/decodificação: arquivo inteiro
+      if (t.dec.duration - t.desloc < DUR - 0.3 && !t.noFim && !t.inteiro) return trecho(audio, true);
+      // o trecho passa do fim do som: com onda/escolha (fixo), só o fim do arquivo conta;
+      // sem onda, a cauda muda do beat também. Aí volta o começo (1 vez).
+      var fimSom = audio.fixo ? t.dec.duration : Math.min(t.dec.duration, fimAudivel(t.dec) + 0.3);
+      var falta = t.desloc + DUR - fimSom;
+      if (falta > 0.4 && inicio > 0 && !audio.voltou) {
+        return trecho({ src: audio.src, inicio: Math.max(0, inicio - falta - 0.3), dur: audio.dur, fixo: audio.fixo, voltou: true }, t.inteiro);
       }
       var desloc = Math.max(0, Math.min(t.desloc, t.dec.duration - DUR));
       var ctx = offline(2, DUR * TAXA);
@@ -317,6 +352,14 @@
       return new Promise(function (ok, erro) {
         ctx.oncomplete = function (e) { ok(e.renderedBuffer); };
         var p = ctx.startRendering(); if (p && p.then) p.then(ok, erro);
+      }).then(function (som) {
+        // a onda diz que tem som até X e o pedaço veio mudo antes: refaz com o arquivo inteiro
+        if (audio.somAte && fimAudivel(som) < audio.somAte - 1) {
+          if (!t.inteiro) return trecho(audio, true);
+          throw new Error('som curto mesmo com o arquivo inteiro');   // vai a arte, nunca story mudo
+        }
+        som.inicio = inicio;
+        return som;
       });
     });
   }
@@ -538,7 +581,7 @@
         ? porWebCodecs(base, desenhar, som, prog, segue).then(function (b) { return conferir(b, 'webcodecs'); })
             .catch(function (e) { if (segue() && mimeGravacao()) return gravando(); throw e; })
         : gravando();
-      return feito.then(function (blob) { return { blob: blob, picos: pk }; });
+      return feito.then(function (blob) { return { blob: blob, picos: pk, inicio: som.inicio }; });
     });
   }
 
@@ -721,12 +764,16 @@
         arqVideo = null;
         legenda('preparando o som…');
         var limite = espera(45000).then(function () { throw new Error('demorou'); });
-        Promise.race([video(base, { src: src, inicio: inicio, dur: dur }, function (p) {
+        var ini = inicio;
+        var pedido = { src: src, inicio: ini, dur: dur, fixo: !!onda0,
+          somAte: onda0 ? Math.min(DUR, fimDaOnda(onda0) - ini) - 0.5 : 0 };
+        Promise.race([video(base, pedido, function (p) {
           if (segue()) legenda('preparando o som · ' + Math.round(p * 100) + '%');
         }, function (pk) { if (segue()) mostrar(base, pk); }, segue), limite]).then(function (v) {
           if (!segue()) return;
           arqVideo = comoArquivo(v.blob, nome + '.mp4', 'video/mp4');
-          legenda('com 15s de som · ' + mmss(inicio) + ' a ' + mmss(inicio + DUR));
+          var usado = typeof v.inicio === 'number' ? v.inicio : ini;
+          legenda('com 15s de som · ' + mmss(usado) + ' a ' + mmss(usado + DUR));
         }).catch(function () { if (segue()) legenda(''); });   // sem som: segue a arte
       };
 
@@ -842,7 +889,7 @@
     });
   }
 
-  window.CaramujoStory = { abrir: abrir, arte: arte, fechar: fechar, precisaDestravar: precisaDestravar, video: video, podeVideo: podeVideo, maisForte: maisForte, fimDaOnda: fimDaOnda };
+  window.CaramujoStory = { abrir: abrir, arte: arte, fechar: fechar, precisaDestravar: precisaDestravar, video: video, podeVideo: podeVideo, maisForte: maisForte, fimDaOnda: fimDaOnda, primeiroQuadro: primeiroQuadro };
 
   // deixa o juntador de mp4 no cache enquanto a pessoa ouve (32KB), pra folha não esperar a rede
   try {

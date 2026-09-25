@@ -1915,6 +1915,17 @@ body.tocando{padding-bottom:104px}
 
 /* pino do seek: some quando não tem o que mostrar, pra não bater no relógio */
 .trilha.zerada i:after{display:none}
+/* barra de progresso do player do rodapé (25/09/2026): linha fina com a bolinha,
+   como a do catálogo. Mesmas cores (loam no fundo, fire no que já tocou). */
+.pe-seek .trilha,.pe-seek .trilha:hover,.pe-seek .trilha.perto{height:3px;border-radius:2px;background:var(--loam)}
+.pe-seek .trilha i{border-radius:2px}
+.pe-seek .trilha i:after{width:13px;height:13px;right:-6.5px;border-radius:50%;box-shadow:0 0 0 3px var(--deep);
+  transform:translateY(-50%) scale(1)}
+.pe-seek .trilha:hover i:after,.pe-seek .trilha.perto i:after{transform:translateY(-50%) scale(1.2)}
+.pe-seek .trilha.zerada i:after{display:block}
+@media(max-width:760px){
+  .pe-seek .trilha i:after{width:14px;height:14px;right:-7px}
+}
 @media(max-width:760px){
   .pe-seek{gap:13px}
   .hw-play{gap:14px}
@@ -4002,7 +4013,7 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25e';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25f';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });
