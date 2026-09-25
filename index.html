@@ -1926,6 +1926,12 @@ body.tocando{padding-bottom:104px}
 @media(max-width:760px){
   .pe-seek .trilha i:after{width:14px;height:14px;right:-7px}
 }
+/* player A (25/09/2026): no celular o volume sai da barra (o aparelho tem o botão dele)
+   e fica o preço; a barra fica igual à das tapes e pastas de artista */
+@media(max-width:600px){
+  .np-bar .pe-dir .vol-wrap{display:none!important}
+  .np-bar .transporte{justify-content:space-between;width:100%;max-width:360px;margin:0 auto;gap:0}
+}
 @media(max-width:760px){
   .pe-seek{gap:13px}
   .hw-play{gap:14px}
@@ -4013,7 +4019,7 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25f';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25g';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });

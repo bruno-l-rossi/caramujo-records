@@ -328,10 +328,10 @@ async function onda(env, url, body) {
   return json({ ok: true, barras: p.length });
 }
 
-// Beats prontos que ainda não têm onda (pra primeira carga, sync.mjs --ondas)
+// Faixas prontas (beats e músicas) que ainda não têm onda (primeira carga, sync.mjs --ondas)
 async function semonda(d, env) {
   if (!env.AUDIO) return json({ erro: 'R2 nao esta ligado (binding AUDIO)' }, 500);
-  const { results } = await d.prepare(`SELECT id FROM tracks WHERE kind = 'beat' AND ready = 1`).all();
+  const { results } = await d.prepare(`SELECT id FROM tracks WHERE ready = 1`).all();
   const tem = new Set();
   let cursor;
   do {

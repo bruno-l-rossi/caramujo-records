@@ -1,9 +1,10 @@
-name: Catálogo — ondas dos beats
+name: Catálogo — ondas das faixas
 
-# Mede o volume de cada meio segundo dos beats que já estão no site (scripts/onda.mjs)
-# e guarda no R2. O compartilhar usa isso pra achar o trecho mais forte do beat e pra
-# pessoa escolher o pedaço do story. Rodar uma vez depois do deploy de 25/09/2026;
-# dali pra frente o conversor já faz junto. Quem já tem onda é pulado.
+# Mede o volume de cada meio segundo das faixas que já estão no site (scripts/onda.mjs)
+# e guarda no R2. O compartilhar usa isso pra achar o trecho mais forte e pra pessoa
+# escolher o pedaço do story. Beats: rodado em 25/09/2026. Músicas das pastas de
+# artista: rodar de novo depois do deploy que liga o compartilhar nelas. Dali pra
+# frente o conversor já faz junto. Quem já tem onda é pulado.
 
 on:
   workflow_dispatch:
@@ -15,7 +16,7 @@ concurrency:
 jobs:
   ondas:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@v5
 

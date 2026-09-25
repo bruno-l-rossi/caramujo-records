@@ -5,7 +5,7 @@
 //   node scripts/sync.mjs                 -> todos os artistas + as beat tapes
 //   node scripts/sync.mjs "nico2b,PUMA"   -> só esses
 //   node scripts/sync.mjs "tapes"         -> só as beat tapes do @rideblan33
-//   node scripts/sync.mjs "--ondas"       -> só a onda (volume) dos beats que ainda não têm
+//   node scripts/sync.mjs "--ondas"       -> só a onda (volume) das faixas que ainda não têm
 //                                            (lê o MP3 do próprio site; não precisa do Drive)
 //
 // Precisa de: GDRIVE_SA_JSON, INGEST_TOKEN, SITE_URL
@@ -340,7 +340,8 @@ async function converter(faixa, dir) {
   const bytes = (await fs.promises.stat(leve)).size;
   const buf = await fs.promises.readFile(leve);
   // volume de cada meio segundo, pro compartilhar achar o trecho mais forte
-  const onda = faixa.kind === 'beat' ? await ondaDe(leve).catch(() => null) : null;
+  // (beats e, desde 25/09/2026, as músicas das pastas de artista)
+  const onda = await ondaDe(leve).catch(() => null);
   await fs.promises.rm(bruto, { force: true });
   await fs.promises.rm(leve, { force: true });
   return { buf, dur: Number(stdout.trim()) || 0, bytes, onda };
@@ -401,7 +402,7 @@ async function ingest(op, params, body, binario = false) {
 // Baixa o MP3 do próprio site, mede e manda. Quem já tem é pulado: dá pra rodar de novo.
 async function ondas() {
   const { ids } = await ingest('semonda', {}, {});
-  console.log(`Ondas: ${ids.length} beat(s) sem onda`);
+  console.log(`Ondas: ${ids.length} faixa(s) sem onda`);
   const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'caramujo-onda-'));
   let feitos = 0, falhas = 0;
   const fila = ids.slice();

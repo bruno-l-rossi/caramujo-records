@@ -123,6 +123,7 @@ __META__
   .searchbox input::placeholder{color:#5a5a5a}
 
   .actions{display:flex;align-items:center;gap:24px;margin-top:16px}
+  @media (max-width:420px){ .actions{gap:15px} .actions .txt-btn{letter-spacing:.06em;gap:6px} }   /* cabe PRÉVIA em tela de 360px */
   .play-all{width:46px;height:46px;margin-left:-5px;padding:0;background:transparent;border:0;
     display:flex;align-items:center;justify-content:center;cursor:pointer}
   .txt-btn{display:flex;align-items:center;gap:8px;padding:8px 0;background:transparent;border:0;
@@ -144,7 +145,7 @@ __META__
     font-size:14px;color:var(--ink-2);cursor:pointer;white-space:nowrap}
   .tabsbar-line{height:1px;background:rgba(255,255,255,.07)}
 
-  .list{padding-top:4px;min-height:120px;padding-bottom:118px}
+  .list{padding-top:4px;min-height:120px;padding-bottom:170px}
   .group{padding:15px 0 3px;font-size:10.5px;font-weight:600;letter-spacing:.2em;color:#949494}
   .row{width:100%;display:flex;align-items:center;gap:13px;padding:9px 0;
     background:transparent;border:0;text-align:left;cursor:pointer}
@@ -197,6 +198,7 @@ __META__
   body.is-preview .tabsbar,
   body.is-preview .tabsbar-line,
   body.is-preview #pickSend,
+  body.is-preview #pickPrevia,
   body.is-preview #searchBtn,
   body.is-preview .selbar{display:none}
 
@@ -215,6 +217,22 @@ __META__
   .dock[hidden]{display:none}
   .dock-in{max-width:1180px;margin:0 auto;padding:7px 16px 9px}
 
+  .pl{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"scrub scrub" "info acao" "ctl ctl";
+    column-gap:12px;align-items:center}
+  .pl .scrub{grid-area:scrub}
+  .pl .pl-top{grid-area:info;min-width:0;margin-top:8px}
+  .pl-acao{grid-area:acao;margin-top:8px;display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;
+    border:1px solid #2a2a2a;background:transparent;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .pl-acao[hidden]{display:none}
+  .pl-acao:active{background:#1d1d1d}
+  .pl-ctl{grid-area:ctl;display:flex;align-items:center;justify-content:space-between;width:100%;max-width:360px;
+    margin:6px auto 0;padding:0 6px}
+  .pl-ctl .pl-btn{color:#cfcfcf;position:relative}
+  .pl-ctl .pl-btn[hidden]{visibility:hidden;display:flex}
+  .pl-ctl .pl-btn:active{opacity:.6}
+  .pl-ctl .pl-btn.on{color:#fff}
+  .pl-ctl .pl-btn.on::after{content:"";position:absolute;bottom:5px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:#fff}
+  .pl-ctl .pl-play{width:48px;height:48px;border-radius:50%;background:#fff}
   .pl-top{display:flex;align-items:center;gap:11px}
   .pl-art{width:40px;height:40px;flex-shrink:0;background:#000;border:1px solid #1e1e1e;
     display:flex;align-items:center;justify-content:center}
@@ -324,6 +342,12 @@ __META__
     .dock-in{padding:10px 24px 12px}
     .pl-art{width:44px;height:44px}
     .dock-in{padding:12px 24px 14px}
+    /* computador: uma linha (faixa | botões com a barra embaixo | ação) */
+    .pl{grid-template-columns:minmax(0,1fr) minmax(320px,480px) minmax(0,1fr);
+      grid-template-areas:"info ctl acao" "info scrub acao";row-gap:2px}
+    .pl .pl-top,.pl-acao{margin-top:0}
+    .pl-acao{justify-self:end}
+    .pl-ctl{margin:0 auto}
     .dl-dock{max-width:560px;margin:0 auto}
     .veil{align-items:center}
     .card{border-radius:20px}
@@ -383,6 +407,10 @@ __META__
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.9" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg>
             ENVIAR
           </button>
+          <button class="txt-btn" id="pickPrevia" type="button" hidden>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 9.5v5l4.2-2.5z" fill="#dcdcdc"/></svg>
+            PRÉVIA
+          </button>
           <button class="txt-btn" id="pickDown" type="button">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="1.9" aria-hidden="true"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
             BAIXAR
@@ -421,30 +449,32 @@ __META__
 </div>
 
 <div class="dock" id="player" hidden>
-  <div class="dock-in">
+  <!-- Player A (25/09/2026): o mesmo desenho da vitrine do site, com as cores do catálogo.
+       Celular: barra fina em cima, faixa + ação da página, botões embaixo.
+       Computador: uma linha só (faixa | botões + barra | ação). -->
+  <div class="dock-in pl">
+    <div class="scrub">
+      <time id="tNow">0:00</time>
+      <label for="seek" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Posição da faixa</label>
+      <input id="seek" type="range" min="0" max="100" value="0" step="1">
+      <time id="tEnd" class="r">0:00</time>
+    </div>
     <div class="pl-top">
       <div class="pl-art"><span class="logo logo-v" aria-hidden="true"></span></div>
       <div class="pl-meta">
         <div class="pl-name" id="plName">—</div>
         <div class="pl-sub" id="plSub">—</div>
       </div>
-      <button class="pl-btn skip" id="back15" type="button" aria-label="Voltar 15 segundos">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" aria-hidden="true"><path d="M11 5V2L6 6l5 4V7a6 6 0 11-6 6"/></svg>
-        <small style="bottom:3px">15</small>
-      </button>
-      <button class="pl-btn" id="plToggle" type="button" aria-label="Pausar">
-        <svg id="plIcon" width="19" height="19" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><rect x="5" y="4" width="5" height="16"/><rect x="14" y="4" width="5" height="16"/></svg>
-      </button>
-      <button class="pl-btn skip" id="fwd15" type="button" aria-label="Avançar 15 segundos">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" aria-hidden="true" style="transform:scaleX(-1)"><path d="M11 5V2L6 6l5 4V7a6 6 0 11-6 6"/></svg>
-        <small style="bottom:3px">15</small>
-      </button>
     </div>
-    <div class="scrub">
-      <time id="tNow">0:00</time>
-      <label for="seek" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Posição da faixa</label>
-      <input id="seek" type="range" min="0" max="100" value="0" step="1">
-      <time id="tEnd" class="r">0:00</time>
+    <button class="pl-acao" id="plAcao" type="button" hidden></button>
+    <div class="pl-ctl">
+      <button class="pl-btn" id="plShuf" type="button" aria-label="Tocar em ordem aleatória" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg></button>
+      <button class="pl-btn" id="plPrev" type="button" aria-label="Faixa anterior"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14h2.6V5zM19 5l-9 7 9 7z"/></svg></button>
+      <button class="pl-btn pl-play" id="plToggle" type="button" aria-label="Pausar">
+        <svg id="plIcon" width="18" height="18" viewBox="0 0 24 24" fill="#000" aria-hidden="true"><rect x="5" y="4" width="5" height="16"/><rect x="14" y="4" width="5" height="16"/></svg>
+      </button>
+      <button class="pl-btn" id="plNext" type="button" aria-label="Próxima faixa"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17 5v14h-2.6V5zM5 5l9 7-9 7z"/></svg></button>
+      <button class="pl-btn" id="plShare" type="button" aria-label="Compartilhar essa faixa"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 13.3l7.4 4.4"/><path d="M15.7 6.3l-7.4 4.4"/></svg></button>
     </div>
   </div>
 </div>
@@ -622,7 +652,7 @@ __META__
     var t=rows[cur];
     player.hidden=false;dlDock.hidden=true;
     audio.src='/audio/'+t.id+'.mp3';
-    if(CAT.artist.tape) prepararStory();
+    if(CAT.artist.tape || podeEnviar()) prepararStory();
     audio.play().catch(function(){});
     tarja(t);
     conta(t);
@@ -636,7 +666,10 @@ __META__
     var t=rows[cur];if(!t)return;
     var dur = audio.duration && isFinite(audio.duration) ? audio.duration : (t.dur || 0);
     $('plName').textContent=t.title;
-    $('plSub').textContent=sub(t,false);
+    // na barra: gênero (quando a loja sabe), BPM e tom; música segue com a etiqueta dela
+    $('plSub').textContent = t.kind==='beat'
+      ? [t.genero||'', t.bpm?t.bpm+' BPM':'', t.key||''].filter(Boolean).join(' · ') || sub(t,false)
+      : sub(t,false);
     $('tNow').textContent=mmss(pos);
     $('tEnd').textContent=mmss(dur);
     var sk=$('seek');
@@ -646,6 +679,7 @@ __META__
       ? '<path d="M7 4l12 8-12 8z"></path>'
       : '<rect x="5" y="4" width="5" height="16"></rect><rect x="14" y="4" width="5" height="16"></rect>';
     $('plToggle').setAttribute('aria-label',audio.paused?'Tocar':'Pausar');
+    pintarAcao(t);
   }
   audio.addEventListener('timeupdate',function(){ if(!scrubbing){pos=audio.currentTime;paint()} });
   audio.addEventListener('loadedmetadata',function(){ paint(); tarjaPosicao(); });
@@ -670,8 +704,10 @@ __META__
     return -1;
   }
   function marcaAleatorio(){
-    var b=$('shuffleAll'); if(!b) return;
-    b.classList.toggle('on',aleatorio); b.setAttribute('aria-pressed',aleatorio?'true':'false');
+    ['shuffleAll','plShuf'].forEach(function(id){
+      var b=$(id); if(!b) return;
+      b.classList.toggle('on',aleatorio); b.setAttribute('aria-pressed',aleatorio?'true':'false');
+    });
   }
   audio.addEventListener('ended',function(){
     var n=vizinho(1);
@@ -687,8 +723,34 @@ __META__
     audio.currentTime=Math.min(audio.duration||1e9,Math.max(0,audio.currentTime+sec));
   }
   $('plToggle').addEventListener('click',toggle);
-  $('back15').addEventListener('click',function(){nudge(-15)});
-  $('fwd15').addEventListener('click',function(){nudge(15)});
+  // botões do player A: aleatório, anterior, próxima, compartilhar e a ação da página
+  $('plShuf').addEventListener('click',alternarAleatorio);
+  $('plPrev').addEventListener('click',function(){
+    if(audio.currentTime > 4 || cur < 0){ audio.currentTime = 0; return; }
+    var a = vizinho(-1); if(a > -1) pick(a); else audio.currentTime = 0;
+  });
+  $('plNext').addEventListener('click',function(){ var n = vizinho(1); if(n > -1) pick(n); });
+  // compartilhar: na tape, a folha do story com 15s do beat; na pasta de artista, a mesma
+  // folha com 30s da música e o link da home
+  function podeEnviar(){ return !CAT.artist.tape && (CAT.owner || (!preview && !CAT.preview)); }
+  $('plShare').addEventListener('click',function(){
+    var t = rows[cur]; if(!t) return;
+    if(CAT.artist.tape) storyDaFaixa(t); else if(podeEnviar()) storyDaMusica(t);
+  });
+  $('plAcao').addEventListener('click',function(){
+    var t = rows[cur]; if(!t) return;
+    if(CAT.artist.tape && t.buy) comprar(t);
+  });
+  var ICO_CART='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="9.5" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M3 4h2.5l2.2 11h11l2-8H7"/></svg>';
+  var acaoDe=null;
+  function pintarAcao(t){
+    if(acaoDe===t) return; acaoDe=t;
+    // na pasta de artista a barra não tem Baixar (pedido de 25/09): baixar fica no "..." e no BAIXAR do topo
+    var b=$('plAcao'), qual = CAT.artist.tape && t.buy ? 'comprar' : '';
+    b.hidden = !qual;
+    if(qual==='comprar') b.innerHTML=ICO_CART+'Comprar';
+    $('plShare').hidden = !(CAT.artist.tape ? t.kind==='beat' : podeEnviar());
+  }
   $('seek').addEventListener('input',function(e){
     scrubbing=true;pos=Number(e.target.value);
     var dur=audio.duration||1;
@@ -704,7 +766,8 @@ __META__
     });
   });
   $('playAll').addEventListener('click',function(){if(rows.length){exitSel();aleatorio=false;marcaAleatorio();pick(0)}});
-  $('shuffleAll').addEventListener('click',function(){
+  $('shuffleAll').addEventListener('click',alternarAleatorio);
+  function alternarAleatorio(){
     if(!rows.length) return;
     if(aleatorio){ aleatorio=false; marcaAleatorio(); flash('Ordem normal.'); return; }
     exitSel();
@@ -714,7 +777,7 @@ __META__
     var primeiro=idxDe(sorteio[0]);
     if(primeiro===cur){ audio.currentTime=0; audio.play().catch(function(){}); } else pick(primeiro);
     flash('Tocando em ordem aleatória.');
-  });
+  }
 
   /* ---------- a tarja do sistema (tela de bloqueio, notificação) ---------- */
   function arteDoSistema(){
@@ -863,7 +926,7 @@ __META__
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25f';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25g';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });
@@ -956,6 +1019,44 @@ __META__
       });
     }).catch(function(){ soltarPrevia(); if(navigator.clipboard) navigator.clipboard.writeText(u); flash('Link copiado.'); });
   }
+  // PRÉVIA (topo da pasta de artista): escolhe a faixa e cai no compartilhar dela.
+  // O ENVIAR segue o de sempre: marca as faixas e manda o link (feat, amigo que opina).
+  function escolherPrevia(){
+    var lista=rows.slice();
+    if(!lista.length){ flash('Nenhuma faixa pra mostrar.'); return; }
+    var faixas=lista.map(function(t,i){
+      var info=(sub(t,false)||'')+(cur>-1&&rows[cur]===t?' · tocando agora':'');
+      return '<button type="button" data-i="'+i+'">'+
+        '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#efefef" stroke-width="1.9">'+ICON_NOTA+'</svg>'+
+        '<span class="fx"><b>'+esc(t.title)+'</b>'+(info?'<small>'+esc(info)+'</small>':'')+'</span></button>';
+    }).join('');
+    open('<h2 id="cardTitle">Prévia pro story</h2><p>Escolhe a faixa. Vão 30 segundos dela, com a arte da Caramujo.</p>'+
+      '<div class="card-list card-rolo">'+faixas+'</div>'+
+      '<button class="card-close" data-close>Fechar</button>');
+    card.querySelectorAll('[data-i]').forEach(function(b){
+      b.addEventListener('click',function(){close();storyDaMusica(lista[+b.getAttribute('data-i')])});
+    });
+  }
+  $('pickPrevia').addEventListener('click',escolherPrevia);
+  // Música da pasta de artista (25/09/2026): o mesmo compartilhar dos beats, com 30s de
+  // trecho e o link da home do site (a pasta é privada: o link dela nunca vai junto).
+  function storyDaMusica(t){
+    destravarSom();
+    pausar();
+    destravarPrevia('/audio/'+t.id+'.mp3');
+    var casa = location.origin + '/';
+    carregarStory().then(function(){
+      var nome = String(t.title||'').toLocaleUpperCase('pt-BR');
+      window.CaramujoStory.abrir({
+        tema:'catalogo', titulo:nome, duracao:30,
+        url:casa+'?de=artista', urlStory:casa+'?de=story-artista',
+        nomeArquivo:'caramujo-'+(norm(t.title||'musica').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'musica'),
+        arte:{ capa:CAT.artist.cover||null, titulo:nome, ficha:[CAT.artist.name||''] },
+        audio:trechoDe(t),
+        pausar:pausar, avisar:flash
+      });
+    }).catch(function(){ soltarPrevia(); flash('Não consegui abrir o compartilhar. Tenta de novo.'); });
+  }
   function slugTape(){ return (location.pathname.split('/')[1]||'tape').replace(/[^a-z0-9-]/gi,''); }
   // sem a folha (arquivo não carregou): o de antes, link copiado
   function linkSimples(){
@@ -996,6 +1097,7 @@ __META__
     var linhas =
       (t.buy ? item('buy',ICON_CART,'Comprar esse beat') : '') +
       (CAT.artist.tape && t.kind==='beat' ? item('story',ICON_SHARE,'Compartilhar esse beat') : '') +
+      (!CAT.artist.tape && podeEnviar() ? item('story',ICON_SHARE,'Postar prévia no story') : '') +
       (!CAT.artist.tape && (CAT.owner || (!preview && !CAT.preview)) ? item('send',ICON_SEND,'Enviar só essa faixa') : '') +
       (podeBaixar() ? item('down',ICON_DOWN,'Baixar') : '');
     if(!linhas){ flash('Essa faixa está só pra ouvir.'); return; }
@@ -1004,7 +1106,7 @@ __META__
     var s0=card.querySelector('[data-act=buy]');
     if(s0) s0.addEventListener('click',function(){close();comprar(t)});
     var sS=card.querySelector('[data-act=story]');
-    if(sS) sS.addEventListener('click',function(){close();storyDaFaixa(t)});
+    if(sS) sS.addEventListener('click',function(){close();(CAT.artist.tape?storyDaFaixa:storyDaMusica)(t)});
     var s1=card.querySelector('[data-act=send]');
     if(s1) s1.addEventListener('click',function(){sendSheet([t])});
     var s2=card.querySelector('[data-act=down]');
@@ -1214,6 +1316,8 @@ __META__
       $('tabSons').setAttribute('aria-selected','true'); $('tabBeats').setAttribute('aria-selected','false'); }
 
     $('pickDown').hidden=!podeBaixar();
+    // pasta de artista: PRÉVIA escolhe uma faixa e abre o compartilhar de 30s pro story
+    $('pickPrevia').hidden=!(!CAT.artist.tape && podeEnviar());
 
     if(CAT.preview){
       document.body.classList.add('is-preview');

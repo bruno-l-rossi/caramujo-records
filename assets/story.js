@@ -7,6 +7,7 @@
    - Enviar o link: manda só o link (a prévia da conversa já mostra capa, nome e ficha).
    Story clicável automático (como SoundCloud/Spotify) só existe pra app nativo parceiro da
    Meta; pela web o caminho é o sticker de link.
+   Pastas de artista (músicas): o mesmo fluxo com 30s (opts.duracao) e o link da home.
    Usado pelo site (index.html) e pelas páginas de beat tape (catalogo/app.html).
    Carregado sob demanda (ou uns segundos depois do primeiro play, pra folha abrir na hora). */
 (function () {
@@ -259,6 +260,7 @@
      Caminho 1: WebCodecs (Chrome, Android, Safari novo), mais rápido que o tempo real.
      Caminho 2: gravar a tela da arte em tempo real (Safari antigo), ~15s.
      Sem nenhum dos dois, ou se algo falhar: fica a imagem parada. */
+  // DUR: 15s nos beats (vitrine e tape), 30s nas músicas das pastas de artista (opts.duracao)
   var DUR = 15, FPS = 30, TAXA = 48000, BPS = 16000;   // mp3 de 128k = 16 mil bytes por segundo
 
   function espera(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
@@ -682,6 +684,7 @@
     }
     var minha = ++vez;
     var vivo = function () { return minha === vez; };
+    DUR = Number(opts.duracao) === 30 ? 30 : 15;
     var avisar = opts.avisar || function () {};
     var pausar = function () { try { if (opts.pausar) opts.pausar(); } catch (_) {} };
     var linhas = String(opts.texto || TEXTO).split('\n');
@@ -695,7 +698,7 @@
       '<h2>' + esc(opts.titulo || 'Compartilhar') + '</h2><p><strong>' + esc(linhas[0]) + '</strong>' +
       esc(linhas.slice(1).join(' ')) + '</p></div></div>' +
       '<div class="cs-trecho" id="csTrecho" hidden><div class="cs-trecho-topo"><span>Trecho do story</span><b id="csTempo"></b></div>' +
-      '<canvas id="csFaixa" aria-label="Arrasta pra escolher o trecho de 15 segundos"></canvas>' +
+      '<canvas id="csFaixa" aria-label="Arrasta pra escolher o trecho de ' + DUR + ' segundos"></canvas>' +
       '<p class="cs-dica">Arrasta pra escolher o trecho que vai no story.</p></div>' +
       '<div class="cs-acoes">' +
         '<button type="button" class="cs-forte" id="csStory" disabled>Postar no story<small id="csSom"></small></button>' +
@@ -763,7 +766,7 @@
         var segue = function () { return meu === ger && vivo(); };
         arqVideo = null;
         legenda('preparando o som…');
-        var limite = espera(45000).then(function () { throw new Error('demorou'); });
+        var limite = espera(DUR * 3000).then(function () { throw new Error('demorou'); });
         var ini = inicio;
         var pedido = { src: src, inicio: ini, dur: dur, fixo: !!onda0,
           somAte: onda0 ? Math.min(DUR, fimDaOnda(onda0) - ini) - 0.5 : 0 };
@@ -773,7 +776,7 @@
           if (!segue()) return;
           arqVideo = comoArquivo(v.blob, nome + '.mp4', 'video/mp4');
           var usado = typeof v.inicio === 'number' ? v.inicio : ini;
-          legenda('com 15s de som · ' + mmss(usado) + ' a ' + mmss(usado + DUR));
+          legenda('com ' + DUR + 's de som · ' + mmss(usado) + ' a ' + mmss(usado + DUR));
         }).catch(function () { if (segue()) legenda(''); });   // sem som: segue a arte
       };
 
