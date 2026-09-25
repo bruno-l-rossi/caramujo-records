@@ -257,6 +257,11 @@ __META__
   .card-list button{display:flex;align-items:center;gap:13px;width:100%;padding:14px 10px;
     background:transparent;border:0;border-radius:12px;font-size:15px;color:#efefef;text-align:left;cursor:pointer}
   .card-list button:active{background:#1d1d1d}
+  .card-rolo{max-height:42vh;overflow-y:auto;margin-top:6px}
+  .card .card-sep{margin:14px 10px 0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-4)}
+  .fx{display:flex;flex-direction:column;min-width:0}
+  .fx b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fx small{font-size:12px;color:var(--ink-4);margin-top:2px}
   .fmt{display:flex;gap:10px;margin-top:16px}
   .fmt button{flex:1;padding:15px 12px;border-radius:14px;border:1px solid #2c2c2c;background:#1a1a1a;
     color:#fff;cursor:pointer;text-align:left}
@@ -609,6 +614,7 @@ __META__
     var t=rows[cur];
     player.hidden=false;dlDock.hidden=true;
     audio.src='/audio/'+t.id+'.mp3';
+    if(CAT.artist.tape) prepararStory();
     audio.play().catch(function(){});
     tarja(t);
     conta(t);
@@ -811,15 +817,15 @@ __META__
     enterSel('send');
   });
 
-  // Beat tape se manda inteira: o link é a própria página. Desde 25/09/2026 com
-  // a folha de compartilhar do site (assets/story.js): prévia, texto do cupom e um
-  // botão que abre o compartilhar do aparelho. Faixa tocando = vídeo de 15s com som.
+  // Compartilhar na beat tape (25/09/2026): a folha do site (assets/story.js) com
+  // "Postar no story" e "Enviar o link". Vem uns segundos depois do primeiro play,
+  // pra folha abrir na hora.
   var storyJs=null;
   function carregarStory(){
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25b';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25c';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });
@@ -834,43 +840,69 @@ __META__
       if(window.__csAC.state==='suspended') window.__csAC.resume();
     }catch(_){}
   }
+  var preparado=false;
+  function prepararStory(){
+    if(preparado) return; preparado=true;
+    var ocioso=window.requestIdleCallback||function(f){ setTimeout(f,1500); };
+    setTimeout(function(){ ocioso(function(){ carregarStory().catch(function(){}); }); },3000);
+  }
   function trechoDe(t){
     if(!t) return null;
     return { src:'/audio/'+t.id+'.mp3', inicio:(rows[cur]===t?audio.currentTime:0)||0, dur:t.dur||0 };
   }
+  function pausar(){ if(!audio.paused) audio.pause(); }   // não toca junto com o Instagram
+  // ENVIAR da tape: a pessoa escolhe se manda a tape inteira ou uma faixa (sem adivinhar
+  // pelo que está tocando)
+  var ICON_NOTA='<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>';
+  var ESCOLHA=[];
   function linkDaTape(){
-    destravarSom();
+    // na ordem da tela (sem busca ativa); com busca, a tape toda
+    var vistas=rows.filter(function(t){return t.kind==='beat'});
+    ESCOLHA=vistas.length===BEATS.length?vistas:BEATS;
+    var faixas=ESCOLHA.map(function(t,i){
+      var info=sub(t,false)+(cur>-1&&rows[cur]===t?' · tocando agora':'');
+      return '<button type="button" data-i="'+i+'">'+
+        '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#efefef" stroke-width="1.9">'+ICON_NOTA+'</svg>'+
+        '<span class="fx"><b>'+esc(t.title)+'</b>'+(info?'<small>'+esc(info)+'</small>':'')+'</span></button>';
+    }).join('');
+    open('<h2 id="cardTitle">Compartilhar</h2><p>A tape inteira ou uma faixa só.</p>'+
+      '<div class="card-list">'+item('tape',ICON_SEND,'A beat tape inteira')+'</div>'+
+      (faixas?'<p class="card-sep">Uma faixa</p><div class="card-list card-rolo">'+faixas+'</div>':'')+
+      '<button class="card-close" data-close>Fechar</button>');
+    card.querySelector('[data-act=tape]').addEventListener('click',function(){close();storyDaTape()});
+    card.querySelectorAll('[data-i]').forEach(function(b){
+      b.addEventListener('click',function(){close();storyDaFaixa(ESCOLHA[+b.getAttribute('data-i')])});
+    });
+  }
+  function storyDaTape(){
     var u = location.origin + location.pathname;
-    var n = rows.filter(function(t){return t.kind==='beat'}).length;
-    var tocando = cur>-1 ? rows[cur] : null;
+    var n = BEATS.length;
     carregarStory().then(function(){
       window.CaramujoStory.abrir({
         tema:'catalogo', titulo:CAT.artist.name,
         url:u, nomeArquivo:'caramujo-'+slugTape(),
-        mensagem:CAT.artist.name+' · beat tape prod. @rideblan33\n'+u,
         arte:{ capa:CAT.artist.cover||null, titulo:CAT.artist.name,
-          ficha:['beat tape · '+n+(n===1?' faixa':' faixas')] },
-        audio:trechoDe(tocando),
-        avisar:flash
+          ficha:['beat tape', n+(n===1?' faixa':' faixas')] },
+        aoPostar:pausar, avisar:flash
       });
     }).catch(linkSimples);
   }
-  // O beat da tape que também está à venda no site: arte do beat, link do site.
-  function storyDoBeat(t){
+  // Uma faixa da tape: vídeo com o som dela. À venda no site: link do beat (/b/...);
+  // senão, o link da própria tape.
+  function storyDaFaixa(t){
     destravarSom();
-    var u = location.origin + '/b/' + t.buy;
+    var u = t.buy ? location.origin + '/b/' + t.buy : location.origin + location.pathname;
     carregarStory().then(function(){
       var nome = String(t.title||'').toLocaleUpperCase('pt-BR');
       window.CaramujoStory.abrir({
         tema:'catalogo', titulo:nome,
-        url:u, urlStory:u+'?de=story', nomeArquivo:'caramujo-'+t.buy,
-        mensagem:nome+' · prod. @rideblan33\n'+u,
+        url:u, urlStory:t.buy ? u+'?de=story' : u, nomeArquivo:'caramujo-'+(t.buy||slugTape()),
         arte:{ capa:CAT.artist.cover||null, titulo:nome,
-          ficha:[t.bpm?t.bpm+' BPM':'', t.key||''] },
+          ficha:[t.bpm?t.bpm+' BPM':'', t.key||''], vendido:t.tag==='vendido' },
         audio:trechoDe(t),
-        avisar:flash
+        aoPostar:pausar, avisar:flash
       });
-    }).catch(function(){ if(navigator.clipboard) navigator.clipboard.writeText(u); flash('Link do beat copiado.'); });
+    }).catch(function(){ if(navigator.clipboard) navigator.clipboard.writeText(u); flash('Link copiado.'); });
   }
   function slugTape(){ return (location.pathname.split('/')[1]||'tape').replace(/[^a-z0-9-]/gi,''); }
   // sem a folha (arquivo não carregou): o de antes, link copiado
@@ -911,7 +943,7 @@ __META__
   function trackSheet(t){
     var linhas =
       (t.buy ? item('buy',ICON_CART,'Comprar esse beat') : '') +
-      (t.buy && CAT.artist.tape ? item('story',ICON_SEND,'Compartilhar esse beat') : '') +
+      (CAT.artist.tape && t.kind==='beat' ? item('story',ICON_SEND,'Compartilhar esse beat') : '') +
       (!CAT.artist.tape && (CAT.owner || (!preview && !CAT.preview)) ? item('send',ICON_SEND,'Enviar só essa faixa') : '') +
       (podeBaixar() ? item('down',ICON_DOWN,'Baixar') : '');
     if(!linhas){ flash('Essa faixa está só pra ouvir.'); return; }
@@ -920,7 +952,7 @@ __META__
     var s0=card.querySelector('[data-act=buy]');
     if(s0) s0.addEventListener('click',function(){close();comprar(t)});
     var sS=card.querySelector('[data-act=story]');
-    if(sS) sS.addEventListener('click',function(){close();storyDoBeat(t)});
+    if(sS) sS.addEventListener('click',function(){close();storyDaFaixa(t)});
     var s1=card.querySelector('[data-act=send]');
     if(s1) s1.addEventListener('click',function(){sendSheet([t])});
     var s2=card.querySelector('[data-act=down]');

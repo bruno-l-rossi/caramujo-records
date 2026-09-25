@@ -1,11 +1,14 @@
-/* Compartilhar com arte pro story (25/09/2026, refeito em 25/09 à tarde).
-   Folha com a prévia, o texto do cupom e UM botão: Compartilhar, que abre a tela
-   do aparelho (story, WhatsApp, copiar...). Vai o arquivo + a mensagem com o link.
-   Beat tocando: o arquivo é um vídeo de 15s com o trecho que tava tocando e a onda
-   andando (Instagram aceita vídeo no story). Sem beat tocando ou sem suporte: a arte
-   1080x1920 parada. O link também vai copiado, pro sticker de link do story.
+/* Compartilhar (25/09/2026, 3ª versão no mesmo dia).
+   Folha com a prévia, o texto do cupom e 2 botões:
+   - Postar no story: manda só o arquivo. Beat tocando = vídeo de 15s (720p, ~2MB) com o
+     trecho e a onda andando, montado no aparelho (só ~265KB de áudio vêm da rede). A arte
+     parada fica pronta antes e o botão nunca trava: o vídeo entra quando termina.
+     Pausa o player do site e copia o link pro sticker de link.
+   - Enviar o link: manda só o link (a prévia da conversa já mostra capa, nome e ficha).
+   Story clicável automático (como SoundCloud/Spotify) só existe pra app nativo parceiro da
+   Meta; pela web o caminho é o sticker de link.
    Usado pelo site (index.html) e pelas páginas de beat tape (catalogo/app.html).
-   Carregado sob demanda: ninguém baixa isso sem tocar em compartilhar. */
+   Carregado sob demanda (ou uns segundos depois do primeiro play, pra folha abrir na hora). */
 (function () {
   if (window.CaramujoStory) return;
 
@@ -157,9 +160,10 @@
   }
 
   // a onda do som: barras do trecho de verdade, o que já tocou em fire
-  var ONDA_L = 760, ONDA_A = 96;
-  function onda(ctx, pk, prog, y) {
-    var n = pk.length, gap = 6, bw = (ONDA_L - gap * (n - 1)) / n, x = (W - ONDA_L) / 2;
+  var ONDA_A = 96;
+  function onda(ctx, pk, prog, y, larg) {
+    larg = larg || 760;
+    var n = pk.length, gap = 6, bw = (larg - gap * (n - 1)) / n, x = (W - larg) / 2;
     var corte = prog * n;
     for (var i = 0; i < n; i++) {
       var h = Math.max(6, pk[i] * ONDA_A);
@@ -194,11 +198,14 @@
       });
       if (opts.vendido) fichas.push({ texto: 'VENDIDO', cor: COR.blood, corTexto: COR.bone });
 
-      // mede o bloco todo pra centrar: selo + nome da casa, capa, kicker, nome, ficha, onda
+      // mede o bloco todo: a capa cresce até ocupar a altura (sem sobra embaixo)
+      // e o conjunto fica centrado entre as barras do Instagram (topo ~170, resposta ~1720)
       var mt = medirTitulo(ctx, opts.titulo || '', 900);
-      var lado = 760, TOPO = 170;
-      var bloco = TOPO + lado + 96 + mt.alt + (fichas.length ? 44 + 58 : 0) + (opts.onda ? 70 + ONDA_A : 0);
-      var y0 = 150 + Math.max(0, (1650 - 150 - bloco) / 2);
+      var TOPO = 170;
+      var resto = TOPO + 96 + mt.alt + (fichas.length ? 44 + 58 : 0) + (opts.onda ? 70 + ONDA_A : 0);
+      var lado = Math.round(Math.max(680, Math.min(900, 1530 - resto)));
+      var bloco = resto + lado;
+      var y0 = 170 + Math.max(0, (1720 - 170 - bloco) / 2);
 
       desenharSelo(ctx, path, W / 2 - 30, y0, 60, COR.cream, 4);
       ctx.fillStyle = COR.cream;
@@ -215,7 +222,7 @@
         var l = Math.min(img.width, img.height);
         ctx.drawImage(img, (img.width - l) / 2, (img.height - l) / 2, l, l, cx, cy, lado, lado);
       } else {
-        desenharSelo(ctx, path, cx + lado / 2 - 190, cy + lado / 2 - 190, 380, COR.fire, 3);
+        desenharSelo(ctx, path, cx + lado / 2 - lado / 4, cy + lado / 2 - lado / 4, lado / 2, COR.fire, 3);
       }
       ctx.strokeStyle = COR.wire; ctx.lineWidth = 2; ctx.strokeRect(cx + 1, cy + 1, lado - 2, lado - 2);
 
@@ -225,7 +232,7 @@
       espacado(ctx, String(opts.kicker || 'prod. @rideblan33'), W / 2, cy + lado + 80, 4);
       var fim = titulo(ctx, mt, W / 2, cy + lado + 96);
       if (fichas.length) { chips(ctx, fichas, W / 2, fim + 44); fim += 44 + 58; }
-      if (opts.onda) cv.ondaY = fim + 70 + ONDA_A / 2;
+      if (opts.onda) { cv.ondaY = fim + 70 + ONDA_A / 2; cv.ondaL = lado; }
       return cv;
     });
   }
@@ -265,7 +272,7 @@
   }
   // pede só o pedaço do mp3 que interessa (com folga); se o servidor mandar tudo, serve também
   function baixarTrecho(src, inicio) {
-    var a = Math.max(0, Math.floor((inicio - 1) * BPS)), b = Math.ceil((inicio + DUR + 2) * BPS);
+    var a = Math.max(0, Math.floor((inicio - 0.5) * BPS)), b = Math.ceil((inicio + DUR + 1) * BPS);   // ~265KB
     return fetch(src, { headers: { Range: 'bytes=' + a + '-' + b } }).then(function (r) {
       if (!r.ok) throw new Error('áudio ' + r.status);
       var desloc = r.status === 206 ? inicio - a / BPS : inicio;
@@ -335,12 +342,14 @@
   function precisaDestravar() { return !temWebCodecs() && !!mimeGravacao(); }
 
   function escolherCodec() {
-    var l = [[1080, 1920, 'avc1.640028'], [1080, 1920, 'avc1.4d0028'], [1080, 1920, 'avc1.420028'], [720, 1280, 'avc1.64001f'], [720, 1280, 'avc1.42001f']]
+    // 720x1280 a 1 Mbps: o Instagram recomprime pra isso de qualquer jeito, e o arquivo
+    // fica perto de 2MB (sobe rápido no 3G); a arte quase parada comprime bem
+    var l = [[720, 1280, 'avc1.64001f'], [720, 1280, 'avc1.4d001f'], [720, 1280, 'avc1.42001f'], [1080, 1920, 'avc1.640028']]
       .concat(window.__csCodecsTeste || []);   // os testes no Chromium sem H.264 entram com VP9 aqui
     return l.reduce(function (p, t) {
       return p.then(function (achou) {
         if (achou) return achou;
-        var cfg = { codec: t[2], width: t[0], height: t[1], bitrate: t[0] > 720 ? 2500000 : 1800000, framerate: FPS };
+        var cfg = { codec: t[2], width: t[0], height: t[1], bitrate: 1000000, framerate: FPS };
         cfg.mux = t[3] || 'avc';
         return VideoEncoder.isConfigSupported(cfg).then(function (r) { return r.supported ? cfg : null; }, function () { return null; });
       });
@@ -409,7 +418,7 @@
       var dest = ac.createMediaStreamDestination();
       var s = ac.createBufferSource(); s.buffer = som; s.connect(dest);   // grava sem tocar no alto-falante
       st.addTrack(dest.stream.getAudioTracks()[0]);
-      var rec = new MediaRecorder(st, { mimeType: mime, videoBitsPerSecond: 3000000, audioBitsPerSecond: 128000 });
+      var rec = new MediaRecorder(st, { mimeType: mime, videoBitsPerSecond: 1000000, audioBitsPerSecond: 128000 });
       var partes = [];
       rec.ondataavailable = function (e) { if (e.data && e.data.size) partes.push(e.data); };
       return new Promise(function (ok, erro) {
@@ -440,7 +449,7 @@
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.drawImage(base, 0, 0, W * esc, H * esc);
         ctx.setTransform(esc, 0, 0, esc, 0, 0);
-        onda(ctx, pk, p, base.ondaY);
+        onda(ctx, pk, p, base.ondaY, base.ondaL);
         ctx.setTransform(1, 0, 0, 1, 0, 0);
       };
       var feito = temWebCodecs()
@@ -464,7 +473,8 @@
     '.cs-topo h2{margin:0 0 4px;font-size:22px;line-height:1.15}',
     '.cs-topo p{margin:0;font-size:13.5px;line-height:1.45}',
     '.cs-topo p strong{display:block;font-size:15px;margin-bottom:3px}',
-    '.cs-status{margin:14px 0 0;font-size:12px;line-height:1.4;min-height:1.4em}',
+    '.cs-acoes button small{display:block;font-size:10.5px;letter-spacing:.08em;font-weight:400;opacity:.75;margin-top:3px;text-transform:none}',
+    '.cs-acoes .cs-forte{flex-direction:column;gap:0}',
     '.cs-acoes{display:flex;flex-direction:column;gap:10px;margin-top:18px}',
     '.cs-acoes button{width:100%;padding:15px 16px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}',
     '.cs-acoes button:disabled{opacity:.45;cursor:default}',
@@ -474,7 +484,6 @@
     '.cs-site h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;color:#f2ecdf;font-size:26px}',
     '.cs-site p{color:#b89e72;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}',
     '.cs-site p strong{color:#f2ecdf}',
-    '.cs-site .cs-status{color:#6f6757;font-family:"IBM Plex Mono",ui-monospace,monospace;letter-spacing:.04em}',
     '.cs-site .cs-acoes button{background:transparent;border:1px solid #332c22;color:#E8E0CF;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.16em;text-transform:uppercase}',
     '.cs-site .cs-acoes .cs-forte{background:#b98f5e;border-color:#b98f5e;color:#14110d}',
     '.cs-site .cs-fechar{color:#9e7c48!important;border-color:transparent!important}',
@@ -514,13 +523,13 @@
   var veu = null, vez = 0;
   function fechar() { vez++; if (veu) { veu.hidden = true; veu.innerHTML = ''; } }
 
-  // opts: { tema:'site'|'catalogo', titulo, texto (padrão: o do cupom), url (vai na mensagem),
-  //         urlStory (vai copiado pro sticker), mensagem (texto que acompanha o arquivo),
-  //         arte:{...}, audio:{ src, inicio, dur } (sem audio = só imagem), nomeArquivo, avisar(msg) }
-  // Um botão só: Compartilhar abre a tela do aparelho com tudo (story, WhatsApp, copiar...).
-  // Vai o arquivo (vídeo com som ou arte) + a mensagem com o link; o link também fica
-  // copiado pro sticker do story. A web não sabe qual app a pessoa escolhe: cada app
-  // pega o que usa (o story pega o arquivo, a conversa leva o link junto).
+  // opts: { tema:'site'|'catalogo', titulo, texto (padrão: o do cupom), url (o link que vai na conversa),
+  //         urlStory (vai copiado pro sticker do story), arte:{...}, audio:{ src, inicio, dur } (sem audio = arte parada),
+  //         nomeArquivo, aoPostar() (pausa o player do site), avisar(msg) }
+  // Dois caminhos, porque a web não sabe qual app a pessoa escolhe na tela do aparelho:
+  //   Postar no story: manda SÓ o arquivo (vídeo com som, ou a arte). Nunca trava: a arte fica
+  //     pronta em menos de 1s e o vídeo entra no lugar quando termina (a legenda do botão conta).
+  //   Enviar o link: manda SÓ o link (a prévia do WhatsApp/Direct já mostra capa, nome e ficha).
   function abrir(opts) {
     if (!document.getElementById('cs-css')) {
       var st = document.createElement('style'); st.id = 'cs-css'; st.textContent = CSS; document.head.appendChild(st);
@@ -542,85 +551,90 @@
       '<div class="cs-topo"><div class="cs-arte" id="csArte">preparando a arte…</div><div>' +
       '<h2>' + esc(opts.titulo || 'Compartilhar') + '</h2><p><strong>' + esc(linhas[0]) + '</strong>' +
       esc(linhas.slice(1).join(' ')) + '</p></div></div>' +
-      '<p class="cs-status" id="csStatus" aria-live="polite"></p>' +
       '<div class="cs-acoes">' +
-        '<button type="button" class="cs-forte" id="csIr" disabled>Preparando…</button>' +
+        '<button type="button" class="cs-forte" id="csStory" disabled>Postar no story<small id="csSom"></small></button>' +
+        '<button type="button" id="csLink">Enviar o link</button>' +
         '<button type="button" class="cs-fechar" id="csFechar">Fechar</button>' +
       '</div></div>';
     veu.hidden = false;
     var $ = function (i) { return document.getElementById(i); };
-    var status = function (t) { var e = $('csStatus'); if (e && vivo()) e.textContent = t; };
-    var botao = function (t, pronto) { var b = $('csIr'); if (b && vivo()) { b.textContent = t; b.disabled = !pronto; } };
+    var legenda = function (t) { var e = $('csSom'); if (e && vivo()) e.textContent = t; };
     $('csFechar').addEventListener('click', fechar);
 
-    // prévia pequena (a arte grande fica na memória pro vídeo)
+    // prévia pequena (a arte grande fica na memória)
     var vista = document.createElement('canvas'); vista.width = 216; vista.height = 384;
     function mostrar(cv, pk) {
       var c = vista.getContext('2d');
       c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(cv, 0, 0, 216, 384);
-      if (pk && cv.ondaY) { c.setTransform(0.2, 0, 0, 0.2, 0, 0); onda(c, pk, 0.4, cv.ondaY); c.setTransform(1, 0, 0, 1, 0, 0); }
+      if (pk && cv.ondaY) { c.setTransform(0.2, 0, 0, 0.2, 0, 0); onda(c, pk, 0.4, cv.ondaY, cv.ondaL); c.setTransform(1, 0, 0, 1, 0, 0); }
       var caixa = $('csArte'); if (caixa && vivo() && !vista.parentNode) { caixa.textContent = ''; caixa.appendChild(vista); }
     }
 
-    var arquivo = null;
-    function pronto(f, textoStatus) {
-      if (!vivo()) return;
-      arquivo = f;
-      if (!f) { status('Não consegui montar a arte.'); botao('Compartilhar o link', true); return; }
-      status(textoStatus);
-      botao('Compartilhar', true);
-    }
-    function soImagem(aviso) {
-      return arte(Object.assign({}, opts.arte, { onda: false })).then(function (cv) {
-        mostrar(cv);
-        return paraArquivo(cv, nome);
-      }).then(function (f) { pronto(f, aviso || 'Arte pronta. O link vai copiado pro sticker do story.'); });
-    }
+    // 1) a arte parada: libera o botão na hora
+    var arqImagem = null, arqVideo = null;
+    var semArte = function () { var c = $('csArte'); if (c && vivo()) c.textContent = 'sem prévia'; };
+    arte(Object.assign({}, opts.arte, { onda: false })).then(function (cv) {
+      if (!comSom) mostrar(cv);
+      return paraArquivo(cv, nome);
+    }).then(function (f) {
+      arqImagem = f;
+      var b = $('csStory'); if (b && f && vivo()) b.disabled = false;
+      if (!f) semArte();
+    }).catch(semArte);
 
-    if (!comSom) {
-      soImagem().catch(function () { pronto(null); });
-    } else {
-      botao('Preparando o vídeo…', false);
-      status('Montando 15s com o trecho que tava tocando.');
+    // 2) com som: o vídeo de 15s troca a arte quando fica pronto
+    if (comSom) {
+      legenda('preparando o som…');
       arte(Object.assign({}, opts.arte, { onda: true })).then(function (base) {
+        if (!vivo()) return null;
         mostrar(base);
         var limite = espera(45000).then(function () { throw new Error('demorou'); });
         return Promise.race([video(base, opts.audio, function (p) {
-          botao('Preparando o vídeo · ' + Math.round(p * 100) + '%', false);
+          legenda('preparando o som · ' + Math.round(p * 100) + '%');
         }, function (pk) { mostrar(base, pk); }), limite]);
       }).then(function (v) {
-        pronto(comoArquivo(v.blob, nome + '.mp4', 'video/mp4'), 'Vídeo de 15s com som. O link vai copiado pro sticker do story.');
-      }).catch(function () {
-        if (vivo()) soImagem('Sem som dessa vez: vai a arte. O link vai copiado pro sticker do story.').catch(function () { pronto(null); });
-      });
+        if (!v || !vivo()) return;
+        arqVideo = comoArquivo(v.blob, nome + '.mp4', 'video/mp4');
+        legenda('com 15s de som');
+      }).catch(function () { legenda(''); });   // sem som: segue a arte
     }
 
-    $('csIr').addEventListener('click', function () {
-      var link = opts.urlStory || opts.url;
-      copiar(link);                        // pro sticker de link do story
-      var msg = opts.mensagem || opts.url;
-      if (!arquivo) {                      // a arte falhou: vai só o link
-        if (navigator.share) navigator.share({ text: msg }).catch(function () {});
-        else avisar('Link copiado.');
-        return;
-      }
-      var dados = { files: [arquivo], text: msg };
-      if (!podeCompartilhar(dados)) dados = { files: [arquivo] };
-      if (podeCompartilhar(dados)) {
-        navigator.share(dados).then(function () {
+    $('csStory').addEventListener('click', function () {
+      var f = arqVideo || arqImagem;
+      if (!f) return;
+      try { if (opts.aoPostar) opts.aoPostar(); } catch (_) {}   // o site para de tocar junto com o Instagram
+      copiar(opts.urlStory || opts.url);    // pro sticker de link do story
+      if (podeCompartilhar({ files: [f] })) {
+        navigator.share({ files: [f] }).then(function () {
           fechar();
           avisar('Link copiado: no story, cola no sticker de link.');
         }).catch(function (e) {
           if (e && e.name === 'AbortError') return;   // a pessoa desistiu
-          avisar('Não abriu o compartilhar. O link já está copiado.');
+          avisar('Não abriu o compartilhar. Tenta de novo.');
         });
         return;
       }
       // navegador sem compartilhar arquivo (Firefox no computador): baixa e copia
-      baixar(arquivo);
-      avisar(celular() ? 'Arquivo salvo e link copiado.' : 'Arquivo baixado e link copiado.');
+      baixar(f);
+      avisar('Arquivo baixado e link copiado.');
+    });
+
+    $('csLink').addEventListener('click', function () {
+      if (navigator.share) {
+        navigator.share({ url: opts.url }).then(fechar).catch(function () {});
+        return;
+      }
+      copiar(opts.url).then(function (ok) { avisar(ok ? 'Link copiado.' : opts.url); });
     });
   }
 
   window.CaramujoStory = { abrir: abrir, arte: arte, fechar: fechar, precisaDestravar: precisaDestravar, video: video, podeVideo: podeVideo };
+
+  // deixa o juntador de mp4 no cache enquanto a pessoa ouve (32KB), pra folha não esperar a rede
+  try {
+    if (temWebCodecs()) {
+      var ocioso = window.requestIdleCallback || function (f) { setTimeout(f, 1500); };
+      ocioso(function () { carregarMuxer().catch(function () {}); });
+    }
+  } catch (_) {}
 })();

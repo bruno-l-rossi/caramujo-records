@@ -3312,6 +3312,7 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
     if(String(atual)===String(id)){ if(som.paused) som.play().catch(nada); else som.pause(); return; }
     atual=b.id;
     som.src=f.mp3;
+    if(window.__csPreparar) window.__csPreparar();
     som.volume=Math.max(0,Math.min(1,window.__npVol/100));
     som.play().catch(nada);
     window.__npCurrent={widget:null,bid:b.id};
@@ -3992,15 +3993,16 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
   }
 
   /* ---------- compartilhar ---------- */
-  // Folha do assets/story.js (carregado só no primeiro toque): prévia, texto do cupom
-  // e um botão que abre o compartilhar do aparelho com o vídeo de 15s (trecho que está
-  // tocando) ou a arte. O link do story leva ?de=story pro funil saber de onde veio.
+  // Folha do assets/story.js: prévia, texto do cupom, "Postar no story" (vídeo de 15s
+  // com o trecho que está tocando, ou a arte) e "Enviar o link". O link do story leva
+  // ?de=story pro funil saber de onde veio. O arquivo vem uns segundos depois do
+  // primeiro play (20KB), pra folha abrir na hora quando a pessoa tocar em compartilhar.
   var storyJs=null;
   function carregarStory(){
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25b';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25c';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });
@@ -4022,6 +4024,11 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(aviso,function(){ prompt('Copia o link do beat:',url); });
     else prompt('Copia o link do beat:',url);
   }
+  window.__csPreparar=function(){
+    var ocioso=window.requestIdleCallback||function(f){ setTimeout(f,1500); };
+    setTimeout(function(){ ocioso(function(){ carregarStory().catch(function(){}); }); },3000);
+    window.__csPreparar=function(){};
+  };
   window.npCompartilhar=function(){
     var b=beatAtual(); if(!b) return;
     destravarSom();
@@ -4033,11 +4040,11 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
       window.CaramujoStory.abrir({
         tema:'site', titulo:b.name,
         url:url, urlStory:url+'?de=story', nomeArquivo:'caramujo-'+sl,
-        mensagem:b.name+' · prod. @rideblan33\n'+url,
         arte:{ capa:f.capaG||null, titulo:b.name,
           ficha:[(typeof GENRE_LABELS!=='undefined'&&GENRE_LABELS[b.genre])||b.genre, b.bpm?b.bpm+' BPM':'', b.key],
           vendido:!!b.sold },
         audio:f.mp3?{ src:f.mp3, inicio:(som&&som.currentTime)||0, dur:f.dur||(som&&som.duration)||0 }:null,
+        aoPostar:function(){ if(som&&!som.paused) som.pause(); },   // não toca junto com o Instagram
         avisar:function(m){ try{ showToast(m); }catch(_){} }
       });
     }).catch(function(){ soLink(url); });   // sem a folha, o compartilhar de sempre
