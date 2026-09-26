@@ -158,7 +158,10 @@ const SCHEMA = [
   // aberta a partir dele (?de=perfil).
   `ALTER TABLE artists ADD COLUMN perfil INTEGER NOT NULL DEFAULT 1`,
   `ALTER TABLE artists ADD COLUMN perfil_ordem REAL`,
-  `ALTER TABLE events ADD COLUMN origem TEXT`
+  `ALTER TABLE events ADD COLUMN origem TEXT`,
+  // visitas do perfil (kind = 'perfil', artist_id vazio): o painel pergunta a última e
+  // as do mês/ano sem varrer a tabela
+  `CREATE INDEX IF NOT EXISTS events_kind_at ON events (kind, at)`
 ];
 
 // Versão do esquema: muda sozinha quando a lista acima muda. Com ela gravada na

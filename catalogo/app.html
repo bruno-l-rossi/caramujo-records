@@ -146,7 +146,10 @@ __META__
     font-size:14px;color:var(--ink-2);cursor:pointer;white-space:nowrap}
   .tabsbar-line{height:1px;background:rgba(255,255,255,.07)}
 
-  .list{padding-top:4px;min-height:120px;padding-bottom:170px}
+  /* o espaço pro player do rodapé fica no fim do painel (depois do "Mais de" e do
+     logo), não embaixo da lista: a última faixa encosta no bloco (26/09/2026) */
+  .list{padding-top:4px;min-height:120px;padding-bottom:12px}
+  .panel{padding-bottom:170px}
   .group{padding:15px 0 3px;font-size:10.5px;font-weight:600;letter-spacing:.2em;color:#949494}
   .row{width:100%;display:flex;align-items:center;gap:13px;padding:9px 0;
     background:transparent;border:0;text-align:left;cursor:pointer}
@@ -189,14 +192,26 @@ __META__
   @media(hover:hover){.buy:hover{background:#E4DAC7;color:#0a0a0a;border-color:#E4DAC7}}
 
   .empty{padding:26px 0;font-size:14px;color:#5a5a5a}
-  .who a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.22);padding-bottom:1px}
-  @media(hover:hover){.who a:hover{color:#fff;border-bottom-color:#fff}}
-  .mais{padding:30px 0 22px;border-top:1px solid rgba(255,255,255,.06);margin-top:18px}
+  /* @rideblan33 como chip do perfil (26/09/2026): foto pequena + @ + seta */
+  .who .chip-perfil{display:inline-flex;align-items:center;gap:8px;padding:4px 11px 4px 4px;border-radius:999px;
+    background:#161616;border:1px solid #2a2a2a;color:#fff;font-size:14px;font-weight:600;text-decoration:none;transition:border-color .2s,background .2s}
+  .who .chip-perfil img{width:26px;height:26px;border-radius:50%;display:block}
+  .who .chip-perfil svg{width:14px;height:14px;color:#8a8a8a}
+  @media(hover:hover){.who .chip-perfil:hover{border-color:#fff;background:#1d1d1d}}
+  .mais{padding:22px 0 20px;border-top:1px solid rgba(255,255,255,.06);margin-top:8px}
   .mais[hidden]{display:none}
   .mais-cab{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
   .mais h2{margin:0;font-size:18px;font-weight:700;letter-spacing:-.02em}
-  .mais-setas{display:none;gap:6px}
-  @media(hover:hover) and (pointer:fine){.mais-setas{display:flex}}
+  .mais-setas{display:flex;align-items:center;gap:6px}
+  .mais-setas .pl-btn{display:none}
+  @media(hover:hover) and (pointer:fine) and (min-width:900px){.mais-setas .pl-btn{display:grid}}
+  .mais-tudo{font-size:13.5px;font-weight:500;color:#b7b7b7;text-decoration:none;padding:6px 4px;margin-right:4px}
+  @media(hover:hover){.mais-tudo:hover{color:#fff}}
+  .mais-card.todas .m-capa{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    border:1px solid #2a2a2a;background:#0f0f0f;padding:10px;text-align:center}
+  .mais-card.todas .m-capa img{width:54px;height:54px;border-radius:50%;object-fit:cover}
+  .mais-card.todas .m-capa span{font-size:12.5px;font-weight:600;line-height:1.25}
+  @media(hover:hover){.mais-card.todas:hover .m-capa{border-color:#fff}}
   .mais-setas .pl-btn{width:34px;height:34px;border-radius:50%;background:#181818;border:1px solid #2c2c2c;color:#e6e6e6;cursor:pointer;display:grid;place-items:center}
   .mais-setas .pl-btn:disabled{opacity:.35;cursor:default}
   .mais-trilho{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;
@@ -483,14 +498,14 @@ __META__
            deslizar, no jeito do "Mais de" do Spotify, e o caminho pro perfil inteiro -->
       <section class="mais" id="mais" hidden aria-labelledby="maisTit">
         <div class="mais-cab">
-          <h2 id="maisTit">Mais do @rideblan33</h2>
+          <h2 id="maisTit">Mais de @rideblan33</h2>
           <span class="mais-setas">
+            <a class="mais-tudo" id="maisTudo" href="/rideblan33?de=tape">Ver tudo</a>
             <button class="pl-btn" id="maisAnt" type="button" aria-label="Tapes anteriores"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
             <button class="pl-btn" id="maisProx" type="button" aria-label="Mais tapes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
           </span>
         </div>
         <div class="mais-trilho" id="maisTrilho"></div>
-        <a class="mais-perfil" id="maisPerfil" href="/rideblan33?de=tape">Ver perfil completo</a>
       </section>
 
       <footer class="foot">
@@ -926,10 +941,16 @@ __META__
   // Tape: o @rideblan33 embaixo do nome leva pro perfil, e no fim da lista entram
   // as outras tapes (26/09/2026). Pasta de artista e link avulso ficam como estão.
   function maisDoPerfil(){
-    if(!CAT.artist.tape || !CAT.perfil) return;
+    if(!CAT.perfil || CAT.preview) return;
     var w=$('who'); w.textContent='';
-    var a=document.createElement('a'); a.href=CAT.perfil+'?de=tape'; a.textContent=CAT.artist.who||'@rideblan33';
+    var a=document.createElement('a'); a.className='chip-perfil';
+    a.href=CAT.perfil+'?de='+(CAT.artist.tape?'tape':'artista');
+    a.setAttribute('aria-label','Portfólio do '+(CAT.artist.who||'@rideblan33'));
+    a.innerHTML='<img src="/assets/perfil/rideblan33-avatar.webp" alt="" width="26" height="26">'+
+      '<span></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+    a.querySelector('span').textContent=CAT.artist.who||'@rideblan33';
     w.appendChild(a);
+    if(!CAT.artist.tape) return;
     var lista=CAT.mais||[];
     if(!lista.length) return;
     var tr=$('maisTrilho'); tr.textContent='';
@@ -944,7 +965,13 @@ __META__
       var sm=document.createElement('small'); sm.textContent=t.n+(t.n===1?' beat':' beats'); c.appendChild(sm);
       tr.appendChild(c);
     });
-    $('maisPerfil').href=CAT.perfil+'?de=tape';
+    // o último card é o portfólio inteiro, do tamanho das capas
+    var tot=CAT.totalPerfil||lista.length+1;
+    var fim=document.createElement('a'); fim.className='mais-card todas'; fim.href=CAT.perfil+'?de=tape';
+    fim.innerHTML='<span class="m-capa"><img src="/assets/perfil/rideblan33-avatar.webp" alt="" width="54" height="54"><span>Ver portfólio completo</span></span><b></b><small>@rideblan33</small>';
+    fim.querySelector('b').textContent=tot+(tot===1?' beat tape':' beat tapes');
+    tr.appendChild(fim);
+    $('maisTudo').href=CAT.perfil+'?de=tape';
     $('mais').hidden=false;
     // setas no computador (mouse não desliza de lado)
     var ant=$('maisAnt'), prox=$('maisProx');

@@ -27,6 +27,7 @@ export async function onRequest({ request, env }) {
   if (op === 'andamento') return andamento(d);
   if (op === 'consumo') return consumo(d);
   if (op === 'eventos') return eventos(d, url.searchParams.get('id'), url.searchParams.get('p'));
+  if (op === 'perfil-resumo') return perfilResumo(d);
   if (op === 'revisar') return revisar(d);
   if (op === 'vitrine') return relatorio(d, request, env);
   if (op === 'funil') return funil(d, request, env, url.searchParams.get('dias'));
@@ -39,7 +40,7 @@ export async function onRequest({ request, env }) {
   if (op === 'perm') return perm(d, body);
   if (op === 'descricao') return descricao(d, body);
   if (op === 'perfil') { const r = await perfilMostrar(d, body); await esquecerPerfil(request); return r; }
-  if (op === 'perfil-topo') { const r = await perfilTopo(d, body); await esquecerPerfil(request); return r; }
+  if (op === 'perfil-ordem') { const r = await perfilOrdem(d, body); await esquecerPerfil(request); return r; }
   if (op === 'venda') return venda(d, body);
   if (op === 'sync') return sync(env, d, body);
   if (LOJA_POST[op]) {
@@ -72,7 +73,9 @@ async function artistas(d) {
   const lista = results || [];
   const usado = lista.reduce((n, a) => n + Number(a.bytes || 0), 0);
   for (const a of lista) delete a.bytes;
-  return json({ artistas: lista, prateleira: { usado, teto: TETO_BYTES } });
+  // quando o perfil foi aberto pela última vez (linha fixa das beat tapes)
+  const pv = await d.prepare("SELECT at FROM events WHERE kind = 'perfil' ORDER BY at DESC LIMIT 1").first();
+  return json({ artistas: lista, prateleira: { usado, teto: TETO_BYTES }, perfilVisto: pv ? pv.at : null });
 }
 
 // O que o painel consulta enquanto tem conversão rodando: só o andamento, sem
@@ -318,17 +321,35 @@ async function perfilMostrar(d, body) {
   await d.prepare("UPDATE artists SET perfil = ? WHERE id = ? AND tipo = 'tape'").bind(body.valor ? 1 : 0, id).run();
   return json({ ok: true, perfil: body.valor ? 1 : 0 });
 }
-// Topo = uma posição acima da primeira. Tape sem ordem (nova) conta como estando no
-// topo, na mesma conta da página do perfil.
-async function perfilTopo(d, body) {
-  const id = Number(body.id);
-  if (!id) return json({ erro: 'sem tape' }, 400);
+// A ordem inteira de uma vez, vinda da lista numerada do painel: ids na ordem da
+// tela viram 1, 2, 3... num UPDATE só. Tape que não veio na lista (escondida) fica
+// como estava; tape nova (sem ordem) continua entrando no topo.
+async function perfilOrdem(d, body) {
+  const ids = Array.isArray(body.ids) ? [...new Set(body.ids.map(Number).filter((n) => Number.isInteger(n) && n > 0))] : [];
+  if (!ids.length) return json({ erro: 'lista vazia' }, 400);
+  if (ids.length > 400) return json({ erro: 'lista grande demais' }, 400);
+  await d.prepare(
+    'UPDATE artists SET perfil_ordem = CASE id ' + ids.map(() => 'WHEN ? THEN ?').join(' ') +
+    " END WHERE tipo = 'tape' AND id IN (" + ids.map(() => '?').join(', ') + ')'
+  ).bind(...ids.flatMap((id, i) => [id, i + 1]), ...ids).run();
+  return json({ ok: true, n: ids.length });
+}
+
+// Atividade do perfil pro card do painel: última visita, visitas no mês e no ano
+// (horário de São Paulo), igual ao card das tapes.
+async function perfilResumo(d) {
+  const sp = new Date(Date.now() - 3 * 3600e3);
+  const inicioMes = new Date(Date.UTC(sp.getUTCFullYear(), sp.getUTCMonth(), 1) + 3 * 3600e3).toISOString();
+  const inicioAno = new Date(Date.UTC(sp.getUTCFullYear(), 0, 1) + 3 * 3600e3).toISOString();
   const r = await d.prepare(
-    "SELECT MIN(COALESCE(perfil_ordem, -1000000000 - id)) AS m FROM artists WHERE tipo = 'tape'"
-  ).first();
-  const nova = (r && r.m != null ? Number(r.m) : 0) - 1;
-  await d.prepare("UPDATE artists SET perfil_ordem = ? WHERE id = ? AND tipo = 'tape'").bind(nova, id).run();
-  return json({ ok: true, perfil_ordem: nova });
+    `SELECT MAX(at) AS ultima,
+            SUM(CASE WHEN at >= ? THEN 1 ELSE 0 END) AS mes,
+            COUNT(*) AS ano,
+            COUNT(DISTINCT who) AS pessoas
+       FROM events WHERE kind = 'perfil' AND at >= ?`
+  ).bind(inicioMes, inicioAno).first();
+  const u = await d.prepare("SELECT at FROM events WHERE kind = 'perfil' ORDER BY at DESC LIMIT 1").first();
+  return json({ ultima: u ? u.at : null, mes: Number(r && r.mes || 0), ano: Number(r && r.ano || 0), pessoas: Number(r && r.pessoas || 0) });
 }
 
 async function descricao(d, body) {

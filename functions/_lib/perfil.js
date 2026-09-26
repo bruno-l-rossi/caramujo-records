@@ -10,27 +10,30 @@
 import { db } from './db.js';
 
 const VALIDADE = 60 * 1000;
-const REGIAO = '/__cache/perfil';
-let cache = { at: 0, tapes: null };
+const REGIAO = '/__cache/perfil-v2';
+let cache = { at: 0, dados: null };
 
 const regiao = () => (typeof caches !== 'undefined' && caches.default ? caches.default : null);
 
 export async function esquecerPerfil(request) {
-  cache = { at: 0, tapes: null };
+  cache = { at: 0, dados: null };
   const c = regiao();
   if (c && request) { try { await c.delete(new URL(REGIAO, request.url)); } catch (_) { /* bônus */ } }
 }
 
-// Tapes do perfil, na ordem da tela: [{ id, name, slug, code, capa, n }]
-// Tape sem beat pronto (ainda não convertida) não aparece: capa sem som não serve.
-export async function tapesDoPerfil(request, env) {
-  if (cache.tapes && Date.now() - cache.at < VALIDADE) return cache.tapes;
+// O perfil inteiro: { tapes: [{ id, name, slug, code, capa, n }], faixas: [...] }.
+// tapes = na ordem da tela; tape sem beat pronto (ainda não convertida) não aparece.
+// faixas = os beats da 1ª tape (a mais nova), pro "Ouça a beat tape nova" do topo,
+// na mesma ordem da página da tape (reservados primeiro, depois o mais novo no Drive).
+// Duas consultas, guardadas 60 s na memória e 5 min na região.
+export async function lerPerfil(request, env) {
+  if (cache.dados && Date.now() - cache.at < VALIDADE) return cache.dados;
   const c = regiao();
   const chave = request ? new URL(REGIAO, request.url) : null;
   if (c && chave) {
     try {
       const r = await c.match(chave);
-      if (r) { const t = await r.json(); cache = { at: Date.now(), tapes: t }; return t; }
+      if (r) { const dd = await r.json(); cache = { at: Date.now(), dados: dd }; return dd; }
     } catch (_) { /* segue pro banco */ }
   }
   const d = await db(env);
@@ -46,15 +49,29 @@ export async function tapesDoPerfil(request, env) {
     id: r.id, name: r.name, slug: r.slug, code: r.code,
     capa: r.cover_key || null, n: r.n
   }));
-  cache = { at: Date.now(), tapes };
+  let faixas = [];
+  if (tapes.length) {
+    const { results: f } = await d.prepare(
+      `SELECT id, title, dur FROM tracks WHERE artist_id = ? AND kind = 'beat' AND ready = 1
+        ORDER BY CASE grp WHEN 'res' THEN 0 ELSE 1 END, src_modified DESC LIMIT 40`
+    ).bind(tapes[0].id).all();
+    faixas = (f || []).map((x) => ({ id: x.id, t: x.title, d: x.dur || 0 }));
+  }
+  const dados = { tapes, faixas };
+  cache = { at: Date.now(), dados };
   if (c && chave) {
     try {
-      await c.put(chave, new Response(JSON.stringify(tapes), {
+      await c.put(chave, new Response(JSON.stringify(dados), {
         headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=300' }
       }));
     } catch (_) { /* cópia é bônus */ }
   }
-  return tapes;
+  return dados;
+}
+
+// Só a lista (bloco "Mais de @rideblan33" das tapes e o sitemap)
+export async function tapesDoPerfil(request, env) {
+  return (await lerPerfil(request, env)).tapes;
 }
 
 export const SITE = 'https://caramujorecords.com.br';
@@ -69,6 +86,8 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 // JSON dentro de <script>: foge de < > & e dos separadores de linha do Unicode
 const jsonSeguro = (o) => JSON.stringify(o).replace(/[<>&\u2028\u2029]/g, (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
 const beats = (n) => n + (n === 1 ? ' beat' : ' beats');
+const ICONE_TOCA = '<svg class="i-toca" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3l15 9-15 9z"/></svg>';
+const ICONE_PAUSA = '<svg class="i-pausa" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="4" width="5" height="16"/><rect x="14" y="4" width="5" height="16"/></svg>';
 
 const ICONES = {
   spotify: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M7 9.3c3.4-1 7.2-.7 10.2 1"/><path d="M7.6 12.4c2.8-.8 5.7-.5 8.2.9"/><path d="M8.2 15.3c2.1-.5 4.2-.3 6 .7"/></svg>',
@@ -86,7 +105,22 @@ function grade(tapes) {
   }).join('\n');
 }
 
-export function paginaPerfil(tapes, { url }) {
+// Ícones da aba do navegador: o padrão de TODAS as páginas do site (selo em SVG,
+// PNG de 180 pro iPhone). Página nova usa esse mesmo bloco.
+export const FAVICON = '<link rel="icon" type="image/svg+xml" href="/assets/brand/selo-creme.svg">\n' +
+  '<link rel="icon" type="image/png" sizes="180x180" href="/assets/brand/icone-180.png">\n' +
+  '<link rel="apple-touch-icon" href="/assets/brand/icone-180.png">';
+
+// barraFixa: a barra fina com a foto e o @ que aparece presa no topo quando a pessoa
+// desce pras capas (o Bruno decide se fica; 26/09/2026).
+export function paginaPerfil(dados, { url, barraFixa = true } = {}) {
+  const tapes = Array.isArray(dados) ? dados : dados.tapes;
+  const faixas = Array.isArray(dados) ? [] : (dados.faixas || []);
+  const nova = tapes[0] || null;
+  const tocador = nova && faixas.length ? {
+    tape: { id: nova.id, name: nova.name, url: `/${nova.slug}/${nova.code}?de=perfil`, capa: nova.capa ? `/capa/${nova.capa}?p` : '/assets/brand/caramujo-v.webp' },
+    faixas
+  } : null;
   const titulo = '@rideblan33 · Portfólio';
   const descricaoGoogle = `Portfólio do @rideblan33, produtor e beatmaker de rap em São Carlos, SP. ${tapes.length} beat tapes pra ouvir, beats exclusivos e produção completa na Caramujo Records.`;
   const descricaoPrevia = 'Produtor & beatmaker. 33 memórias distantes. 40+ artistas · 200+ faixas · 2,5 mi de streams.';
@@ -142,8 +176,7 @@ export function paginaPerfil(tapes, { url }) {
 <meta name="twitter:description" content="${esc(descricaoPrevia)}">
 <meta name="twitter:image" content="${og}">
 <meta name="theme-color" content="#14110d">
-<link rel="icon" type="image/png" sizes="180x180" href="/assets/brand/icone-180.png">
-<link rel="apple-touch-icon" href="/assets/brand/icone-180.png">
+${FAVICON}
 <link rel="preload" as="image" href="/assets/perfil/rideblan33.webp" fetchpriority="high">
 <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/cormorant-garamond-latin-600-normal.woff2" crossorigin>
 <script type="application/ld+json">${jsonSeguro(pessoa)}</script>
@@ -169,10 +202,38 @@ a:focus-visible{outline:2px solid var(--fire);outline-offset:3px}
   background:radial-gradient(ellipse 70% 55% at 72% 38%,rgba(185,143,94,.10),transparent 70%),var(--black)}
 .terra::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.10;mix-blend-mode:screen;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .95 0 0 0 0 .88 0 0 0 1.4 -.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-.topo{position:relative;z-index:2;display:flex;justify-content:center;padding:22px 0 26px}
-.topo a{display:grid;place-items:center;width:64px;height:64px;border:1px solid var(--wire);border-radius:50%;background:var(--deep);transition:border-color .2s}
-.topo a:hover{border-color:var(--fire)}
-.topo img{width:40px;height:40px}
+.topo{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:1180px;margin:0 auto;padding:26px 0 50px}
+.topo .logo{display:block;line-height:0}
+.topo .logo img{width:168px;height:auto}
+.ouca{display:inline-flex;align-items:center;gap:10px;height:44px;padding:0 20px 0 16px;border:1px solid var(--fire);border-radius:999px;background:var(--fire);color:var(--black);font:700 11px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:background .2s,border-color .2s}
+.ouca:hover{background:var(--amber);border-color:var(--amber)}
+.ouca svg{width:13px;height:13px;flex:none}
+.ouca .i-pausa{display:none}
+.ouca[aria-pressed="true"] .i-toca{display:none}
+.ouca[aria-pressed="true"] .i-pausa{display:block}
+/* mini player do "Ouça a beat tape nova" */
+.tocando{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;width:min(560px,calc(100% - 24px));display:flex;align-items:center;gap:12px;padding:9px 10px 9px 9px;border:1px solid var(--wire);border-radius:16px;background:rgba(20,17,13,.96);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 18px 40px rgba(0,0,0,.5);font-family:var(--grot)}
+.tocando[hidden]{display:none}
+.tocando .t-capa{width:44px;height:44px;flex:none;border-radius:6px;overflow:hidden;background:#000}
+.tocando .t-capa img{width:100%;height:100%;object-fit:cover;display:block}
+.tocando .t-txt{flex:1;min-width:0}
+.tocando .t-txt b{display:block;font:700 14px/1.2 var(--grot);color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tocando .t-txt a{display:block;margin-top:3px;font:500 12px/1.2 var(--grot);color:var(--read);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none}
+.tocando .t-txt a:hover{color:var(--amber)}
+.tocando button{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;border:0;background:transparent;color:var(--cream);cursor:pointer}
+.tocando .t-play{background:var(--cream);color:var(--black)}
+.tocando button svg{width:16px;height:16px}
+.tocando .t-play .i-pausa{display:none}
+.tocando.toca .t-play .i-toca{display:none}
+.tocando.toca .t-play .i-pausa{display:block}
+.tocando .barra{position:absolute;left:12px;right:12px;bottom:0;height:2px;background:rgba(242,236,223,.12);border-radius:2px;overflow:hidden}
+.tocando .barra i{display:block;height:100%;width:0;background:var(--fire)}
+/* barra que acompanha (aparece depois do topo) */
+.fixa{position:fixed;left:0;right:0;top:0;z-index:25;display:flex;align-items:center;gap:12px;padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:rgba(20,17,13,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--wire);transform:translateY(-110%);transition:transform .25s ease}
+.fixa.on{transform:none}
+.fixa img{width:34px;height:34px;border-radius:50%}
+.fixa b{flex:1;min-width:0;font:600 22px/1 var(--serif);color:var(--cream)}
+.fixa .ouca{height:36px;padding:0 14px 0 12px;font-size:10px}
 .palco{position:relative;z-index:1;max-width:1180px;margin:0 auto;min-height:520px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:end;border:1px solid var(--wire);background:linear-gradient(180deg,var(--dark),var(--deep))}
 .texto{padding:56px 0 56px 56px;align-self:center}
 .kicker{font:700 11px/1 var(--sans);letter-spacing:.28em;text-transform:uppercase;color:var(--label);margin:0 0 22px}
@@ -189,7 +250,7 @@ h1{font:600 clamp(56px,8.6vw,124px)/.9 var(--serif);color:var(--cream);margin:0;
 .botoes .casa img{width:26px;height:26px}
 .foto{position:relative;align-self:stretch;min-height:520px}
 .num33{position:absolute;right:-2%;top:50%;transform:translateY(-54%);font:600 clamp(260px,34vw,470px)/1 var(--serif);color:transparent;-webkit-text-stroke:1.5px rgba(185,143,94,.55);letter-spacing:-.04em;user-select:none;pointer-events:none}
-.foto img{position:absolute;bottom:-1px;left:50%;transform:translateX(-38%);height:114%;max-height:640px;width:auto;filter:drop-shadow(0 18px 30px rgba(0,0,0,.55))}
+.foto img{position:absolute;bottom:-1px;left:50%;transform:translateX(-38%);height:105%;max-height:590px;width:auto;filter:drop-shadow(0 18px 30px rgba(0,0,0,.55))}
 .preto{background:var(--preto);color:var(--branco);font-family:var(--grot);padding:64px 16px 80px}
 .cab{max-width:1180px;margin:0 auto 22px;display:flex;align-items:baseline;justify-content:space-between;gap:16px}
 .cab h2{margin:0;font:700 13px/1 var(--grot);letter-spacing:.2em;text-transform:uppercase}
@@ -210,13 +271,20 @@ footer{background:var(--preto);border-top:1px solid var(--div);padding:28px 16px
 footer img{width:148px;height:auto}
 footer p{margin:0;font:500 12px/1.5 var(--grot);color:var(--apagado);letter-spacing:.04em;text-align:center}
 footer p a{color:var(--meta)}
+body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 @media (max-width:1100px){.grade{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:820px){
-  .topo{padding:16px 0 18px}.topo a{width:52px;height:52px}.topo img{width:32px;height:32px}
+  .topo{padding:16px 0 20px;gap:10px}
+  .topo .logo img{width:118px}
+  .ouca{height:38px;padding:0 13px 0 11px;font-size:9.5px;letter-spacing:.13em;gap:8px}
+  .fixa b{font-size:20px}
+  .fixa .ouca span{display:none}
+  .fixa .ouca{width:36px;padding:0;justify-content:center}
   .terra{padding-bottom:40px}
-  .palco{grid-template-columns:1fr;min-height:0;margin-top:64px}
+  .palco{grid-template-columns:1fr;min-height:0;margin-top:44px}
   .foto{order:-1;min-height:330px}
-  .foto img{height:auto;width:min(70%,300px);bottom:-1px;left:50%;transform:translateX(-50%)}
+  /* a foto passa só 30px da moldura: nunca encosta no cabeçalho */
+  .foto img{height:360px;max-height:none;width:auto;bottom:-1px;left:50%;transform:translateX(-50%)}
   .num33{font-size:min(84vw,420px);right:auto;left:50%;transform:translate(-50%,-58%)}
   .texto{padding:28px 20px 32px;text-align:center}
   .kicker{margin-bottom:16px}.bio{margin-top:16px}
@@ -234,7 +302,10 @@ footer p a{color:var(--meta)}
 </head>
 <body>
 <header class="terra">
-  <nav class="topo" aria-label="Caramujo Records"><a href="/" aria-label="Caramujo Records, página inicial"><img src="/assets/brand/selo-creme.svg" alt="" width="40" height="40"></a></nav>
+  <nav class="topo" aria-label="Caramujo Records">
+    <a class="logo" href="/?de=perfil" aria-label="Caramujo Records, beats à venda"><img src="/assets/brand/caramujo-h.webp" alt="Caramujo Records" width="296" height="54"></a>
+    ${tocador ? `<button class="ouca" id="ouca" type="button" aria-pressed="false">${ICONE_TOCA}${ICONE_PAUSA}<span>Ouça a beat tape nova</span></button>` : ''}
+  </nav>
   <section class="palco">
     <div class="texto">
       <p class="kicker">Caramujo Records</p>
@@ -254,6 +325,15 @@ footer p a{color:var(--meta)}
     </div>
   </section>
 </header>
+${barraFixa ? `<div class="fixa" id="fixa" aria-hidden="true"><img src="/assets/perfil/rideblan33-avatar.webp" alt="" width="34" height="34"><b>@rideblan33</b>${tocador ? `<button class="ouca" type="button" data-ouca aria-pressed="false" tabindex="-1">${ICONE_TOCA}${ICONE_PAUSA}<span>Ouça a tape nova</span></button>` : ''}</div>` : ''}
+${tocador ? `<div class="tocando" id="tocando" hidden>
+  <a class="t-capa" href="${esc(tocador.tape.url)}" aria-label="Abrir a tape ${esc(tocador.tape.name)}"><img src="${esc(tocador.tape.capa)}" alt="" width="44" height="44"></a>
+  <div class="t-txt"><b id="tNome">—</b><a href="${esc(tocador.tape.url)}">${esc(tocador.tape.name)} · abrir a tape</a></div>
+  <button class="t-play" id="tPlay" type="button" aria-label="Pausar">${ICONE_TOCA}${ICONE_PAUSA}</button>
+  <button id="tProx" type="button" aria-label="Próximo beat"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17 5v14h-2.6V5zM5 5l9 7-9 7z"/></svg></button>
+  <span class="barra"><i id="tBarra"></i></span>
+</div>
+<script type="application/json" id="tocadorDados">${jsonSeguro(tocador)}</script>` : ''}
 
 <main class="preto" id="tapes">
   <div class="cab"><h2>Beat tapes</h2><span>${tapes.length} ${tapes.length === 1 ? 'tape' : 'tapes'}</span></div>
@@ -280,6 +360,51 @@ ${grade(tapes)}
     if(a.dataset.id)manda({kind:'perfil-tape',artistId:+a.dataset.id,origem:de});
     else manda({kind:'perfil-rede',trackId:a.dataset.rede,origem:de});
   });
+
+  // "Ouça a beat tape nova": toca os beats da tape mais nova aqui mesmo, um atrás
+  // do outro, sem sair da página. Cada beat conta como play da tape (origem perfil).
+  var dadosEl=document.getElementById('tocadorDados'), T=null;
+  try{ T=dadosEl?JSON.parse(dadosEl.textContent):null; }catch(e){ T=null; }
+  var botoes=[].slice.call(document.querySelectorAll('#ouca,[data-ouca]'));
+  var caixa=document.getElementById('tocando');
+  if(T && T.faixas && T.faixas.length && caixa){
+    var som=new Audio(); som.preload='none';
+    var i=-1, contados={};
+    var nome=document.getElementById('tNome'), barra=document.getElementById('tBarra');
+    function marca(){
+      var toca=!som.paused;
+      botoes.forEach(function(b){ b.setAttribute('aria-pressed',toca?'true':'false'); b.setAttribute('aria-label',toca?'Pausar a beat tape nova':'Ouça a beat tape nova'); });
+      caixa.classList.toggle('toca',toca);
+      document.getElementById('tPlay').setAttribute('aria-label',toca?'Pausar':'Tocar');
+    }
+    function vai(n){
+      i=(n+T.faixas.length)%T.faixas.length;
+      var f=T.faixas[i];
+      som.src='/audio/'+f.id; nome.textContent=f.t;
+      caixa.hidden=false; document.body.classList.add('com-player');
+      som.play().catch(function(){ marca(); });
+      if(!contados[f.id]){ contados[f.id]=1; manda({kind:'play',trackId:f.id,artistId:T.tape.id,origem:'perfil'}); }
+      if('mediaSession' in navigator){ try{ navigator.mediaSession.metadata=new MediaMetadata({title:f.t+' (prod. @rideblan33)',artist:T.tape.name,album:'Caramujo Records',artwork:[{src:T.tape.capa,sizes:'200x200',type:'image/jpeg'}]});
+        navigator.mediaSession.setActionHandler('nexttrack',function(){ vai(i+1); }); }catch(e){} }
+    }
+    function alterna(){ if(i<0) return vai(0); if(som.paused) som.play().catch(function(){}); else som.pause(); }
+    botoes.forEach(function(b){ b.addEventListener('click',alterna); });
+    document.getElementById('tPlay').addEventListener('click',alterna);
+    document.getElementById('tProx').addEventListener('click',function(){ vai(i+1); });
+    som.addEventListener('play',marca); som.addEventListener('pause',marca);
+    som.addEventListener('ended',function(){ vai(i+1); });
+    som.addEventListener('timeupdate',function(){ barra.style.width=(som.duration?som.currentTime/som.duration*100:0)+'%'; });
+  }
+
+  // barra que acompanha: aparece quando o topo sai da tela
+  var fixa=document.getElementById('fixa'), palco=document.querySelector('.palco');
+  if(fixa && palco && 'IntersectionObserver' in window){
+    new IntersectionObserver(function(l){
+      var on=!l[0].isIntersecting && l[0].boundingClientRect.top<0;
+      fixa.classList.toggle('on',on); fixa.setAttribute('aria-hidden',on?'false':'true');
+      fixa.querySelectorAll('button').forEach(function(b){ b.tabIndex=on?0:-1; });
+    }).observe(palco);
+  }
 })();
 </script>
 </body></html>`;

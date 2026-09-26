@@ -56,6 +56,9 @@ export async function onRequestGet({ params, request, env }) {
 <meta name="twitter:description" content="${esc(texto)}">
 <meta name="twitter:image" content="${esc(img.url)}">
 <meta name="theme-color" content="#14110d">
+<link rel="icon" type="image/svg+xml" href="/assets/brand/selo-creme.svg">
+<link rel="icon" type="image/png" sizes="180x180" href="/assets/brand/icone-180.png">
+<link rel="apple-touch-icon" href="/assets/brand/icone-180.png">
 <meta http-equiv="refresh" content="0;url=${esc(destino)}">
 <style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#14110d;color:#E8E0CF;font:15px 'Helvetica Neue',Helvetica,Arial,sans-serif}a{color:#b98f5e}</style>
 </head><body>

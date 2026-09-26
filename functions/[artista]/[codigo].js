@@ -62,10 +62,12 @@ export async function onRequestGet({ params, request, env }) {
   // Tape: "Mais do @rideblan33" no fim da lista (as outras tapes do perfil, na ordem
   // do perfil, até 12). Sai da mesma lista guardada do perfil: nenhuma consulta a mais
   // na maioria das aberturas. Falhou = a tape abre sem o bloco.
-  let mais = null;
+  let mais = null, totalPerfil = 0;
   if (tape) {
     try {
-      mais = (await tapesDoPerfil(request, env)).filter((t) => t.id !== artist.id).slice(0, 12)
+      const todas = await tapesDoPerfil(request, env);
+      totalPerfil = todas.length;
+      mais = todas.filter((t) => t.id !== artist.id).slice(0, 12)
         .map((t) => ({ name: t.name, url: `/${t.slug}/${t.code}?de=mais`, capa: t.capa ? `/capa/${t.capa}` : null, n: t.n }));
     } catch (_) { mais = null; }
   }
@@ -96,7 +98,9 @@ export async function onRequestGet({ params, request, env }) {
       owner: false,
       perm: { beats: !!artist.dl_beats, sons: !!artist.dl_sons },
       tracks,
-      ...(tape ? { perfil: '/rideblan33', mais } : {})
+      // o @rideblan33 vira o chip do perfil nas tapes E nas pastas de artista (26/09/2026)
+      perfil: '/rideblan33',
+      ...(tape ? { mais, totalPerfil } : {})
     }
   });
 }

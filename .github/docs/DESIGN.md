@@ -66,3 +66,17 @@ O contraste serif grande + sans miúda espaçada + mono técnica É a identidade
 ## Contexto de uso
 
 Público acessa 80%+ pelo celular, vindo do Instagram (bio e Direct). Mobile-first sempre. Site atual é one-pager: hero → pacotes → catálogo de beats (com player SoundCloud por card) → serviços → contato. Compra via carrinho próprio com PIX e cartão (Mercado Pago).
+
+## Ícone da aba (padrão de todas as páginas)
+
+Toda página do site, inclusive as que ainda vão existir, usa o mesmo bloco no `<head>`:
+selo em SVG primeiro (`/assets/brand/selo-creme.svg`), depois o PNG de 180px pro iPhone
+(`/assets/brand/icone-180.png`, também como `apple-touch-icon`). Em código: `FAVICON` em
+`functions/_lib/perfil.js`.
+
+## Perfil @rideblan33 (/rideblan33)
+
+Moldura terrosa em cima (logo horizontal à esquerda, "Ouça a beat tape nova" em fogo à
+direita, foto tratada em 3 tons com o 33 em fogo e o "33" gigante só no contorno atrás),
+grade preta das tapes embaixo (regras do DESIGN-catalogo). Foto e avatar em
+`assets/perfil/`. O avatar (costas, camisa 33) é a cara do @rideblan33 em chip, card e painel.

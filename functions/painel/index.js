@@ -135,6 +135,25 @@ const BASE = `
   .card-list button:hover{background:#1a1a1a}
   .card-list button:active{background:#1d1d1d}
   .bloco{margin-top:20px}
+  /* Perfil @rideblan33: lista numerada pra arrastar (26/09/2026) */
+  .capa-lista.perfil,.capa-mini.perfil{border-radius:50%}
+  .pf-lista{list-style:none;margin:0;padding:0;counter-reset:pf}
+  .pf-lista li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--linha);background:#141414;touch-action:auto}
+  .pf-lista li.pego{position:relative;z-index:2;background:#1c1c1c;box-shadow:0 10px 26px rgba(0,0,0,.55);border-radius:10px}
+  .pf-n{width:26px;flex:none;text-align:right;font-size:13px;font-weight:700;color:var(--ink3);font-variant-numeric:tabular-nums}
+  .pf-capa{width:40px;height:40px;flex:none;border-radius:6px;overflow:hidden;background:#171717}
+  .pf-capa img{width:100%;height:100%;object-fit:cover;display:block}
+  .pf-capa img.sem{object-fit:contain;padding:22%}
+  .pf-txt{flex:1;min-width:0}
+  .pf-txt b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pf-txt small{display:block;font-size:12px;color:var(--ink4);margin-top:2px}
+  .pf-bt{width:34px;height:34px;flex:none;border-radius:9px;border:1px solid var(--borda);background:#101010;color:#cfcfcf;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+  .pf-bt:disabled{opacity:.3;cursor:default}
+  .pf-alca{width:34px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;color:#8a8a8a;cursor:grab;touch-action:none}
+  .pf-alca:active{cursor:grabbing}
+  .pf-dica{font-size:12.5px;color:var(--ink4);margin:0 0 10px}
+  .pf-fora li .pill{padding:8px 12px;font-size:13px}
   .rot{font-size:11px;letter-spacing:.2em;color:var(--ink4);margin-bottom:10px}
   .desc{width:100%;min-height:104px;resize:vertical;background:var(--campo);border:1px solid var(--borda);
     border-radius:12px;padding:12px 14px;font-size:14.5px;line-height:1.5;outline:none;
@@ -285,7 +304,7 @@ function pagina() {
 <script>
 (function(){
   var $=function(i){return document.getElementById(i)};
-  var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='home', filtro='', ordem='modificado';
+  var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='home', filtro='', ordem='modificado', perfilVisto=null;
   var lojaResumo=null, lojaPedida=false, consumoHoje=null, consumoPedido=false;
   var ORDENS={modificado:'Modificação', atividade:'Atividade', az:'A a Z', faixas:'Mais faixas', perfil:'Ordem do perfil'};
   // Perfil do @rideblan33 (26/09/2026): a mesma conta da página (tape sem ordem = nova = topo)
@@ -353,6 +372,7 @@ function pagina() {
       var todos=j.artistas||[];
       artistas=todos.filter(function(a){return a.tipo==='artista'});   // 'vitrine' é interno, não aparece
       tapes=todos.filter(function(a){return a.tipo==='tape'});
+      perfilVisto=j.perfilVisto||null;
       pintarResumo(j.prateleira.usado);
       desenhar();
       acompanhar();
@@ -473,7 +493,7 @@ function pagina() {
     $('lista').innerHTML='';
 
     if(vista==='tapes') cartaoRevisar();
-    if(vista==='tapes' && !filtro && tapes.length) linhaPerfil();
+    if(vista==='tapes') linhaPerfil();   // fixa: primeira linha sempre, com busca ou ordem que for
 
     if(!alvo.length){
       var v=document.createElement('div'); v.className='vazio';
@@ -659,20 +679,142 @@ function pagina() {
   }
   function link(a){ return location.origin+'/'+a.slug+'/'+a.code }
 
-  // primeira linha da lista de tapes: o perfil público, com o link pra copiar
+  // primeira linha da lista de tapes, sempre: o perfil público. Toca = abre o card do
+  // perfil (atividade + a ordem das tapes); o botão ao lado copia o link.
+  var AVATAR='/assets/perfil/rideblan33-avatar.webp';
   function linhaPerfil(){
     var u=location.origin+'/rideblan33';
-    var row=document.createElement('div'); row.className='item';
+    var row=document.createElement('div'); row.className='item item-perfil';
     var b=document.createElement('button'); b.type='button'; b.className='linha';
-    b.innerHTML='<span class="capa-lista vazia"><img src="/assets/brand/selo-creme.svg" alt="" width="18" height="18"></span>'+
+    var n=noPerfil().length;
+    b.innerHTML='<span class="capa-lista perfil"><img src="'+AVATAR+'" alt="" loading="lazy"></span>'+
       '<span style="flex:1;min-width:0"><span class="nome">Perfil @rideblan33</span>'+
-      '<span class="meta">'+noPerfil().length+' tapes no perfil · caramujorecords.com.br/rideblan33</span></span>';
-    b.addEventListener('click',function(){ window.open(u,'_blank','noopener') });
+      '<span class="meta">'+n+(n===1?' beat tape':' beat tapes')+' no perfil · '+tempo(perfilVisto)+'</span></span>';
+    b.addEventListener('click',abrirPerfil);
     var c=document.createElement('button'); c.type='button'; c.className='copiar'; c.setAttribute('aria-label','Copiar link do perfil');
     c.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b7b7b7" stroke-width="1.7"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a1 1 0 011-1h9"/></svg>';
     c.addEventListener('click',function(e){ e.stopPropagation(); if(navigator.clipboard) navigator.clipboard.writeText(u); flash('Link do perfil copiado.') });
     row.appendChild(b); row.appendChild(c);
     $('lista').appendChild(row);
+  }
+
+  var SETA_CIMA='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>';
+  var SETA_BAIXO='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+  var ALCA='<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
+
+  // Card do perfil: link, atividade (igual às tapes) e a ordem das capas numa lista
+  // numerada. Arrasta pela alça (ou usa as setas); salva sozinho. Tape nova sempre
+  // entra como 1ª.
+  function abrirPerfil(){
+    var u=location.origin+'/rideblan33', c=$('card');
+    c.innerHTML=
+      '<div class="cab"><div class="capa-mini perfil"><img src="'+AVATAR+'" alt="@rideblan33"></div><div class="cab-txt">'+
+        '<h2>Perfil @rideblan33</h2><div class="end">caramujorecords.com.br/rideblan33</div></div></div>'+
+      '<div class="acoes">'+
+        '<button class="pill solid" data-act="copiar" type="button">Copiar link</button>'+
+        '<button class="pill" data-act="abrir" type="button">Abrir</button>'+
+      '</div>'+
+      '<div class="bloco"><div class="rot">ATIVIDADE</div>'+
+        '<div class="numeros">'+
+          '<div><b id="pfUltima">—</b><span>última<br>visita</span></div>'+
+          '<div><b id="pfMes">—</b><span>visitas<br>no mês</span></div>'+
+          '<div><b id="pfAno">—</b><span>visitas<br>no ano</span></div>'+
+        '</div></div>'+
+      '<div class="bloco"><div class="rot">ORDEM NO PERFIL</div>'+
+        '<p class="pf-dica">Arrasta pela alça ou usa as setas. Salva sozinho. Tape nova entra sempre como 1ª.</p>'+
+        '<ol class="pf-lista" id="pfLista"></ol></div>'+
+      '<div class="bloco" id="pfForaBloco" hidden><div class="rot">FORA DO PERFIL</div><ul class="pf-lista pf-fora" id="pfFora"></ul></div>'+
+      '<div class="acoes"><button class="pill" data-close type="button">Fechar</button></div>';
+    $('veil').hidden=false;
+    c.querySelector('[data-close]').addEventListener('click',fechar);
+    c.querySelector('[data-act=copiar]').addEventListener('click',function(){ if(navigator.clipboard) navigator.clipboard.writeText(u); flash('Link do perfil copiado.') });
+    c.querySelector('[data-act=abrir]').addEventListener('click',function(){ window.open(u,'_blank','noopener') });
+    fetch('/api/painel?op=perfil-resumo').then(function(x){return x.json()}).then(function(j){
+      $('pfUltima').textContent=j.ultima?dia(j.ultima):'—'; $('pfMes').textContent=j.mes||0; $('pfAno').textContent=j.ano||0;
+    }).catch(function(){});
+    montarOrdem();
+  }
+  function capaPf(a){
+    return '<span class="pf-capa">'+(a.cover_key?'<img src="/capa/'+esc(a.cover_key)+'?p" alt="" loading="lazy">':'<img class="sem" src="/assets/brand/selo-creme.svg" alt="">')+'</span>';
+  }
+  function montarOrdem(){
+    var ol=$('pfLista'); ol.innerHTML='';
+    noPerfil().forEach(function(a){
+      var li=document.createElement('li'); li.dataset.id=a.id;
+      li.innerHTML='<span class="pf-n"></span>'+capaPf(a)+
+        '<span class="pf-txt"><b>'+esc(a.name)+'</b><small>'+(a.nb||0)+((a.nb||0)===1?' beat':' beats')+'</small></span>'+
+        '<button class="pf-bt" type="button" data-mv="-1" aria-label="Subir '+esc(a.name)+'">'+SETA_CIMA+'</button>'+
+        '<button class="pf-bt" type="button" data-mv="1" aria-label="Descer '+esc(a.name)+'">'+SETA_BAIXO+'</button>'+
+        '<span class="pf-alca" aria-hidden="true">'+ALCA+'</span>';
+      ol.appendChild(li);
+    });
+    renumera();
+    var fora=tapes.filter(function(t){ return t.perfil===0 && (t.nb||0)>0 });
+    $('pfForaBloco').hidden=!fora.length;
+    var ul=$('pfFora'); ul.innerHTML='';
+    fora.forEach(function(a){
+      var li=document.createElement('li');
+      li.innerHTML=capaPf(a)+'<span class="pf-txt"><b>'+esc(a.name)+'</b><small>escondida</small></span><button class="pill" type="button">Mostrar</button>';
+      li.querySelector('button').addEventListener('click',function(e){
+        var bt=e.currentTarget; bt.disabled=true;
+        acao('perfil',{id:a.id,valor:1}).then(function(j){
+          if(!j.ok){ bt.disabled=false; flash(j.erro||'Não consegui mudar.'); return; }
+          a.perfil=1; montarOrdem(); flash('Aparece no perfil.');
+        });
+      });
+      ul.appendChild(li);
+    });
+    if(!ol.dataset.ligado){ ol.dataset.ligado='1'; ligarOrdem(ol); }
+  }
+  function renumera(){
+    var lis=[].slice.call($('pfLista').children);
+    lis.forEach(function(li,i){
+      li.querySelector('.pf-n').textContent=(i+1);
+      li.querySelector('[data-mv="-1"]').disabled=i===0;
+      li.querySelector('[data-mv="1"]').disabled=i===lis.length-1;
+    });
+  }
+  var salvarOrdemT=null;
+  function salvarOrdem(){
+    clearTimeout(salvarOrdemT);
+    salvarOrdemT=setTimeout(function(){
+      var ids=[].slice.call($('pfLista').children).map(function(li){ return Number(li.dataset.id) });
+      acao('perfil-ordem',{ids:ids}).then(function(j){
+        if(!j.ok){ flash(j.erro||'Não consegui salvar a ordem.'); return; }
+        ids.forEach(function(id,i){ var t=tapes.filter(function(x){return x.id===id})[0]; if(t) t.perfil_ordem=i+1; });
+        flash('Ordem do perfil salva.');
+      });
+    },600);
+  }
+  function ligarOrdem(ol){
+    ol.addEventListener('click',function(e){
+      var b=e.target.closest('[data-mv]'); if(!b||b.disabled) return;
+      var li=b.closest('li'), d=Number(b.dataset.mv);
+      if(d<0 && li.previousElementSibling) ol.insertBefore(li,li.previousElementSibling);
+      if(d>0 && li.nextElementSibling) ol.insertBefore(li.nextElementSibling,li);
+      renumera(); salvarOrdem();
+      var f=li.querySelector('[data-mv="'+d+'"]'); if(f && !f.disabled) f.focus();
+    });
+    var pego=null, card=$('card');
+    ol.addEventListener('pointerdown',function(e){
+      var h=e.target.closest('.pf-alca'); if(!h) return;
+      pego=h.closest('li'); e.preventDefault();
+      try{ h.setPointerCapture(e.pointerId); }catch(_){}
+      pego.classList.add('pego');
+    });
+    ol.addEventListener('pointermove',function(e){
+      if(!pego) return;
+      var cr=card.getBoundingClientRect();
+      if(e.clientY<cr.top+60) card.scrollTop-=12; else if(e.clientY>cr.bottom-60) card.scrollTop+=12;
+      var outros=[].slice.call(ol.children).filter(function(li){ return li!==pego });
+      var antes=null;
+      for(var i=0;i<outros.length;i++){ var r=outros[i].getBoundingClientRect(); if(e.clientY<r.top+r.height/2){ antes=outros[i]; break; } }
+      if(antes){ if(pego.nextElementSibling!==antes) ol.insertBefore(pego,antes); }
+      else if(ol.lastElementChild!==pego) ol.appendChild(pego);
+      renumera();
+    });
+    function solta(){ if(!pego) return; pego.classList.remove('pego'); pego=null; salvarOrdem(); }
+    ol.addEventListener('pointerup',solta); ol.addEventListener('pointercancel',solta);
   }
 
   function rodando(a){
@@ -721,8 +863,7 @@ function pagina() {
       (a.tipo==='tape'
         ? '<div class="bloco"><div class="rot">PERFIL @RIDEBLAN33</div>'+
           sw('perfil','Mostrar no perfil','a capa aparece em caramujorecords.com.br/rideblan33',a.perfil!==0)+
-          '<div class="sw"><span><b id="perfilPos">'+esc(posicaoPerfil(a))+'</b><small>a ordem das capas no perfil</small></span>'+
-          '<button class="pill" data-act="topo" type="button">Subir pro topo</button></div></div>'
+          '<div class="sw"><span><b id="perfilPos">'+esc(posicaoPerfil(a))+'</b><small>a ordem muda em <b>Perfil @rideblan33</b>, no topo da lista das tapes</small></span></div></div>'
         : '')+
       '<div class="bloco"><div class="rot">DESCRIÇÃO DO CATÁLOGO</div>'+
         '<label for="desc" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Descrição</label>'+
@@ -792,17 +933,6 @@ function pagina() {
         flash('Conversão do '+a.name+' começou.');
         a.job_estado='na fila';a.job_total=0;a.job_feitos=0;a.job_at=new Date().toISOString();
         fechar();acompanhar();carregar(true);
-      });
-    });
-    var topo=c.querySelector('[data-act=topo]');
-    if(topo) topo.addEventListener('click',function(){
-      topo.disabled=true; topo.textContent='Subindo…';
-      acao('perfil-topo',{id:a.id}).then(function(j){
-        topo.disabled=false; topo.textContent='Subir pro topo';
-        if(!j.ok){ flash(j.erro||'Não consegui mudar a ordem.'); return; }
-        a.perfil_ordem=j.perfil_ordem;
-        $('perfilPos').textContent=posicaoPerfil(a);
-        flash(a.perfil===0?'Subiu pro topo. Ligue "Mostrar no perfil" pra ela aparecer.':'Subiu pro topo do perfil.');
       });
     });
     c.querySelectorAll('.toggle').forEach(function(t){
