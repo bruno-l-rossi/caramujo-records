@@ -59,15 +59,18 @@ export async function onRequestGet({ params, request, env }) {
 
   const tape = artist.tipo === 'tape';
 
-  // Tape: "Mais do @rideblan33" no fim da lista (as outras tapes do perfil, na ordem
-  // do perfil, até 12). Sai da mesma lista guardada do perfil: nenhuma consulta a mais
-  // na maioria das aberturas. Falhou = a tape abre sem o bloco.
+  // "Mais de @rideblan33" no fim da lista: as outras tapes do perfil, na ordem do
+  // perfil. Tape e pasta de artista (pasta entrou em 26/09/2026). Sai da mesma lista
+  // guardada do perfil: nenhuma consulta a mais na maioria das aberturas. Falhou =
+  // a página abre sem o bloco. A pasta só aponta pras tapes (públicas); nada da
+  // pasta vai pra fora.
   let mais = null, totalPerfil = 0;
-  if (tape) {
+  {
     try {
       const todas = await tapesDoPerfil(request, env);
       totalPerfil = todas.length;
-      mais = todas.filter((t) => t.id !== artist.id).slice(0, 12)
+      // 5 tapes + o card do portfólio completo (26/09/2026)
+      mais = todas.filter((t) => t.id !== artist.id).slice(0, 5)
         .map((t) => ({ name: t.name, url: `/${t.slug}/${t.code}?de=mais`, capa: t.capa ? `/capa/${t.capa}` : null, n: t.n }));
     } catch (_) { mais = null; }
   }
@@ -100,7 +103,7 @@ export async function onRequestGet({ params, request, env }) {
       tracks,
       // o @rideblan33 vira o chip do perfil nas tapes E nas pastas de artista (26/09/2026)
       perfil: '/rideblan33',
-      ...(tape ? { mais, totalPerfil } : {})
+      mais, totalPerfil
     }
   });
 }

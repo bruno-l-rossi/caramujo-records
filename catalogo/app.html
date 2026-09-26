@@ -213,7 +213,7 @@ __META__
   .mais-card.todas .m-veu{position:absolute;inset:0;display:flex;align-items:flex-end;padding:10px;
     background:linear-gradient(180deg,rgba(0,0,0,0) 25%,rgba(0,0,0,.86));font-size:13px;font-weight:700;line-height:1.2}
   @media(hover:hover){.mais-card.todas:hover .m-veu{background:linear-gradient(180deg,rgba(0,0,0,.2) 0%,rgba(0,0,0,.9))}}
-  .mais-setas .pl-btn{width:34px;height:34px;border-radius:50%;background:#181818;border:1px solid #2c2c2c;color:#e6e6e6;cursor:pointer;display:grid;place-items:center}
+  .mais-setas .pl-btn{width:34px;height:34px;border-radius:50%;background:#181818;border:1px solid #2c2c2c;color:#e6e6e6;cursor:pointer;place-items:center}
   .mais-setas .pl-btn:disabled{opacity:.35;cursor:default}
   .mais-trilho{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;
     margin:0 -16px;padding:0 16px 4px;scroll-padding:0 16px}
@@ -495,7 +495,7 @@ __META__
 
       <div class="list" id="list"></div>
 
-      <!-- Mais do @rideblan33 (26/09/2026, só nas tapes): as outras tapes do perfil pra
+      <!-- Mais do @rideblan33 (26/09/2026, tapes e pastas de artista): as outras tapes do perfil pra
            deslizar, no jeito do "Mais de" do Spotify, e o caminho pro perfil inteiro -->
       <section class="mais" id="mais" hidden aria-labelledby="maisTit">
         <div class="mais-cab">
@@ -889,20 +889,26 @@ __META__
   }
 
   /* ---------- a tarja do sistema (tela de bloqueio, notificação) ---------- */
+  // Mesmo padrão da vitrine do site (26/09/2026): capa inteira, 1000x1000
   function arteDoSistema(){
     var c = CAT.artist.cover;
-    var url = c ? location.origin + c : location.origin + '/assets/brand/Caramujo_Records.png';
-    var tipo = /\.png$/i.test(url) ? 'image/png' : 'image/jpeg';
-    return ['96x96','192x192','256x256','512x512'].map(function(t){
-      return { src:url, sizes:t, type:tipo };
-    });
+    if(c) return [{ src:location.origin + c, sizes:'1000x1000', type:'image/jpeg' }];
+    return [{ src:location.origin + '/assets/brand/Caramujo_Records.png', sizes:'1000x1000', type:'image/png' }];
+  }
+  // Autoria na tela bloqueada: tape e link avulso = "@rideblan33" (igual à vitrine);
+  // pasta de artista = "nico2b & @rideblan33"
+  function autoria(){
+    var eu = CAT.artist.who || '@rideblan33';
+    if(CAT.artist.tape || !CAT.artist.name) return eu;
+    return CAT.artist.name + ' & ' + eu;
   }
   function tarja(t){
     if(!('mediaSession' in navigator)) return;
     try{
+      // igual à vitrine: título = nome da faixa, autoria embaixo, Caramujo Records
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: t.title + ' (prod. @rideblan33)',
-        artist: CAT.artist.name || 'Caramujo Records',
+        title: t.title,
+        artist: autoria(),
         album: 'Caramujo Records',
         artwork: arteDoSistema()
       });
@@ -939,8 +945,8 @@ __META__
     contados[t.id]=1;
     envia({ kind:'play', trackId:t.id, artistId:CAT.artist.id, code:CAT.code });
   }
-  // Tape: o @rideblan33 embaixo do nome leva pro perfil, e no fim da lista entram
-  // as outras tapes (26/09/2026). Pasta de artista e link avulso ficam como estão.
+  // O @rideblan33 embaixo do nome leva pro perfil, e no fim da lista entram as
+  // tapes do perfil (26/09/2026). Tape e pasta de artista; link avulso fica como está.
   function maisDoPerfil(){
     if(!CAT.perfil || CAT.preview) return;
     var w=$('who'); w.textContent='';
@@ -950,9 +956,9 @@ __META__
     a.innerHTML='<span></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
     a.querySelector('span').textContent=CAT.artist.who||'@rideblan33';
     w.appendChild(a);
-    if(!CAT.artist.tape) return;
     var lista=CAT.mais||[];
     if(!lista.length) return;
+    var deOnde=CAT.artist.tape?'tape':'artista';
     var tr=$('maisTrilho'); tr.textContent='';
     lista.forEach(function(t){
       var c=document.createElement('a'); c.className='mais-card'; c.href=t.url;
@@ -967,16 +973,15 @@ __META__
     });
     // o último card é o portfólio inteiro, do tamanho das capas
     var tot=CAT.totalPerfil||lista.length+1;
-    var fim=document.createElement('a'); fim.className='mais-card todas'; fim.href=CAT.perfil+'?de=tape';
+    var fim=document.createElement('a'); fim.className='mais-card todas'; fim.href=CAT.perfil+'?de='+deOnde;
     // grade com as 4 primeiras capas do perfil e o texto por cima (escolha de 26/09)
     var grade=lista.filter(function(t){ return t.capa }).slice(0,4);
-    fim.innerHTML='<span class="m-capa"></span><b></b><small>@rideblan33</small>';
+    fim.innerHTML='<span class="m-capa"></span><b>Portfólio completo</b><small>@rideblan33</small>';
     var mc=fim.querySelector('.m-capa');
     grade.forEach(function(t){ var im=document.createElement('img'); im.loading='lazy'; im.alt=''; im.src=t.capa+'?p'; mc.appendChild(im); });
-    var veu=document.createElement('span'); veu.className='m-veu'; veu.textContent='Ver portfólio completo'; mc.appendChild(veu);
-    fim.querySelector('b').textContent=tot+(tot===1?' beat tape':' beat tapes');
+    var veu=document.createElement('span'); veu.className='m-veu'; veu.textContent=tot+(tot===1?' beat tape':' beat tapes'); mc.appendChild(veu);
     tr.appendChild(fim);
-    $('maisTudo').href=CAT.perfil+'?de=tape';
+    $('maisTudo').href=CAT.perfil+'?de='+deOnde;
     $('mais').hidden=false;
     // setas no computador (mouse não desliza de lado)
     var ant=$('maisAnt'), prox=$('maisProx');

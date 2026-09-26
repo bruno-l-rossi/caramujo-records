@@ -99,7 +99,7 @@ function grade(tapes) {
   return tapes.map((t, i) => {
     const href = `/${t.slug}/${t.code}?de=perfil`;
     const img = t.capa
-      ? `<img src="/capa/${esc(t.capa)}" srcset="/capa/${esc(t.capa)}?p 200w, /capa/${esc(t.capa)} 1000w" sizes="(max-width:820px) 46vw, 222px" alt="Capa da beat tape ${esc(t.name)}" width="1000" height="1000"${i < 6 ? '' : ' loading="lazy"'} decoding="async">`
+      ? `<img src="/capa/${esc(t.capa)}" srcset="/capa/${esc(t.capa)}?p 200w, /capa/${esc(t.capa)} 1000w" sizes="(max-width:600px) 31vw, (max-width:820px) 24vw, 222px" alt="Capa da beat tape ${esc(t.name)}" width="1000" height="1000"${i < 6 ? '' : ' loading="lazy"'} decoding="async">`
       : `<img class="semcapa" src="/assets/brand/caramujo-v.webp" alt="Beat tape ${esc(t.name)}" width="300" height="300"${i < 6 ? '' : ' loading="lazy"'}>`;
     return `<a class="tape" href="${esc(href)}" data-id="${t.id}"><span class="capa">${img}<span class="sobre" aria-hidden="true"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span></span><span class="leg"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span></a>`;
   }).join('\n');
@@ -297,11 +297,18 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
   .botoes{justify-content:center;margin-top:26px}
   .preto{padding:40px 16px 56px}
   .moldura{padding:0;background:none;border:0}
-  .grade{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 12px}
+  .grade{grid-template-columns:repeat(4,minmax(0,1fr));gap:20px 10px}
   .sobre{display:none}
   .leg{display:flex;flex-direction:column;gap:5px;padding-top:10px}
   .leg b{font:500 15px/1.2 var(--grot);color:var(--branco);overflow-wrap:anywhere}
   .leg i{font:500 13px/1 var(--grot);font-style:normal;color:var(--meta)}
+}
+/* celular: 3 capas por linha (26/09/2026) */
+@media (max-width:600px){
+  .grade{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 8px}
+  .leg{gap:4px;padding-top:8px}
+  .leg b{font-size:12.5px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .leg i{font-size:11.5px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -394,14 +401,14 @@ ${grade(tapes)}
       if(!contados[f.id]){ contados[f.id]=1; manda({kind:'play',trackId:f.id,artistId:T.tape.id,origem:'perfil'}); }
       tarja(f);
     }
-    // Tela de bloqueio e notificação: exatamente as mesmas informações da página da
-    // tape (título "BEAT (prod. @rideblan33)", nome da tape, Caramujo Records, capa
-    // inteira) e os mesmos botões.
+    // Tela de bloqueio e notificação no padrão da vitrine (e das tapes): nome do beat,
+    // @rideblan33, Caramujo Records, capa inteira, e os mesmos botões.
     function tarja(f){
       if(!('mediaSession' in navigator)) return;
       var url=location.origin+T.tape.arte, tipo=/\\.png$/i.test(url)?'image/png':'image/jpeg';
-      try{ navigator.mediaSession.metadata=new MediaMetadata({ title:f.t+' (prod. @rideblan33)', artist:T.tape.name, album:'Caramujo Records',
-        artwork:['96x96','192x192','256x256','512x512'].map(function(t){ return {src:url,sizes:t,type:tipo}; }) }); }catch(e){}
+      // igual à vitrine do site: nome do beat, @rideblan33, Caramujo Records, capa inteira
+      try{ navigator.mediaSession.metadata=new MediaMetadata({ title:f.t, artist:'@rideblan33', album:'Caramujo Records',
+        artwork:[{src:url,sizes:'1000x1000',type:tipo}] }); }catch(e){}
       var liga=function(a,fn){ try{ navigator.mediaSession.setActionHandler(a,fn) }catch(e){} };
       liga('play',function(){ som.play().catch(function(){}) });
       liga('pause',function(){ som.pause() });
