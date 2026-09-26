@@ -192,12 +192,13 @@ __META__
   @media(hover:hover){.buy:hover{background:#E4DAC7;color:#0a0a0a;border-color:#E4DAC7}}
 
   .empty{padding:26px 0;font-size:14px;color:#5a5a5a}
-  /* @rideblan33 como chip do perfil (26/09/2026): foto pequena + @ + seta */
-  .who .chip-perfil{display:inline-flex;align-items:center;gap:8px;padding:4px 11px 4px 4px;border-radius:999px;
-    background:#161616;border:1px solid #2a2a2a;color:#fff;font-size:14px;font-weight:600;text-decoration:none;transition:border-color .2s,background .2s}
-  .who .chip-perfil img{width:26px;height:26px;border-radius:50%;display:block}
-  .who .chip-perfil svg{width:14px;height:14px;color:#8a8a8a}
-  @media(hover:hover){.who .chip-perfil:hover{border-color:#fff;background:#1d1d1d}}
+  /* @rideblan33 é o próprio link do perfil (26/09/2026, noite): branco, sublinhado
+     e com seta, pra ficar claro que abre alguma coisa. Sem botão à parte. */
+  .who .at-link{display:inline-flex;align-items:center;gap:3px;min-height:30px;color:#fff;font-weight:600;
+    text-decoration:underline;text-decoration-color:rgba(255,255,255,.35);text-decoration-thickness:1px;text-underline-offset:4px;
+    transition:text-decoration-color .2s}
+  .who .at-link svg{width:15px;height:15px;color:#b7b7b7;flex:none;transition:transform .2s}
+  @media(hover:hover){.who .at-link:hover{text-decoration-color:#fff}.who .at-link:hover svg{transform:translateX(2px);color:#fff}}
   .mais{padding:22px 0 20px;border-top:1px solid rgba(255,255,255,.06);margin-top:8px}
   .mais[hidden]{display:none}
   .mais-cab{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
@@ -207,11 +208,11 @@ __META__
   @media(hover:hover) and (pointer:fine) and (min-width:900px){.mais-setas .pl-btn{display:grid}}
   .mais-tudo{font-size:13.5px;font-weight:500;color:#b7b7b7;text-decoration:none;padding:6px 4px;margin-right:4px}
   @media(hover:hover){.mais-tudo:hover{color:#fff}}
-  .mais-card.todas .m-capa{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
-    border:1px solid #2a2a2a;background:#0f0f0f;padding:10px;text-align:center}
-  .mais-card.todas .m-capa img{width:54px;height:54px;border-radius:50%;object-fit:cover}
-  .mais-card.todas .m-capa span{font-size:12.5px;font-weight:600;line-height:1.25}
-  @media(hover:hover){.mais-card.todas:hover .m-capa{border-color:#fff}}
+  .mais-card.todas .m-capa{position:relative;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:2px;background:#000}
+  .mais-card.todas .m-capa img{width:100%;height:100%;object-fit:cover}
+  .mais-card.todas .m-veu{position:absolute;inset:0;display:flex;align-items:flex-end;padding:10px;
+    background:linear-gradient(180deg,rgba(0,0,0,0) 25%,rgba(0,0,0,.86));font-size:13px;font-weight:700;line-height:1.2}
+  @media(hover:hover){.mais-card.todas:hover .m-veu{background:linear-gradient(180deg,rgba(0,0,0,.2) 0%,rgba(0,0,0,.9))}}
   .mais-setas .pl-btn{width:34px;height:34px;border-radius:50%;background:#181818;border:1px solid #2c2c2c;color:#e6e6e6;cursor:pointer;display:grid;place-items:center}
   .mais-setas .pl-btn:disabled{opacity:.35;cursor:default}
   .mais-trilho{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;
@@ -943,11 +944,10 @@ __META__
   function maisDoPerfil(){
     if(!CAT.perfil || CAT.preview) return;
     var w=$('who'); w.textContent='';
-    var a=document.createElement('a'); a.className='chip-perfil';
+    var a=document.createElement('a'); a.className='at-link';
     a.href=CAT.perfil+'?de='+(CAT.artist.tape?'tape':'artista');
     a.setAttribute('aria-label','Portfólio do '+(CAT.artist.who||'@rideblan33'));
-    a.innerHTML='<img src="/assets/perfil/rideblan33-avatar.webp" alt="" width="26" height="26">'+
-      '<span></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+    a.innerHTML='<span></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
     a.querySelector('span').textContent=CAT.artist.who||'@rideblan33';
     w.appendChild(a);
     if(!CAT.artist.tape) return;
@@ -968,7 +968,12 @@ __META__
     // o último card é o portfólio inteiro, do tamanho das capas
     var tot=CAT.totalPerfil||lista.length+1;
     var fim=document.createElement('a'); fim.className='mais-card todas'; fim.href=CAT.perfil+'?de=tape';
-    fim.innerHTML='<span class="m-capa"><img src="/assets/perfil/rideblan33-avatar.webp" alt="" width="54" height="54"><span>Ver portfólio completo</span></span><b></b><small>@rideblan33</small>';
+    // grade com as 4 primeiras capas do perfil e o texto por cima (escolha de 26/09)
+    var grade=lista.filter(function(t){ return t.capa }).slice(0,4);
+    fim.innerHTML='<span class="m-capa"></span><b></b><small>@rideblan33</small>';
+    var mc=fim.querySelector('.m-capa');
+    grade.forEach(function(t){ var im=document.createElement('img'); im.loading='lazy'; im.alt=''; im.src=t.capa+'?p'; mc.appendChild(im); });
+    var veu=document.createElement('span'); veu.className='m-veu'; veu.textContent='Ver portfólio completo'; mc.appendChild(veu);
     fim.querySelector('b').textContent=tot+(tot===1?' beat tape':' beat tapes');
     tr.appendChild(fim);
     $('maisTudo').href=CAT.perfil+'?de=tape';

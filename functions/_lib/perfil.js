@@ -23,7 +23,7 @@ export async function esquecerPerfil(request) {
 
 // O perfil inteiro: { tapes: [{ id, name, slug, code, capa, n }], faixas: [...] }.
 // tapes = na ordem da tela; tape sem beat pronto (ainda não convertida) não aparece.
-// faixas = os beats da 1ª tape (a mais nova), pro "Ouça a beat tape nova" do topo,
+// faixas = os beats da 1ª tape (a mais nova), pro "Ouça a última beat tape" do topo,
 // na mesma ordem da página da tape (reservados primeiro, depois o mais novo no Drive).
 // Duas consultas, guardadas 60 s na memória e 5 min na região.
 export async function lerPerfil(request, env) {
@@ -118,7 +118,9 @@ export function paginaPerfil(dados, { url, barraFixa = true } = {}) {
   const faixas = Array.isArray(dados) ? [] : (dados.faixas || []);
   const nova = tapes[0] || null;
   const tocador = nova && faixas.length ? {
-    tape: { id: nova.id, name: nova.name, url: `/${nova.slug}/${nova.code}?de=perfil`, capa: nova.capa ? `/capa/${nova.capa}?p` : '/assets/brand/caramujo-v.webp' },
+    tape: { id: nova.id, name: nova.name, url: `/${nova.slug}/${nova.code}?de=perfil`, capa: nova.capa ? `/capa/${nova.capa}?p` : '/assets/brand/caramujo-v.webp',
+      // a tela de bloqueio usa a arte inteira, igual à página da tape
+      arte: nova.capa ? `/capa/${nova.capa}` : '/assets/brand/Caramujo_Records.png' },
     faixas
   } : null;
   const titulo = '@rideblan33 · Portfólio';
@@ -211,15 +213,19 @@ a:focus-visible{outline:2px solid var(--fire);outline-offset:3px}
 .ouca .i-pausa{display:none}
 .ouca[aria-pressed="true"] .i-toca{display:none}
 .ouca[aria-pressed="true"] .i-pausa{display:block}
-/* mini player do "Ouça a beat tape nova" */
+/* mini player do "Ouça a última beat tape" */
 .tocando{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;width:min(560px,calc(100% - 24px));display:flex;align-items:center;gap:12px;padding:9px 10px 9px 9px;border:1px solid var(--wire);border-radius:16px;background:rgba(20,17,13,.96);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 18px 40px rgba(0,0,0,.5);font-family:var(--grot)}
 .tocando[hidden]{display:none}
 .tocando .t-capa{width:44px;height:44px;flex:none;border-radius:6px;overflow:hidden;background:#000}
 .tocando .t-capa img{width:100%;height:100%;object-fit:cover;display:block}
 .tocando .t-txt{flex:1;min-width:0}
 .tocando .t-txt b{display:block;font:700 14px/1.2 var(--grot);color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tocando .t-txt a{display:block;margin-top:3px;font:500 12px/1.2 var(--grot);color:var(--read);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none}
-.tocando .t-txt a:hover{color:var(--amber)}
+.tocando .t-txt small{display:block;margin-top:3px;font:500 12px/1.2 var(--grot);color:var(--read);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* toque em qualquer lugar do player (fora dos botões) abre a tape: um link cobre a caixa, os botões ficam por cima */
+.tocando .t-link{position:absolute;inset:0;z-index:1;border-radius:16px}
+.tocando .t-capa,.tocando .t-txt{position:relative;pointer-events:none}
+.tocando button{position:relative;z-index:2}
+@media(hover:hover){.tocando:hover{border-color:var(--clay)}.tocando:hover .t-txt small{color:var(--amber)}}
 .tocando button{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;border:0;background:transparent;color:var(--cream);cursor:pointer}
 .tocando .t-play{background:var(--cream);color:var(--black)}
 .tocando button svg{width:16px;height:16px}
@@ -304,7 +310,7 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
 <header class="terra">
   <nav class="topo" aria-label="Caramujo Records">
     <a class="logo" href="/?de=perfil" aria-label="Caramujo Records, beats à venda"><img src="/assets/brand/caramujo-h.webp" alt="Caramujo Records" width="296" height="54"></a>
-    ${tocador ? `<button class="ouca" id="ouca" type="button" aria-pressed="false">${ICONE_TOCA}${ICONE_PAUSA}<span>Ouça a beat tape nova</span></button>` : ''}
+    ${tocador ? `<button class="ouca" id="ouca" type="button" aria-pressed="false">${ICONE_TOCA}${ICONE_PAUSA}<span>Ouça a última beat tape</span></button>` : ''}
   </nav>
   <section class="palco">
     <div class="texto">
@@ -325,10 +331,12 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
     </div>
   </section>
 </header>
-${barraFixa ? `<div class="fixa" id="fixa" aria-hidden="true"><img src="/assets/perfil/rideblan33-avatar.webp" alt="" width="34" height="34"><b>@rideblan33</b>${tocador ? `<button class="ouca" type="button" data-ouca aria-pressed="false" tabindex="-1">${ICONE_TOCA}${ICONE_PAUSA}<span>Ouça a tape nova</span></button>` : ''}</div>` : ''}
+${barraFixa ? `<div class="fixa" id="fixa" aria-hidden="true"><img src="/assets/perfil/rideblan33-avatar.webp" alt="" width="34" height="34"><b>@rideblan33</b>${tocador ? `<button class="ouca" type="button" data-ouca aria-pressed="false" tabindex="-1">${ICONE_TOCA}${ICONE_PAUSA}<span>Ouça a última tape</span></button>` : ''}</div>` : ''}
 ${tocador ? `<div class="tocando" id="tocando" hidden>
-  <a class="t-capa" href="${esc(tocador.tape.url)}" aria-label="Abrir a tape ${esc(tocador.tape.name)}"><img src="${esc(tocador.tape.capa)}" alt="" width="44" height="44"></a>
-  <div class="t-txt"><b id="tNome">—</b><a href="${esc(tocador.tape.url)}">${esc(tocador.tape.name)} · abrir a tape</a></div>
+  <a class="t-link" id="tLink" href="${esc(tocador.tape.url)}" aria-label="Abrir a tape ${esc(tocador.tape.name)}"></a>
+  <span class="t-capa"><img src="${esc(tocador.tape.capa)}" alt="" width="44" height="44"></span>
+  <div class="t-txt"><b id="tNome">—</b><small>${esc(tocador.tape.name)}</small></div>
+  <button id="tAnt" type="button" aria-label="Beat anterior"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14h2.6V5zM19 5l-9 7 9 7z"/></svg></button>
   <button class="t-play" id="tPlay" type="button" aria-label="Pausar">${ICONE_TOCA}${ICONE_PAUSA}</button>
   <button id="tProx" type="button" aria-label="Próximo beat"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17 5v14h-2.6V5zM5 5l9 7-9 7z"/></svg></button>
   <span class="barra"><i id="tBarra"></i></span>
@@ -361,7 +369,7 @@ ${grade(tapes)}
     else manda({kind:'perfil-rede',trackId:a.dataset.rede,origem:de});
   });
 
-  // "Ouça a beat tape nova": toca os beats da tape mais nova aqui mesmo, um atrás
+  // "Ouça a última beat tape": toca os beats da tape mais nova aqui mesmo, um atrás
   // do outro, sem sair da página. Cada beat conta como play da tape (origem perfil).
   var dadosEl=document.getElementById('tocadorDados'), T=null;
   try{ T=dadosEl?JSON.parse(dadosEl.textContent):null; }catch(e){ T=null; }
@@ -373,7 +381,7 @@ ${grade(tapes)}
     var nome=document.getElementById('tNome'), barra=document.getElementById('tBarra');
     function marca(){
       var toca=!som.paused;
-      botoes.forEach(function(b){ b.setAttribute('aria-pressed',toca?'true':'false'); b.setAttribute('aria-label',toca?'Pausar a beat tape nova':'Ouça a beat tape nova'); });
+      botoes.forEach(function(b){ b.setAttribute('aria-pressed',toca?'true':'false'); b.setAttribute('aria-label',toca?'Pausar a última beat tape':'Ouça a última beat tape'); });
       caixa.classList.toggle('toca',toca);
       document.getElementById('tPlay').setAttribute('aria-label',toca?'Pausar':'Tocar');
     }
@@ -384,14 +392,40 @@ ${grade(tapes)}
       caixa.hidden=false; document.body.classList.add('com-player');
       som.play().catch(function(){ marca(); });
       if(!contados[f.id]){ contados[f.id]=1; manda({kind:'play',trackId:f.id,artistId:T.tape.id,origem:'perfil'}); }
-      if('mediaSession' in navigator){ try{ navigator.mediaSession.metadata=new MediaMetadata({title:f.t+' (prod. @rideblan33)',artist:T.tape.name,album:'Caramujo Records',artwork:[{src:T.tape.capa,sizes:'200x200',type:'image/jpeg'}]});
-        navigator.mediaSession.setActionHandler('nexttrack',function(){ vai(i+1); }); }catch(e){} }
+      tarja(f);
+    }
+    // Tela de bloqueio e notificação: exatamente as mesmas informações da página da
+    // tape (título "BEAT (prod. @rideblan33)", nome da tape, Caramujo Records, capa
+    // inteira) e os mesmos botões.
+    function tarja(f){
+      if(!('mediaSession' in navigator)) return;
+      var url=location.origin+T.tape.arte, tipo=/\\.png$/i.test(url)?'image/png':'image/jpeg';
+      try{ navigator.mediaSession.metadata=new MediaMetadata({ title:f.t+' (prod. @rideblan33)', artist:T.tape.name, album:'Caramujo Records',
+        artwork:['96x96','192x192','256x256','512x512'].map(function(t){ return {src:url,sizes:t,type:tipo}; }) }); }catch(e){}
+      var liga=function(a,fn){ try{ navigator.mediaSession.setActionHandler(a,fn) }catch(e){} };
+      liga('play',function(){ som.play().catch(function(){}) });
+      liga('pause',function(){ som.pause() });
+      liga('previoustrack',function(){ if(som.currentTime>4){ som.currentTime=0; return; } vai(i-1); });
+      liga('nexttrack',function(){ vai(i+1); });
+      liga('seekbackward',function(d){ som.currentTime=Math.max(0,som.currentTime-(d&&d.seekOffset||15)); });
+      liga('seekforward',function(d){ som.currentTime=Math.min(som.duration||1e9,som.currentTime+(d&&d.seekOffset||15)); });
+      liga('seekto',function(d){ if(d&&d.seekTime!=null) som.currentTime=d.seekTime; });
+      liga('stop',function(){ som.pause(); som.currentTime=0; });
+    }
+    function posicao(){
+      if(!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState) return;
+      var dur=som.duration; if(!dur||!isFinite(dur)) return;
+      try{ navigator.mediaSession.setPositionState({ duration:dur, position:Math.min(som.currentTime,dur), playbackRate:som.playbackRate||1 }); }catch(e){}
     }
     function alterna(){ if(i<0) return vai(0); if(som.paused) som.play().catch(function(){}); else som.pause(); }
     botoes.forEach(function(b){ b.addEventListener('click',alterna); });
     document.getElementById('tPlay').addEventListener('click',alterna);
     document.getElementById('tProx').addEventListener('click',function(){ vai(i+1); });
-    som.addEventListener('play',marca); som.addEventListener('pause',marca);
+    // anterior: no começo do beat volta pro anterior; passou de 4 s, volta pro começo dele
+    document.getElementById('tAnt').addEventListener('click',function(){ if(som.currentTime>4){ som.currentTime=0; if(som.paused) som.play().catch(function(){}); } else vai(i-1); });
+    som.addEventListener('play',function(){ marca(); if('mediaSession' in navigator) navigator.mediaSession.playbackState='playing'; });
+    som.addEventListener('pause',function(){ marca(); if('mediaSession' in navigator) navigator.mediaSession.playbackState='paused'; });
+    som.addEventListener('loadedmetadata',posicao); som.addEventListener('seeked',posicao);
     som.addEventListener('ended',function(){ vai(i+1); });
     som.addEventListener('timeupdate',function(){ barra.style.width=(som.duration?som.currentTime/som.duration*100:0)+'%'; });
   }

@@ -349,7 +349,14 @@ async function perfilResumo(d) {
        FROM events WHERE kind = 'perfil' AND at >= ?`
   ).bind(inicioMes, inicioAno).first();
   const u = await d.prepare("SELECT at FROM events WHERE kind = 'perfil' ORDER BY at DESC LIMIT 1").first();
-  return json({ ultima: u ? u.at : null, mes: Number(r && r.mes || 0), ano: Number(r && r.ano || 0), pessoas: Number(r && r.pessoas || 0) });
+  // plays de cada tape desde sempre (a lista numerada mostra "N beats · N plays")
+  const { results: pl } = await d.prepare(
+    `SELECT e.artist_id AS id, COUNT(*) AS n FROM events e JOIN artists a ON a.id = e.artist_id
+      WHERE e.kind = 'play' AND a.tipo = 'tape' GROUP BY e.artist_id`
+  ).all();
+  const plays = {};
+  for (const x of pl || []) plays[x.id] = Number(x.n || 0);
+  return json({ ultima: u ? u.at : null, mes: Number(r && r.mes || 0), ano: Number(r && r.ano || 0), pessoas: Number(r && r.pessoas || 0), plays });
 }
 
 async function descricao(d, body) {

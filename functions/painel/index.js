@@ -138,8 +138,9 @@ const BASE = `
   /* Perfil @rideblan33: lista numerada pra arrastar (26/09/2026) */
   .capa-lista.perfil,.capa-mini.perfil{border-radius:50%}
   .pf-lista{list-style:none;margin:0;padding:0;counter-reset:pf}
-  .pf-lista li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--linha);background:#141414;touch-action:auto}
-  .pf-lista li.pego{position:relative;z-index:2;background:#1c1c1c;box-shadow:0 10px 26px rgba(0,0,0,.55);border-radius:10px}
+  .pf-lista{position:relative}
+  .pf-lista li{position:relative;display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--linha);background:#141414;touch-action:auto;will-change:transform}
+  .pf-lista li.pego{z-index:3;background:#1e1e1e;box-shadow:0 14px 34px rgba(0,0,0,.6);border-radius:10px;border-bottom-color:transparent}
   .pf-n{width:26px;flex:none;text-align:right;font-size:13px;font-weight:700;color:var(--ink3);font-variant-numeric:tabular-nums}
   .pf-capa{width:40px;height:40px;flex:none;border-radius:6px;overflow:hidden;background:#171717}
   .pf-capa img{width:100%;height:100%;object-fit:cover;display:block}
@@ -147,10 +148,10 @@ const BASE = `
   .pf-txt{flex:1;min-width:0}
   .pf-txt b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pf-txt small{display:block;font-size:12px;color:var(--ink4);margin-top:2px}
-  .pf-bt{width:34px;height:34px;flex:none;border-radius:9px;border:1px solid var(--borda);background:#101010;color:#cfcfcf;
-    display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
-  .pf-bt:disabled{opacity:.3;cursor:default}
-  .pf-alca{width:34px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;color:#8a8a8a;cursor:grab;touch-action:none}
+  .pf-alca{width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;color:#8a8a8a;cursor:grab;touch-action:none;
+    background:transparent;border:0;border-radius:10px;padding:0}
+  .pf-alca:focus-visible{outline:2px solid #fff;outline-offset:-2px}
+  .pf-alca:hover{color:#fff;background:#1a1a1a}
   .pf-alca:active{cursor:grabbing}
   .pf-dica{font-size:12.5px;color:var(--ink4);margin:0 0 10px}
   .pf-fora li .pill{padding:8px 12px;font-size:13px}
@@ -688,7 +689,7 @@ function pagina() {
     var b=document.createElement('button'); b.type='button'; b.className='linha';
     var n=noPerfil().length;
     b.innerHTML='<span class="capa-lista perfil"><img src="'+AVATAR+'" alt="" loading="lazy"></span>'+
-      '<span style="flex:1;min-width:0"><span class="nome">Perfil @rideblan33</span>'+
+      '<span style="flex:1;min-width:0"><span class="nome">@rideblan33</span>'+
       '<span class="meta">'+n+(n===1?' beat tape':' beat tapes')+' no perfil · '+tempo(perfilVisto)+'</span></span>';
     b.addEventListener('click',abrirPerfil);
     var c=document.createElement('button'); c.type='button'; c.className='copiar'; c.setAttribute('aria-label','Copiar link do perfil');
@@ -698,18 +699,17 @@ function pagina() {
     $('lista').appendChild(row);
   }
 
-  var SETA_CIMA='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>';
-  var SETA_BAIXO='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
   var ALCA='<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
 
-  // Card do perfil: link, atividade (igual às tapes) e a ordem das capas numa lista
-  // numerada. Arrasta pela alça (ou usa as setas); salva sozinho. Tape nova sempre
-  // entra como 1ª.
+  // Card do @rideblan33: link, atividade (igual às tapes) e a ordem das capas numa
+  // lista numerada. Segura a alça e arrasta (no teclado: foca a alça e usa as setas);
+  // salva sozinho. Tape nova sempre entra como 1ª.
+  var pfPlays=null;
   function abrirPerfil(){
     var u=location.origin+'/rideblan33', c=$('card');
     c.innerHTML=
       '<div class="cab"><div class="capa-mini perfil"><img src="'+AVATAR+'" alt="@rideblan33"></div><div class="cab-txt">'+
-        '<h2>Perfil @rideblan33</h2><div class="end">caramujorecords.com.br/rideblan33</div></div></div>'+
+        '<h2>@rideblan33</h2><div class="end">caramujorecords.com.br/rideblan33</div></div></div>'+
       '<div class="acoes">'+
         '<button class="pill solid" data-act="copiar" type="button">Copiar link</button>'+
         '<button class="pill" data-act="abrir" type="button">Abrir</button>'+
@@ -721,7 +721,7 @@ function pagina() {
           '<div><b id="pfAno">—</b><span>visitas<br>no ano</span></div>'+
         '</div></div>'+
       '<div class="bloco"><div class="rot">ORDEM NO PERFIL</div>'+
-        '<p class="pf-dica">Arrasta pela alça ou usa as setas. Salva sozinho. Tape nova entra sempre como 1ª.</p>'+
+        '<p class="pf-dica">Segura a alça e arrasta. Salva sozinho. Tape nova entra sempre como 1ª.</p>'+
         '<ol class="pf-lista" id="pfLista"></ol></div>'+
       '<div class="bloco" id="pfForaBloco" hidden><div class="rot">FORA DO PERFIL</div><ul class="pf-lista pf-fora" id="pfFora"></ul></div>'+
       '<div class="acoes"><button class="pill" data-close type="button">Fechar</button></div>';
@@ -731,6 +731,7 @@ function pagina() {
     c.querySelector('[data-act=abrir]').addEventListener('click',function(){ window.open(u,'_blank','noopener') });
     fetch('/api/painel?op=perfil-resumo').then(function(x){return x.json()}).then(function(j){
       $('pfUltima').textContent=j.ultima?dia(j.ultima):'—'; $('pfMes').textContent=j.mes||0; $('pfAno').textContent=j.ano||0;
+      pfPlays=j.plays||{}; pintaPlays();
     }).catch(function(){});
     montarOrdem();
   }
@@ -742,13 +743,11 @@ function pagina() {
     noPerfil().forEach(function(a){
       var li=document.createElement('li'); li.dataset.id=a.id;
       li.innerHTML='<span class="pf-n"></span>'+capaPf(a)+
-        '<span class="pf-txt"><b>'+esc(a.name)+'</b><small>'+(a.nb||0)+((a.nb||0)===1?' beat':' beats')+'</small></span>'+
-        '<button class="pf-bt" type="button" data-mv="-1" aria-label="Subir '+esc(a.name)+'">'+SETA_CIMA+'</button>'+
-        '<button class="pf-bt" type="button" data-mv="1" aria-label="Descer '+esc(a.name)+'">'+SETA_BAIXO+'</button>'+
-        '<span class="pf-alca" aria-hidden="true">'+ALCA+'</span>';
+        '<span class="pf-txt"><b>'+esc(a.name)+'</b><small>'+(a.nb||0)+((a.nb||0)===1?' beat':' beats')+'<span class="pf-plays"></span></small></span>'+
+        '<button class="pf-alca" type="button" aria-label="Mover '+esc(a.name)+' (setas pra cima e pra baixo)">'+ALCA+'</button>';
       ol.appendChild(li);
     });
-    renumera();
+    renumera(); pintaPlays();
     var fora=tapes.filter(function(t){ return t.perfil===0 && (t.nb||0)>0 });
     $('pfForaBloco').hidden=!fora.length;
     var ul=$('pfFora'); ul.innerHTML='';
@@ -767,11 +766,13 @@ function pagina() {
     if(!ol.dataset.ligado){ ol.dataset.ligado='1'; ligarOrdem(ol); }
   }
   function renumera(){
-    var lis=[].slice.call($('pfLista').children);
-    lis.forEach(function(li,i){
-      li.querySelector('.pf-n').textContent=(i+1);
-      li.querySelector('[data-mv="-1"]').disabled=i===0;
-      li.querySelector('[data-mv="1"]').disabled=i===lis.length-1;
+    [].slice.call($('pfLista').children).forEach(function(li,i){ li.querySelector('.pf-n').textContent=(i+1) });
+  }
+  function pintaPlays(){
+    if(!pfPlays || !$('pfLista')) return;
+    [].slice.call(document.querySelectorAll('#pfLista li')).forEach(function(li){
+      var n=pfPlays[li.dataset.id]||0;
+      li.querySelector('.pf-plays').textContent=' · '+n.toLocaleString('pt-BR')+(n===1?' play':' plays');
     });
   }
   var salvarOrdemT=null;
@@ -786,35 +787,69 @@ function pagina() {
       });
     },600);
   }
+  // Arrastar suave: a tape pega segue o dedo (sem pular de linha em linha) e as outras
+  // deslizam pro lugar novo (FLIP: mede antes, troca no DOM, anima a diferença).
   function ligarOrdem(ol){
-    ol.addEventListener('click',function(e){
-      var b=e.target.closest('[data-mv]'); if(!b||b.disabled) return;
-      var li=b.closest('li'), d=Number(b.dataset.mv);
-      if(d<0 && li.previousElementSibling) ol.insertBefore(li,li.previousElementSibling);
-      if(d>0 && li.nextElementSibling) ol.insertBefore(li.nextElementSibling,li);
-      renumera(); salvarOrdem();
-      var f=li.querySelector('[data-mv="'+d+'"]'); if(f && !f.disabled) f.focus();
-    });
-    var pego=null, card=$('card');
+    var pego=null, card=$('card'), dy=0, DUR=180;
+    function topoLayout(li){ return ol.getBoundingClientRect().top + li.offsetTop; }
+    function desliza(mudar){
+      var outros=[].slice.call(ol.children).filter(function(li){ return li!==pego });
+      var antes=outros.map(function(li){ return li.getBoundingClientRect().top });
+      mudar();
+      outros.forEach(function(li,i){
+        var d=antes[i]-li.getBoundingClientRect().top;
+        if(!d) return;
+        li.style.transition='none'; li.style.transform='translateY('+d+'px)';
+        li.getBoundingClientRect();
+        li.style.transition='transform '+DUR+'ms cubic-bezier(.2,.7,.3,1)'; li.style.transform='';
+      });
+      renumera();
+    }
+    function segue(y){ if(pego) pego.style.transform='translateY('+(y-dy-topoLayout(pego))+'px)'; }
     ol.addEventListener('pointerdown',function(e){
       var h=e.target.closest('.pf-alca'); if(!h) return;
       pego=h.closest('li'); e.preventDefault();
       try{ h.setPointerCapture(e.pointerId); }catch(_){}
+      dy=e.clientY-pego.getBoundingClientRect().top;
+      pego.style.transition='box-shadow .15s, background .15s';
       pego.classList.add('pego');
     });
     ol.addEventListener('pointermove',function(e){
       if(!pego) return;
       var cr=card.getBoundingClientRect();
-      if(e.clientY<cr.top+60) card.scrollTop-=12; else if(e.clientY>cr.bottom-60) card.scrollTop+=12;
+      if(e.clientY<cr.top+60) card.scrollTop-=10; else if(e.clientY>cr.bottom-60) card.scrollTop+=10;
+      // meio da tape pega x meio das outras (posição de layout, sem a animação)
+      var meio=e.clientY-dy+pego.offsetHeight/2;
       var outros=[].slice.call(ol.children).filter(function(li){ return li!==pego });
-      var antes=null;
-      for(var i=0;i<outros.length;i++){ var r=outros[i].getBoundingClientRect(); if(e.clientY<r.top+r.height/2){ antes=outros[i]; break; } }
-      if(antes){ if(pego.nextElementSibling!==antes) ol.insertBefore(pego,antes); }
-      else if(ol.lastElementChild!==pego) ol.appendChild(pego);
-      renumera();
+      var alvo=null;
+      for(var i=0;i<outros.length;i++){ if(meio<topoLayout(outros[i])+outros[i].offsetHeight/2){ alvo=outros[i]; break; } }
+      if(alvo ? pego.nextElementSibling!==alvo : ol.lastElementChild!==pego){
+        desliza(function(){ if(alvo) ol.insertBefore(pego,alvo); else ol.appendChild(pego); });
+      }
+      segue(e.clientY);
     });
-    function solta(){ if(!pego) return; pego.classList.remove('pego'); pego=null; salvarOrdem(); }
+    function solta(){
+      if(!pego) return;
+      var li=pego; pego=null;
+      li.style.transition='transform '+DUR+'ms cubic-bezier(.2,.7,.3,1), box-shadow .2s, background .2s';
+      li.style.transform='';
+      li.classList.remove('pego');
+      setTimeout(function(){ li.style.transition=''; }, DUR+20);
+      salvarOrdem();
+    }
     ol.addEventListener('pointerup',solta); ol.addEventListener('pointercancel',solta);
+    // teclado: alça focada + seta pra cima/baixo
+    ol.addEventListener('keydown',function(e){
+      var h=e.target.closest('.pf-alca'); if(!h) return;
+      if(e.key!=='ArrowUp' && e.key!=='ArrowDown') return;
+      e.preventDefault();
+      var li=h.closest('li'); pego=li;
+      desliza(function(){
+        if(e.key==='ArrowUp' && li.previousElementSibling) ol.insertBefore(li,li.previousElementSibling);
+        if(e.key==='ArrowDown' && li.nextElementSibling) ol.insertBefore(li.nextElementSibling,li);
+      });
+      pego=null; h.focus(); salvarOrdem();
+    });
   }
 
   function rodando(a){
@@ -863,7 +898,7 @@ function pagina() {
       (a.tipo==='tape'
         ? '<div class="bloco"><div class="rot">PERFIL @RIDEBLAN33</div>'+
           sw('perfil','Mostrar no perfil','a capa aparece em caramujorecords.com.br/rideblan33',a.perfil!==0)+
-          '<div class="sw"><span><b id="perfilPos">'+esc(posicaoPerfil(a))+'</b><small>a ordem muda em <b>Perfil @rideblan33</b>, no topo da lista das tapes</small></span></div></div>'
+          '<div class="sw"><span><b id="perfilPos">'+esc(posicaoPerfil(a))+'</b><small>a ordem muda em <b>@rideblan33</b>, no topo da lista das tapes</small></span></div></div>'
         : '')+
       '<div class="bloco"><div class="rot">DESCRIÇÃO DO CATÁLOGO</div>'+
         '<label for="desc" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Descrição</label>'+

@@ -6,7 +6,7 @@ import { lerPerfil, paginaPerfil } from '../_lib/perfil.js';
 
 // A barra fina com a foto e o @ que aparece presa no topo ao descer pras capas.
 // Desligar = false (decisão do Bruno depois de ver com e sem).
-const BARRA_FIXA = true;
+const BARRA_FIXA = false;   // 26/09/2026: o Bruno escolheu SEM a barra
 
 export async function onRequestGet({ request, env }) {
   const dados = await lerPerfil(request, env);
