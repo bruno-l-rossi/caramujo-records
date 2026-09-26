@@ -682,7 +682,8 @@ function pagina() {
 
   // primeira linha da lista de tapes, sempre: o perfil público. Toca = abre o card do
   // perfil (atividade + a ordem das tapes); o botão ao lado copia o link.
-  var AVATAR='/assets/perfil/rideblan33-avatar.webp';
+  // ícone do @rideblan33 no painel: o 33 da camisa (escolha B, 26/09/2026)
+  var AVATAR='/assets/perfil/rideblan33-camisa.webp';
   function linhaPerfil(){
     var u=location.origin+'/rideblan33';
     var row=document.createElement('div'); row.className='item item-perfil';
