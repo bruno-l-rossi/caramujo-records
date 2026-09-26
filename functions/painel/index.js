@@ -276,7 +276,7 @@ function pagina() {
   <div id="analytics" hidden></div>
   <div id="vitrine" hidden></div>
 </div>
-<script src="/assets/painel/analytics.js?v=2026-09-27b" defer></script>
+<script src="/assets/painel/analytics.js?v=2026-09-26p" defer></script>
 <script src="/assets/painel/vitrine.js?v=2026-09-25a" defer></script>
 
 <div class="veil" id="veil" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
@@ -287,7 +287,19 @@ function pagina() {
   var $=function(i){return document.getElementById(i)};
   var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='home', filtro='', ordem='modificado';
   var lojaResumo=null, lojaPedida=false, consumoHoje=null, consumoPedido=false;
-  var ORDENS={modificado:'Modificação', atividade:'Atividade', az:'A a Z', faixas:'Mais faixas'};
+  var ORDENS={modificado:'Modificação', atividade:'Atividade', az:'A a Z', faixas:'Mais faixas', perfil:'Ordem do perfil'};
+  // Perfil do @rideblan33 (26/09/2026): a mesma conta da página (tape sem ordem = nova = topo)
+  function chavePerfil(a){ return a.perfil_ordem!=null ? Number(a.perfil_ordem) : -1000000000 - a.id; }
+  function noPerfil(){
+    return tapes.filter(function(t){ return t.perfil!==0 && (t.nb||0)>0 })
+      .sort(function(x,y){ return chavePerfil(x)-chavePerfil(y) || x.id-y.id });
+  }
+  function posicaoPerfil(a){
+    if(a.perfil===0) return 'Fora do perfil';
+    if(!(a.nb>0)) return 'Aparece quando tiver beat pronto';
+    var l=noPerfil(), i=l.indexOf(a);
+    return (i+1)+'ª de '+l.length+' no perfil';
+  }
 
   function tempo(iso){
     if(!iso) return 'nunca abriu';
@@ -362,6 +374,7 @@ function pagina() {
   function irPara(v){
     if(v==='home'){ lojaPedida=false; consumoPedido=false; }   // volta com os números novos
     vista=v; filtro=''; $('q').value='';
+    if(v!=='tapes' && ordem==='perfil'){ ordem='modificado'; $('ordemLabel').textContent=ORDENS[ordem]; }
     $('q').placeholder = v==='tapes' ? 'Buscar beat tape' : 'Buscar artista';
     desenhar(); window.scrollTo(0,0);
   }
@@ -444,6 +457,13 @@ function pagina() {
       }
       if(ordem==='az') return a.name.localeCompare(b.name,'pt-BR',{sensitivity:'base'});
       if(ordem==='faixas') return ((b.nb||0)+(b.ns||0)) - ((a.nb||0)+(a.ns||0));
+      if(ordem==='perfil'){
+        // fora do perfil (escondida ou ainda sem beat pronto) vai pro fim, em ordem alfabética
+        var fa=a.perfil===0||!(a.nb>0), fb=b.perfil===0||!(b.nb>0);
+        if(fa!==fb) return fa ? 1 : -1;
+        if(fa) return a.name.localeCompare(b.name,'pt-BR',{sensitivity:'base'});
+        return chavePerfil(a)-chavePerfil(b) || a.id-b.id;
+      }
       // atividade: quem abriu mais recente primeiro, quem nunca abriu por último
       if(!a.visto && !b.visto) return a.name.localeCompare(b.name,'pt-BR',{sensitivity:'base'});
       if(!a.visto) return 1;
@@ -453,6 +473,7 @@ function pagina() {
     $('lista').innerHTML='';
 
     if(vista==='tapes') cartaoRevisar();
+    if(vista==='tapes' && !filtro && tapes.length) linhaPerfil();
 
     if(!alvo.length){
       var v=document.createElement('div'); v.className='vazio';
@@ -471,7 +492,7 @@ function pagina() {
       var b=document.createElement('button');
       b.type='button';b.className='linha';
       b.innerHTML=capaLista(a)+'<span style="flex:1;min-width:0"><span class="nome">'+esc(a.name)+'</span>'+
-        (rodando(a) ? barra(a) : '<span class="meta">'+conta(a)+' · '+tempo(a.visto)+'</span>')+'</span>';
+        (rodando(a) ? barra(a) : '<span class="meta">'+conta(a)+' · '+tempo(a.visto)+(a.tipo==='tape'&&a.perfil===0?' · fora do perfil':'')+'</span>')+'</span>';
       b.addEventListener('click',function(){abrir(a)});
       var c=document.createElement('button');
       c.type='button';c.className='copiar';c.setAttribute('aria-label','Copiar link de '+a.name);
@@ -638,6 +659,22 @@ function pagina() {
   }
   function link(a){ return location.origin+'/'+a.slug+'/'+a.code }
 
+  // primeira linha da lista de tapes: o perfil público, com o link pra copiar
+  function linhaPerfil(){
+    var u=location.origin+'/rideblan33';
+    var row=document.createElement('div'); row.className='item';
+    var b=document.createElement('button'); b.type='button'; b.className='linha';
+    b.innerHTML='<span class="capa-lista vazia"><img src="/assets/brand/selo-creme.svg" alt="" width="18" height="18"></span>'+
+      '<span style="flex:1;min-width:0"><span class="nome">Perfil @rideblan33</span>'+
+      '<span class="meta">'+noPerfil().length+' tapes no perfil · caramujorecords.com.br/rideblan33</span></span>';
+    b.addEventListener('click',function(){ window.open(u,'_blank','noopener') });
+    var c=document.createElement('button'); c.type='button'; c.className='copiar'; c.setAttribute('aria-label','Copiar link do perfil');
+    c.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b7b7b7" stroke-width="1.7"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a1 1 0 011-1h9"/></svg>';
+    c.addEventListener('click',function(e){ e.stopPropagation(); if(navigator.clipboard) navigator.clipboard.writeText(u); flash('Link do perfil copiado.') });
+    row.appendChild(b); row.appendChild(c);
+    $('lista').appendChild(row);
+  }
+
   function rodando(a){
     if(a.job_estado!=='na fila' && a.job_estado!=='convertendo') return false;
     // some sozinho se algo travar no meio do caminho
@@ -681,6 +718,12 @@ function pagina() {
         '<button class="pill solid" data-act="copiar" type="button">Copiar link</button>'+
         '<button class="pill" data-act="abrir" type="button">Abrir</button>'+
       '</div>'+
+      (a.tipo==='tape'
+        ? '<div class="bloco"><div class="rot">PERFIL @RIDEBLAN33</div>'+
+          sw('perfil','Mostrar no perfil','a capa aparece em caramujorecords.com.br/rideblan33',a.perfil!==0)+
+          '<div class="sw"><span><b id="perfilPos">'+esc(posicaoPerfil(a))+'</b><small>a ordem das capas no perfil</small></span>'+
+          '<button class="pill" data-act="topo" type="button">Subir pro topo</button></div></div>'
+        : '')+
       '<div class="bloco"><div class="rot">DESCRIÇÃO DO CATÁLOGO</div>'+
         '<label for="desc" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Descrição</label>'+
         '<textarea class="desc" id="desc" maxlength="280" placeholder="Um recado que aparece embaixo da contagem de faixas. Só você escreve — pode quebrar linha.">'+esc(a.descricao||'')+'</textarea>'+
@@ -751,10 +794,30 @@ function pagina() {
         fechar();acompanhar();carregar(true);
       });
     });
+    var topo=c.querySelector('[data-act=topo]');
+    if(topo) topo.addEventListener('click',function(){
+      topo.disabled=true; topo.textContent='Subindo…';
+      acao('perfil-topo',{id:a.id}).then(function(j){
+        topo.disabled=false; topo.textContent='Subir pro topo';
+        if(!j.ok){ flash(j.erro||'Não consegui mudar a ordem.'); return; }
+        a.perfil_ordem=j.perfil_ordem;
+        $('perfilPos').textContent=posicaoPerfil(a);
+        flash(a.perfil===0?'Subiu pro topo. Ligue "Mostrar no perfil" pra ela aparecer.':'Subiu pro topo do perfil.');
+      });
+    });
     c.querySelectorAll('.toggle').forEach(function(t){
       t.addEventListener('click',function(){
         var on=t.getAttribute('aria-pressed')!=='true';
         t.setAttribute('aria-pressed',String(on));
+        if(t.dataset.campo==='perfil'){
+          acao('perfil',{id:a.id,valor:on?1:0}).then(function(j){
+            if(!j.ok){ t.setAttribute('aria-pressed',String(!on)); flash(j.erro||'Não consegui mudar.'); return; }
+            a.perfil=on?1:0;
+            $('perfilPos').textContent=posicaoPerfil(a);
+            flash(on?'Aparece no perfil.':'Escondida do perfil.');
+          });
+          return;
+        }
         acao('perm',{id:a.id,campo:t.dataset.campo,valor:on?1:0}).then(function(){
           if(t.dataset.campo==='beats')a.dl_beats=on?1:0; else a.dl_sons=on?1:0;
           flash(on?'Liberado pra baixar.':'Agora é só ouvir.');
@@ -813,6 +876,7 @@ function pagina() {
   }
   function rotulo(x){
     if(x.kind==='open') return 'abriu o catálogo';
+    if(x.kind==='perfil-tape') return 'tocou na capa no perfil';
     if(x.kind==='play') return 'ouviu ' + esc(x.titulo||'uma faixa');
     if(x.kind && x.kind.indexOf('download')===0) return 'baixou ' + esc(x.titulo||'uma faixa') + ' em ' + x.kind.split('-')[1].toUpperCase();
     return x.kind;
@@ -831,7 +895,7 @@ function pagina() {
   $('ordemBtn').addEventListener('click',function(){
     var c=$('card');
     c.innerHTML='<h2>Ordem</h2><p>Como a lista aparece</p><div class="card-list">'+
-      Object.keys(ORDENS).map(function(k){
+      Object.keys(ORDENS).filter(function(k){ return k!=='perfil' || vista==='tapes' }).map(function(k){
         return '<button type="button" data-ordem="'+k+'">'+
           '<span style="width:18px;display:flex">'+(ordem===k?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M5 12.5l5 5 9-10"/></svg>':'')+'</span>'+
           ORDENS[k]+'</button>';

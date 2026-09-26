@@ -123,7 +123,8 @@
   var ORIGEM = {
     direto: 'Direto (link salvo ou digitado)', instagram: 'Instagram', facebook: 'Facebook', whatsapp: 'WhatsApp',
     tiktok: 'TikTok', youtube: 'YouTube', google: 'Google', busca: 'Outra busca', 'outro-site': 'Outro site',
-    beat: 'Link de beat', bio: 'Bio do Instagram', story: 'Story', 'beat-tape': 'Beat tape'
+    beat: 'Link de beat', bio: 'Bio do Instagram', story: 'Story', 'beat-tape': 'Beat tape',
+    perfil: 'Perfil @rideblan33', tape: 'De uma beat tape', mais: 'Mais do @rideblan33', site: 'Site da Caramujo', spotify: 'Spotify'
   };
   var nomeOrigem = function (o) { return o.nome ? 'Tape: ' + o.nome : (ORIGEM[o.origem] || o.origem); };
 
@@ -504,6 +505,38 @@
       j.faixas.map(function (f) { return [[f.title, f.onde, f.kind === 'beat' ? 'Beat' : 'Música'], num(f.n)]; }), { busca: 'Buscar faixa ou artista', limite: 10 }));
   }
 
+  // Portfólio (26/09/2026): o perfil caramujorecords.com.br/rideblan33
+  var REDES = { vitrine: 'Selo da Caramujo (vitrine)', spotify: 'Spotify', youtube: 'YouTube', instagram: 'Instagram' };
+  function perfil(j, corpo) {
+    var a = j.agora, an = j.antes;
+    corpo.appendChild(tiles([
+      ['Visitas no perfil', num(a.visitas), delta(a.visitas, an.visitas)],
+      ['Pessoas', num(a.pessoas), delta(a.pessoas, an.pessoas)],
+      ['Tocaram numa capa', num(a.cliques), pct(a.clicaram, a.pessoas) + ' das pessoas'],
+      ['Chegaram na vitrine', num(a.vitrine), 'saindo do perfil'],
+      ['Vendas', num(a.pagos), 'de quem veio do perfil']
+    ]));
+    if (!a.visitas) corpo.appendChild(el('div', 'an-vazio', 'Ninguém abriu o perfil nesse período. O perfil começou a contar no deploy de 26/09/2026.'));
+    corpo.appendChild(evolucao('Evolução por dia', 'Até 3 linhas por vez: desligue uma pra ligar outra.', j.dias, j.serie,
+      [['visitas', 'Visitas'], ['pessoas', 'Pessoas'], ['cliques', 'Tocaram numa capa'], ['abertas', 'Tapes abertas pelo perfil'], ['vitrine', 'Chegaram na vitrine']],
+      ['visitas', 'cliques', 'vitrine']));
+    corpo.appendChild(barras('Do perfil até a venda', 'Pessoas diferentes nas duas primeiras etapas; a vitrine conta visitas que saíram do perfil.', [
+      ['Abriram o perfil', a.pessoas, '', ''],
+      ['Tocaram numa capa', a.clicaram, pct(a.clicaram, a.pessoas), ''],
+      ['Chegaram na vitrine', a.vitrine, '', ''],
+      ['Pagaram', a.pagos, pct(a.pagos, a.vitrine), '']
+    ]));
+    var dois = el('div', 'an-dois');
+    dois.appendChild(tabela('De onde vieram', 'Use ?de=bio ou ?de=story no link do perfil que você divulga pra separar a origem.', ['Origem', 'Visitas', 'Pessoas'],
+      j.origens.map(function (o) { return [nomeOrigem(o), num(o.visitas), num(o.pessoas)]; }), { vazio: 'Nenhuma visita nesse período.' }));
+    dois.appendChild(tabela('Botões do perfil', 'Toques em cada botão redondo.', ['Botão', 'Toques'],
+      j.redes.map(function (r) { return [REDES[r.rede] || r.rede, num(r.n)]; }), { vazio: 'Ninguém tocou nos botões nesse período.' }));
+    corpo.appendChild(dois);
+    corpo.appendChild(tabela('Por beat tape', '"Capa no perfil" = toques na capa. "Abertas" = a tape abriu vinda do perfil; "Mais do" = vinda do bloco no fim de outra tape.', ['Tape', 'Capa no perfil', 'Abertas', 'Mais do'],
+      j.tapes.map(function (t) { return [t.perfil === 0 ? [t.name, 'fora do perfil'] : t.name, num(t.cliques), num(t.abertas), num(t.mais)]; }),
+      { busca: 'Buscar beat tape', limite: 10, vazio: 'Nenhuma beat tape convertida ainda.' }));
+  }
+
   /* ---------- montagem ---------- */
   // atalho escolhido vira as datas (sempre contando até hoje)
   function acertaPreset(e) {
@@ -523,7 +556,7 @@
 
       var filtros = el('div', 'an-filtros');
       var abas = el('div', 'an-seg'); abas.setAttribute('role', 'group'); abas.setAttribute('aria-label', 'O que ver');
-      [['vitrine', 'Vitrine'], ['tapes', 'Beat tapes'], ['artistas', 'Artistas']].forEach(function (x) {
+      [['vitrine', 'Vitrine'], ['tapes', 'Beat tapes'], ['artistas', 'Artistas'], ['perfil', 'Portfólio']].forEach(function (x) {
         var b = el('button', null, x[1]); b.type = 'button'; b.dataset.aba = x[0];
         b.addEventListener('click', function () { estado.aba = x[0]; puxa(); });
         abas.appendChild(b);
@@ -617,7 +650,7 @@
             legenda.textContent = j.tudo
               ? 'Tudo que tem guardado: ' + brAno(j.de) + ' a ' + brAno(j.ate) + ' · ' + nd
               : brAno(j.de) + ' a ' + brAno(j.ate) + ' · ' + nd + ', comparado com os ' + nd + ' antes';
-            (j.aba === 'tapes' ? tapes : j.aba === 'artistas' ? artistas : vitrine)(j, corpo);
+            (j.aba === 'tapes' ? tapes : j.aba === 'artistas' ? artistas : j.aba === 'perfil' ? perfil : vitrine)(j, corpo);
           })
           .catch(function () {
             if (meu !== pedido) return;

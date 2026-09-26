@@ -189,6 +189,30 @@ __META__
   @media(hover:hover){.buy:hover{background:#E4DAC7;color:#0a0a0a;border-color:#E4DAC7}}
 
   .empty{padding:26px 0;font-size:14px;color:#5a5a5a}
+  .who a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.22);padding-bottom:1px}
+  @media(hover:hover){.who a:hover{color:#fff;border-bottom-color:#fff}}
+  .mais{padding:30px 0 22px;border-top:1px solid rgba(255,255,255,.06);margin-top:18px}
+  .mais[hidden]{display:none}
+  .mais-cab{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+  .mais h2{margin:0;font-size:18px;font-weight:700;letter-spacing:-.02em}
+  .mais-setas{display:none;gap:6px}
+  @media(hover:hover) and (pointer:fine){.mais-setas{display:flex}}
+  .mais-setas .pl-btn{width:34px;height:34px;border-radius:50%;background:#181818;border:1px solid #2c2c2c;color:#e6e6e6;cursor:pointer;display:grid;place-items:center}
+  .mais-setas .pl-btn:disabled{opacity:.35;cursor:default}
+  .mais-trilho{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;
+    margin:0 -16px;padding:0 16px 4px;scroll-padding:0 16px}
+  .mais-trilho::-webkit-scrollbar{display:none}
+  .mais-card{flex:0 0 136px;min-width:0;scroll-snap-align:start;color:#fff;text-decoration:none}
+  .mais-card .m-capa{display:block;aspect-ratio:1;border-radius:6px;overflow:hidden;background:#0d0d0d}
+  .mais-card img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .3s ease}
+  .mais-card img.m-sem{object-fit:contain;padding:22%}
+  .mais-card b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+    margin-top:9px;font-size:13.5px;font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+  .mais-card small{display:block;margin-top:3px;font-size:12px;color:var(--ink-4);font-variant-numeric:tabular-nums}
+  @media(hover:hover){.mais-card:hover img:not(.m-sem){transform:scale(1.04)}}
+  .mais-perfil{display:inline-flex;align-items:center;gap:8px;margin-top:18px;padding:12px 18px;border-radius:999px;
+    border:1px solid #2c2c2c;background:#181818;color:#fff;font-size:14px;font-weight:500;text-decoration:none}
+  @media(hover:hover){.mais-perfil:hover{border-color:#fff}}
   .foot{padding:6px 0 0;border-top:1px solid rgba(255,255,255,.06);
     display:flex;flex-direction:column;gap:6px;align-items:flex-start}
   .foot .brand-link{padding:16px 2px 0}
@@ -363,6 +387,8 @@ __META__
     .pl-vol #vol{flex:1}
     .pl-ctl{margin:0 auto}
     .dl-dock{max-width:560px;margin:0 auto}
+    .mais-trilho{margin:0 -30px;padding:0 30px 4px;scroll-padding:0 30px}
+    .mais-card{flex-basis:148px}
     .veil{align-items:center}
     .card{border-radius:20px}
   }
@@ -452,6 +478,20 @@ __META__
       </div>
 
       <div class="list" id="list"></div>
+
+      <!-- Mais do @rideblan33 (26/09/2026, só nas tapes): as outras tapes do perfil pra
+           deslizar, no jeito do "Mais de" do Spotify, e o caminho pro perfil inteiro -->
+      <section class="mais" id="mais" hidden aria-labelledby="maisTit">
+        <div class="mais-cab">
+          <h2 id="maisTit">Mais do @rideblan33</h2>
+          <span class="mais-setas">
+            <button class="pl-btn" id="maisAnt" type="button" aria-label="Tapes anteriores"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+            <button class="pl-btn" id="maisProx" type="button" aria-label="Mais tapes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+          </span>
+        </div>
+        <div class="mais-trilho" id="maisTrilho"></div>
+        <a class="mais-perfil" id="maisPerfil" href="/rideblan33?de=tape">Ver perfil completo</a>
+      </section>
 
       <footer class="foot">
         <a class="brand-link" href="https://caramujorecords.com.br" target="_blank" rel="noopener" aria-label="Caramujo Records">
@@ -882,6 +922,37 @@ __META__
     if(contados[t.id])return;
     contados[t.id]=1;
     envia({ kind:'play', trackId:t.id, artistId:CAT.artist.id, code:CAT.code });
+  }
+  // Tape: o @rideblan33 embaixo do nome leva pro perfil, e no fim da lista entram
+  // as outras tapes (26/09/2026). Pasta de artista e link avulso ficam como estão.
+  function maisDoPerfil(){
+    if(!CAT.artist.tape || !CAT.perfil) return;
+    var w=$('who'); w.textContent='';
+    var a=document.createElement('a'); a.href=CAT.perfil+'?de=tape'; a.textContent=CAT.artist.who||'@rideblan33';
+    w.appendChild(a);
+    var lista=CAT.mais||[];
+    if(!lista.length) return;
+    var tr=$('maisTrilho'); tr.textContent='';
+    lista.forEach(function(t){
+      var c=document.createElement('a'); c.className='mais-card'; c.href=t.url;
+      var cap=document.createElement('span'); cap.className='m-capa';
+      var img=document.createElement('img'); img.loading='lazy'; img.decoding='async'; img.alt='';
+      if(t.capa){ img.src=t.capa+'?p'; img.srcset=t.capa+'?p 200w, '+t.capa+' 1000w'; img.sizes='148px'; }
+      else { img.src='/assets/brand/caramujo-v.webp'; img.className='m-sem'; }
+      cap.appendChild(img); c.appendChild(cap);
+      var b=document.createElement('b'); b.textContent=t.name; c.appendChild(b);
+      var sm=document.createElement('small'); sm.textContent=t.n+(t.n===1?' beat':' beats'); c.appendChild(sm);
+      tr.appendChild(c);
+    });
+    $('maisPerfil').href=CAT.perfil+'?de=tape';
+    $('mais').hidden=false;
+    // setas no computador (mouse não desliza de lado)
+    var ant=$('maisAnt'), prox=$('maisProx');
+    function setas(){ ant.disabled=tr.scrollLeft<4; prox.disabled=tr.scrollLeft+tr.clientWidth>=tr.scrollWidth-4; }
+    ant.addEventListener('click',function(){ tr.scrollBy({left:-tr.clientWidth*.8,behavior:'smooth'}) });
+    prox.addEventListener('click',function(){ tr.scrollBy({left:tr.clientWidth*.8,behavior:'smooth'}) });
+    tr.addEventListener('scroll',setas,{passive:true});
+    setas();
   }
   function envia(body){
     try{
@@ -1403,7 +1474,10 @@ __META__
 
     ligarCapa();
     render();
-    envia({ kind:'open', artistId:CAT.artist.id, code:CAT.code });
+    maisDoPerfil();
+    // ?de= do link (perfil, mais, bio...) vai junto, pro analytics saber de onde veio
+    var de=''; try{ de=(new URLSearchParams(location.search).get('de')||''); }catch(_){}
+    envia({ kind:'open', artistId:CAT.artist.id, code:CAT.code, origem:de||undefined });
 
   }
 

@@ -151,7 +151,14 @@ const SCHEMA = [
      linhas INTEGER NOT NULL DEFAULT 0,
      chamadas INTEGER NOT NULL DEFAULT 0,
      PRIMARY KEY (dia, rotulo)
-   )`
+   )`,
+  // Perfil do @rideblan33 (26/09/2026): toda tape aparece no perfil sozinha; o painel
+  // esconde (perfil = 0) e ordena (perfil_ordem, menor primeiro; tape nova sem ordem
+  // entra no topo). events.origem guarda de onde veio a visita do perfil e a tape
+  // aberta a partir dele (?de=perfil).
+  `ALTER TABLE artists ADD COLUMN perfil INTEGER NOT NULL DEFAULT 1`,
+  `ALTER TABLE artists ADD COLUMN perfil_ordem REAL`,
+  `ALTER TABLE events ADD COLUMN origem TEXT`
 ];
 
 // Versão do esquema: muda sozinha quando a lista acima muda. Com ela gravada na
@@ -207,6 +214,32 @@ async function aplicarRespostas(DB, modo) {
 
 export const respostasDoBruno = (DB) => aplicarRespostas(DB, 'pendentes');
 export const vendidosDoBruno = (DB) => aplicarRespostas(DB, 'vendido');
+
+// Ordem inicial do perfil (26/09/2026): a mesma da prévia que o Bruno aprovou, pela
+// data da arte de cada capa no Drive, mais nova primeiro. Duas consultas: lê as
+// tapes e grava tudo num UPDATE só (o plano gratuito aceita 50 por chamada).
+// Tape que não está na lista fica sem ordem e aparece no topo (é nova).
+export const ORDEM_PERFIL = ['A VIDA PASSA, FOCA NO SEU SONHO AGORA', 'FAÇO BEAT, LOGO EXISTO',
+  'TUDO MUDA E NADA MUDA', 'INTERNET', 'OPP FICA PUTO', 'TEMPORADA DE CAÇA', 'CAPITAL DO SUBMUNDO',
+  'CULTURA NÃO DEVE SER TRATADA COMO NEGÓCIOS', 'A VIDA QUE EU PEDI', 'RESILIÊNCIA', 'vozes e vultos',
+  'O FUTURO E O PASSADO SÃO COISAS QUE ME CONFUNDEM', 'caramujo natalino', 'ARMADILHA PARA RATOS',
+  "SÓ QUEM 'TEVE LÁ EMBAIXO COMIGO VAI ANDAR DE BENTLEY", 'respirando notas', 'mente fria', 'Rastros',
+  '1-6 tape', 'rideblan vs michael jackson', 'rideblan vs freddy krueger', 'Onda', 'Não fecho com bolsominion',
+  '2021 tape', 'Nada de novo (vol. I)', 'Grito'];
+export async function ordemInicialPerfil(DB) {
+  const pos = new Map(ORDEM_PERFIL.map((n, i) => [chave(n), i + 1]));
+  const { results } = await DB.prepare("SELECT id, name FROM artists WHERE tipo = 'tape'").all();
+  const casos = [];
+  for (const r of results || []) {
+    const i = pos.get(chave(r.name));
+    if (i) casos.push([r.id, i]);
+  }
+  if (!casos.length) return;
+  await DB.prepare(
+    'UPDATE artists SET perfil_ordem = CASE id ' + casos.map(() => 'WHEN ? THEN ?').join(' ') + ' END WHERE id IN (' +
+    casos.map(() => '?').join(', ') + ')'
+  ).bind(...casos.flat(), ...casos.map((c) => c[0])).run();
+}
 export const disponiveisDoBruno = (DB) => aplicarRespostas(DB, 'fixar-disponivel');
 
 // Ajustes que rodam uma vez só e ficam marcados na tabela meta.
@@ -233,7 +266,8 @@ export const UMA_VEZ = [
   ['beat-evento-do-funil-2026-09-25',
     `INSERT OR IGNORE INTO beat_evento (sessao, beat_id, tipo, dia)
        SELECT sessao, beat_id, CASE etapa WHEN 'play' THEN 'toque' ELSE 'adicao' END, dia
-         FROM funil WHERE etapa IN ('play', 'carrinho') AND beat_id IS NOT NULL`]
+         FROM funil WHERE etapa IN ('play', 'carrinho') AND beat_id IS NOT NULL`],
+  ['perfil-ordem-2026-09-26', ordemInicialPerfil]
 ];
 
 let ready = false;

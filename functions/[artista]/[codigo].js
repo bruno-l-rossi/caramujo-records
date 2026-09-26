@@ -4,10 +4,11 @@ import { paginaErro } from '../_lib/erro.js';
 import { db } from '../_lib/db.js';
 import { pagina, faixa } from '../_lib/page.js';
 import { vitrine, indexar, achar } from '../_lib/vitrine.js';
+import { tapesDoPerfil } from '../_lib/perfil.js';
 
 // caminhos do site que não são artista
 const RESERVADO = new Set(['api', 'audio', 'assets', 'docs', 'previews', 'functions',
-  'mockups-antigos', 'catalogo', 'painel', 'dl', 'f', 'p', 'b', 'capa', 'cdn-cgi']);
+  'mockups-antigos', 'catalogo', 'painel', 'dl', 'f', 'p', 'b', 'capa', 'cdn-cgi', 'rideblan33']);
 
 export async function onRequestGet({ params, request, env }) {
   const slug = String(params.artista || '').toLowerCase();
@@ -58,7 +59,24 @@ export async function onRequestGet({ params, request, env }) {
 
   const tape = artist.tipo === 'tape';
 
+  // Tape: "Mais do @rideblan33" no fim da lista (as outras tapes do perfil, na ordem
+  // do perfil, até 12). Sai da mesma lista guardada do perfil: nenhuma consulta a mais
+  // na maioria das aberturas. Falhou = a tape abre sem o bloco.
+  let mais = null;
+  if (tape) {
+    try {
+      mais = (await tapesDoPerfil(request, env)).filter((t) => t.id !== artist.id).slice(0, 12)
+        .map((t) => ({ name: t.name, url: `/${t.slug}/${t.code}?de=mais`, capa: t.capa ? `/capa/${t.capa}` : null, n: t.n }));
+    } catch (_) { mais = null; }
+  }
+  const nBeats = tracks.filter((t) => t.kind === 'beat').length;
+
   return pagina(request, env, {
+    // Tape vai pro Google (pedido de 26/09/2026); pasta de artista segue privada
+    indexar: tape,
+    descricaoGoogle: tape
+      ? `${artist.name}: beat tape do @rideblan33 com ${nBeats} ${nBeats === 1 ? 'beat' : 'beats'} de rap pra ouvir. Beats exclusivos e produção completa na Caramujo Records, São Carlos, SP.`
+      : null,
     // textos da prévia no Direct/WhatsApp (formato do Bruno, 25/09/2026)
     titulo: tape ? `${artist.name} · @rideblan33` : `${artist.name} · Caramujo Records`,
     descricao: tape
@@ -77,7 +95,8 @@ export async function onRequestGet({ params, request, env }) {
       code: artist.code,
       owner: false,
       perm: { beats: !!artist.dl_beats, sons: !!artist.dl_sons },
-      tracks
+      tracks,
+      ...(tape ? { perfil: '/rideblan33', mais } : {})
     }
   });
 }

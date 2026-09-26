@@ -9,6 +9,7 @@ import { lerBeats, lerDestaque, lerEstatico, esquecerLoja } from '../_lib/loja.j
 import { slug } from '../_lib/casar.js';
 import { tomDeCopia, ehBeatNovo } from '../_lib/tom.js';
 import { esquecerApiVitrine } from './vitrine.js';
+import { esquecerPerfil } from '../_lib/perfil.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
 
@@ -37,6 +38,8 @@ export async function onRequest({ request, env }) {
   const body = await request.json().catch(() => ({}));
   if (op === 'perm') return perm(d, body);
   if (op === 'descricao') return descricao(d, body);
+  if (op === 'perfil') { const r = await perfilMostrar(d, body); await esquecerPerfil(request); return r; }
+  if (op === 'perfil-topo') { const r = await perfilTopo(d, body); await esquecerPerfil(request); return r; }
   if (op === 'venda') return venda(d, body);
   if (op === 'sync') return sync(env, d, body);
   if (LOJA_POST[op]) {
@@ -53,6 +56,7 @@ async function artistas(d) {
   const { results } = await d.prepare(
     `SELECT a.id, a.slug, a.name, a.code, a.tipo, a.dl_beats, a.dl_sons, a.synced_at,
             a.job_estado, a.job_total, a.job_feitos, a.job_at, a.cover_origem, a.cover_key, a.descricao,
+            a.perfil, a.perfil_ordem,
             c.modificado, COALESCE(c.nb, 0) AS nb, COALESCE(c.ns, 0) AS ns, COALESCE(c.bytes, 0) AS bytes,
             (SELECT MAX(at) FROM events e WHERE e.artist_id = a.id) AS visto
        FROM artists a
@@ -307,6 +311,26 @@ async function venda(d, body) {
   return json({ ok: true });
 }
 
+// Perfil do @rideblan33 (26/09/2026): mostrar/esconder a tape e subir pro topo.
+async function perfilMostrar(d, body) {
+  const id = Number(body.id);
+  if (!id) return json({ erro: 'sem tape' }, 400);
+  await d.prepare("UPDATE artists SET perfil = ? WHERE id = ? AND tipo = 'tape'").bind(body.valor ? 1 : 0, id).run();
+  return json({ ok: true, perfil: body.valor ? 1 : 0 });
+}
+// Topo = uma posição acima da primeira. Tape sem ordem (nova) conta como estando no
+// topo, na mesma conta da página do perfil.
+async function perfilTopo(d, body) {
+  const id = Number(body.id);
+  if (!id) return json({ erro: 'sem tape' }, 400);
+  const r = await d.prepare(
+    "SELECT MIN(COALESCE(perfil_ordem, -1000000000 - id)) AS m FROM artists WHERE tipo = 'tape'"
+  ).first();
+  const nova = (r && r.m != null ? Number(r.m) : 0) - 1;
+  await d.prepare("UPDATE artists SET perfil_ordem = ? WHERE id = ? AND tipo = 'tape'").bind(nova, id).run();
+  return json({ ok: true, perfil_ordem: nova });
+}
+
 async function descricao(d, body) {
   const id = Number(body.id);
   if (!id) return json({ erro: 'sem artista' }, 400);
@@ -482,6 +506,7 @@ async function analytics(d, request, env, params) {
   const aba = params.get('aba');
   if (aba === 'tapes') return json({ ...p, aba, ...(await abaCatalogos(d, p, 'tape')) });
   if (aba === 'artistas') return json({ ...p, aba, ...(await abaCatalogos(d, p, 'artista')) });
+  if (aba === 'perfil') return json({ ...p, aba, ...(await abaPerfil(d, p)) });
   return json({ ...p, aba: 'vitrine', ...(await abaVitrine(d, request, env, p)) });
 }
 
@@ -643,6 +668,82 @@ async function abaCatalogos(d, p, tipo) {
       { visitas: 0, carrinho: 0, pagos: 0 });
   }
   return out;
+}
+
+// Portfólio (26/09/2026): o perfil caramujorecords.com.br/rideblan33.
+// perfil = visita, perfil-tape = tocou numa capa, perfil-rede = tocou num botão
+// (vitrine, spotify, youtube, instagram, em track_id). A tape aberta a partir do
+// perfil grava 'open' com origem 'perfil'; pelo bloco "Mais do @rideblan33", 'mais'.
+// Quem foi pra vitrine pelo perfil chega no funil com origem 'perfil'.
+async function abaPerfil(d, p) {
+  const ini = inicioUTC(p.de), fim = inicioUTC(somaDias(p.ate, 1));
+  const iniA = inicioUTC(p.antesDe), fimA = ini;
+  const tot = async (a, b) => {
+    const r = await d.prepare(
+      `SELECT
+         SUM(CASE WHEN kind='perfil' THEN 1 ELSE 0 END) visitas,
+         COUNT(DISTINCT CASE WHEN kind='perfil' THEN who END) pessoas,
+         SUM(CASE WHEN kind='perfil-tape' THEN 1 ELSE 0 END) cliques,
+         COUNT(DISTINCT CASE WHEN kind='perfil-tape' THEN who END) clicaram,
+         SUM(CASE WHEN kind='perfil-rede' THEN 1 ELSE 0 END) redes,
+         SUM(CASE WHEN kind='open' AND origem='perfil' THEN 1 ELSE 0 END) abertas,
+         SUM(CASE WHEN kind='open' AND origem='mais' THEN 1 ELSE 0 END) mais
+         FROM events WHERE at >= ? AND at < ? AND (kind IN ('perfil','perfil-tape','perfil-rede') OR origem IN ('perfil','mais'))`
+    ).bind(a, b).first();
+    const o = {};
+    for (const k of Object.keys(r || {})) o[k] = Number(r[k] || 0);
+    return o;
+  };
+  const vit = async (de, ate) => (await d.prepare(
+    `SELECT COUNT(*) visitas, SUM(CASE WHEN g.sessao IS NOT NULL THEN 1 ELSE 0 END) pagos
+       FROM funil v LEFT JOIN funil g ON g.sessao = v.sessao AND g.etapa = 'pago'
+      WHERE v.etapa = 'visita' AND v.origem = 'perfil' AND v.dia BETWEEN ? AND ?`
+  ).bind(de, ate).first()) || {};
+  const [agora, antes, va, vb] = await Promise.all([tot(ini, fim), tot(iniA, fimA), vit(p.de, p.ate), vit(p.antesDe, p.antesAte)]);
+  agora.vitrine = Number(va.visitas || 0); agora.pagos = Number(va.pagos || 0);
+  antes.vitrine = Number(vb.visitas || 0); antes.pagos = Number(vb.pagos || 0);
+
+  const porDia = (await d.prepare(
+    `SELECT ${DIA_SP} dia,
+            CASE WHEN e.kind = 'perfil' THEN 'visitas' WHEN e.kind = 'perfil-tape' THEN 'cliques' ELSE 'abertas' END chave,
+            COUNT(*) n
+       FROM events e WHERE e.at >= ? AND e.at < ?
+        AND (e.kind IN ('perfil','perfil-tape') OR (e.kind = 'open' AND e.origem = 'perfil'))
+      GROUP BY dia, chave`
+  ).bind(ini, fim).all()).results || [];
+  const pessoasDia = (await d.prepare(
+    `SELECT ${DIA_SP} dia, 'pessoas' chave, COUNT(DISTINCT e.who) n
+       FROM events e WHERE e.kind = 'perfil' AND e.at >= ? AND e.at < ? GROUP BY dia`
+  ).bind(ini, fim).all()).results || [];
+  const vitDia = (await d.prepare(
+    `SELECT dia, 'vitrine' chave, COUNT(*) n FROM funil
+      WHERE etapa = 'visita' AND origem = 'perfil' AND dia BETWEEN ? AND ? GROUP BY dia`
+  ).bind(p.de, p.ate).all()).results || [];
+  const serie = series(p.dias, porDia.concat(pessoasDia, vitDia), ['visitas', 'pessoas', 'cliques', 'abertas', 'vitrine']);
+
+  // todas as tapes, inclusive as zeradas e as escondidas (marcadas)
+  const tapes = (await d.prepare(
+    `SELECT a.id, a.name, a.perfil,
+            COALESCE(SUM(CASE WHEN e.kind='perfil-tape' THEN 1 ELSE 0 END), 0) cliques,
+            COALESCE(SUM(CASE WHEN e.kind='open' AND e.origem='perfil' THEN 1 ELSE 0 END), 0) abertas,
+            COALESCE(SUM(CASE WHEN e.kind='open' AND e.origem='mais' THEN 1 ELSE 0 END), 0) mais
+       FROM artists a LEFT JOIN events e ON e.artist_id = a.id AND e.at >= ? AND e.at < ?
+        AND (e.kind = 'perfil-tape' OR (e.kind = 'open' AND e.origem IN ('perfil','mais')))
+      WHERE a.tipo = 'tape'
+      GROUP BY a.id ORDER BY cliques DESC, abertas DESC, a.name COLLATE NOCASE`
+  ).bind(ini, fim).all()).results || [];
+
+  const origens = (await d.prepare(
+    `SELECT COALESCE(origem, 'direto') origem, COUNT(*) visitas, COUNT(DISTINCT who) pessoas
+       FROM events WHERE kind = 'perfil' AND at >= ? AND at < ?
+      GROUP BY 1 ORDER BY visitas DESC LIMIT 12`
+  ).bind(ini, fim).all()).results || [];
+  const redes = (await d.prepare(
+    `SELECT track_id rede, COUNT(*) n FROM events
+      WHERE kind = 'perfil-rede' AND at >= ? AND at < ? GROUP BY track_id ORDER BY n DESC`
+  ).bind(ini, fim).all()).results || [];
+
+  return { agora, antes, serie, tapes, origens, redes };
 }
 
 /* ---------- a loja: beats do site, destaque do hero e cupons (24/09/2026) ---------- */

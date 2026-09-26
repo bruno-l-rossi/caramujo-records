@@ -18,3 +18,5 @@ Disallow: /docs/
 Disallow: /previews/
 Disallow: /mockups-antigos/
 Disallow: /README.md
+
+Sitemap: https://caramujorecords.com.br/sitemap.xml
