@@ -191,7 +191,7 @@ ${FAVICON}
 @font-face{font-family:'IBM Plex Mono';font-weight:400;font-display:swap;src:url(/assets/fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2')}
 :root{color-scheme:dark;
   --black:#14110d;--deep:#1A1815;--dark:#1e1a15;--mole:#221e18;
-  --fire:#b98f5e;--amber:#c3a074;--cream:#f2ecdf;--bone:#E8E0CF;--read:#b89e72;--label:#9e7c48;--wire:#332c22;
+  --fire:#b98f5e;--amber:#c3a074;--cream:#f2ecdf;--bone:#E8E0CF;--read:#b89e72;--label:#9e7c48;--wire:#332c22;--dim:#6f6757;
   --preto:#000;--folha:#141414;--div:#1f1f1f;--branco:#fff;--apoio:#b7b7b7;--meta:#8a8a8a;--apagado:#454545;
   --serif:'Cormorant Garamond',Georgia,serif;--sans:'Helvetica Neue',Helvetica,Arial,sans-serif;
   --grot:'Schibsted Grotesk',-apple-system,'Helvetica Neue',Arial,sans-serif;--mono:'IBM Plex Mono',ui-monospace,Menlo,monospace}
@@ -273,10 +273,14 @@ h1{font:600 clamp(56px,8.6vw,124px)/.9 var(--serif);color:var(--cream);margin:0;
 .leg{display:none}
 @media (hover:hover){.tape:hover .sobre,.tape:focus-visible .sobre{opacity:1}.tape:hover img:not(.semcapa){transform:scale(1.035);filter:saturate(.85)}}
 @media (hover:none){.sobre{display:none}.leg{display:flex;flex-direction:column;gap:5px;padding-top:10px}.leg b{font:500 15px/1.2 var(--grot);color:var(--branco);overflow-wrap:anywhere}.leg i{font:500 13px/1 var(--grot);font-style:normal;color:var(--meta)}}
-footer{background:var(--preto);border-top:1px solid var(--div);padding:28px 16px calc(40px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:14px;font-family:var(--grot)}
-footer img{width:148px;height:auto}
-footer p{margin:0;font:500 12px/1.5 var(--grot);color:var(--apagado);letter-spacing:.04em;text-align:center}
-footer p a{color:var(--meta)}
+/* rodapé igual ao da vitrine (26/09/2026): selo, © e @rideblan33, mesmas letras e disposição */
+footer{padding:1.4rem 2.4rem calc(1.4rem + env(safe-area-inset-bottom,0px));background:var(--black);border-top:1px solid var(--wire);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+footer img{height:30px;width:auto;display:block}
+footer p{margin:0;font-family:var(--sans);font-size:.57rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+footer a.foot-perfil{color:inherit;text-decoration:none;border-bottom:1px solid var(--wire);transition:color .2s,border-color .2s}
+@media (hover:hover){footer a.foot-perfil:hover{color:var(--fire);border-bottom-color:var(--fire)}}
+@media (max-width:860px){footer{flex-direction:column;align-items:flex-start;padding:1.2rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom,0px))}footer p{font-size:.63rem}}
+@media (max-width:480px){footer{gap:.5rem}}
 body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 @media (max-width:1100px){.grade{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:820px){
@@ -358,8 +362,9 @@ ${grade(tapes)}
 </main>
 
 <footer>
-  <a href="/" aria-label="Caramujo Records"><img src="/assets/brand/caramujo-h.webp" alt="Caramujo Records" width="296" height="54"></a>
-  <p>© Caramujo Records · São Carlos, SP · <a href="/?de=perfil#beats">beats à venda</a></p>
+  <a href="/?de=perfil" aria-label="Caramujo Records"><img loading="lazy" width="400" height="400" src="/assets/brand/selo-creme.svg" alt="Caramujo Records"></a>
+  <p>© 2026 Caramujo Records — São Carlos, SP</p>
+  <p><a class="foot-perfil" href="/rideblan33">@rideblan33</a> · Todos os direitos reservados</p>
 </footer>
 <script>
 (function(){

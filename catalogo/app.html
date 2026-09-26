@@ -149,7 +149,9 @@ __META__
   /* o espaço pro player do rodapé fica no fim do painel (depois do "Mais de" e do
      logo), não embaixo da lista: a última faixa encosta no bloco (26/09/2026) */
   .list{padding-top:4px;min-height:120px;padding-bottom:12px}
-  .panel{padding-bottom:170px}
+  /* fim da página no celular (26/09/2026): margem segura abaixo do logo + a altura
+     do player quando ele aparece (--dock-h, medido no script). Sem player, sem sobra */
+  .panel{padding-bottom:calc(max(var(--dock-h, 0px), env(safe-area-inset-bottom, 0px)) + 32px)}
   .group{padding:15px 0 3px;font-size:10.5px;font-weight:600;letter-spacing:.2em;color:#949494}
   .row{width:100%;display:flex;align-items:center;gap:13px;padding:9px 0;
     background:transparent;border:0;text-align:left;cursor:pointer}
@@ -593,6 +595,18 @@ __META__
 
   var $=function(id){return document.getElementById(id)};
   var list=$('list'), player=$('player'), dlDock=$('dlDock'), veil=$('veil'), card=$('card');
+  // altura do player/barra de download fixos embaixo: vira o espaço do fim da página
+  (function(){
+    function mede(){
+      var h=Math.max(player.hidden?0:player.offsetHeight, dlDock.hidden?0:dlDock.offsetHeight);
+      document.documentElement.style.setProperty('--dock-h', h+'px');
+    }
+    if(window.ResizeObserver){ var ro=new ResizeObserver(mede); ro.observe(player); ro.observe(dlDock); }
+    else document.documentElement.style.setProperty('--dock-h', '140px');
+    new MutationObserver(mede).observe(player,{attributes:true,attributeFilter:['hidden']});
+    new MutationObserver(mede).observe(dlDock,{attributes:true,attributeFilter:['hidden']});
+    window.addEventListener('resize', mede);
+  })();
 
   var audio = new Audio();
   audio.preload = 'metadata';
@@ -897,9 +911,11 @@ __META__
   }
   // Autoria na tela bloqueada: tape e link avulso = "@rideblan33" (igual à vitrine);
   // pasta de artista = "nico2b & @rideblan33"
-  function autoria(){
+  // Beat (tape ou aba Beats da pasta): só @rideblan33. Música da pasta de artista
+  // (aba Músicas): "Nome & @rideblan33" (26/09/2026)
+  function autoria(t){
     var eu = CAT.artist.who || '@rideblan33';
-    if(CAT.artist.tape || !CAT.artist.name) return eu;
+    if(CAT.artist.tape || !CAT.artist.name || !t || t.kind !== 'son') return eu;
     return CAT.artist.name + ' & ' + eu;
   }
   function tarja(t){
@@ -908,7 +924,7 @@ __META__
       // igual à vitrine: título = nome da faixa, autoria embaixo, Caramujo Records
       navigator.mediaSession.metadata = new MediaMetadata({
         title: t.title,
-        artist: autoria(),
+        artist: autoria(t),
         album: 'Caramujo Records',
         artwork: arteDoSistema()
       });
@@ -959,6 +975,8 @@ __META__
     var lista=CAT.mais||[];
     if(!lista.length) return;
     var deOnde=CAT.artist.tape?'tape':'artista';
+    // pasta de artista: o bloco se apresenta como o catálogo de tapes (26/09/2026)
+    if(!CAT.artist.tape) $('maisTit').textContent='Catálogo de beat tapes';
     var tr=$('maisTrilho'); tr.textContent='';
     lista.forEach(function(t){
       var c=document.createElement('a'); c.className='mais-card'; c.href=t.url;
@@ -976,7 +994,7 @@ __META__
     var fim=document.createElement('a'); fim.className='mais-card todas'; fim.href=CAT.perfil+'?de='+deOnde;
     // grade com as 4 primeiras capas do perfil e o texto por cima (escolha de 26/09)
     var grade=lista.filter(function(t){ return t.capa }).slice(0,4);
-    fim.innerHTML='<span class="m-capa"></span><b>Portfólio completo</b><small>@rideblan33</small>';
+    fim.innerHTML='<span class="m-capa"></span><b>PORTFÓLIO COMPLETO</b><small>@rideblan33</small>';
     var mc=fim.querySelector('.m-capa');
     grade.forEach(function(t){ var im=document.createElement('img'); im.loading='lazy'; im.alt=''; im.src=t.capa+'?p'; mc.appendChild(im); });
     var veu=document.createElement('span'); veu.className='m-veu'; veu.textContent=tot+(tot===1?' beat tape':' beat tapes'); mc.appendChild(veu);
