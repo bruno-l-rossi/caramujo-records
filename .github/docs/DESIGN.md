@@ -48,7 +48,7 @@ O contraste serif grande + sans miúda espaçada + mono técnica É a identidade
 
 ## Elementos de marca
 
-- Selo do caramujo (espiral desenhada a traço) em creme ou sépia. Aparece na nav, no hero (grande, translúcido, à direita) e no rodapé.
+- Selo do caramujo (espiral desenhada a traço) em creme ou sépia. Aparece no hero (grande, translúcido, à direita), no rodapé e no ícone da aba. No topo das páginas entra o logo horizontal (ver abaixo).
 - Grão de filme sutil sobre os fundos (desligado no mobile).
 - Bordas de 1px `#332c22` em cards, tabelas e botões ghost; cantos retos, zero border-radius (exceto o círculo do carrinho mobile).
 - Interlude tipográfico: faixa escura com texto gigante em outline "ATENÇÃO! VOCÊ ESTÁ OUVINDO UM BEAT DO RIDEBLAN" (a palavra RIDEBLAN em contorno cor fire).
@@ -65,7 +65,7 @@ O contraste serif grande + sans miúda espaçada + mono técnica É a identidade
 
 ## Contexto de uso
 
-Público acessa 80%+ pelo celular, vindo do Instagram (bio e Direct). Mobile-first sempre. Site atual é one-pager: hero → pacotes → catálogo de beats (com player SoundCloud por card) → serviços → contato. Compra via carrinho próprio com PIX e cartão (Mercado Pago).
+Público acessa 80%+ pelo celular, vindo do Instagram (bio e Direct). Mobile-first sempre. Vitrine é one-pager: hero → catálogo de beats (player contínuo, áudio do R2) → pacotes → serviços → estúdio → contato. Tapes, pastas de artista e o perfil /rideblan33 são páginas à parte. Compra via carrinho próprio com PIX e cartão (Mercado Pago).
 
 ## Ícone da aba (padrão de todas as páginas)
 
@@ -73,6 +73,15 @@ Toda página do site, inclusive as que ainda vão existir, usa o mesmo bloco no 
 selo em SVG primeiro (`/assets/brand/selo-creme.svg`), depois o PNG de 180px pro iPhone
 (`/assets/brand/icone-180.png`, também como `apple-touch-icon`). Em código: `FAVICON` em
 `functions/_lib/perfil.js`.
+
+## Logo do topo (padrão de todas as páginas)
+
+Toda página do site, inclusive as que ainda vão existir, usa no cabeçalho o mesmo logo
+horizontal: selo + CARAMUJO RECORDS em imagem (`/assets/brand/caramujo-h.webp`, 296x54).
+Nunca o selo sozinho e nunca o nome montado em texto. Tamanho: 148x27 no computador e
+122x22 abaixo de 900px (o perfil usa 168/118 por causa do botão ao lado). Liga pra vitrine
+(`/`), exceto na própria vitrine. Hoje: vitrine (`nav .nav-logo`), tapes e pastas
+(`.brand-link .logo`), perfil (`.topo .logo`) e painel (`.marca`). Vale desde 26/09/2026.
 
 ## Perfil @rideblan33 (/rideblan33)
 

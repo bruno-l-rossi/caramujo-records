@@ -97,7 +97,7 @@ nav{
   backdrop-filter:blur(10px);
 }
 .nav-logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;}
-.nav-logo img{height:36px;width:auto;}
+.nav-logo img{height:27px;width:auto;}
 .nav-links{display:flex;list-style:none;}
 .nav-links a{
   font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.76rem;font-weight:700;
@@ -671,10 +671,6 @@ html { scroll-padding-top: var(--nav-h,54px); }
   .s{padding:2.5rem 1rem;}
   .hero-content{padding:6rem 1rem 2.5rem;}
   nav{padding:0 .7rem;}
-  /* o nome fica: com o menu em hambúrguer sobra espaço, e selo sozinho não diz
-     de quem é o site pra quem chega pelo link de uma tape */
-  .nav-wm{font-size:1.05rem;}
-  .nav-wm small{font-size:.4rem;letter-spacing:.3em;}
   .nav-links a{font-size:.58rem;padding:0 .65rem;}
 
   .hero-desc{font-size:.68rem;}
@@ -699,11 +695,11 @@ html { scroll-padding-top: var(--nav-h,54px); }
 .rec{animation:none!important;background:var(--clay)!important;}
 body{cursor:auto!important;}
 
-/* nav logo + wordmark */
-.nav-logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;}
-.nav-logo img{width:32px!important;height:32px!important;opacity:1!important;border-radius:0!important;}
-.nav-wm{font-family:var(--serif);font-size:1.3rem;line-height:1;color:var(--bone);font-weight:500;}
-.nav-wm small{display:block;font-family:var(--sans);font-size:.45rem;letter-spacing:.4em;color:var(--clay);margin-top:3px;font-weight:700;}
+/* logo do topo = o mesmo das outras páginas (caramujo-h.webp: selo + CARAMUJO RECORDS),
+   148x27 no computador e 122x22 no celular, padrão de 26/09/2026 (DESIGN.md) */
+.nav-logo{display:flex;align-items:center;text-decoration:none;}
+.nav-logo img{width:148px!important;height:27px!important;opacity:1!important;border-radius:0!important;object-fit:contain;}
+@media(max-width:899px){.nav-logo img{width:122px!important;height:22px!important;}}
 .nav-links a{font-family:var(--sans)!important;}
 
 /* HERO */
@@ -1193,9 +1189,8 @@ html,body{overflow-x:hidden;}
 
 <!-- NAV -->
 <nav>
-  <a class="nav-logo" href="#">
-    <img width="34" height="34" src="assets/brand/selo-creme.svg" alt="Caramujo Records"/>
-    <span class="nav-wm">Caramujo<small>RECORDS</small></span>
+  <a class="nav-logo" href="#" aria-label="Caramujo Records">
+    <img width="296" height="54" src="assets/brand/caramujo-h.webp" alt="Caramujo Records"/>
   </a>
   <ul class="nav-links">
     <li><a href="#beats">Beats</a></li>
