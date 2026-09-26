@@ -225,6 +225,8 @@ __META__
   .pl-acao{grid-area:acao;margin-top:8px;display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;
     border:1px solid #2a2a2a;background:transparent;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
   .pl-acao[hidden]{display:none}
+  .pl-dir{display:contents}
+  .pl-vol{display:none}
   .pl-acao:active{background:#1d1d1d}
   .pl-ctl{grid-area:ctl;display:flex;align-items:center;justify-content:space-between;width:100%;max-width:360px;
     margin:6px auto 0;padding:0 6px}
@@ -350,6 +352,15 @@ __META__
       grid-template-areas:"info ctl acao" "info scrub acao";row-gap:2px}
     .pl .pl-top,.pl-acao{margin-top:0}
     .pl-acao{justify-self:end}
+    .pl-dir{grid-area:acao;display:flex;align-items:center;justify-content:flex-end;gap:18px;min-width:0}
+    .pl-vol{display:flex;align-items:center;gap:4px;width:150px;flex-shrink:0}
+    .pl-vol .pl-btn{color:#cfcfcf;cursor:pointer}
+    .pl-vol .pl-btn:hover{color:#fff}
+    .pl-vol #plVolIco .vx{display:none}
+    .pl-vol.mudo #plVolIco .v1,.pl-vol.mudo #plVolIco .v2{display:none}
+    .pl-vol.mudo #plVolIco .vx{display:inline}
+    .pl-vol.baixo #plVolIco .v2{display:none}
+    .pl-vol #vol{flex:1}
     .pl-ctl{margin:0 auto}
     .dl-dock{max-width:560px;margin:0 auto}
     .veil{align-items:center}
@@ -469,7 +480,16 @@ __META__
         <div class="pl-sub" id="plSub">—</div>
       </div>
     </div>
-    <button class="pl-acao" id="plAcao" type="button" hidden></button>
+    <div class="pl-dir">
+      <button class="pl-acao" id="plAcao" type="button" hidden></button>
+      <!-- volume (26/09/2026): só no computador, à direita, espelhando capa + nome
+           da esquerda. No celular o aparelho tem o botão dele e isto fica escondido. -->
+      <div class="pl-vol" id="plVol">
+        <button class="pl-btn" id="plMute" type="button" aria-label="Tirar o som" aria-pressed="false"><svg id="plVolIco" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" fill="currentColor" stroke="none"/><path class="v1" d="M15.5 9.2a4 4 0 010 5.6"/><path class="v2" d="M18.3 6.6a7.8 7.8 0 010 10.8"/><path class="vx" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
+        <label for="vol" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Volume</label>
+        <input id="vol" type="range" min="0" max="100" value="100" step="1">
+      </div>
+    </div>
     <div class="pl-ctl">
       <button class="pl-btn" id="plShuf" type="button" aria-label="Tocar em ordem aleatória" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg></button>
       <button class="pl-btn" id="plPrev" type="button" aria-label="Faixa anterior"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14h2.6V5zM19 5l-9 7 9 7z"/></svg></button>
@@ -729,6 +749,33 @@ __META__
     audio.currentTime=Math.min(audio.duration||1e9,Math.max(0,audio.currentTime+sec));
   }
   $('plToggle').addEventListener('click',toggle);
+
+  // Volume (26/09/2026, só aparece no computador): barra + botão de tirar o som.
+  // Lembra o último volume neste navegador. Aparelho que não deixa mexer no volume
+  // por programa (iPad/iPhone) esconde o controle: lá vale o botão do próprio aparelho.
+  (function(){
+    var box=$('plVol'), sl=$('vol'), bt=$('plMute');
+    if(!box||!sl||!bt) return;
+    var antes=100;
+    try{ var t=new Audio(); t.volume=0.5; if(Math.abs(t.volume-0.5)>0.01){ box.remove(); return; } }catch(_){ box.remove(); return; }
+    function aplica(v, guarda){
+      v=Math.max(0,Math.min(100,Math.round(+v||0)));
+      audio.volume=v/100; audio.muted=false;
+      sl.value=v; sl.style.setProperty('--pct',v+'%');
+      box.classList.toggle('mudo',v===0); box.classList.toggle('baixo',v>0&&v<50);
+      bt.setAttribute('aria-pressed',v===0?'true':'false');
+      bt.setAttribute('aria-label',v===0?'Voltar o som':'Tirar o som');
+      if(guarda){ try{ localStorage.setItem('caramujo_volume',String(v)); }catch(_){} }
+    }
+    var salvo=null; try{ salvo=localStorage.getItem('caramujo_volume'); }catch(_){}
+    aplica(salvo===null?100:salvo,false);
+    sl.addEventListener('input',function(){ var v=+sl.value; if(v>0) antes=v; aplica(v,true); });
+    bt.addEventListener('click',function(){
+      var v=+sl.value;
+      if(v>0){ antes=v; aplica(0,true); } else aplica(antes||100,true);
+    });
+  })();
+
   // botões do player A: aleatório, anterior, próxima, compartilhar e a ação da página
   $('plShuf').addEventListener('click',alternarAleatorio);
   $('plPrev').addEventListener('click',function(){
