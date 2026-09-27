@@ -186,6 +186,10 @@ nav{
   letter-spacing:.04em;
 }
 .hero-desc strong{color:var(--bone);}
+/* @rideblan33 do hero é o link do perfil (27/09/2026), igual ao das tapes: sublinhado e seta */
+.hero-desc a.hero-at{display:inline-flex;align-items:center;gap:2px;color:var(--bone);font-weight:700;text-decoration:underline;text-decoration-color:rgba(232,224,207,.35);text-decoration-thickness:1px;text-underline-offset:4px;transition:text-decoration-color .2s,color .2s;}
+.hero-desc a.hero-at svg{width:.95em;height:.95em;color:var(--read);flex:none;transition:transform .2s;}
+@media(hover:hover){.hero-desc a.hero-at:hover{color:var(--cream);text-decoration-color:var(--fire);}.hero-desc a.hero-at:hover svg{transform:translateX(2px);color:var(--fire);}}
 
 .hero-ctas{display:flex;gap:.8rem;flex-wrap:wrap;}
 
@@ -1260,13 +1264,13 @@ html,body{overflow-x:hidden;}
 
     <p class="hero-desc">
       Estúdio popular e independente.<br/>
-      Beats exclusivos, mixagem e masterização por <strong>@rideblan33</strong>.
+      Beats exclusivos, mixagem e masterização por <a class="hero-at" href="/rideblan33?de=hero" aria-label="Portfólio do @rideblan33">@rideblan33<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>.
     </p>
 
     <p class="hero-proof">
-      <span><b>40+</b> artistas</span>
-      <span><b>200+</b> faixas lançadas</span>
-      <span><b>2.500.000+</b> streams</span>
+      <span><b data-num="artistas">40+</b> artistas</span>
+      <span><b data-num="faixas">200+</b> faixas lançadas</span>
+      <span><b data-num="streams">2.500.000+</b> streams</span>
     </p>
 
     <div class="hero-ctas">
@@ -4052,7 +4056,7 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-27a';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-27b';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });

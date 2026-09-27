@@ -8,6 +8,7 @@
 // alguma coisa (esquecerPerfil).
 
 import { db } from './db.js';
+import { PADRAO as NUM_PADRAO, deTexto as numDeTexto, limpar as numLimpar, curto, longo } from './numeros.js';
 
 const VALIDADE = 60 * 1000;
 const REGIAO = '/__cache/perfil-v3';
@@ -22,35 +23,50 @@ export async function esquecerPerfil(request) {
 }
 
 // Pastilhas das capas (27/09/2026). NOVA: a 1ª tape da lista do perfil (a ordem do
-// painel manda; tape recriada no Drive ganha id novo sem ser nova, ex. 2021 tape). EM ALTA: a tape do perfil com mais plays nos
-// últimos 30 dias, fora a nova, com pelo menos EM_ALTA_MIN plays. A conta passa por
-// todos os plays do mês, então roda no máximo a cada 6 h e fica guardada na meta.
-export const EM_ALTA_MIN = 10;
+// painel manda; tape recriada no Drive ganha id novo sem ser nova, ex. 2021 tape).
+// EM ALTA: a tape do perfil com mais plays nos últimos 30 dias; se for a própria NOVA,
+// passa pra 2ª mais tocada. A conta passa por todos os plays do mês, então roda no
+// máximo a cada 6 h e guarda o ranking (top 5) na meta; quem é a NOVA é decidido na
+// hora (2ª rodada de 27/09: o guardado era só um id e, quando ele virava a NOVA,
+// nenhuma tape ficava em alta).
+export const EM_ALTA_MIN = 1;
+const EM_ALTA_CHAVE = 'perfil-emalta-2';
 const EM_ALTA_VALIDADE = 6 * 60 * 60 * 1000;
 const EM_ALTA_JANELA = 30 * 24 * 60 * 60 * 1000;
 
-async function tapeEmAlta(d, nova) {
-  let guardado = null;
+export function escolherEmAlta(ranking, nova) {
+  const top = (ranking || []).find((r) => r[0] !== nova && r[1] >= EM_ALTA_MIN);
+  return top ? top[0] : null;
+}
+
+// Uma consulta pra meta (ranking do em alta + números do site); a conta dos plays só
+// quando o ranking guardado passou de 6 h.
+async function lerMetaPerfil(d, nova) {
+  let ranking = null, numeros = { ...NUM_PADRAO };
   try {
-    const m = await d.prepare("SELECT valor FROM meta WHERE chave = 'perfil-emalta'").first();
-    guardado = m ? JSON.parse(m.valor) : null;
-  } catch (_) { guardado = null; }
-  if (guardado && Date.now() - Date.parse(guardado.at) < EM_ALTA_VALIDADE) return guardado.id || null;
-  let id = null;
-  try {
-    const desde = new Date(Date.now() - EM_ALTA_JANELA).toISOString();
     const { results } = await d.prepare(
-      `SELECT e.artist_id AS id, COUNT(*) AS n FROM events e
-         JOIN artists a ON a.id = e.artist_id AND a.tipo = 'tape' AND a.perfil = 1
-        WHERE e.kind = 'play' AND e.at >= ?
-        GROUP BY e.artist_id ORDER BY n DESC, e.artist_id DESC LIMIT 3`
-    ).bind(desde).all();
-    const top = (results || []).find((r) => r.id !== nova && r.n >= EM_ALTA_MIN);
-    id = top ? top.id : null;
-    await d.prepare("INSERT OR REPLACE INTO meta (chave, valor) VALUES ('perfil-emalta', ?)")
-      .bind(JSON.stringify({ id, at: new Date().toISOString() })).run();
-  } catch (_) { id = guardado ? guardado.id || null : null; }
-  return id;
+      `SELECT chave, valor FROM meta WHERE chave IN ('${EM_ALTA_CHAVE}', 'numeros')`
+    ).all();
+    for (const r of results || []) {
+      if (r.chave === 'numeros') numeros = numDeTexto(r.valor);
+      else { try { ranking = JSON.parse(r.valor); } catch (_) { ranking = null; } }
+    }
+  } catch (_) { /* segue com o padrão */ }
+  if (!ranking || !Array.isArray(ranking.top) || !(Date.now() - Date.parse(ranking.at) < EM_ALTA_VALIDADE)) {
+    try {
+      const desde = new Date(Date.now() - EM_ALTA_JANELA).toISOString();
+      const { results } = await d.prepare(
+        `SELECT e.artist_id AS id, COUNT(*) AS n FROM events e
+           JOIN artists a ON a.id = e.artist_id AND a.tipo = 'tape' AND a.perfil = 1
+          WHERE e.kind = 'play' AND e.at >= ?
+          GROUP BY e.artist_id ORDER BY n DESC, e.artist_id DESC LIMIT 5`
+      ).bind(desde).all();
+      ranking = { top: (results || []).map((r) => [r.id, r.n]), at: new Date().toISOString() };
+      await d.prepare(`INSERT OR REPLACE INTO meta (chave, valor) VALUES ('${EM_ALTA_CHAVE}', ?)`)
+        .bind(JSON.stringify(ranking)).run();
+    } catch (_) { if (!ranking || !Array.isArray(ranking.top)) ranking = { top: [] }; }
+  }
+  return { emAlta: escolherEmAlta(ranking.top, nova), numeros };
 }
 
 // O perfil inteiro: { tapes: [{ id, name, slug, code, capa, n }], faixas: [...], nova, emAlta }.
@@ -90,8 +106,9 @@ export async function lerPerfil(request, env) {
     faixas = (f || []).map((x) => ({ id: x.id, t: x.title, d: x.dur || 0 }));
   }
   const nova = tapes.length ? tapes[0].id : null;
-  const emAlta = tapes.length ? await tapeEmAlta(d, nova) : null;
-  const dados = { tapes, faixas, nova, emAlta: tapes.some((t) => t.id === emAlta) ? emAlta : null };
+  const meta = await lerMetaPerfil(d, nova);
+  const emAlta = meta.emAlta;
+  const dados = { tapes, faixas, nova, emAlta: tapes.some((t) => t.id === emAlta) ? emAlta : null, numeros: meta.numeros };
   cache = { at: Date.now(), dados };
   if (c && chave) {
     try {
@@ -130,7 +147,7 @@ const ICONES = {
   compartilhar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 13.3l7.4 4.4"/><path d="M15.7 6.3l-7.4 4.4"/></svg>'
 };
 // o mesmo ?v das outras páginas: trocar junto com index.html e catalogo/app.html
-export const STORY_JS = '/assets/story.js?v=2026-09-27a';
+export const STORY_JS = '/assets/story.js?v=2026-09-27b';
 
 const ICONE_FOGO = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 4-3 5-3 9a3 3 0 006 0c0-1.5-.6-2.4-1-3 2.5 1 4 3.6 4 6.5A6 6 0 016 14.5C6 9 11 7 12 2z"/></svg>';
 function pastilha(t, nova, emAlta) {
@@ -171,15 +188,18 @@ export function paginaPerfil(dados, { url, barraFixa = true } = {}) {
   } : null;
   const titulo = '@rideblan33 · Portfólio';
   const descricaoGoogle = `Portfólio do @rideblan33, produtor e beatmaker de rap em São Carlos, SP. ${tapes.length} beat tapes pra ouvir, beats exclusivos e produção completa na Caramujo Records.`;
-  const descricaoPrevia = 'Produtor & beatmaker. 33 memórias distantes. 40+ artistas · 200+ faixas · 2,5 mi de streams.';
-  const og = SITE + '/assets/perfil/rideblan33-og.jpg';
+  // os números grandes vêm do painel (Números do site); sem eles, os de sempre
+  const num = numLimpar(!Array.isArray(dados) && dados.numeros ? dados.numeros : NUM_PADRAO);
+  const descricaoPrevia = `Produtor & beatmaker. 33 memórias distantes. ${num.artistas}+ artistas · ${num.faixas}+ faixas · ${curto(num.streams)} de streams.`;
+  // sem os números desenhados (27/09/2026): eles mudam no painel e ficam só no texto da prévia
+  const og = SITE + '/assets/perfil/rideblan33-og-2.jpg';
   const pessoa = {
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: '@rideblan33',
     alternateName: ['rideblan33', 'rideblan'],
     jobTitle: 'Produtor musical e beatmaker',
-    description: 'Produtor & beatmaker de rap. 40+ artistas, 200+ faixas, 2,5 milhões de streams.',
+    description: `Produtor & beatmaker de rap. ${num.artistas}+ artistas, ${num.faixas}+ faixas, ${longo(num.streams)} de streams.`,
     url: SITE + '/rideblan33',
     image: SITE + '/assets/perfil/rideblan33.webp',
     homeLocation: { '@type': 'Place', name: 'São Carlos, SP', address: { '@type': 'PostalAddress', addressLocality: 'São Carlos', addressRegion: 'SP', addressCountry: 'BR' } },
@@ -385,7 +405,7 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
       <p class="kicker">Caramujo Records</p>
       <h1>@rideblan33</h1>
       <p class="bio">Produtor &amp; beatmaker.<br>33 memórias distantes.</p>
-      <p class="numeros"><span><b>40+</b> artistas</span> · <span><b>200+</b> faixas</span> · <span><b>2,5 mi</b> de streams</span></p>
+      <p class="numeros"><span><b>${num.artistas}+</b> artistas</span> · <span><b>${num.faixas}+</b> faixas</span> · <span><b>${curto(num.streams)}</b> de streams</span></p>
       <div class="botoes">
         <a class="casa" href="/?de=perfil#beats" aria-label="Beats à venda na Caramujo Records" title="Beats à venda" data-rede="vitrine"><img src="/assets/brand/selo-creme.svg" alt="" width="26" height="26"></a>
         <a href="${REDES.spotify}" target="_blank" rel="noopener" aria-label="Spotify" title="Spotify" data-rede="spotify">${ICONES.spotify}</a>

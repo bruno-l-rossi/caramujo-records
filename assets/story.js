@@ -744,7 +744,8 @@
       });
       var n = Number(o.total) || capas.length;
       centro(ctx, '@rideblan33', 1365, '600 140px "Cormorant Garamond", Georgia, serif', COR.cream);
-      centro(ctx, n + (n === 1 ? ' beat tape completa' : ' beat tapes completas'), 1460, 'italic 500 58px "Cormorant Garamond", Georgia, serif', COR.bone);
+      // o número acompanha as tapes do perfil (27/09/2026, 2ª rodada)
+      centro(ctx, 'Catálogo de ' + n + (n === 1 ? ' beat tape' : ' beat tapes'), 1460, 'italic 500 58px "Cormorant Garamond", Georgia, serif', COR.bone);
       chips(ctx, [{ texto: 'BEATS · MIX · MASTER' }], W / 2, 1500);
       return cv;
     });

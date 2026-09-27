@@ -8,6 +8,7 @@
 // já vendido). Qualquer erro aqui dentro devolve o arquivo com a lista zerada.
 
 import { lojaParaPagina, injetar, lerEstatico } from './_lib/loja.js';
+import { injetarNumeros } from './_lib/numeros.js';
 
 // Os mesmos cabeçalhos do bloco /* do _headers. O _headers não vale pra resposta
 // de função, então repito aqui (teste14 confere que os dois batem).
@@ -27,6 +28,8 @@ export async function onRequest({ request, env }) {
   try {
     const dados = await lojaParaPagina(request, env);
     saida = injetar(html, dados);
+    // os números do hero (artistas, faixas, streams) vêm do painel; sem eles, os do arquivo
+    if (dados && dados.numeros) saida = injetarNumeros(saida, dados.numeros);
   } catch (e) {
     console.error('index sem loja', e && e.message);
     saida = injetar(html, null);

@@ -229,6 +229,16 @@ const BASE = `
   .consumo{display:block;margin-top:6px;padding:0;border:0;background:transparent;font-size:13px;color:var(--ink4);cursor:pointer;text-align:left}
   .consumo.alto{color:#e0b155;text-decoration:underline;text-underline-offset:3px}
   @media (max-width:640px){.home{grid-template-columns:1fr}}
+  /* números do site (27/09/2026): linha larga embaixo dos 4 cartões */
+  .home button.num{grid-column:1/-1;min-height:0;flex-direction:row;align-items:center;gap:14px;padding:14px 18px}
+  .home button.num b{font-size:16px}
+  .home button.num .seta{margin-left:auto;color:var(--ink3);font-size:20px}
+  .nums{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+  .nums label{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14.5px}
+  .nums input{width:150px;background:var(--campo);border:1px solid var(--borda);border-radius:10px;padding:11px 12px;font-size:16px;text-align:right;outline:none;font-variant-numeric:tabular-nums}
+  .nums input:focus{border-color:#4a4a4a}
+  .nums-prev{margin-top:14px;font-size:12.5px;line-height:1.6;color:var(--ink3)}
+  .nums-prev b{color:var(--ink);font-weight:600}
   .home button{display:flex;flex-direction:column;align-items:flex-start;gap:14px;min-height:150px;padding:18px;
     background:#111;border:1px solid var(--borda);border-radius:16px;color:var(--ink);text-align:left;cursor:pointer;
     transition:background .15s,border-color .15s}
@@ -296,7 +306,7 @@ function pagina() {
   <div id="analytics" hidden></div>
   <div id="vitrine" hidden></div>
 </div>
-<script src="/assets/painel/analytics.js?v=2026-09-27a" defer></script>
+<script src="/assets/painel/analytics.js?v=2026-09-27b" defer></script>
 <script src="/assets/painel/vitrine.js?v=2026-09-25a" defer></script>
 
 <div class="veil" id="veil" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
@@ -306,7 +316,7 @@ function pagina() {
 (function(){
   var $=function(i){return document.getElementById(i)};
   var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='home', filtro='', ordem='modificado', perfilVisto=null;
-  var lojaResumo=null, lojaPedida=false, consumoHoje=null, consumoPedido=false;
+  var lojaResumo=null, lojaPedida=false, consumoHoje=null, consumoPedido=false, numerosSite=null, numerosPedido=false;
   var ORDENS={modificado:'Modificação', atividade:'Atividade', az:'A a Z', faixas:'Mais faixas', perfil:'Ordem do perfil'};
   // Perfil do @rideblan33 (26/09/2026): a mesma conta da página (tape sem ordem = nova = topo)
   function chavePerfil(a){ return a.perfil_ordem!=null ? Number(a.perfil_ordem) : -1000000000 - a.id; }
@@ -393,7 +403,7 @@ function pagina() {
 
   var TITULOS={home:'Painel',artistas:'Artistas',tapes:'Beat tapes',vitrine:'Vitrine',analytics:'Analytics'};
   function irPara(v){
-    if(v==='home'){ lojaPedida=false; consumoPedido=false; }   // volta com os números novos
+    if(v==='home'){ lojaPedida=false; consumoPedido=false; numerosPedido=false; }   // volta com os números novos
     vista=v; filtro=''; $('q').value='';
     if(v!=='tapes' && ordem==='perfil'){ ordem='modificado'; $('ordemLabel').textContent=ORDENS[ordem]; }
     $('q').placeholder = v==='tapes' ? 'Buscar beat tape' : 'Buscar artista';
@@ -428,7 +438,52 @@ function pagina() {
       b.addEventListener('click',function(){ irPara(it[0]); });
       box.appendChild(b);
     });
+    // números do site: aparecem na vitrine, no perfil e na prévia do perfil nas redes
+    var nb=document.createElement('button'); nb.type='button'; nb.className='num'; nb.id='numSite';
+    nb.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/></svg></span>'+
+      '<span><b>Números do site</b><small>'+(numerosSite?esc(textoNumeros(numerosSite,'curto')):'artistas, faixas e streams')+'</small></span><span class="seta" aria-hidden="true">›</span>';
+    nb.addEventListener('click',abrirNumeros);
+    box.appendChild(nb);
     return box;
+  }
+  function milharPonto(n){ return String(Math.round(n)).replace(/\\B(?=(\\d{3})+(?!\\d))/g,'.'); }
+  function streamsCurto(n){ return n>=1e6?(Math.floor(n/1e5)/10).toString().replace('.',',')+' mi':n>=1e3?Math.floor(n/1e3)+' mil':String(n); }
+  function textoNumeros(n,modo){
+    return modo==='curto' ? n.artistas+'+ artistas · '+n.faixas+'+ faixas · '+streamsCurto(n.streams)+' de streams'
+      : milharPonto(n.artistas)+'+ artistas · '+milharPonto(n.faixas)+'+ faixas lançadas · '+milharPonto(n.streams)+'+ streams';
+  }
+  function pedirNumeros(){
+    if(numerosPedido) return; numerosPedido=true;
+    fetch('/api/painel?op=numeros').then(function(r){return r.json()}).then(function(j){
+      if(j&&j.numeros){ numerosSite=j.numeros; var el=$('numSite'); if(el&&vista==='home') el.querySelector('small').textContent=textoNumeros(numerosSite,'curto'); }
+    }).catch(function(){});
+  }
+  function abrirNumeros(){
+    var n=numerosSite||{artistas:40,faixas:200,streams:2500000};
+    var card=$('card');
+    card.innerHTML='<h2>Números do site</h2><p>Aparecem no topo da vitrine, no topo do perfil e na prévia do perfil quando o link é compartilhado. Sempre com o "+" na frente.</p>'+
+      '<div class="bloco"><div class="nums">'+
+        '<label for="nArt">Artistas<input id="nArt" inputmode="numeric" autocomplete="off" value="'+n.artistas+'"></label>'+
+        '<label for="nFx">Faixas lançadas<input id="nFx" inputmode="numeric" autocomplete="off" value="'+n.faixas+'"></label>'+
+        '<label for="nSt">Streams<input id="nSt" inputmode="numeric" autocomplete="off" value="'+milharPonto(n.streams)+'"></label>'+
+      '</div><div class="nums-prev" id="nPrev"></div></div>'+
+      '<div class="acoes"><button class="pill" data-close type="button">Cancelar</button><button class="pill solid" id="nSalvar" type="button">Salvar</button></div>';
+    $('veil').hidden=false;
+    var ler=function(){ var v={}, ok=true; [['artistas','nArt'],['faixas','nFx'],['streams','nSt']].forEach(function(p){ var x=Number(String($(p[1]).value).replace(/\\D/g,'')); if(!(x>0)) ok=false; v[p[0]]=x; }); return ok?v:null; };
+    var prev=function(){ var v=ler(); $('nPrev').innerHTML=v?'Vitrine: <b>'+esc(textoNumeros(v,'cheio'))+'</b><br>Perfil: <b>'+esc(textoNumeros(v,'curto'))+'</b>':'Só algarismos, maior que zero.'; $('nSalvar').disabled=!v; };
+    ['nArt','nFx','nSt'].forEach(function(i){ $(i).addEventListener('input',prev); });
+    $('nSt').addEventListener('blur',function(){ var x=Number(String(this.value).replace(/\\D/g,'')); if(x>0) this.value=milharPonto(x); });
+    prev();
+    card.querySelector('[data-close]').addEventListener('click',fechar);
+    $('nSalvar').addEventListener('click',function(){
+      var v=ler(); if(!v) return;
+      var b=this; b.disabled=true; b.textContent='Salvando…';
+      fetch('/api/painel?op=numeros',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(v)})
+        .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})}).then(function(x){
+          if(!x.ok){ flash((x.j&&x.j.erro)||'Não salvou. Tenta de novo.'); b.disabled=false; b.textContent='Salvar'; return; }
+          numerosSite=x.j.numeros; fechar(); flash('Números salvos. O site mostra em até 1 minuto.');
+        }).catch(function(){ flash('Não salvou. Tenta de novo.'); b.disabled=false; b.textContent='Salvar'; });
+    });
   }
   // o selo do topo: numa subpágina volta pra home do painel; na home, leva pro site
   document.querySelector('.topo .marca').addEventListener('click',function(e){
@@ -443,7 +498,7 @@ function pagina() {
     $('lista').hidden = vista==='analytics'||vista==='vitrine';
     $('analytics').hidden = vista!=='analytics';
     $('vitrine').hidden = vista!=='vitrine';
-    if(vista==='home'){ pedirResumoFunil(); pedirResumoLoja(); pedirConsumo(); $('lista').innerHTML=''; $('lista').appendChild(home()); pintarConsumo(); return; }
+    if(vista==='home'){ pedirResumoFunil(); pedirResumoLoja(); pedirConsumo(); pedirNumeros(); $('lista').innerHTML=''; $('lista').appendChild(home()); pintarConsumo(); return; }
     if(vista==='vitrine'){
       // monta uma vez só (igual ao analytics): a lista de artistas recarrega sozinha
       // durante conversão e não pode apagar o que você está digitando aqui

@@ -10,6 +10,7 @@ import { slug } from '../_lib/casar.js';
 import { tomDeCopia, ehBeatNovo } from '../_lib/tom.js';
 import { esquecerApiVitrine } from './vitrine.js';
 import { esquecerPerfil } from '../_lib/perfil.js';
+import { PADRAO as NUM_PADRAO, deTexto as numDeTexto } from '../_lib/numeros.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
 
@@ -34,6 +35,7 @@ export async function onRequest({ request, env }) {
   if (op === 'analytics') return analytics(d, request, env, url.searchParams);
   if (op === 'loja') return loja(d, request, env);
   if (op === 'cupom-usos') return cupomUsos(d, url.searchParams.get('codigo'));
+  if (op === 'numeros' && request.method !== 'POST') return numerosLer(d);
   if (request.method !== 'POST') return json({ erro: 'op desconhecida' }, 400);
 
   const body = await request.json().catch(() => ({}));
@@ -41,6 +43,11 @@ export async function onRequest({ request, env }) {
   if (op === 'descricao') return descricao(d, body);
   if (op === 'perfil') { const r = await perfilMostrar(d, body); await esquecerPerfil(request); return r; }
   if (op === 'perfil-ordem') { const r = await perfilOrdem(d, body); await esquecerPerfil(request); return r; }
+  if (op === 'numeros') {
+    const r = await numerosSalvar(d, body);
+    if (r.status === 200) { await esquecerLoja(request); await esquecerPerfil(request); }
+    return r;
+  }
   if (op === 'venda') return venda(d, body);
   if (op === 'sync') return sync(env, d, body);
   if (LOJA_POST[op]) {
@@ -49,6 +56,23 @@ export async function onRequest({ request, env }) {
     return r;
   }
   return json({ erro: 'op desconhecida' }, 400);
+}
+
+// Números do site (27/09/2026): artistas, faixas e streams. Hero da vitrine, topo do
+// perfil, prévia do perfil nas redes e dados pro Google leem daqui.
+async function numerosLer(d) {
+  const r = await d.prepare("SELECT valor FROM meta WHERE chave = 'numeros'").first();
+  return json({ numeros: r ? numDeTexto(r.valor) : { ...NUM_PADRAO }, padrao: !r });
+}
+async function numerosSalvar(d, body) {
+  const n = {};
+  for (const [k, nome] of [['artistas', 'artistas'], ['faixas', 'faixas'], ['streams', 'streams']]) {
+    const v = Number(String(body && body[k] != null ? body[k] : '').replace(/\D/g, ''));
+    if (!Number.isInteger(v) || v < 1 || v >= 1e11) return json({ erro: 'Confere o número de ' + nome + ': só algarismos, maior que zero.' }, 400);
+    n[k] = v;
+  }
+  await d.prepare("INSERT OR REPLACE INTO meta (chave, valor) VALUES ('numeros', ?)").bind(JSON.stringify(n)).run();
+  return json({ ok: true, numeros: n });
 }
 
 // Uma passada só em tracks (agrupada por catálogo) no lugar de 3 subconsultas por

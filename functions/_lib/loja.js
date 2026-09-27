@@ -5,6 +5,7 @@
 // Quem abre o site recebe a lista daqui: functions/index.js troca o bloco
 // const BEATS (vazio no arquivo) pela lista do banco (injetar()).
 
+import { deTexto, PADRAO } from './numeros.js';
 import { db, now } from './db.js';
 
 /* ---------- o que ainda vem do index.html servido ---------- */
@@ -77,6 +78,14 @@ export async function lerBeats(d) {
   return (results || []).map((b) => ({ ...b, sold: b.sold ? 1 : 0 }));
 }
 
+// Os números grandes do site (27/09/2026), do painel. Falhou = os de sempre.
+export async function lerNumeros(d) {
+  try {
+    const r = await d.prepare("SELECT valor FROM meta WHERE chave = 'numeros'").first();
+    return r ? deTexto(r.valor) : { ...PADRAO };
+  } catch (_) { return { ...PADRAO }; }
+}
+
 export async function lerDestaque(d) {
   const r = await d.prepare("SELECT valor FROM meta WHERE chave = 'destaque'").first();
   if (!r) return null;
@@ -111,7 +120,7 @@ export async function lojaParaPagina(request, env) {
   if (pagina.dados && Date.now() - pagina.at < VALIDADE_PAGINA) return pagina.dados;
   const fresca = await lerCache(request, FRESCA);
   if (fresca && fresca.at && Date.now() - fresca.at < VALIDADE_PAGINA && Array.isArray(fresca.lista)) {
-    pagina = { at: fresca.at, dados: { lista: fresca.lista, destaque: fresca.destaque || null } };
+    pagina = { at: fresca.at, dados: { lista: fresca.lista, destaque: fresca.destaque || null, numeros: fresca.numeros || null } };
     return pagina.dados;
   }
   try {
@@ -120,7 +129,8 @@ export async function lojaParaPagina(request, env) {
     if (!beats.length) throw new Error('lista vazia no banco');
     const dados = {
       lista: beats.map((b) => ({ id: b.id, name: b.name, bpm: b.bpm, key: b.key || '', genre: b.genre, sold: !!b.sold })),
-      destaque: await lerDestaque(d)
+      destaque: await lerDestaque(d),
+      numeros: await lerNumeros(d)
     };
     pagina = { at: Date.now(), dados };
     await guardar(request, FRESCA, { ...dados, at: pagina.at }, 60);

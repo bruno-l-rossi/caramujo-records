@@ -96,7 +96,7 @@ Na grade do /rideblan33, canto de cima à esquerda da capa, o mesmo desenho do D
 das tapes (Schibsted 700, caixa alta, cantos de 3px):
 - **NOVA**: creme `#E4DAC7` com texto preto. Vai na 1ª tape da lista do perfil (a ordem do painel manda).
 - **EM ALTA**: preta translúcida com aro branco e o foguinho. Tape com mais plays em 30
-  dias, fora a nova, com pelo menos 10. Sem ninguém com 10, não aparece.
+  dias; se for a própria NOVA, vai pra 2ª mais tocada.
 Só essas duas. Nunca mais de uma de cada.
 
 ## O @rideblan33 na vitrine (desde 27/09/2026)
@@ -120,6 +120,19 @@ numa prévia posta aquela imagem (só imagem, sem som) e copia o link do sticker
 - **Perfil:** foto recortada com o 33 gigante só no contorno, "@rideblan33" e a bio em
   itálico. Embaixo fica livre pro sticker de link.
 - **Catálogo:** mosaico 3x3 das tapes mais novas na ordem do perfil (NOVA na 1ª),
-  "@rideblan33", "X beat tapes completas" e o chip BEATS · MIX · MASTER.
+  "@rideblan33", "Catálogo de X beat tapes" (o número acompanha as tapes do perfil) e o chip
+  BEATS · MIX · MASTER.
 Nenhuma das duas leva texto de cupom. Desenho em `assets/story.js` (artePerfil, arteCatalogo).
+
+## Números do site (desde 27/09/2026)
+
+Artistas, faixas e streams mudam no painel (home, "Números do site") e aparecem no hero
+da vitrine ("2.500.000+ streams", número cheio), no topo do perfil e na prévia do perfil
+nas redes ("2,5 mi de streams", curto) e nos dados pro Google ("2,5 milhões"). Sempre com o
+"+" depois. A imagem da prévia do perfil (`rideblan33-og-2.jpg`) não tem números desenhados.
+
+## @rideblan33 no hero (desde 27/09/2026)
+
+Na frase "Beats exclusivos, mixagem e masterização por @rideblan33." o @ é o link do perfil,
+igual ao das tapes: bone em negrito, sublinhado discreto e a setinha, que anda no hover.
 
