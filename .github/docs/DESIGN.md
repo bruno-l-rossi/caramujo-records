@@ -128,7 +128,8 @@ Nenhuma das duas leva texto de cupom. Desenho em `assets/story.js` (artePerfil, 
 
 Artistas, faixas e streams mudam no painel (home, "Números do site") e aparecem no hero
 da vitrine ("2.500.000+ streams", número cheio), no topo do perfil e na prévia do perfil
-nas redes ("2,5 mi de streams", curto) e nos dados pro Google ("2,5 milhões"). Sempre com o
+nas redes ("2,5 mi de streams", curto), nos dados pro Google ("2,5 milhões") e no
+`/llms.txt`, o resumo pras IAs (número cheio). Sempre com o
 "+" depois. A imagem da prévia do perfil (`rideblan33-og-2.jpg`) não tem números desenhados.
 
 ## @rideblan33 no hero (desde 27/09/2026)
