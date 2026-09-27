@@ -3,12 +3,15 @@
 // O molde é o próprio 404.html servido: mudou o 404.html, muda tudo junto.
 
 const IG = '<a href="https://ig.me/m/rideblan33" rel="noopener">@rideblan33</a>';
+// 27/09/2026: link quebrado aponta pras beat tapes (perfil) e o pedido de link vai pro Direct
+const PERFIL = '<a href="/rideblan33?de=404">beat tapes do @rideblan33</a>';
+const DIRECT = '<a href="https://ig.me/m/rideblan33" rel="noopener">Direct</a>';
 
 const PADRAO = {
   404: {
     codigo: 'Erro 404',
     titulo: 'Essa página não existe',
-    texto: `Ou o link veio cortado, ou o catálogo mudou de endereço. Pede o link de novo pro ${IG}.`
+    texto: `Ou o link veio cortado, ou o catálogo mudou de endereço. Procura nas ${PERFIL} ou pede o link de novo no ${DIRECT}.`
   },
   503: {
     codigo: 'Fora do ar',
@@ -56,7 +59,7 @@ export async function paginaErro(request, env, status = 404, sob = {}) {
   const t = {
     codigo: sob.codigo || base.codigo,
     titulo: sob.titulo || base.titulo,
-    texto: sob.texto ? esc(sob.texto).replace('{ig}', IG) : base.texto
+    texto: sob.texto ? esc(sob.texto).replace('{ig}', IG).replace('{perfil}', PERFIL).replace('{direct}', DIRECT) : base.texto
   };
   let html = await molde(request, env);
   if (html) {

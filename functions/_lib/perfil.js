@@ -196,6 +196,8 @@ export function paginaPerfil(dados, { url, barraFixa = true } = {}) {
   const pessoa = {
     '@context': 'https://schema.org',
     '@type': 'Person',
+    // o mesmo @id do founder no JSON-LD da home: o Google junta as duas páginas na mesma pessoa
+    '@id': SITE + '/rideblan33#pessoa',
     name: '@rideblan33',
     alternateName: ['rideblan33', 'rideblan'],
     jobTitle: 'Produtor musical e beatmaker',
@@ -471,6 +473,14 @@ ${grade(tapes, idNova, idEmAlta)}
   if(T && T.faixas && T.faixas.length && caixa){
     var som=new Audio(); som.preload='none';
     var i=-1, contados={};
+    // sempre em ordem aleatória (27/09/2026): embaralha no 1º play e de novo a cada volta
+    // completa, sem repetir o beat que acabou de tocar
+    function embaralha(){
+      var a=T.faixas, atual=i>=0?a[i]:null, k, j, x;
+      for(k=a.length-1;k>0;k--){ j=Math.floor(Math.random()*(k+1)); x=a[k]; a[k]=a[j]; a[j]=x; }
+      if(atual && a.length>1 && a[0]===atual){ x=a[0]; a[0]=a[1]; a[1]=x; }
+    }
+    function proxima(){ if(i+1>=T.faixas.length){ embaralha(); vai(0); } else vai(i+1); }
     var nome=document.getElementById('tNome'), barra=document.getElementById('tBarra');
     function marca(){
       var toca=!som.paused;
@@ -499,7 +509,7 @@ ${grade(tapes, idNova, idEmAlta)}
       liga('play',function(){ som.play().catch(function(){}) });
       liga('pause',function(){ som.pause() });
       liga('previoustrack',function(){ if(som.currentTime>4){ som.currentTime=0; return; } vai(i-1); });
-      liga('nexttrack',function(){ vai(i+1); });
+      liga('nexttrack',function(){ proxima(); });
       liga('seekbackward',function(d){ som.currentTime=Math.max(0,som.currentTime-(d&&d.seekOffset||15)); });
       liga('seekforward',function(d){ som.currentTime=Math.min(som.duration||1e9,som.currentTime+(d&&d.seekOffset||15)); });
       liga('seekto',function(d){ if(d&&d.seekTime!=null) som.currentTime=d.seekTime; });
@@ -510,16 +520,16 @@ ${grade(tapes, idNova, idEmAlta)}
       var dur=som.duration; if(!dur||!isFinite(dur)) return;
       try{ navigator.mediaSession.setPositionState({ duration:dur, position:Math.min(som.currentTime,dur), playbackRate:som.playbackRate||1 }); }catch(e){}
     }
-    function alterna(){ if(i<0) return vai(0); if(som.paused) som.play().catch(function(){}); else som.pause(); }
+    function alterna(){ if(i<0){ embaralha(); return vai(0); } if(som.paused) som.play().catch(function(){}); else som.pause(); }
     botoes.forEach(function(b){ b.addEventListener('click',alterna); });
     document.getElementById('tPlay').addEventListener('click',alterna);
-    document.getElementById('tProx').addEventListener('click',function(){ vai(i+1); });
+    document.getElementById('tProx').addEventListener('click',function(){ proxima(); });
     // anterior: no começo do beat volta pro anterior; passou de 4 s, volta pro começo dele
     document.getElementById('tAnt').addEventListener('click',function(){ if(som.currentTime>4){ som.currentTime=0; if(som.paused) som.play().catch(function(){}); } else vai(i-1); });
     som.addEventListener('play',function(){ marca(); if('mediaSession' in navigator) navigator.mediaSession.playbackState='playing'; });
     som.addEventListener('pause',function(){ marca(); if('mediaSession' in navigator) navigator.mediaSession.playbackState='paused'; });
     som.addEventListener('loadedmetadata',posicao); som.addEventListener('seeked',posicao);
-    som.addEventListener('ended',function(){ vai(i+1); });
+    som.addEventListener('ended',function(){ proxima(); });
     som.addEventListener('timeupdate',function(){ barra.style.width=(som.duration?som.currentTime/som.duration*100:0)+'%'; });
   }
 

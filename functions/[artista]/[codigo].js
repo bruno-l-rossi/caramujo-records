@@ -24,7 +24,7 @@ export async function onRequestGet({ params, request, env }) {
   if (!artist || artist.code !== codigo || artist.tipo === 'vitrine') {
     return paginaErro(request, env, 404, {
       titulo: 'Esse link não abre',
-      texto: 'Ou ele veio cortado, ou o catálogo mudou de endereço. Pede o link de novo pro {ig}.'
+      texto: 'Ou ele veio cortado, ou o catálogo mudou de endereço. Procura nas {perfil} ou pede o link de novo no {direct}.'
     });
   }
 

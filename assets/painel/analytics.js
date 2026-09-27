@@ -126,7 +126,7 @@
     beat: 'Link de beat', bio: 'Bio do Instagram', story: 'Story', 'beat-tape': 'Beat tape',
     perfil: 'Perfil @rideblan33', tape: 'De uma beat tape', mais: 'Mais do @rideblan33', site: 'Site da Caramujo', spotify: 'Spotify',
     // 27/09/2026: caminhos novos pro perfil
-    anel: 'Anel do topo da vitrine', sobre: 'Card do Sobre nós', hero: '@ do topo da vitrine', 'story-catalogo': 'Story do catálogo', link: 'Link compartilhado do perfil'
+    anel: 'Anel do topo da vitrine', sobre: 'Card do Sobre nós', hero: '@ do topo da vitrine', '404': 'Link quebrado (página de erro)', 'story-catalogo': 'Story do catálogo', link: 'Link compartilhado do perfil'
   };
   var nomeOrigem = function (o) { return o.nome ? 'Tape: ' + o.nome : (ORIGEM[o.origem] || o.origem); };
 
