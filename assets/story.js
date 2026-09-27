@@ -10,7 +10,10 @@
    Meta; pela web o caminho é o sticker de link.
    Pastas de artista: 30s (opts.duracao), sem link (semLink: mandar a faixa é o ENVIAR
    da pasta) e o nome do artista no lugar do texto do cupom (opts.texto).
-   Usado pelo site (index.html) e pelas páginas de beat tape e de artista (catalogo/app.html).
+   Perfil do @rideblan33 (27/09/2026): abrirPerfil() abre a folha de um passo só, com as
+   duas artes paradas lado a lado (Perfil e Catálogo; tocar numa posta ela) e o Enviar o link.
+   Usado pelo site (index.html), pelas páginas de beat tape e de artista (catalogo/app.html)
+   e pelo perfil (/rideblan33).
    Carregado sob demanda (ou uns segundos depois do primeiro play, pra folha abrir na hora). */
 (function () {
   if (window.CaramujoStory) return;
@@ -28,11 +31,14 @@
     var lista = [
       ['Cormorant Garamond', '/assets/fonts/cormorant-garamond-latin-600-normal.woff2', '600'],
       ['IBM Plex Mono', '/assets/fonts/ibm-plex-mono-latin-400-normal.woff2', '400'],
-      ['Schibsted Grotesk', '/assets/fonts/schibsted-grotesk-latin-600-normal.woff2', '600']
+      ['Schibsted Grotesk', '/assets/fonts/schibsted-grotesk-latin-600-normal.woff2', '600'],
+      // artes do perfil (27/09/2026): bio em itálico e a pastilha NOVA
+      ['Cormorant Garamond', '/assets/fonts/cormorant-garamond-latin-500-italic.woff2', '500', 'italic'],
+      ['Schibsted Grotesk', '/assets/fonts/schibsted-grotesk-latin-700-normal.woff2', '700']
     ];
     prontas = Promise.all(lista.map(function (f) {
       try {
-        var ff = new FontFace(f[0], 'url(' + f[1] + ')', { weight: f[2] });
+        var ff = new FontFace(f[0], 'url(' + f[1] + ')', { weight: f[2], style: f[3] || 'normal' });
         return ff.load().then(function (x) { document.fonts.add(x); }).catch(function () {});
       } catch (_) { return Promise.resolve(); }
     }));
@@ -644,6 +650,106 @@
     });
   }
 
+  /* ---------- artes do perfil (27/09/2026) ----------
+     As duas são só imagem. Medidas no quadro de 1080x1920, iguais ao mockup aprovado
+     (claude.ai/artifact/JqYZwyrV29SLWDZ22zdJ22, opções 1A e 2A). O espaço de baixo fica
+     livre pro sticker de link do Instagram. */
+  function fundoPerfil(ctx) {
+    ctx.fillStyle = COR.fundo; ctx.fillRect(0, 0, W, H);
+    var g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#1b1712'); g.addColorStop(0.55, '#14110d'); g.addColorStop(1, '#100d0a');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    var r = ctx.createRadialGradient(W * 0.58, H * 0.34, 0, W * 0.58, H * 0.34, H * 0.5);
+    r.addColorStop(0, 'rgba(185,143,94,.16)'); r.addColorStop(1, 'rgba(185,143,94,0)');
+    ctx.fillStyle = r; ctx.fillRect(0, 0, W, H);
+    grao(ctx);
+  }
+  function marcaTopo(ctx, path) {
+    desenharSelo(ctx, path, W / 2 - 32, 175, 64, COR.cream, 4);
+    ctx.fillStyle = COR.cream;
+    ctx.font = '600 28px "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif';
+    ctx.textBaseline = 'alphabetic';
+    espacado(ctx, 'CARAMUJO RECORDS', W / 2, 285, 9);
+  }
+  function centro(ctx, texto, y, fonte, cor) {
+    ctx.font = fonte; ctx.fillStyle = cor; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText(texto, W / 2, y);
+  }
+  function artePerfil(o) {
+    return Promise.all([fontes(), selo(), imagem(o.foto)]).then(function (r) {
+      var path = r[1], foto = r[2];
+      var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      var ctx = cv.getContext('2d');
+      fundoPerfil(ctx);
+      marcaTopo(ctx, path);
+      // o 33 gigante, só no contorno, atrás da foto
+      ctx.save();
+      ctx.font = '600 1040px "Cormorant Garamond", Georgia, serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.strokeStyle = 'rgba(185,143,94,.5)'; ctx.lineWidth = 3;
+      var w3 = ctx.measureText('3').width, x3 = W / 2 - (w3 * 2 - 40) / 2;
+      // os números do Cormorant são de estilo antigo (descem da linha): 600 deixa o 33 no meio da foto
+      ctx.strokeText('3', x3, 600); ctx.strokeText('3', x3 + w3 - 40, 600);
+      ctx.restore();
+      if (foto) {
+        var fh = 930, fw = fh * foto.width / foto.height;
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 50; ctx.shadowOffsetY = 30;
+        ctx.drawImage(foto, W / 2 - fw * 0.47, H - 690 - fh, fw, fh);
+        ctx.restore();
+      }
+      centro(ctx, '@rideblan33', 1368, '600 150px "Cormorant Garamond", Georgia, serif', COR.cream);
+      centro(ctx, 'Produtor & beatmaker.', 1462, 'italic 500 56px "Cormorant Garamond", Georgia, serif', COR.bone);
+      centro(ctx, '33 memórias distantes.', 1527, 'italic 500 56px "Cormorant Garamond", Georgia, serif', COR.bone);
+      return cv;
+    });
+  }
+  function cantosRedondos(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+  }
+  function arteCatalogo(o) {
+    var capas = (o.capas || []).slice(0, 9);
+    return Promise.all([fontes(), selo(), Promise.all(capas.map(imagem))]).then(function (r) {
+      var path = r[1], imgs = r[2];
+      var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      var ctx = cv.getContext('2d');
+      fundoPerfil(ctx);
+      marcaTopo(ctx, path);
+      // mosaico 3x3 das tapes mais novas, na ordem do perfil
+      var lado = 280, gap = 14, x0 = 106, y0 = 330;
+      capas.forEach(function (_, i) {
+        var x = x0 + (i % 3) * (lado + gap), y = y0 + Math.floor(i / 3) * (lado + gap), img = imgs[i];
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 20;
+        ctx.fillStyle = '#000'; ctx.fillRect(x, y, lado, lado);
+        ctx.restore();
+        if (img) {
+          var l = Math.min(img.width, img.height);
+          ctx.drawImage(img, (img.width - l) / 2, (img.height - l) / 2, l, l, x, y, lado, lado);
+        } else {
+          ctx.fillStyle = COR.deep; ctx.fillRect(x, y, lado, lado);
+          desenharSelo(ctx, path, x + lado / 2 - 40, y + lado / 2 - 40, 80, COR.fire, 3);
+        }
+        if (i === 0 && o.nova !== false) {
+          ctx.font = '700 24px "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif';
+          var tw = 0, t = 'NOVA', k; for (k = 0; k < t.length; k++) tw += ctx.measureText(t[k]).width + (k < t.length - 1 ? 3 : 0);
+          ctx.fillStyle = '#E4DAC7'; cantosRedondos(ctx, x + 14, y + 14, tw + 26, 41, 5); ctx.fill();
+          ctx.fillStyle = '#000'; ctx.textBaseline = 'alphabetic';
+          espacado(ctx, t, x + 14 + (tw + 26) / 2, y + 14 + 29, 3);
+        }
+      });
+      var n = Number(o.total) || capas.length;
+      centro(ctx, '@rideblan33', 1365, '600 140px "Cormorant Garamond", Georgia, serif', COR.cream);
+      centro(ctx, n + (n === 1 ? ' beat tape completa' : ' beat tapes completas'), 1460, 'italic 500 58px "Cormorant Garamond", Georgia, serif', COR.bone);
+      chips(ctx, [{ texto: 'BEATS · MIX · MASTER' }], W / 2, 1500);
+      return cv;
+    });
+  }
+
   /* ---------- a folha ---------- */
   var CSS = [
     '.cs-veu{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.66);display:flex;align-items:flex-end;justify-content:center}',
@@ -705,6 +811,16 @@
     '.cs-catalogo .cs-acoes button{border-radius:999px;border:1px solid #2a2a2a;background:#1b1b1b;color:#fff;font-weight:600}',
     '.cs-catalogo .cs-acoes .cs-forte{background:#fff;color:#000;border-color:#fff}',
     '.cs-catalogo .cs-fechar{background:transparent!important;border-color:transparent!important;color:#8a8a8a!important}',
+    // folha do perfil (27/09/2026): as duas artes lado a lado, tocar posta
+    '.cs-perfil .cs-kicker{margin:18px 0 10px;font:700 11px/1 "Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:#9e7c48}',
+    '.cs-duas{display:grid;grid-template-columns:1fr 1fr;gap:12px}',
+    '.cs-duas button{display:flex;flex-direction:column;gap:10px;padding:8px 8px 12px;border:1px solid #332c22;background:#14110d;color:#f2ecdf;cursor:pointer;font:700 11.5px/1 "Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;transition:border-color .15s}',
+    '.cs-duas button:hover,.cs-duas button:focus-visible{border-color:#b98f5e}',
+    '.cs-duas button:disabled{cursor:progress;opacity:.7}',
+    '.cs-duas .cs-mini{display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:9/16;overflow:hidden;background:#000;color:#6f6757;font:400 11px/1.3 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:0;text-transform:none}',
+    '.cs-duas .cs-mini canvas{width:100%;height:100%;display:block}',
+    '.cs-perfil .cs-topo h2{margin-bottom:6px}',
+    '.cs-perfil .cs-acoes{margin-top:14px}',
     '@media (min-width:700px){.cs-veu{align-items:center}.cs-catalogo .cs-folha{border-radius:20px}.cs-site .cs-folha{border-bottom:1px solid #332c22}}'
   ].join('\n');
 
@@ -1012,7 +1128,84 @@
     });
   }
 
-  window.CaramujoStory = { abrir: abrir, arte: arte, fechar: fechar, precisaDestravar: precisaDestravar, video: video, podeVideo: podeVideo, maisForte: maisForte, fimDaOnda: fimDaOnda, primeiroQuadro: primeiroQuadro, onda: onda, picos: picos, nBarras: nBarras };
+  // Compartilhar o perfil do @rideblan33 (27/09/2026). Um passo só: título, subtítulo,
+  // as duas artes (Perfil e Catálogo, só imagem; tocar na prévia posta ela), Enviar o link
+  // e Fechar. opts: { url, urlStory: { perfil, catalogo }, foto, capas: [até 9 urls],
+  // nova (pastilha na 1ª capa), total (nº de tapes), avisar(msg), evento(tipo) }.
+  function abrirPerfil(opts) {
+    opts = opts || {};
+    if (!document.getElementById('cs-css')) {
+      var st = document.createElement('style'); st.id = 'cs-css'; st.textContent = CSS; document.head.appendChild(st);
+    }
+    if (!veu) {
+      veu = document.createElement('div'); veu.className = 'cs-veu'; veu.hidden = true;
+      veu.addEventListener('click', function (e) { if (e.target === veu) fechar(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fechar(); });
+      document.body.appendChild(veu);
+    }
+    var minha = ++vez;
+    var vivo = function () { return minha === vez; };
+    var avisar = opts.avisar || function () {};
+    var evento = function (t) { try { if (opts.evento) opts.evento(t); } catch (_) {} };
+    var urlStory = opts.urlStory || {};
+    veu.className = 'cs-veu cs-site cs-perfil';
+    veu.innerHTML = '<div class="cs-folha" role="dialog" aria-modal="true" aria-label="Compartilhar perfil">' +
+      '<div class="cs-topo"><div><h2>Compartilhar perfil</h2><p>@rideblan33 © Caramujo Records</p></div></div>' +
+      '<p class="cs-kicker">Postar no story</p>' +
+      '<div class="cs-duas">' +
+        '<button type="button" id="csPerfil" disabled aria-label="Postar no story: perfil"><span class="cs-mini" id="csMiniPerfil">preparando…</span>Perfil</button>' +
+        '<button type="button" id="csCatalogo" disabled aria-label="Postar no story: catálogo"><span class="cs-mini" id="csMiniCatalogo">preparando…</span>Catálogo</button>' +
+      '</div>' +
+      '<div class="cs-acoes">' + (opts.url ? '<button type="button" id="csLink">Enviar o link</button>' : '') +
+        '<button type="button" class="cs-fechar" id="csFechar">Fechar</button></div></div>';
+    veu.hidden = false;
+    var $ = function (i) { return document.getElementById(i); };
+    $('csFechar').addEventListener('click', fechar);
+    var arquivos = {};
+    function preparar(tipo, fazer, idMini, idBotao) {
+      fazer(opts).then(function (cv) {
+        if (!vivo()) return;
+        var v = document.createElement('canvas'); v.width = 432; v.height = 768;   // nítida em tela 2x/3x
+        v.getContext('2d').drawImage(cv, 0, 0, 432, 768);
+        var m = $(idMini); if (m) { m.textContent = ''; m.appendChild(v); }
+        return paraArquivo(cv, 'rideblan33-' + tipo);
+      }).then(function (f) {
+        if (!vivo()) return;
+        arquivos[tipo] = f || null;
+        var b = $(idBotao); if (b) b.disabled = !f;
+        if (!f) { var m = $(idMini); if (m) m.textContent = 'sem prévia'; }
+      }).catch(function () { var m = $(idMini); if (m && vivo()) m.textContent = 'sem prévia'; });
+    }
+    preparar('perfil', artePerfil, 'csMiniPerfil', 'csPerfil');
+    preparar('catalogo', arteCatalogo, 'csMiniCatalogo', 'csCatalogo');
+    function postar(tipo) {
+      var f = arquivos[tipo]; if (!f) return;
+      var link = urlStory[tipo] || opts.url;
+      if (link) copiar(link);                 // pro sticker de link do story
+      evento('story-' + tipo);
+      if (podeCompartilhar({ files: [f] })) {
+        navigator.share({ files: [f] }).then(function () {
+          fechar();
+          if (link) avisar('Link copiado: no story, cola no sticker de link.');
+        }).catch(function (e) {
+          if (e && e.name === 'AbortError') return;
+          avisar('Não abriu o compartilhar. Tenta de novo.');
+        });
+        return;
+      }
+      baixar(f);
+      avisar(link ? 'Imagem baixada e link copiado.' : 'Imagem baixada.');
+    }
+    $('csPerfil').addEventListener('click', function () { postar('perfil'); });
+    $('csCatalogo').addEventListener('click', function () { postar('catalogo'); });
+    if (opts.url) $('csLink').addEventListener('click', function () {
+      evento('link');
+      if (navigator.share) { navigator.share({ url: opts.url }).then(fechar).catch(function () {}); return; }
+      copiar(opts.url).then(function (ok) { avisar(ok ? 'Link copiado.' : opts.url); });
+    });
+  }
+
+  window.CaramujoStory = { abrir: abrir, abrirPerfil: abrirPerfil, artePerfil: artePerfil, arteCatalogo: arteCatalogo, arte: arte, fechar: fechar, precisaDestravar: precisaDestravar, video: video, podeVideo: podeVideo, maisForte: maisForte, fimDaOnda: fimDaOnda, primeiroQuadro: primeiroQuadro, onda: onda, picos: picos, nBarras: nBarras };
 
   // deixa o juntador de mp4 no cache enquanto a pessoa ouve (32KB), pra folha não esperar a rede
   try {

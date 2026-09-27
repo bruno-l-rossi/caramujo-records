@@ -94,7 +94,7 @@ grade preta das tapes embaixo (regras do DESIGN-catalogo). Foto e avatar em
 
 Na grade do /rideblan33, canto de cima à esquerda da capa, o mesmo desenho do DISPONÍVEL
 das tapes (Schibsted 700, caixa alta, cantos de 3px):
-- **NOVA**: creme `#E4DAC7` com texto preto. Vai na tape que entrou por último no site.
+- **NOVA**: creme `#E4DAC7` com texto preto. Vai na 1ª tape da lista do perfil (a ordem do painel manda).
 - **EM ALTA**: preta translúcida com aro branco e o foguinho. Tape com mais plays em 30
   dias, fora a nova, com pelo menos 10. Sem ninguém com 10, não aparece.
 Só essas duas. Nunca mais de uma de cada.
@@ -102,9 +102,24 @@ Só essas duas. Nunca mais de uma de cada.
 ## O @rideblan33 na vitrine (desde 27/09/2026)
 
 - Anel de story no topo: a camisa 33 (`assets/perfil/rideblan33-camisa.webp`) numa bolinha
-  de 34px com anel em degradê fire → amber → clay, do lado do Instagram, celular e computador.
+  de 34px com anel em degradê fire → amber → clay. No computador fica do lado do Instagram;
+  no celular é o único ícone do topo (o Instagram sai, segue no Contato).
   Leva pro `/rideblan33?de=anel`.
 - 1º card do carrossel do Sobre nós: fundo preto, "33" gigante só no contorno, a foto
   recortada e a faixa "@rideblan33 · PORTFÓLIO →"; legenda "Quem faz o som" em fogo.
   Leva pro `/rideblan33?de=sobre`.
+- Carrossel do Sobre nós: todos os cards com a mesma altura, no computador e no celular
+  (celular: `min(82vw,400px)`); a largura segue a proporção de cada mídia, nada corta nem estica.
+
+## Compartilhar o perfil (desde 27/09/2026)
+
+5º botão redondo no fim das redes do perfil (aro creme claro, pra não parecer mais uma rede).
+Abre a folha na pele da vitrine: "Compartilhar perfil", "@rideblan33 © Caramujo Records",
+"POSTAR NO STORY" e as duas prévias lado a lado, depois "Enviar o link" e "Fechar". Tocar
+numa prévia posta aquela imagem (só imagem, sem som) e copia o link do sticker.
+- **Perfil:** foto recortada com o 33 gigante só no contorno, "@rideblan33" e a bio em
+  itálico. Embaixo fica livre pro sticker de link.
+- **Catálogo:** mosaico 3x3 das tapes mais novas na ordem do perfil (NOVA na 1ª),
+  "@rideblan33", "X beat tapes completas" e o chip BEATS · MIX · MASTER.
+Nenhuma das duas leva texto de cupom. Desenho em `assets/story.js` (artePerfil, arteCatalogo).
 

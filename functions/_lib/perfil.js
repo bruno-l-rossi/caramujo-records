@@ -21,8 +21,8 @@ export async function esquecerPerfil(request) {
   if (c && request) { try { await c.delete(new URL(REGIAO, request.url)); } catch (_) { /* bônus */ } }
 }
 
-// Pastilhas das capas (27/09/2026). NOVA: a tape que entrou por último no site (maior
-// id), mesmo que o painel mude a ordem. EM ALTA: a tape do perfil com mais plays nos
+// Pastilhas das capas (27/09/2026). NOVA: a 1ª tape da lista do perfil (a ordem do
+// painel manda; tape recriada no Drive ganha id novo sem ser nova, ex. 2021 tape). EM ALTA: a tape do perfil com mais plays nos
 // últimos 30 dias, fora a nova, com pelo menos EM_ALTA_MIN plays. A conta passa por
 // todos os plays do mês, então roda no máximo a cada 6 h e fica guardada na meta.
 export const EM_ALTA_MIN = 10;
@@ -89,7 +89,7 @@ export async function lerPerfil(request, env) {
     ).bind(tapes[0].id).all();
     faixas = (f || []).map((x) => ({ id: x.id, t: x.title, d: x.dur || 0 }));
   }
-  const nova = tapes.length ? Math.max(...tapes.map((t) => t.id)) : null;
+  const nova = tapes.length ? tapes[0].id : null;
   const emAlta = tapes.length ? await tapeEmAlta(d, nova) : null;
   const dados = { tapes, faixas, nova, emAlta: tapes.some((t) => t.id === emAlta) ? emAlta : null };
   cache = { at: Date.now(), dados };
@@ -126,8 +126,11 @@ const ICONE_PAUSA = '<svg class="i-pausa" viewBox="0 0 24 24" fill="currentColor
 const ICONES = {
   spotify: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M7 9.3c3.4-1 7.2-.7 10.2 1"/><path d="M7.6 12.4c2.8-.8 5.7-.5 8.2.9"/><path d="M8.2 15.3c2.1-.5 4.2-.3 6 .7"/></svg>',
   youtube: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2.5" y="5.5" width="19" height="13" rx="3.5"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor" stroke="none"/></svg>',
-  instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>'
+  instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>',
+  compartilhar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 13.3l7.4 4.4"/><path d="M15.7 6.3l-7.4 4.4"/></svg>'
 };
+// o mesmo ?v das outras páginas: trocar junto com index.html e catalogo/app.html
+export const STORY_JS = '/assets/story.js?v=2026-09-27a';
 
 const ICONE_FOGO = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 4-3 5-3 9a3 3 0 006 0c0-1.5-.6-2.4-1-3 2.5 1 4 3.6 4 6.5A6 6 0 016 14.5C6 9 11 7 12 2z"/></svg>';
 function pastilha(t, nova, emAlta) {
@@ -157,7 +160,7 @@ export const FAVICON = '<link rel="icon" type="image/svg+xml" href="/assets/bran
 export function paginaPerfil(dados, { url, barraFixa = true } = {}) {
   const tapes = Array.isArray(dados) ? dados : dados.tapes;
   const faixas = Array.isArray(dados) ? [] : (dados.faixas || []);
-  const idNova = !Array.isArray(dados) && dados.nova != null ? dados.nova : (tapes.length ? Math.max(...tapes.map((t) => t.id)) : null);
+  const idNova = !Array.isArray(dados) && dados.nova != null ? dados.nova : (tapes.length ? tapes[0].id : null);
   const idEmAlta = Array.isArray(dados) ? null : (dados.emAlta ?? null);
   const nova = tapes[0] || null;
   const tocador = nova && faixas.length ? {
@@ -292,8 +295,12 @@ h1{font:600 clamp(56px,8.6vw,124px)/.9 var(--serif);color:var(--cream);margin:0;
 .numeros b{font-weight:400;color:var(--cream)}
 .numeros span{white-space:nowrap}
 .botoes{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
-.botoes a{display:grid;place-items:center;width:48px;height:48px;border:1px solid var(--wire);border-radius:50%;color:var(--cream);background:rgba(20,17,13,.55);transition:border-color .2s,color .2s}
-.botoes a:hover{border-color:var(--fire);color:var(--fire)}
+.botoes a,.botoes button{display:grid;place-items:center;width:48px;height:48px;border:1px solid var(--wire);border-radius:50%;color:var(--cream);background:rgba(20,17,13,.55);transition:border-color .2s,color .2s}
+.botoes a:hover,.botoes button:hover{border-color:var(--fire);color:var(--fire)}
+/* 5º botão (27/09/2026): compartilhar o perfil. Aro claro pra não parecer mais uma rede */
+.botoes .comp{padding:0;font:inherit;cursor:pointer;border-color:rgba(242,236,223,.55);background:rgba(242,236,223,.06)}
+.aviso{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translate(-50%,8px);z-index:9500;max-width:calc(100% - 32px);padding:11px 16px;background:#1e1a12;border:1px solid var(--clay);color:var(--bone);font:400 12.5px/1.4 var(--mono);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.aviso.on{opacity:1;transform:translate(-50%,0)}
 .botoes svg{width:20px;height:20px}
 .botoes .casa{border-color:var(--fire)}
 .botoes .casa img{width:26px;height:26px}
@@ -384,6 +391,7 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
         <a href="${REDES.spotify}" target="_blank" rel="noopener" aria-label="Spotify" title="Spotify" data-rede="spotify">${ICONES.spotify}</a>
         <a href="${REDES.youtube}" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" data-rede="youtube">${ICONES.youtube}</a>
         <a href="${REDES.instagram}" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram" data-rede="instagram">${ICONES.instagram}</a>
+        <button class="comp" id="compartilhar" type="button" aria-label="Compartilhar perfil" title="Compartilhar">${ICONES.compartilhar}</button>
       </div>
     </div>
     <div class="foto" aria-hidden="true">
@@ -403,6 +411,9 @@ ${tocador ? `<div class="tocando" id="tocando" hidden>
   <span class="barra"><i id="tBarra"></i></span>
 </div>
 <script type="application/json" id="tocadorDados">${jsonSeguro(tocador)}</script>` : ''}
+
+<script type="application/json" id="compDados">${jsonSeguro({ total: tapes.length, capas: tapes.slice(0, 9).map((t) => (t.capa ? '/capa/' + t.capa : null)) })}</script>
+<div class="aviso" id="aviso" role="status" aria-live="polite"></div>
 
 <main class="preto" id="tapes">
   <div class="cab"><h2>Beat tapes</h2><span>${tapes.length} ${tapes.length === 1 ? 'tape' : 'tapes'}</span></div>
@@ -490,6 +501,34 @@ ${grade(tapes, idNova, idEmAlta)}
     som.addEventListener('loadedmetadata',posicao); som.addEventListener('seeked',posicao);
     som.addEventListener('ended',function(){ vai(i+1); });
     som.addEventListener('timeupdate',function(){ barra.style.width=(som.duration?som.currentTime/som.duration*100:0)+'%'; });
+  }
+
+  // compartilhar o perfil (27/09/2026): a folha do story.js com as duas artes (Perfil e
+  // Catálogo, só imagem) e o Enviar o link. O story.js desce quieto uns segundos depois.
+  var comp=document.getElementById('compartilhar'), carregando=null;
+  function storyJs(){
+    if(window.CaramujoStory) return Promise.resolve();
+    if(carregando) return carregando;
+    carregando=new Promise(function(ok,falha){ var s=document.createElement('script'); s.src='${STORY_JS}'; s.onload=ok; s.onerror=function(){ carregando=null; falha(); }; document.head.appendChild(s); });
+    return carregando;
+  }
+  var tAviso=null;
+  function avisar(msg){ var a=document.getElementById('aviso'); if(!a) return; a.textContent=msg; a.classList.add('on'); clearTimeout(tAviso); tAviso=setTimeout(function(){ a.classList.remove('on'); },3200); }
+  if(comp){
+    var CD={}; try{ CD=JSON.parse(document.getElementById('compDados').textContent); }catch(e){}
+    comp.addEventListener('click',function(){
+      manda({kind:'perfil-rede',trackId:'compartilhar',origem:de});
+      storyJs().then(function(){
+        window.CaramujoStory.abrirPerfil({
+          url: location.origin+'/rideblan33?de=link',
+          urlStory: { perfil: location.origin+'/rideblan33?de=story', catalogo: location.origin+'/rideblan33?de=story-catalogo#tapes' },
+          foto: '/assets/perfil/rideblan33.webp', capas: CD.capas||[], total: CD.total||0, nova: true,
+          avisar: avisar,
+          evento: function(t){ manda({kind:'perfil-rede',trackId:t,origem:de}); }
+        });
+      }).catch(function(){ avisar('Não carregou. Tenta de novo.'); });
+    });
+    (window.requestIdleCallback||function(f){ setTimeout(f,1) })(function(){ setTimeout(function(){ storyJs().catch(function(){}); },4000); });
   }
 
   // barra que acompanha: aparece quando o topo sai da tela

@@ -892,6 +892,8 @@ html,body{overflow-x:hidden;}
 .nav-burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
 @media(max-width:600px){
   .nav-burger{display:flex;}
+  /* celular (27/09/2026): no topo fica só o anel do @rideblan33; o Instagram segue no Contato */
+  .nav-ig{display:none;}
 
   .nav-links{position:fixed!important;top:54px;left:0;right:0;flex-direction:column!important;background:rgba(5,4,3,.98);border-bottom:1px solid var(--wire);overflow:hidden!important;max-height:0;transition:max-height .3s ease;justify-content:flex-start!important;}
   .nav-links.open{max-height:82vh;border-bottom:1px solid var(--wire);}
@@ -947,9 +949,17 @@ html,body{overflow-x:hidden;}
 @media(max-width:760px){
   .studio-strip{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:.9rem;padding:0 9vw .4rem;justify-content:flex-start;scrollbar-width:none;}
   .studio-strip::-webkit-scrollbar{display:none;}
-  .studio-ph{scroll-snap-align:center;flex:0 0 82vw;max-width:340px;}
-  .studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb,.studio-ph .vid-thumb>img{width:100%;height:auto;max-height:none;}
-  .studio-eu .eu-box{aspect-ratio:1;}
+  /* celular (27/09/2026): todos os cards com a MESMA altura e largura pela proporção de
+     cada mídia, igual ao computador. Nada corta nem estica (proporção = a do arquivo). */
+  .studio-strip{--sh:min(82vw,400px);}
+  .studio-ph{scroll-snap-align:center;flex:0 0 auto;width:min-content;max-width:none;}
+  .studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb,.studio-ph .vid-thumb>img{height:var(--sh);width:auto;max-width:none;max-height:none;object-fit:cover;}
+  .sp-1>img{aspect-ratio:1;}
+  .sp-2 .vid-thumb,.sp-2 .vid-thumb>img{aspect-ratio:.6957;}
+  .sp-3>img{aspect-ratio:.5322;}
+  .sp-4>video{aspect-ratio:.7826;}
+  .studio-eu .eu-box{height:var(--sh);width:auto;aspect-ratio:4/5;}
+  .studio-ph figcaption{max-width:100%;}
 }
 
 /* ══ NOVO v18 — player do Drive (sai o SoundCloud) ═══════════════════
@@ -4042,7 +4052,7 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-25j';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-27a';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });

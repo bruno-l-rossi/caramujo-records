@@ -124,7 +124,9 @@
     direto: 'Direto (link salvo ou digitado)', instagram: 'Instagram', facebook: 'Facebook', whatsapp: 'WhatsApp',
     tiktok: 'TikTok', youtube: 'YouTube', google: 'Google', busca: 'Outra busca', 'outro-site': 'Outro site',
     beat: 'Link de beat', bio: 'Bio do Instagram', story: 'Story', 'beat-tape': 'Beat tape',
-    perfil: 'Perfil @rideblan33', tape: 'De uma beat tape', mais: 'Mais do @rideblan33', site: 'Site da Caramujo', spotify: 'Spotify'
+    perfil: 'Perfil @rideblan33', tape: 'De uma beat tape', mais: 'Mais do @rideblan33', site: 'Site da Caramujo', spotify: 'Spotify',
+    // 27/09/2026: caminhos novos pro perfil
+    anel: 'Anel do topo da vitrine', sobre: 'Card do Sobre nós', 'story-catalogo': 'Story do catálogo', link: 'Link compartilhado do perfil'
   };
   var nomeOrigem = function (o) { return o.nome ? 'Tape: ' + o.nome : (ORIGEM[o.origem] || o.origem); };
 
@@ -506,7 +508,9 @@
   }
 
   // Portfólio (26/09/2026): o perfil caramujorecords.com.br/rideblan33
-  var REDES = { vitrine: 'Selo da Caramujo (vitrine)', spotify: 'Spotify', youtube: 'YouTube', instagram: 'Instagram' };
+  var REDES = { vitrine: 'Selo da Caramujo (vitrine)', spotify: 'Spotify', youtube: 'YouTube', instagram: 'Instagram',
+    // 27/09/2026: o 5º botão (compartilhar) e o que a pessoa fez na folha
+    compartilhar: 'Abriu o compartilhar', 'story-perfil': 'Postou o story do perfil', 'story-catalogo': 'Postou o story do catálogo', link: 'Enviou o link do perfil' };
   function perfil(j, corpo) {
     var a = j.agora, an = j.antes;
     corpo.appendChild(tiles([

@@ -14,7 +14,7 @@ Site do estúdio Caramujo Records (São Carlos, SP): vitrine de beats exclusivos
 | **Link de beat** | `/b/<beat>` | Prévia pro Direct/WhatsApp com capa, ficha e preço. Abre a vitrine com o beat tocando. |
 | **Beat tapes** | `/<tape>/<código>` | Cada tape do @rideblan33 é uma página pública: ouvir, comprar o beat disponível, compartilhar no story e seguir pras outras tapes. Indexada no Google. |
 | **Pastas de artista** | `/<artista>/<código>` | Catálogo privado de cada artista (beats e músicas do Drive), com download e prévia pro story. Fora do Google. |
-| **Portfólio** | `/rideblan33` | Foto, apresentação, redes e a grade de todas as beat tapes na ordem escolhida no painel, com as pastilhas NOVA e EM ALTA. Toca a última tape direto do topo. A vitrine leva pra cá pelo anel com a camisa 33 no topo e pelo 1º card do Sobre nós. |
+| **Portfólio** | `/rideblan33` | Foto, apresentação, redes e a grade de todas as beat tapes na ordem escolhida no painel, com as pastilhas NOVA e EM ALTA. Toca a última tape direto do topo e tem o botão de compartilhar (story do perfil ou do catálogo, e o link). A vitrine leva pra cá pelo anel com a camisa 33 no topo e pelo 1º card do Sobre nós. |
 | **Painel** | `/painel` | Com senha. Artistas, Beat tapes (ordem do portfólio incluída), Vitrine (beats, fila, cupons) e Analytics. |
 
 ---
