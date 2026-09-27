@@ -89,3 +89,22 @@ Moldura terrosa em cima (logo horizontal à esquerda, "Ouça a beat tape nova" e
 direita, foto tratada em 3 tons com o 33 em fogo e o "33" gigante só no contorno atrás),
 grade preta das tapes embaixo (regras do DESIGN-catalogo). Foto e avatar em
 `assets/perfil/`. O avatar (costas, camisa 33) é a cara do @rideblan33 em chip, card e painel.
+
+## Pastilhas do perfil (desde 27/09/2026)
+
+Na grade do /rideblan33, canto de cima à esquerda da capa, o mesmo desenho do DISPONÍVEL
+das tapes (Schibsted 700, caixa alta, cantos de 3px):
+- **NOVA**: creme `#E4DAC7` com texto preto. Vai na tape que entrou por último no site.
+- **EM ALTA**: preta translúcida com aro branco e o foguinho. Tape com mais plays em 30
+  dias, fora a nova, com pelo menos 10. Sem ninguém com 10, não aparece.
+Só essas duas. Nunca mais de uma de cada.
+
+## O @rideblan33 na vitrine (desde 27/09/2026)
+
+- Anel de story no topo: a camisa 33 (`assets/perfil/rideblan33-camisa.webp`) numa bolinha
+  de 34px com anel em degradê fire → amber → clay, do lado do Instagram, celular e computador.
+  Leva pro `/rideblan33?de=anel`.
+- 1º card do carrossel do Sobre nós: fundo preto, "33" gigante só no contorno, a foto
+  recortada e a faixa "@rideblan33 · PORTFÓLIO →"; legenda "Quem faz o som" em fogo.
+  Leva pro `/rideblan33?de=sobre`.
+

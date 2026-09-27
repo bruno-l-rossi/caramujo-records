@@ -10,7 +10,7 @@
 import { db } from './db.js';
 
 const VALIDADE = 60 * 1000;
-const REGIAO = '/__cache/perfil-v2';
+const REGIAO = '/__cache/perfil-v3';
 let cache = { at: 0, dados: null };
 
 const regiao = () => (typeof caches !== 'undefined' && caches.default ? caches.default : null);
@@ -21,7 +21,39 @@ export async function esquecerPerfil(request) {
   if (c && request) { try { await c.delete(new URL(REGIAO, request.url)); } catch (_) { /* bônus */ } }
 }
 
-// O perfil inteiro: { tapes: [{ id, name, slug, code, capa, n }], faixas: [...] }.
+// Pastilhas das capas (27/09/2026). NOVA: a tape que entrou por último no site (maior
+// id), mesmo que o painel mude a ordem. EM ALTA: a tape do perfil com mais plays nos
+// últimos 30 dias, fora a nova, com pelo menos EM_ALTA_MIN plays. A conta passa por
+// todos os plays do mês, então roda no máximo a cada 6 h e fica guardada na meta.
+export const EM_ALTA_MIN = 10;
+const EM_ALTA_VALIDADE = 6 * 60 * 60 * 1000;
+const EM_ALTA_JANELA = 30 * 24 * 60 * 60 * 1000;
+
+async function tapeEmAlta(d, nova) {
+  let guardado = null;
+  try {
+    const m = await d.prepare("SELECT valor FROM meta WHERE chave = 'perfil-emalta'").first();
+    guardado = m ? JSON.parse(m.valor) : null;
+  } catch (_) { guardado = null; }
+  if (guardado && Date.now() - Date.parse(guardado.at) < EM_ALTA_VALIDADE) return guardado.id || null;
+  let id = null;
+  try {
+    const desde = new Date(Date.now() - EM_ALTA_JANELA).toISOString();
+    const { results } = await d.prepare(
+      `SELECT e.artist_id AS id, COUNT(*) AS n FROM events e
+         JOIN artists a ON a.id = e.artist_id AND a.tipo = 'tape' AND a.perfil = 1
+        WHERE e.kind = 'play' AND e.at >= ?
+        GROUP BY e.artist_id ORDER BY n DESC, e.artist_id DESC LIMIT 3`
+    ).bind(desde).all();
+    const top = (results || []).find((r) => r.id !== nova && r.n >= EM_ALTA_MIN);
+    id = top ? top.id : null;
+    await d.prepare("INSERT OR REPLACE INTO meta (chave, valor) VALUES ('perfil-emalta', ?)")
+      .bind(JSON.stringify({ id, at: new Date().toISOString() })).run();
+  } catch (_) { id = guardado ? guardado.id || null : null; }
+  return id;
+}
+
+// O perfil inteiro: { tapes: [{ id, name, slug, code, capa, n }], faixas: [...], nova, emAlta }.
 // tapes = na ordem da tela; tape sem beat pronto (ainda não convertida) não aparece.
 // faixas = os beats da 1ª tape (a mais nova), pro "Ouça a última beat tape" do topo,
 // na mesma ordem da página da tape (reservados primeiro, depois o mais novo no Drive).
@@ -57,7 +89,9 @@ export async function lerPerfil(request, env) {
     ).bind(tapes[0].id).all();
     faixas = (f || []).map((x) => ({ id: x.id, t: x.title, d: x.dur || 0 }));
   }
-  const dados = { tapes, faixas };
+  const nova = tapes.length ? Math.max(...tapes.map((t) => t.id)) : null;
+  const emAlta = tapes.length ? await tapeEmAlta(d, nova) : null;
+  const dados = { tapes, faixas, nova, emAlta: tapes.some((t) => t.id === emAlta) ? emAlta : null };
   cache = { at: Date.now(), dados };
   if (c && chave) {
     try {
@@ -95,13 +129,20 @@ const ICONES = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>'
 };
 
-function grade(tapes) {
+const ICONE_FOGO = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 4-3 5-3 9a3 3 0 006 0c0-1.5-.6-2.4-1-3 2.5 1 4 3.6 4 6.5A6 6 0 016 14.5C6 9 11 7 12 2z"/></svg>';
+function pastilha(t, nova, emAlta) {
+  if (t.id === nova) return '<span class="pst nova">Nova</span>';
+  if (t.id === emAlta) return `<span class="pst alta">${ICONE_FOGO}Em alta</span>`;
+  return '';
+}
+
+function grade(tapes, nova = null, emAlta = null) {
   return tapes.map((t, i) => {
     const href = `/${t.slug}/${t.code}?de=perfil`;
     const img = t.capa
       ? `<img src="/capa/${esc(t.capa)}" srcset="/capa/${esc(t.capa)}?p 200w, /capa/${esc(t.capa)} 1000w" sizes="(max-width:600px) 31vw, (max-width:820px) 24vw, 222px" alt="Capa da beat tape ${esc(t.name)}" width="1000" height="1000"${i < 6 ? '' : ' loading="lazy"'} decoding="async">`
       : `<img class="semcapa" src="/assets/brand/caramujo-v.webp" alt="Beat tape ${esc(t.name)}" width="300" height="300"${i < 6 ? '' : ' loading="lazy"'}>`;
-    return `<a class="tape" href="${esc(href)}" data-id="${t.id}"><span class="capa">${img}<span class="sobre" aria-hidden="true"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span></span><span class="leg"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span></a>`;
+    return `<a class="tape" href="${esc(href)}" data-id="${t.id}"><span class="capa">${img}<span class="sobre" aria-hidden="true"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span>${pastilha(t, nova, emAlta)}</span><span class="leg"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span></a>`;
   }).join('\n');
 }
 
@@ -116,6 +157,8 @@ export const FAVICON = '<link rel="icon" type="image/svg+xml" href="/assets/bran
 export function paginaPerfil(dados, { url, barraFixa = true } = {}) {
   const tapes = Array.isArray(dados) ? dados : dados.tapes;
   const faixas = Array.isArray(dados) ? [] : (dados.faixas || []);
+  const idNova = !Array.isArray(dados) && dados.nova != null ? dados.nova : (tapes.length ? Math.max(...tapes.map((t) => t.id)) : null);
+  const idEmAlta = Array.isArray(dados) ? null : (dados.emAlta ?? null);
   const nova = tapes[0] || null;
   const tocador = nova && faixas.length ? {
     tape: { id: nova.id, name: nova.name, url: `/${nova.slug}/${nova.code}?de=perfil`, capa: nova.capa ? `/capa/${nova.capa}?p` : '/assets/brand/caramujo-v.webp',
@@ -271,6 +314,11 @@ h1{font:600 clamp(56px,8.6vw,124px)/.9 var(--serif);color:var(--cream);margin:0;
 .sobre b{font:700 17px/1.15 var(--grot);letter-spacing:-.01em;color:var(--branco);text-wrap:balance;overflow-wrap:anywhere}
 .sobre i{font:500 13px/1 var(--grot);font-style:normal;color:var(--apoio);font-variant-numeric:tabular-nums}
 .leg{display:none}
+/* pastilhas NOVA e EM ALTA (27/09/2026): o mesmo desenho do DISPONÍVEL das tapes */
+.pst{position:absolute;left:8px;top:8px;z-index:2;display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:3px;font:700 10.5px/1 var(--grot);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;pointer-events:none}
+.pst.nova{background:#E4DAC7;color:#000}
+.pst.alta{background:rgba(0,0,0,.55);color:var(--branco);box-shadow:inset 0 0 0 1px rgba(255,255,255,.75);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.pst svg{width:10px;height:10px;flex:none}
 @media (hover:hover){.tape:hover .sobre,.tape:focus-visible .sobre{opacity:1}.tape:hover img:not(.semcapa){transform:scale(1.035);filter:saturate(.85)}}
 @media (hover:none){.sobre{display:none}.leg{display:flex;flex-direction:column;gap:5px;padding-top:10px}.leg b{font:500 15px/1.2 var(--grot);color:var(--branco);overflow-wrap:anywhere}.leg i{font:500 13px/1 var(--grot);font-style:normal;color:var(--meta)}}
 /* rodapé igual ao da vitrine (26/09/2026): selo, © e @rideblan33, mesmas letras e disposição */
@@ -313,6 +361,8 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
   .leg{gap:4px;padding-top:8px}
   .leg b{font-size:12.5px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
   .leg i{font-size:11.5px}
+  .pst{left:6px;top:6px;padding:4px 6px;font-size:9px;gap:4px}
+  .pst svg{width:9px;height:9px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -357,7 +407,7 @@ ${tocador ? `<div class="tocando" id="tocando" hidden>
 <main class="preto" id="tapes">
   <div class="cab"><h2>Beat tapes</h2><span>${tapes.length} ${tapes.length === 1 ? 'tape' : 'tapes'}</span></div>
   <div class="moldura"><div class="grade">
-${grade(tapes)}
+${grade(tapes, idNova, idEmAlta)}
   </div></div>
 </main>
 

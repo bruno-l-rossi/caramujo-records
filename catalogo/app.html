@@ -976,7 +976,7 @@ __META__
     if(!lista.length) return;
     var deOnde=CAT.artist.tape?'tape':'artista';
     // pasta de artista: o bloco se apresenta como o catálogo de tapes (26/09/2026)
-    if(!CAT.artist.tape) $('maisTit').textContent='Catálogo de beat tapes';
+    if(!CAT.artist.tape) $('maisTit').textContent='Explorar beats';
     var tr=$('maisTrilho'); tr.textContent='';
     lista.forEach(function(t){
       var c=document.createElement('a'); c.className='mais-card'; c.href=t.url;

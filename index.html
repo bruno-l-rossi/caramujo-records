@@ -839,6 +839,11 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 
 /* ═══ MENU HAMBÚRGUER (variante) ═══ */
 .nav-right{display:flex;align-items:center;gap:.2rem;}
+/* anel de story do @rideblan33 (27/09/2026): leva pro portfólio, do lado do Instagram */
+.nav-eu{display:flex;align-items:center;justify-content:center;width:44px;height:44px;flex:none;text-decoration:none;}
+.nav-eu .anel{display:block;width:34px;height:34px;border-radius:50%;padding:2px;background:conic-gradient(from 200deg,var(--fire),var(--amber),var(--clay),var(--fire));transition:transform .15s;}
+.nav-eu img{display:block;width:100%;height:100%;border-radius:50%;border:2px solid #050403;object-fit:cover;}
+.nav-eu:hover .anel,.nav-eu:focus-visible .anel{transform:scale(1.06);}
 .nav-ig{display:flex;align-items:center;justify-content:center;width:44px;height:44px;color:var(--bone);text-decoration:none;transition:color .15s;}
 .nav-ig:hover{color:var(--fire);}
 .nav-ig svg{width:22px;height:22px;display:block;}
@@ -897,6 +902,17 @@ html,body{overflow-x:hidden;}
 .studio-ph{margin:0;padding:0;border:none;background:none;display:flex;flex-direction:column;align-items:center;width:auto;aspect-ratio:auto;}
 .studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb>img{height:400px;width:auto;max-width:100%;display:block;border:1px solid var(--wire);border-radius:4px;background:var(--black);}
 .studio-ph figcaption{margin-top:.6rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;text-align:center;}
+/* 1º card do carrossel (27/09/2026): o @rideblan33, abre o portfólio */
+.studio-eu{text-decoration:none;cursor:pointer;}
+.studio-eu .eu-box{position:relative;display:block;width:100%;aspect-ratio:4/5;overflow:hidden;border:1px solid var(--wire);border-radius:4px;background:radial-gradient(ellipse 80% 60% at 60% 40%,rgba(185,143,94,.12),transparent 70%),var(--black);container-type:inline-size;}
+.studio-eu .eu-33{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);font-family:var(--serif);font-weight:600;font-size:96cqw;line-height:1;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1.3px rgba(185,143,94,.5);pointer-events:none;user-select:none;}
+.studio-eu .eu-box img{position:absolute;bottom:0;left:50%;transform:translateX(-50%);height:100%;width:auto;max-width:none;border:0;border-radius:0;background:none;filter:drop-shadow(0 12px 24px rgba(0,0,0,.55));transition:transform .3s ease;}
+.studio-eu .eu-sel{position:absolute;left:10px;right:10px;bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:rgba(20,17,13,.92);border:1px solid var(--wire);transition:border-color .2s;}
+.studio-eu .eu-sel b{font-family:var(--serif);font-weight:600;font-size:1.25rem;line-height:1;color:var(--cream);white-space:nowrap;}
+.studio-eu .eu-sel i{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-style:normal;font-weight:700;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--fire);white-space:nowrap;}
+.studio-eu .eu-cap{margin-top:.6rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.1em;color:var(--fire);text-transform:uppercase;text-align:center;}
+.studio-eu:hover .eu-sel,.studio-eu:focus-visible .eu-sel{border-color:var(--clay);}
+.studio-eu:hover .eu-box img{transform:translateX(-50%) scale(1.02);}
 /* destaque do depoimento @sxnxstro */
 .testi{max-width:1180px;padding-top:2.2rem;}
 .testi-q{font-size:clamp(1.4rem,2.5vw,1.85rem);line-height:1.3;}
@@ -922,7 +938,10 @@ html,body{overflow-x:hidden;}
   .studio-strip{flex-wrap:nowrap;gap:1rem;max-width:1260px;align-items:flex-start;}
   .studio-ph{flex-basis:0;flex-shrink:1;flex-grow:1;min-width:0;}
   .studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb,.studio-ph .vid-thumb>img{height:auto;width:100%;}
-  .sp-1{flex-grow:1;} .sp-2{flex-grow:.6957;} .sp-3{flex-grow:.5322;} .sp-4{flex-grow:.7826;}
+  .studio-eu .eu-sel{left:8px;right:8px;bottom:8px;padding:8px 10px;}
+  .studio-eu .eu-sel b{font-size:1.05rem;}
+  .studio-eu .eu-sel i{font-size:.52rem;letter-spacing:.16em;}
+  .sp-0{flex-grow:.8;} .sp-1{flex-grow:1;} .sp-2{flex-grow:.6957;} .sp-3{flex-grow:.5322;} .sp-4{flex-grow:.7826;}
 }
 
 @media(max-width:760px){
@@ -930,6 +949,7 @@ html,body{overflow-x:hidden;}
   .studio-strip::-webkit-scrollbar{display:none;}
   .studio-ph{scroll-snap-align:center;flex:0 0 82vw;max-width:340px;}
   .studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb,.studio-ph .vid-thumb>img{width:100%;height:auto;max-height:none;}
+  .studio-eu .eu-box{aspect-ratio:1;}
 }
 
 /* ══ NOVO v18 — player do Drive (sai o SoundCloud) ═══════════════════
@@ -1200,6 +1220,7 @@ html,body{overflow-x:hidden;}
     <li><a href="#contact">Contato</a></li>
   </ul>
   <div class="nav-right">
+    <a class="nav-eu" href="/rideblan33?de=anel" aria-label="Portfólio do @rideblan33" title="@rideblan33"><span class="anel"><img src="assets/perfil/rideblan33-camisa.webp" alt="" width="256" height="256"></span></a>
     <a class="nav-ig" href="https://ig.me/m/rideblan33" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg></a>
     <button class="nav-cart" id="navCart" type="button" onclick="toggleCart()" aria-label="Abrir carrinho"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.4 11.5h11.2L21 7H6"/></svg><span class="cart-n" id="cartNTopo">0</span></button>
     <button class="nav-burger" id="navBurger" onclick="toggleMenu()" aria-label="Abrir menu"><span></span><span></span><span></span></button>
@@ -1480,6 +1501,10 @@ html,body{overflow-x:hidden;}
   <div class="studio-carousel">
     <button class="studio-nav prev" type="button" onclick="studioScroll(-1)" aria-label="Anterior">‹</button>
   <div class="studio-strip">
+    <a class="studio-ph sp-0 studio-eu" href="/rideblan33?de=sobre" aria-label="Portfólio do @rideblan33">
+      <span class="eu-box"><span class="eu-33" aria-hidden="true">33</span><img src="assets/perfil/rideblan33-480.webp" alt="@rideblan33 de costas, com a camisa 33" loading="lazy" width="480" height="800"><span class="eu-sel"><b>@rideblan33</b><i>Portfólio →</i></span></span>
+      <span class="eu-cap">Quem faz o som</span>
+    </a>
     <figure class="studio-ph sp-1" tabindex="0" role="button" aria-label="Ampliar foto do estúdio" onclick="openLB('img','assets/studio-hero.jpg')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLB('img','assets/studio-hero.jpg');}">
       <img src="assets/studio-hero.jpg" alt="rideblan no estúdio, produzindo no FL Studio" loading="lazy">
       <figcaption>Onde tudo acontece</figcaption>
