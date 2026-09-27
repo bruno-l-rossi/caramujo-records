@@ -3,15 +3,15 @@
 // O molde é o próprio 404.html servido: mudou o 404.html, muda tudo junto.
 
 const IG = '<a href="https://ig.me/m/rideblan33" rel="noopener">@rideblan33</a>';
-// 27/09/2026: link quebrado aponta pras beat tapes (perfil) e o pedido de link vai pro Direct
-const PERFIL = '<a href="/rideblan33?de=404">beat tapes do @rideblan33</a>';
-const DIRECT = '<a href="https://ig.me/m/rideblan33" rel="noopener">Direct</a>';
+// 27/09/2026: link quebrado aponta pro catálogo de beat tapes (perfil) e o @ abre o Direct
+const PERFIL = '<a href="/rideblan33?de=404">catálogo de beat tapes</a>';
+const DIRECT = IG;
 
 const PADRAO = {
   404: {
     codigo: 'Erro 404',
     titulo: 'Essa página não existe',
-    texto: `Ou o link veio cortado, ou o catálogo mudou de endereço. Procura nas ${PERFIL} ou pede o link de novo no ${DIRECT}.`
+    texto: `Ou o link veio cortado, ou o catálogo mudou de endereço. Procure no ${PERFIL} ou chame o ${DIRECT}.`
   },
   503: {
     codigo: 'Fora do ar',

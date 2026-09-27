@@ -11,7 +11,7 @@ export async function avulso(kind, { params, request, env }) {
   const link = await d.prepare('SELECT * FROM links WHERE code = ? AND kind = ?').bind(c, kind).first();
   if (!link) return paginaErro(request, env, 404, {
     titulo: 'Esse link não abre',
-    texto: 'Ou ele veio cortado, ou o catálogo mudou de endereço. Procura nas {perfil} ou pede o link de novo no {direct}.'
+    texto: 'Ou ele veio cortado, ou o catálogo mudou de endereço. Procure no {perfil} ou chame o {direct}.'
   });
 
   const ids = link.track_ids.split(',').filter(Boolean);
