@@ -321,18 +321,30 @@ export async function gravarConsumo(DB, agora = false) {
   } catch (_) { /* contador é bônus: nunca derruba a chamada */ }
 }
 
+// A gravação do contador (1 vez por minuto) segurava a resposta de quem calhava de
+// fazer a consulta da vez: ~150ms a mais numa visita qualquer. Desde 03/10/2026 o
+// _middleware deixa aqui o waitUntil da chamada e a gravação sai depois da resposta.
+// Sem ele (testes, chamada direta), espera como sempre esperou.
+let depois = null;
+export function aoFim(fn) { depois = typeof fn === 'function' ? fn : null; }
+function contar(DB) {
+  const p = gravarConsumo(DB);
+  if (depois) { try { depois(p); return null; } catch (_) { /* chamada já fechada: espera */ } }
+  return p;
+}
+
 // O D1 embrulhado: mesma cara (prepare/bind/all/first/run/batch), mas anota o
 // consumo. first() vira all() porque só o all() devolve o rows_read.
 function consulta(DB, cru, sql) {
   return {
     __cru: cru, __sql: sql,
     bind: (...a) => consulta(DB, cru.bind(...a), sql),
-    async all() { const r = await cru.all(); anotar(sql, r && r.meta); await gravarConsumo(DB); return r; },
-    async run() { const r = await cru.run(); anotar(sql, r && r.meta); await gravarConsumo(DB); return r; },
+    async all() { const r = await cru.all(); anotar(sql, r && r.meta); await contar(DB); return r; },
+    async run() { const r = await cru.run(); anotar(sql, r && r.meta); await contar(DB); return r; },
     async first(col) {
       const r = await cru.all();
       anotar(sql, r && r.meta);
-      await gravarConsumo(DB);
+      await contar(DB);
       const l = r && r.results && r.results[0];
       if (l === undefined || l === null) return null;
       return col ? l[col] : l;
@@ -345,7 +357,7 @@ function embrulhar(DB) {
     async batch(lista) {
       const r = await DB.batch(lista.map((x) => x.__cru || x));
       (r || []).forEach((x, i) => anotar(lista[i].__sql || '(lote)', x && x.meta));
-      await gravarConsumo(DB);
+      await contar(DB);
       return r;
     }
   };
@@ -355,11 +367,17 @@ let embrulhado = null, cruVisto = null;
 export async function db(env) {
   if (!env.DB) throw new Error('D1 nao esta ligado (binding DB)');
   if (!ready) {
-    let versao = null;
+    // Servidor que acabou de acordar: a versão do esquema e as marcas do UMA_VEZ saem
+    // numa consulta só (eram duas, uma atrás da outra; 03/10/2026).
+    let versao = null, feitos = null;
+    const marcas = UMA_VEZ.map((x) => x[0]);
     try {
-      const v = await env.DB.prepare("SELECT valor FROM meta WHERE chave = 'esquema'").first();
-      versao = v ? v.valor : null;
-    } catch (_) { versao = null; }            // banco novo: nem a meta existe ainda
+      const { results } = await env.DB.prepare(
+        `SELECT chave, valor FROM meta WHERE chave IN (${['esquema', ...marcas].map(() => '?').join(', ')})`
+      ).bind('esquema', ...marcas).all();
+      feitos = new Set();
+      for (const r of results || []) { if (r.chave === 'esquema') versao = r.valor; else feitos.add(r.chave); }
+    } catch (_) { versao = null; feitos = null; }   // banco novo: nem a meta existe ainda
     if (versao !== VERSAO) {
       for (const q of SCHEMA) {
         try { await env.DB.prepare(q).run(); }
@@ -367,11 +385,13 @@ export async function db(env) {
       }
       await env.DB.prepare("INSERT OR REPLACE INTO meta (chave, valor) VALUES ('esquema', ?)").bind(VERSAO).run();
     }
-    const vagas = UMA_VEZ.map(() => '?').join(', ');
-    const { results: jaFeitos } = await env.DB.prepare(
-      `SELECT chave FROM meta WHERE chave IN (${vagas})`
-    ).bind(...UMA_VEZ.map((x) => x[0])).all();
-    const feitos = new Set((jaFeitos || []).map((r) => r.chave));
+    if (!feitos) {                                   // a meta acabou de nascer: confere de novo
+      const vagas = marcas.map(() => '?').join(', ');
+      const { results: jaFeitos } = await env.DB.prepare(
+        `SELECT chave FROM meta WHERE chave IN (${vagas})`
+      ).bind(...marcas).all();
+      feitos = new Set((jaFeitos || []).map((r) => r.chave));
+    }
     for (const [marca, q] of UMA_VEZ) {
       if (feitos.has(marca)) continue;
       if (typeof q === 'function') await q(env.DB);

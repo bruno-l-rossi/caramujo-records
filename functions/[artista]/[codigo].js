@@ -18,7 +18,21 @@ export async function onRequestGet({ params, request, env }) {
   if (RESERVADO.has(slug)) return env.ASSETS.fetch(request);
 
   const d = await db(env);
-  const artist = await d.prepare('SELECT * FROM artists WHERE slug = ?').bind(slug).first();
+  // As duas consultas saem juntas (03/10/2026): o banco fica longe do Brasil e cada
+  // ida e volta custava ~150ms, uma atrás da outra. As faixas só vêm se o slug E o
+  // código baterem (código errado = lista vazia, nada lido à toa).
+  // A vitrine (só a tape usa) e a lista do perfil (o "Mais de") também já saem agora,
+  // em paralelo: as duas costumam vir da cópia guardada, mas no servidor frio iam ao
+  // banco depois das consultas da página.
+  const pVitrine = vitrine(request, env).catch(() => []);
+  const pPerfil = tapesDoPerfil(request, env).catch(() => null);
+  const [artist, faixasDoBanco] = await Promise.all([
+    d.prepare('SELECT * FROM artists WHERE slug = ?').bind(slug).first(),
+    d.prepare(
+      `SELECT * FROM tracks WHERE ready = 1 AND artist_id =
+         (SELECT id FROM artists WHERE slug = ? AND code = ? AND tipo != 'vitrine')`
+    ).bind(slug, codigo).all()
+  ]);
 
   // a prateleira interna da vitrine não é catálogo de ninguém: não abre página
   if (!artist || artist.code !== codigo || artist.tipo === 'vitrine') {
@@ -28,9 +42,7 @@ export async function onRequestGet({ params, request, env }) {
     });
   }
 
-  const { results } = await d.prepare(
-    'SELECT * FROM tracks WHERE artist_id = ? AND ready = 1'
-  ).bind(artist.id).all();
+  const { results } = faixasDoBanco;
 
   const tracks = (results || []).map(faixa);
   const url = new URL(request.url);
@@ -43,7 +55,7 @@ export async function onRequestGet({ params, request, env }) {
   // Carrinho só em tape com download DESLIGADO: tape de graça (a "Nada de novo") tem
   // beat sem licença exclusiva, ninguém compra.
   if (artist.tipo === 'tape') {
-    const mapa = indexar(await vitrine(request, env));
+    const mapa = indexar(await pVitrine);
     for (const t of tracks) {
       if (t.kind !== 'beat') continue;
       const b = achar(mapa, t);
@@ -67,7 +79,7 @@ export async function onRequestGet({ params, request, env }) {
   let mais = null, totalPerfil = 0;
   {
     try {
-      const todas = await tapesDoPerfil(request, env);
+      const todas = await pPerfil;     // null = falhou: cai no catch e a página abre sem o bloco
       totalPerfil = todas.length;
       // 5 tapes + o card do portfólio completo (26/09/2026)
       mais = todas.filter((t) => t.id !== artist.id).slice(0, 5)

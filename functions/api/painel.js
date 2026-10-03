@@ -52,7 +52,7 @@ export async function onRequest({ request, env }) {
   if (op === 'sync') return sync(env, d, body);
   if (LOJA_POST[op]) {
     const r = await LOJA_POST[op](d, body, request, env);
-    await esquecerLoja(request); esquecerVitrine(); await esquecerApiVitrine(request);
+    await esquecerLoja(request); await esquecerVitrine(request); await esquecerApiVitrine(request);
     return r;
   }
   return json({ erro: 'op desconhecida' }, 400);

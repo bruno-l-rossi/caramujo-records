@@ -160,7 +160,7 @@ function grade(tapes, nova = null, emAlta = null) {
   return tapes.map((t, i) => {
     const href = `/${t.slug}/${t.code}?de=perfil`;
     const img = t.capa
-      ? `<img src="/capa/${esc(t.capa)}" srcset="/capa/${esc(t.capa)}?p 200w, /capa/${esc(t.capa)} 1000w" sizes="(max-width:600px) 31vw, (max-width:820px) 24vw, 222px" alt="Capa da beat tape ${esc(t.name)}" width="1000" height="1000"${i < 6 ? '' : ' loading="lazy"'} decoding="async">`
+      ? `<img src="/capa/${esc(t.capa)}" srcset="/capa/${esc(t.capa)}?p 200w, /capa/${esc(t.capa)}?m 480w, /capa/${esc(t.capa)} 1000w" sizes="(max-width:600px) 31vw, (max-width:820px) 24vw, 222px" alt="Capa da beat tape ${esc(t.name)}" width="1000" height="1000"${i < 6 ? '' : ' loading="lazy"'} decoding="async">`
       : `<img class="semcapa" src="/assets/brand/caramujo-v.webp" alt="Beat tape ${esc(t.name)}" width="300" height="300"${i < 6 ? '' : ' loading="lazy"'}>`;
     return `<a class="tape" href="${esc(href)}" data-id="${t.id}"><span class="capa">${img}<span class="sobre" aria-hidden="true"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span>${pastilha(t, nova, emAlta)}</span><span class="leg"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span></a>`;
   }).join('\n');
@@ -531,6 +531,17 @@ ${grade(tapes, idNova, idEmAlta)}
     som.addEventListener('loadedmetadata',posicao); som.addEventListener('seeked',posicao);
     som.addEventListener('ended',function(){ proxima(); });
     som.addEventListener('timeupdate',function(){ barra.style.width=(som.duration?som.currentTime/som.duration*100:0)+'%'; });
+    // o próximo beat já fica pronto na borda (03/10/2026): passou da metade, um pedido de
+    // 2 bytes faz o servidor guardar o próximo inteiro, e ele começa sem espera
+    var aquecidos={};
+    som.addEventListener('timeupdate',function(){
+      try{
+        if(i<0||!som.duration||som.currentTime/som.duration<0.5) return;
+        var f=T.faixas[i+1]; if(!f||aquecidos[f.id]) return;
+        aquecidos[f.id]=1;
+        fetch('/audio/'+f.id,{headers:{Range:'bytes=0-1'},cache:'no-store'}).catch(function(){});
+      }catch(e){}
+    });
   }
 
   // compartilhar o perfil (27/09/2026): a folha do story.js com as duas artes (Perfil e
@@ -569,6 +580,27 @@ ${grade(tapes, idNova, idEmAlta)}
       fixa.classList.toggle('on',on); fixa.setAttribute('aria-hidden',on?'false':'true');
       fixa.querySelectorAll('button').forEach(function(b){ b.tabIndex=on?0:-1; });
     }).observe(palco);
+  }
+
+  // voltar do celular fecha a folha de compartilhar (03/10/2026), em vez de sair do perfil.
+  // Fechou pelo botão: a entrada extra do histórico sai junto.
+  if(window.history && history.pushState && window.MutationObserver){
+    var empilhado=false, proprio=false, lenTopo=0;
+    var aberta=function(){ var v=document.querySelector('.cs-veu'); return !!(v && !v.hidden); };
+    new MutationObserver(function(){
+      if(aberta() && !empilhado){ empilhado=true; history.pushState({folha:1},'',location.href); lenTopo=history.length; return; }
+      if(!aberta() && empilhado){
+        empilhado=false;
+        setTimeout(function(){ if(!empilhado && history.state && history.state.folha){ proprio=true; history.back(); } },0);
+      }
+    }).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden']});
+    window.addEventListener('popstate',function(){
+      if(proprio){ proprio=false; return; }
+      if(!empilhado) return;
+      empilhado=false;
+      if(history.length>lenTopo) return;            // foi pra frente (link #), não voltou
+      if(aberta()){ try{ window.CaramujoStory.fechar(); }catch(e){} }
+    });
   }
 })();
 </script>

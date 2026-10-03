@@ -1651,6 +1651,15 @@ html,body{overflow-x:hidden;}
   <span class="cart-label">CARRINHO</span> <span class="cart-n" id="cartN">0</span>
 </button>
 
+<!-- PIX que ficou aberto (03/10/2026): aparece na volta do app do banco se a página
+     recarregou, ou depois de fechar o checkout com o PIX esperando. Ver o script do fim. -->
+<div class="pix-volta" id="pixVolta" role="status" hidden>
+  <div class="pv-in">
+    <div class="pv-linha"><span class="pv-ponto" aria-hidden="true"></span><div class="pv-txt"><b id="pixVoltaTit">Seu PIX tá aguardando</b><small id="pixVoltaSub"></small></div></div>
+    <div class="pv-botoes"><button type="button" class="pv-ver" id="pixVoltaVer">VER O PIX</button><button type="button" class="pv-descarta" id="pixVoltaDescarta">DESCARTAR</button></div>
+  </div>
+</div>
+
 <div class="overlay" id="overlay" onclick="closeAll()"></div>
 
 <div class="cart-panel" id="cartPanel">
@@ -2085,6 +2094,22 @@ body.vol-aberto .cart-btn{transform:translateY(-76px)}
       opaco ele não aparecia, e custava processamento a cada quadro da rolagem. */
 .cp-body,.pkg-modal-body,.mp-modal-inner,.lb{overscroll-behavior:contain}
 @media(max-width:860px){ nav{backdrop-filter:none;-webkit-backdrop-filter:none} }
+/* faixa do PIX que ficou aberto (03/10/2026): embaixo, acima do player, abaixo do véu */
+.pix-volta{position:fixed;left:0;right:0;bottom:0;z-index:8150;background:var(--deep);border-top:1px solid var(--fire);
+  padding:16px 18px calc(18px + env(safe-area-inset-bottom,0px))}
+.pix-volta[hidden]{display:none}
+.pv-in{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.pv-linha{display:flex;align-items:center;gap:10px}
+.pv-ponto{width:8px;height:8px;border-radius:50%;background:var(--fire);flex:none}
+.pv-txt{display:flex;flex-direction:column;gap:3px;min-width:0}
+.pv-txt b{font-family:var(--sans);font-size:.88rem;font-weight:700;color:var(--cream)}
+.pv-txt small{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--read);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv-botoes{display:flex;gap:8px}
+.pv-ver,.pv-descarta{min-height:48px;font-family:var(--sans);font-weight:700;font-size:.74rem;letter-spacing:.14em;cursor:pointer}
+.pv-ver{flex:1;background:var(--bone);border:0;color:var(--deep)}
+.pv-ver:hover{background:var(--clay)}
+.pv-descarta{padding:0 16px;background:transparent;border:1px solid var(--wire);color:var(--read)}
+.pv-descarta:hover{border-color:var(--clay);color:var(--bone)}
 </style>
 
 <script>
@@ -3588,6 +3613,20 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
   });
 
   som.addEventListener('timeupdate',repintar);
+  // A próxima da lista já fica pronta (03/10/2026): passou da metade da faixa, um pedido
+  // de 2 bytes faz o servidor guardar a próxima inteira na borda. No modo rádio, e pra
+  // quem toca em "próxima", ela começa sem a espera de ir buscar no armazenamento.
+  var aquecidos={};
+  som.addEventListener('timeupdate',function(){
+    try{
+      if(atual===null||!som.duration||som.currentTime/som.duration<0.5) return;
+      var lista=ordem(), i=lista.indexOf(String(atual)); if(i<0) return;
+      var prox=lista[i+1]; if(prox==null||aquecidos[prox]) return;
+      var fx=fonte(prox); if(!fx||!fx.mp3) return;
+      aquecidos[prox]=1;
+      fetch(fx.mp3,{headers:{Range:'bytes=0-1'},cache:'no-store'}).catch(nada);
+    }catch(_){}
+  });
   som.addEventListener('play',repintar);
   som.addEventListener('pause',repintar);
   som.addEventListener('ended',function(){ anda(1,true); });
@@ -3996,7 +4035,8 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     };
   }
 
-  window.addEventListener('hashchange',function(){ if(/^#(beat|add)=/i.test(location.hash)) openBeatFromHash(); });
+  // o voltar que só fechou uma folha (carrinho, checkout...) não reabre o beat do endereço (03/10/2026)
+  window.addEventListener('hashchange',function(){ if(Date.now()-(window.__folhaVolta||0)<800) return; if(/^#(beat|add)=/i.test(location.hash)) openBeatFromHash(); });
   if(/^#(beat|add)=/i.test(location.hash)){
     if(document.readyState!=='loading') openBeatFromHash();
     else document.addEventListener('DOMContentLoaded',openBeatFromHash);
@@ -4236,17 +4276,57 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
 </script>
 <script>
 /* ── PIX: VOLTOU DO APP DO BANCO (03/10/2026) ──────────────────────────
-   No celular a pessoa copia o código, paga no app do banco e volta pro site. A
-   conferência automática roda de 5 em 5 (depois 8, 12) segundos; quando a aba
-   volta a aparecer, confiro na hora, e o PEDIDO CONFIRMADO aparece sem espera.
-   Só envelopo por fora: startPixPolling e showPixConfirmed seguem iguais. */
+   No celular a pessoa copia o código, paga no app do banco e volta pro site.
+   1) A conferência automática roda de 5 em 5 (depois 8, 12) segundos; quando a aba
+      volta a aparecer, confiro na hora, e o PEDIDO CONFIRMADO aparece sem espera.
+   2) O PIX gerado fica guardado no navegador por 2 horas. Se o celular recarregou a
+      página na volta do banco (o iPhone faz isso) ou a pessoa fechou no X, aparece a
+      faixa "Seu PIX de R$ X tá aguardando" com VER O PIX e DESCARTAR. Pagamento
+      aprovado nesse meio tempo: abre o PEDIDO CONFIRMADO de sempre.
+   Só envelopo por fora: startPixPolling, showPixConfirmed e closeCheckout seguem iguais. */
 (function(){
   var pagamento=null, conferindo=false;
+  var CHAVE='caramujo_pix_v1', VALE=2*3600e3;
+  var $=function(i){ return document.getElementById(i); };
   var orig=window.startPixPolling;
   if(typeof orig!=='function') return;
-  window.startPixPolling=function(id){ pagamento=id||null; return orig.apply(this,arguments); };
+
+  function lerGuardado(){
+    try{ var g=JSON.parse(localStorage.getItem(CHAVE)||'null'); if(g&&g.id&&g.at&&Date.now()-g.at<VALE) return g; localStorage.removeItem(CHAVE); }catch(_){}
+    return null;
+  }
+  function esquecer(){ try{ localStorage.removeItem(CHAVE); }catch(_){} }
+  function guardar(id){
+    try{
+      var ant=lerGuardado();
+      if(ant&&ant.id===String(id)) return;          // reaberto pela faixa: vale o que foi guardado
+      var sub=cart.reduce(function(s,c){return s+c.price;},0), total=sub-calcDiscount(sub);
+      var itens=cart.map(function(c){ return c.qty&&c.qty>1 ? c.name+' x'+c.qty : c.name; }).join(', ');
+      var g={ id:String(id), at:Date.now(), total:total, itens:itens,
+        un:cart.reduce(function(s,c){return s+(c.qty||1);},0),
+        qr:($('mpPixQrImg')||{}).src||'', code:($('mpPixCode')||{}).value||'' };
+      localStorage.setItem(CHAVE,JSON.stringify(g));
+    }catch(_){}
+  }
+
+  window.startPixPolling=function(id){
+    pagamento=id||null;
+    if(id) guardar(id);
+    esconderFaixa();
+    return orig.apply(this,arguments);
+  };
+  var origOk=window.showPixConfirmed;
+  if(typeof origOk==='function') window.showPixConfirmed=function(){ esquecer(); esconderFaixa(); return origOk.apply(this,arguments); };
+  var origFecha=window.closeCheckout;
+  if(typeof origFecha==='function') window.closeCheckout=function(){
+    var r=origFecha.apply(this,arguments);
+    // fechou no X com o PIX ainda aberto: a faixa fica como caminho de volta
+    try{ var g=lerGuardado(); if(g) mostrarFaixa(g); }catch(_){}
+    return r;
+  };
+
   function pendente(){
-    var p=document.getElementById('mpPixPending'), m=document.getElementById('mpModal');
+    var p=$('mpPixPending'), m=$('mpModal');
     return !!(pagamento && p && p.style.display==='block' && m && m.classList.contains('open'));
   }
   document.addEventListener('visibilitychange',function(){
@@ -4258,6 +4338,163 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
       .catch(function(){})
       .then(function(){ conferindo=false; });
   });
+
+  /* ---------- a faixa ---------- */
+  function rs(v){ return 'R$ '+String(v); }
+  function esconderFaixa(){ var f=$('pixVolta'); if(f) f.hidden=true; }
+  function mostrarFaixa(g){
+    var f=$('pixVolta'); if(!f) return;
+    $('pixVoltaTit').textContent='Seu PIX de '+rs(g.total)+' tá aguardando';
+    $('pixVoltaSub').textContent=g.itens||'';
+    f.hidden=false;
+  }
+  function abrirPix(g){
+    esconderFaixa();
+    try{
+      $('mpModalSub').textContent=g.un+' ite'+(g.un===1?'m':'ns')+' · '+rs(g.total);
+      $('mpStep1').style.display='none'; $('mpStep2').style.display='none'; $('mpStep3').style.display='block';
+      $('mpPixConfirmed').style.display='none'; $('mpPixPending').style.display='block';
+      $('mpContractDownload').style.display='none';
+      if(g.qr) $('mpPixQrImg').src=g.qr;
+      $('mpPixCode').value=g.code||'';
+      $('mpPixStatusText').textContent='Aguardando pagamento…';
+      $('overlay').classList.add('on'); $('mpModal').classList.add('open');
+      startPixPolling(g.id);
+    }catch(_){}
+  }
+  function conferirGuardado(g){
+    fetch('/api/check-payment?id='+encodeURIComponent(g.id),{cache:'no-store'})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        var st=d&&d.status;
+        if(st==='approved'){
+          // pagou enquanto a página recarregava: o PEDIDO CONFIRMADO de sempre
+          try{
+            $('mpModalSub').textContent=g.un+' ite'+(g.un===1?'m':'ns')+' · '+rs(g.total);
+            $('mpStep1').style.display='none'; $('mpStep2').style.display='none'; $('mpStep3').style.display='block';
+            $('overlay').classList.add('on'); $('mpModal').classList.add('open');
+          }catch(_){}
+          showPixConfirmed();
+        } else if(st==='pending'||st==='in_process'||!st){ mostrarFaixa(g); }   // sem resposta: mostra e confere no VER
+        else esquecer();                                                         // recusado, cancelado, vencido
+      })
+      .catch(function(){ mostrarFaixa(g); });
+  }
+  function ligarFaixa(){
+    var ver=$('pixVoltaVer'), des=$('pixVoltaDescarta');
+    if(ver) ver.addEventListener('click',function(){ var g=lerGuardado(); if(g) abrirPix(g); else esconderFaixa(); });
+    if(des) des.addEventListener('click',function(){ esquecer(); esconderFaixa(); });
+    var g=lerGuardado(); if(g) conferirGuardado(g);
+  }
+  if(document.readyState!=='loading') ligarFaixa(); else document.addEventListener('DOMContentLoaded',ligarFaixa);
+})();
+</script>
+<script>
+/* ── CHECKOUT QUE LEMBRA (03/10/2026) ──────────────────────────────────
+   O openCheckout limpa os campos a cada abertura: quem fechava pra pegar mais um beat
+   digitava tudo de novo. Agora e-mail, nome artístico e nome completo ficam guardados
+   neste navegador (vêm prontos na próxima compra também). O CPF fica só enquanto a
+   página está aberta, nunca guardado. O aceite dos termos segue desmarcado toda vez. */
+(function(){
+  var CHAVE='caramujo_comprador_v1', GUARDA=['mpEmail','mpArtist','mpName'];
+  var cpfDaVez='';
+  var orig=window.openCheckout;
+  if(typeof orig!=='function') return;
+  function ler(){ try{ return JSON.parse(localStorage.getItem(CHAVE)||'null')||{}; }catch(_){ return {}; } }
+  function guardar(){
+    try{
+      var o={};
+      GUARDA.forEach(function(id){ var e=document.getElementById(id); if(e&&e.value.trim()) o[id]=e.value.trim().slice(0,120); });
+      localStorage.setItem(CHAVE,JSON.stringify(o));
+    }catch(_){}
+    var c=document.getElementById('mpCpf'); if(c) cpfDaVez=c.value;
+  }
+  window.openCheckout=function(){
+    var r=orig.apply(this,arguments);
+    try{
+      var o=ler();
+      GUARDA.forEach(function(id){ var e=document.getElementById(id); if(e&&!e.value&&o[id]) e.value=o[id]; });
+      var c=document.getElementById('mpCpf'); if(c&&!c.value&&cpfDaVez) c.value=cpfDaVez;
+    }catch(_){}
+    return r;
+  };
+  GUARDA.concat(['mpCpf']).forEach(function(id){
+    var e=document.getElementById(id);
+    if(e){ e.addEventListener('change',guardar); e.addEventListener('blur',guardar); }
+  });
+})();
+</script>
+<script>
+/* ── VOLTAR DO CELULAR FECHA A FOLHA (03/10/2026) ──────────────────────
+   Carrinho, escolha do pacote, checkout, mídia ampliada, menu e a folha de compartilhar:
+   o voltar do Android (e o gesto de voltar do iPhone) fecha o que está aberto em vez de
+   sair do site. Fechou pelo X: a entrada extra do histórico sai junto. Com o PIX na tela,
+   o voltar não fecha (pararia a conferência do pagamento): avisa como sair.
+   Só observo e chamo as funções de fechar de sempre; nenhuma função do checkout mudou. */
+(function(){
+  if(!window.history||!history.pushState||!window.MutationObserver) return;
+  var $=function(i){ return document.getElementById(i); };
+  var tem=function(id,c){ var e=$(id); return !!(e&&e.classList.contains(c)); };
+  var folhas=[
+    { aberta:function(){ var v=document.querySelector('.cs-veu'); return !!(v&&!v.hidden); },
+      fechar:function(){ try{ window.CaramujoStory.fechar(); }catch(_){} } },
+    { aberta:function(){ return tem('mediaLB','on'); }, fechar:function(){ closeLB(); } },
+    { aberta:function(){ return tem('mpModal','open'); }, fechar:function(){ closeCheckout(); },
+      segura:function(){ var p=$('mpPixPending'); return !!(p&&p.style.display==='block'); } },
+    { aberta:function(){ return tem('pkgModal','open'); }, fechar:function(){ closePkgModal(); } },
+    { aberta:function(){ return tem('cartPanel','open'); }, fechar:function(){ closeAll(); } },
+    { aberta:function(){ var l=document.querySelector('.nav-links'); return !!(l&&l.classList.contains('open')); },
+      fechar:function(){ toggleMenu(); } }
+  ];
+  var MARCA={folha:1}, empilhado=false, proprio=false, urlTopo=null, y=null, lenTopo=0, linkEm=0;
+  // voltar no histórico devolveria a rolagem de quando a folha abriu: com a folha aberta o
+  // navegador não mexe na rolagem (manual) e a página fica onde a pessoa está
+  function manual(on){ try{ history.scrollRestoration=on?'manual':'auto'; }catch(_){} }
+  window.addEventListener('scroll',function(){ if(empilhado) y=window.pageYOffset; },{passive:true});
+  function fica(){ if(y===null) return; var alvo=y; y=null; try{ window.scrollTo({top:alvo,behavior:'instant'}); }catch(_){ window.scrollTo(0,alvo); } }
+  // fechou a folha tocando num link (Ver pacotes, item do menu): a navegação é do link
+  document.addEventListener('click',function(e){ var a=e.target&&e.target.closest&&e.target.closest('a[href]'); if(a) linkEm=Date.now(); },true);
+  // outro código troca o endereço (#beat=) com replaceState: a marca da folha não pode sumir
+  var trocaOrig=history.replaceState.bind(history);
+  history.replaceState=function(st,t,u){
+    if(empilhado&&(st===null||st===undefined)) st=MARCA;
+    var r=trocaOrig(st,t,u); if(empilhado) urlTopo=location.href; return r;
+  };
+  function topo(){ for(var i=0;i<folhas.length;i++){ try{ if(folhas[i].aberta()) return folhas[i]; }catch(_){} } return null; }
+  function confere(){
+    var f=topo();
+    if(f&&!empilhado){ empilhado=true; y=window.pageYOffset; manual(true); history.pushState(MARCA,'',location.href); urlTopo=location.href; lenTopo=history.length; return; }
+    if(!f&&empilhado){
+      empilhado=false;
+      var antes=location.href;
+      // fechou pelo X: tira a entrada extra, se ninguém navegou (link #pacotes etc.) no meio tempo
+      setTimeout(function(){
+        if(!empilhado && location.href===antes && Date.now()-linkEm>400 && history.state && history.state.folha){ proprio=true; y=window.pageYOffset; window.__folhaVolta=Date.now(); history.back(); }
+        else if(!empilhado){ y=null; manual(false); }
+      },0);
+    }
+  }
+  window.addEventListener('popstate',function(){
+    // a entrada de baixo pode ter o #beat= de antes: fica o endereço de agora
+    var volta=function(){ if(urlTopo&&urlTopo!==location.href) trocaOrig(null,'',urlTopo); urlTopo=null; };
+    if(proprio){ proprio=false; window.__folhaVolta=Date.now(); volta(); fica(); manual(false); return; }
+    if(!empilhado) return;
+    // link pra uma parte da página (#pacotes, #add= vindo da tape) também dispara popstate,
+    // mas cria uma entrada nova: isso é ir pra frente, não voltar. A folha segue como está.
+    if(history.length>lenTopo){ empilhado=false; urlTopo=null; y=null; manual(false); return; }
+    empilhado=false;
+    window.__folhaVolta=Date.now();
+    var f=topo(); if(!f){ volta(); fica(); manual(false); return; }
+    if(f.segura&&f.segura()){
+      var guarda=y;
+      empilhado=true; history.pushState(MARCA,'',urlTopo||location.href); lenTopo=history.length; fica(); y=guarda;
+      try{ showToast('Seu PIX segue aberto aqui. Pra sair, toque no X.',4000); }catch(_){}
+      return;
+    }
+    volta(); fica(); manual(false);
+    try{ f.fechar(); }catch(_){}
+  });
+  new MutationObserver(confere).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','hidden']});
 })();
 </script>
 </body>

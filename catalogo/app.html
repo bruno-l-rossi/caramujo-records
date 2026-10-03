@@ -783,6 +783,18 @@ __META__
     pintarAcao(t);
   }
   audio.addEventListener('timeupdate',function(){ if(!scrubbing){pos=audio.currentTime;paint()} });
+  // a próxima faixa já fica pronta na borda (03/10/2026): passou da metade, um pedido de
+  // 2 bytes faz o servidor guardar a próxima inteira; ela começa sem a espera do R2
+  var aquecidas={};
+  audio.addEventListener('timeupdate',function(){
+    try{
+      if(cur<0||!audio.duration||audio.currentTime/audio.duration<0.5) return;
+      var j=vizinho(1), t=j>-1?rows[j]:null;
+      if(!t||aquecidas[t.id]) return;
+      aquecidas[t.id]=1;
+      fetch('/audio/'+t.id+'.mp3',{headers:{Range:'bytes=0-1'},cache:'no-store'}).catch(function(){});
+    }catch(_){}
+  });
   audio.addEventListener('loadedmetadata',function(){ paint(); tarjaPosicao(); });
   audio.addEventListener('seeked',tarjaPosicao);
   audio.addEventListener('durationchange',tarjaPosicao);
@@ -987,7 +999,8 @@ __META__
       var c=document.createElement('a'); c.className='mais-card'; c.href=t.url;
       var cap=document.createElement('span'); cap.className='m-capa';
       var img=document.createElement('img'); img.loading='lazy'; img.decoding='async'; img.alt='';
-      if(t.capa){ img.src=t.capa+'?p'; img.srcset=t.capa+'?p 200w, '+t.capa+' 1000w'; img.sizes='148px'; }
+      // 480px no meio (03/10/2026): em tela 2x e 3x o celular puxava a de 1000px
+      if(t.capa){ img.src=t.capa+'?p'; img.srcset=t.capa+'?p 200w, '+t.capa+'?m 480w, '+t.capa+' 1000w'; img.sizes='148px'; }
       else { img.src='/assets/brand/caramujo-v.webp'; img.className='m-sem'; }
       cap.appendChild(img); c.appendChild(cap);
       var b=document.createElement('b'); b.textContent=t.name; c.appendChild(b);
@@ -1540,6 +1553,47 @@ __META__
     envia({ kind:'open', artistId:CAT.artist.id, code:CAT.code, origem:de||undefined });
 
   }
+
+  /* ---------- voltar do celular fecha a folha (03/10/2026) ----------
+     O "...", ENVIAR, BAIXAR, PRÉVIA e a folha de compartilhar: o voltar do Android (e o
+     gesto do iPhone) fecha o que está aberto, e sai do modo de escolher faixas, em vez
+     de sair da página. Fechou pelo botão: a entrada extra do histórico sai junto. */
+  (function(){
+    if(!window.history||!history.pushState||!window.MutationObserver) return;
+    var folhas=[
+      { aberta:function(){ var v=document.querySelector('.cs-veu'); return !!(v&&!v.hidden); },
+        fechar:function(){ try{ window.CaramujoStory.fechar(); }catch(e){} } },
+      { aberta:function(){ return !veil.hidden; }, fechar:function(){ close(); } },
+      { aberta:function(){ return selMode; }, fechar:function(){ exitSel(); } }
+    ];
+    var MARCA={folha:1}, empilhado=false, proprio=false, y=null, lenTopo=0;
+    window.addEventListener('scroll',function(){ if(empilhado) y=window.pageYOffset; },{passive:true});
+    function fica(){ if(y===null) return; var alvo=y; y=null; try{ window.scrollTo({top:alvo,behavior:'instant'}); }catch(e){ window.scrollTo(0,alvo); } }
+    // com a folha aberta o navegador não devolve a rolagem antiga no voltar
+    function manual(on){ try{ history.scrollRestoration=on?'manual':'auto'; }catch(e){} }
+    function topo(){ for(var i=0;i<folhas.length;i++){ try{ if(folhas[i].aberta()) return folhas[i]; }catch(e){} } return null; }
+    function confere(){
+      var f=topo();
+      if(f&&!empilhado){ empilhado=true; y=window.pageYOffset; manual(true); history.pushState(MARCA,'',location.href); lenTopo=history.length; return; }
+      if(!f&&empilhado){
+        empilhado=false;
+        var antes=location.href;
+        setTimeout(function(){
+          if(!empilhado&&location.href===antes&&history.state&&history.state.folha){ proprio=true; y=window.pageYOffset; history.back(); }
+          else if(!empilhado){ y=null; manual(false); }
+        },0);
+      }
+    }
+    window.addEventListener('popstate',function(){
+      if(proprio){ proprio=false; fica(); manual(false); return; }
+      if(!empilhado) return;
+      empilhado=false;
+      if(history.length>lenTopo){ y=null; manual(false); return; }     // foi pra frente (link #), não voltou
+      var f=topo(); fica(); manual(false);
+      if(f){ try{ f.fechar(); }catch(e){} }
+    });
+    new MutationObserver(confere).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden']});
+  })();
 
   inicio();
 })();

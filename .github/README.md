@@ -25,7 +25,7 @@ Site do estúdio Caramujo Records (São Carlos, SP): vitrine de beats exclusivos
 - **Hospedagem:** Cloudflare Pages com deploy a cada push na `main`.
 - **Backend:** Pages Functions (`functions/`).
 - **Banco:** D1 (beats da vitrine, cupons, catálogos, eventos, funil).
-- **Áudio e capas:** R2 (MP3 de 128k e capas de 1000px com miniatura de 200px).
+- **Áudio e capas:** R2 (MP3 de 128k e capas de 1000px, com média de 480px e miniatura de 200px). Capa e áudio ficam copiados na borda da Cloudflare depois do primeiro pedido; a próxima faixa da lista é aquecida quando a atual passa da metade.
 - **Conversão:** GitHub Actions lê o Google Drive, converte WAV em MP3 (ffmpeg) e manda pro site (`scripts/sync.mjs`).
 - **Pagamento:** Mercado Pago. **E-mails:** Resend. **Contato:** EmailJS (carrega só quando a pessoa usa o formulário).
 
@@ -60,6 +60,10 @@ scripts/                conversor do Drive e cálculo da onda de cada faixa
 ## Fluxos principais
 
 **Compra.** `create-payment` refaz a conta do carrinho com os preços da própria página e o cupom do banco, e recusa se o valor não bater ou se o beat já foi vendido. Cartão responde na hora. PIX confirma pelo `payment-webhook`. No fim, o banco marca o beat como vendido e registra o uso do cupom, e saem os e-mails com o contrato. Nada vai pro GitHub.
+
+**PIX no celular.** O PIX gerado fica guardado no navegador por 2 horas. Voltou do app do banco: o site confere na hora. Se a página recarregou ou a pessoa fechou no X, aparece a faixa "Seu PIX de R$ X tá aguardando" (VER O PIX / DESCARTAR); se já pagou, abre o PEDIDO CONFIRMADO. O checkout lembra e-mail e nomes neste navegador (o CPF nunca fica guardado).
+
+**Voltar do celular.** Em todas as páginas, o voltar do Android (e o gesto do iPhone) fecha a folha aberta (carrinho, pacote, checkout, mídia, menu, compartilhar, "...", ENVIAR/BAIXAR) em vez de sair. Com o PIX na tela ele não fecha.
 
 **Beat tape nova.** Pasta nova em `@rideblan33 / Beat tapes` no Drive, com capa e beats (`nome Tom 140bpm`). A conversão da madrugada cria a página e a tape entra em 1º no portfólio. Pra vender os beats: painel > Vitrine > Fila > marcar, escolher o gênero e publicar.
 

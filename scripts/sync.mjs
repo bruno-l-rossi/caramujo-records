@@ -367,10 +367,17 @@ async function capinha(arquivo, dir) {
   await run('ffmpeg', ['-y', '-loglevel', 'error', '-i', quadrado,
     '-vf', 'scale=200:200', '-q:v', '5', pequena]);
 
+  // a média (03/10/2026): 480px, pra grade do perfil e o "Mais de" no fim das tapes.
+  // O celular (tela 2x e 3x) puxava a de 1000px pra mostrar em 120-150px.
+  const media = path.join(dir, arquivo.id + '.capa-m.jpg');
+  await run('ffmpeg', ['-y', '-loglevel', 'error', '-i', quadrado,
+    '-vf', 'scale=480:480', '-q:v', '4', media]);
+
   const grande = await fs.promises.readFile(quadrado);
   const mini = await fs.promises.readFile(pequena);
-  for (const f of [bruto, quadrado, pequena]) await fs.promises.rm(f, { force: true });
-  return { grande, mini };
+  const med = await fs.promises.readFile(media);
+  for (const f of [bruto, quadrado, pequena, media]) await fs.promises.rm(f, { force: true });
+  return { grande, mini, media: med };
 }
 
 /* ---------- conversa com o site ---------- */
@@ -553,21 +560,25 @@ async function umaPasta(pasta, dir) {
   let capaChave = null;
   if (capa && capa.id === p.capaAtual) {
     capaChave = capa.id;                       // já está na prateleira, não baixa de novo
-    if (p.capaMini === false) {                // subiu antes de existir miniatura
+    // subiu antes de existir a miniatura (200px) ou a média (480px, 03/10/2026):
+    // gera só o que falta. Site antigo não manda capaMedia: aí não mexe.
+    if (p.capaMini === false || p.capaMedia === false) {
       try {
-        const { mini } = await capinha(capa, dir);
-        await ingest('capa', { folderId: pasta.id, chave: capa.id, tam: 'p' }, mini, true);
-        console.log(`    miniatura da capa: ${capa.name}`);
+        const { mini, media } = await capinha(capa, dir);
+        if (p.capaMini === false) await ingest('capa', { folderId: pasta.id, chave: capa.id, tam: 'p' }, mini, true);
+        if (p.capaMedia === false) await ingest('capa', { folderId: pasta.id, chave: capa.id, tam: 'm' }, media, true);
+        console.log(`    ${p.capaMini === false ? 'miniatura' : 'capa média'} da capa: ${capa.name}`);
       } catch (e) {
         if (e.parar) throw e;
-        console.log(`    miniatura falhou (${capa.name}): ${e.message}`);
+        console.log(`    miniatura/média falhou (${capa.name}): ${e.message}`);
       }
     }
   } else if (capa) {
     try {
-      const { grande, mini } = await capinha(capa, dir);
+      const { grande, mini, media } = await capinha(capa, dir);
       await ingest('capa', { folderId: pasta.id, chave: capa.id }, grande, true);
       await ingest('capa', { folderId: pasta.id, chave: capa.id, tam: 'p' }, mini, true);
+      await ingest('capa', { folderId: pasta.id, chave: capa.id, tam: 'm' }, media, true);
       capaChave = capa.id;
       console.log(`    capa: ${capa.name}`);
     } catch (e) {

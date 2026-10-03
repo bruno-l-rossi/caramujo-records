@@ -137,3 +137,11 @@ nas redes ("2,5 mi de streams", curto), nos dados pro Google ("2,5 milhões") e 
 Na frase "Beats exclusivos, mixagem e masterização por @rideblan33." o @ é o link do perfil,
 igual ao das tapes: bone em negrito, sublinhado discreto e a setinha, que anda no hover.
 
+## Faixa do PIX aguardando (desde 03/10/2026)
+
+Barra embaixo, de ponta a ponta, fundo `deep` com o fio de cima em `fire`. Bolinha `fire`,
+"Seu PIX de R$ X tá aguardando" em bone negrito, os itens embaixo em IBM Plex Mono `read`.
+Dois botões de 48px: VER O PIX (creme `bone`, texto escuro) e DESCARTAR (fantasma com
+borda `wire`). No computador o miolo fica com 560px no centro. Mockup no artifact "PIX no
+celular". O layout da tela do PIX segue o de sempre (escolha de 03/10), com o COPIAR em
+creme e 44px de altura.

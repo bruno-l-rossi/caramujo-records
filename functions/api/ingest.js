@@ -135,9 +135,11 @@ async function plan(d, body, request, env) {
   const capaAtual = artist.cover_origem === 'artista' ? null : (artist.cover_key || null);
   // capa que subiu antes de existir miniatura: o conversor gera só a pequena
   const capaMini = capaAtual ? !!(await env.AUDIO.head(`capa/${capaAtual}-p.jpg`).catch(() => null)) : false;
+  // a média de 480px (03/10/2026): capa antiga ganha a dela na próxima conversão
+  const capaMedia = capaAtual ? !!(await env.AUDIO.head(`capa/${capaAtual}-m.jpg`).catch(() => null)) : false;
   return json({
     artistId: artist.id, slug: artist.slug, code: artist.code, need, venda,
-    capaAtual, capaMini,
+    capaAtual, capaMini, capaMedia,
     prateleira: { usado: usadoBytes, teto: TETO_BYTES, folga: TETO_BYTES - usadoBytes }
   });
 }
@@ -351,7 +353,7 @@ async function done(d, env, url, body) {
   // a capa saiu da pasta do Drive: some daqui também, e volta o logo da casa
   const capaAgora = body.capa || null;
   if (!capaAgora && artist.cover_key && artist.cover_origem !== 'artista') {
-    await env.AUDIO.delete([`capa/${artist.cover_key}.jpg`, `capa/${artist.cover_key}-p.jpg`]).catch(() => {});
+    await env.AUDIO.delete([`capa/${artist.cover_key}.jpg`, `capa/${artist.cover_key}-p.jpg`, `capa/${artist.cover_key}-m.jpg`]).catch(() => {});
     await d.prepare('UPDATE artists SET cover_key = NULL WHERE id = ?').bind(artist.id).run();
   }
 
@@ -395,12 +397,14 @@ async function capa(d, env, url, request) {
   const body = await request.arrayBuffer();
   if (!body.byteLength) return json({ erro: 'imagem vazia' }, 400);
 
-  // tam=p: a miniatura de 200px da mesma capa. Só guarda, não mexe no banco.
-  if (url.searchParams.get('tam') === 'p') {
-    await env.AUDIO.put(`capa/${chave}-p.jpg`, body, {
+  // tam=p: a miniatura de 200px da mesma capa; tam=m: a média de 480px (03/10/2026).
+  // Só guarda, não mexe no banco.
+  const tam = url.searchParams.get('tam');
+  if (tam === 'p' || tam === 'm') {
+    await env.AUDIO.put(`capa/${chave}-${tam}.jpg`, body, {
       httpMetadata: { contentType: 'image/jpeg', cacheControl: 'public, max-age=31536000, immutable' }
     });
-    return json({ ok: true, chave, mini: true });
+    return json({ ok: true, chave, ...(tam === 'p' ? { mini: true } : { media: true }) });
   }
 
   await env.AUDIO.put(`capa/${chave}.jpg`, body, {
@@ -408,7 +412,7 @@ async function capa(d, env, url, request) {
   });
 
   if (artist.cover_key && artist.cover_key !== chave) {
-    await env.AUDIO.delete([`capa/${artist.cover_key}.jpg`, `capa/${artist.cover_key}-p.jpg`]).catch(() => {});
+    await env.AUDIO.delete([`capa/${artist.cover_key}.jpg`, `capa/${artist.cover_key}-p.jpg`, `capa/${artist.cover_key}-m.jpg`]).catch(() => {});
   }
   await d.prepare(
     "UPDATE artists SET cover_key = ?, cover_origem = 'drive' WHERE id = ?"
@@ -443,6 +447,7 @@ async function faxina(d, env) {
   for (const r of (await d.prepare('SELECT cover_key FROM artists WHERE cover_key IS NOT NULL').all()).results || []) {
     capas.add('capa/' + r.cover_key + '.jpg');
     capas.add('capa/' + r.cover_key + '-p.jpg');
+    capas.add('capa/' + r.cover_key + '-m.jpg');
   }
   const limite = Date.now() - 3600e3;
   const apagar = [];

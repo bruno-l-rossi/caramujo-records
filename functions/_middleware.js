@@ -4,11 +4,14 @@
 // API, áudio, capa e download passam direto, sem try: o checkout, o webhook e
 // o player continuam respondendo exatamente como antes.
 import { paginaErro } from './_lib/erro.js';
+import { aoFim } from './_lib/db.js';
 
 const DIRETO = /^\/(api|audio|capa|dl)\//;
 
 export async function onRequest(ctx) {
   const { pathname } = new URL(ctx.request.url);
+  // o contador de consumo do banco grava depois da resposta (_lib/db.js, 03/10/2026)
+  try { aoFim((p) => ctx.waitUntil(p)); } catch (_) { /* sem waitUntil: o banco espera, como antes */ }
   if (DIRETO.test(pathname)) return ctx.next();
   try {
     return await ctx.next();
