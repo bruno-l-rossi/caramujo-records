@@ -106,6 +106,11 @@ Origem das visitas: `?de=<rótulo>` nos links divulgados (ex.: `/rideblan33?de=b
 | `GDRIVE_SA_JSON` | secret (Pages e GitHub) | leitura do Drive |
 | `GITHUB_TOKEN` | secret | painel dispara a conversão no Actions |
 
+**Áudio por domínio próprio (desligado até conferir).** `functions/_lib/midia.js` tem `MIDIA = ''`: o MP3 passa pela função `/audio/<id>`, que guarda cópia na borda. Pra o MP3 sair direto do R2 pela CDN, sem gastar chamada de função:
+1. Cloudflare > R2 > `caramujo-audio` > Settings > Custom Domains > Connect Domain > `som.caramujorecords.com.br`.
+2. No mesmo lugar, CORS Policy: `[{"AllowedOrigins":["https://caramujorecords.com.br","https://www.caramujorecords.com.br"],"AllowedMethods":["GET","HEAD"],"AllowedHeaders":["Range"],"ExposeHeaders":["Content-Range","Content-Length","Accept-Ranges","ETag"],"MaxAgeSeconds":86400}]`
+3. Conferir `https://som.caramujorecords.com.br/mp3/<id>.mp3` com Range (206 e Content-Range) e o CORS, trocar `MIDIA` pra `'https://som.caramujorecords.com.br'` e publicar. A CSP do site já libera o domínio. Capas e ondas seguem pelas funções (a capa pequena e a média têm volta pra grande).
+
 Workflows: **Catálogo dos artistas** (madrugada e manual), **Catálogo, carga geral** (6 frentes em paralelo) e **Catálogo, ondas das faixas**.
 
 ---

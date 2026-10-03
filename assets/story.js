@@ -408,7 +408,10 @@
   // A onda da faixa inteira (volume a cada meio segundo, feita no conversor):
   // /audio/<id>.onda, ~1KB. Sem ela, o compartilhar segue do ponto que está tocando.
   function lerOnda(src) {
-    var url = String(src).replace(/(\.mp3)?$/i, '.onda');
+    // a onda mora no site mesmo quando o MP3 sai do domínio próprio do armazenamento
+    // (03/10/2026): /audio/<id>.onda, achado pelo id no fim do endereço do som
+    var m = String(src).match(/([A-Za-z0-9_-]{10,80})(?:\.mp3)?(?:[?#].*)?$/);
+    var url = m && /^https?:/i.test(String(src)) ? '/audio/' + m[1] + '.onda' : String(src).replace(/(\.mp3)?$/i, '.onda');
     var limite = espera(5000).then(function () { return null; });
     return Promise.race([fetch(url).then(function (r) { return r.ok ? r.json() : null; })
       .then(function (o) { return o && o.p && o.p.length ? o : null; }).catch(function () { return null; }), limite]);

@@ -3,6 +3,7 @@
 import { db } from './db.js';
 import { pagina, faixa } from './page.js';
 import { paginaErro } from './erro.js';
+import { MIDIA } from './midia.js';
 
 export async function avulso(kind, { params, request, env }) {
   const c = String(params.codigo || '').toLowerCase();
@@ -34,10 +35,11 @@ export async function avulso(kind, { params, request, env }) {
   const podeBaixar = tracks.some((t) => (t.kind === 'beat' ? artist.dl_beats : artist.dl_sons));
 
   return pagina(request, env, {
-    titulo: umaSo ? `${tracks[0].title} · prod. rideblan33` : `${artist.name} · Caramujo Records`,
+    // textos com o @rideblan33 (03/10/2026, escolha do Bruno; sem o "Toca direto, sem baixar nada")
+    titulo: umaSo ? `${tracks[0].title} · @rideblan33` : `${artist.name} · Caramujo Records`,
     descricao: umaSo
-      ? `${tracks[0].title}, produzido pelo rideblan33. Toca direto, sem baixar nada.`
-      : `${tracks.length} faixas de ${artist.name} com o rideblan33.`,
+      ? `${tracks[0].title}, produzido por @rideblan33.`
+      : `${tracks.length} faixas de ${artist.name} com @rideblan33.`,
     url: url.origin + url.pathname,
     capa: artist.cover_key ? `${url.origin}/capa/${artist.cover_key}` : `${url.origin}/og-image.png`,
     cat: {
@@ -50,7 +52,8 @@ export async function avulso(kind, { params, request, env }) {
       preview: true,
       owner: false,
       perm: { download: !!podeBaixar, beats: !!artist.dl_beats, sons: !!artist.dl_sons },
-      tracks
+      tracks,
+      ...(MIDIA ? { midia: MIDIA } : {})
     }
   });
 }

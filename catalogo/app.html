@@ -615,6 +615,8 @@ __META__
   audio.preload = 'metadata';
   audio.crossOrigin = 'anonymous';
 
+  // de onde sai o MP3 (03/10/2026): o domínio próprio do armazenamento, quando ligado
+  function som(id){ return CAT.midia ? CAT.midia+'/mp3/'+id+'.mp3' : '/audio/'+id+'.mp3'; }
   function mmss(s){s=Math.max(0,Math.round(s||0));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
   function norm(s){return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()}
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]})}
@@ -750,7 +752,7 @@ __META__
     cur=i;pos=0;
     var t=rows[cur];
     player.hidden=false;dlDock.hidden=true;
-    audio.src='/audio/'+t.id+'.mp3';
+    audio.src=som(t.id);
     if(CAT.artist.tape || podeEnviar()) prepararStory();
     audio.play().catch(function(){});
     tarja(t);
@@ -792,7 +794,7 @@ __META__
       var j=vizinho(1), t=j>-1?rows[j]:null;
       if(!t||aquecidas[t.id]) return;
       aquecidas[t.id]=1;
-      fetch('/audio/'+t.id+'.mp3',{headers:{Range:'bytes=0-1'},cache:'no-store'}).catch(function(){});
+      fetch(som(t.id),{headers:{Range:'bytes=0-1'},cache:'no-store'}).catch(function(){});
     }catch(_){}
   });
   audio.addEventListener('loadedmetadata',function(){ paint(); tarjaPosicao(); });
@@ -1123,7 +1125,7 @@ __META__
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-27b';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-10-03a';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });
@@ -1146,7 +1148,7 @@ __META__
   }
   function trechoDe(t){
     if(!t) return null;
-    return { src:'/audio/'+t.id+'.mp3', inicio:(rows[cur]===t?audio.currentTime:0)||0, dur:t.dur||0 };
+    return { src:som(t.id), inicio:(rows[cur]===t?audio.currentTime:0)||0, dur:t.dur||0 };
   }
   // a prévia do trecho toca num player da folha; o celular só deixa tocar depois de um
   // toque, então ele nasce aqui, no toque de compartilhar (mudo até a folha achar o trecho)
@@ -1202,7 +1204,7 @@ __META__
   function storyDaFaixa(t){
     destravarSom();
     pausar();                                   // a faixa da página para e a folha toca o trecho
-    destravarPrevia('/audio/'+t.id+'.mp3');
+    destravarPrevia(som(t.id));
     var u = t.buy ? location.origin + '/b/' + t.buy : location.origin + location.pathname;
     carregarStory().then(function(){
       var nome = String(t.title||'').toLocaleUpperCase('pt-BR');
@@ -1260,7 +1262,7 @@ __META__
   function storyDaMusica(t){
     destravarSom();
     pausar();
-    destravarPrevia('/audio/'+t.id+'.mp3');
+    destravarPrevia(som(t.id));
     carregarStory().then(function(){
       var nome = String(t.title||'').toLocaleUpperCase('pt-BR');
       window.CaramujoStory.abrir({
@@ -1525,7 +1527,8 @@ __META__
       $('recado').textContent=CAT.artist.descricao;
       $('recado').hidden=false;
     }
-    document.title=(CAT.artist.name||'Catálogo')+' · Caramujo Records';
+    // a aba da tape fica igual ao título que o servidor manda pro Google e pro WhatsApp (03/10/2026)
+    document.title=(CAT.artist.name||'Catálogo')+(CAT.artist.tape&&!CAT.preview?' · @rideblan33':' · Caramujo Records');
 
     aplicarCapa();
 

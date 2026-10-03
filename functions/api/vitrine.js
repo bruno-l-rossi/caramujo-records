@@ -5,6 +5,7 @@
 import { db, json } from '../_lib/db.js';
 import { vitrine } from '../_lib/vitrine.js';
 import { mesma, limpo } from '../_lib/casar.js';
+import { somUrl } from '../_lib/midia.js';
 
 const VALIDADE = 5 * 60 * 1000;
 let cache = { at: 0, dados: null };
@@ -111,7 +112,7 @@ async function montar(request, env) {
     return {
       id: b.id, name: b.name, slug: b.slug, bpm: b.bpm, key: b.key,
       genre: b.genre, genero: b.generoLabel || b.genre || '', sold: b.sold,
-      mp3: f ? '/audio/' + f.id : null,
+      mp3: f ? somUrl(f.id) : null,
       capa: comCapa ? '/capa/' + comCapa.cover_key : null,
       dur: f ? (f.dur || 0) : 0
     };

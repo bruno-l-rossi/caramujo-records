@@ -5,6 +5,7 @@ import { db } from '../_lib/db.js';
 import { pagina, faixa } from '../_lib/page.js';
 import { vitrine, indexar, achar } from '../_lib/vitrine.js';
 import { tapesDoPerfil } from '../_lib/perfil.js';
+import { MIDIA } from '../_lib/midia.js';
 
 // caminhos do site que não são artista
 const RESERVADO = new Set(['api', 'audio', 'assets', 'docs', 'previews', 'functions',
@@ -115,7 +116,8 @@ export async function onRequestGet({ params, request, env }) {
       tracks,
       // o @rideblan33 vira o chip do perfil nas tapes E nas pastas de artista (26/09/2026)
       perfil: '/rideblan33',
-      mais, totalPerfil
+      mais, totalPerfil,
+      ...(MIDIA ? { midia: MIDIA } : {})
     }
   });
 }

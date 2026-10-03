@@ -103,7 +103,6 @@ nav{
   backdrop-filter:blur(10px);
 }
 .nav-logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;}
-.nav-logo img{height:27px;width:auto;}
 .nav-links{display:flex;list-style:none;}
 .nav-links a{
   font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.76rem;font-weight:700;
@@ -178,13 +177,6 @@ nav{
   margin-bottom:1rem;
   white-space:nowrap;
 }
-.hero-title .sub{
-  display:block;
-  font-size:.22em;
-  color:var(--clay);
-  letter-spacing:.12em;
-  text-shadow:none;
-}
 
 .hero-desc{
   font-size:.72rem;color:var(--read);
@@ -206,7 +198,6 @@ nav{
   text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;
   transition:all .18s;
 }
-.btn-fire{background:var(--ember);color:var(--cream);}
 .btn-fire:hover{background:var(--fire);}
 .btn-ghost{background:transparent;color:var(--bone);border:1px solid var(--wire);}
 .btn-ghost:hover{border-color:var(--clay);color:var(--cream);}
@@ -229,7 +220,6 @@ nav{
   line-height:.9;text-transform:uppercase;
   color:var(--cream);letter-spacing:.02em;
 }
-.s-title .r{color:var(--fire);}
 .s-sub{font-size:.76rem;color:var(--read);max-width:520px;margin-top:.9rem;line-height:1.9;}
 .s-sub strong{color:var(--bone);}
 
@@ -599,7 +589,6 @@ html { scroll-padding-top: var(--nav-h,54px); }
 /* Custom cursor hidden on touch devices */
 @media (hover: none) {
   .cur, .cur-r { display: none; }
-  body { cursor: auto; }
 }
 
 @media(max-width:860px){
@@ -628,9 +617,6 @@ html { scroll-padding-top: var(--nav-h,54px); }
   .s{padding:3.5rem 1.2rem;}
   .hero-content{padding:7rem 1.2rem 3rem;}
   .hero-title{white-space:normal;font-size:clamp(3rem,14vw,8rem);}
-
-  /* Catalog */
-  .ftabs{width:100%;}
 
   /* Packages */
   .packs{grid-template-columns:1fr;}
@@ -661,16 +647,11 @@ html { scroll-padding-top: var(--nav-h,54px); }
   input,select,textarea{font-size:16px!important;}
   /* Piso de legibilidade pra textos miúdos */
   .pkg-beat-meta,.ci-t,.pack-tag,.cp-upsell-tag,.s-kicker{font-size:.66rem;}
-  .hero-proof{font-size:.7rem;}
   footer p{font-size:.63rem;}
   .mp-lbl,.cf-lbl{font-size:.66rem;}
 
-  /* Coupon */
-  .cp-coupon-row{flex-wrap:nowrap;}
-
   /* MP checkout modal */
   .mp-modal-inner{max-width:100%;width:100%;margin:0;border-radius:0;min-height:100dvh;}
-  .mp-modal{align-items:flex-start;}
 
   /* Pagination */
   .pagination, .pagination-top{flex-wrap:wrap;gap:.4rem;}
@@ -679,9 +660,7 @@ html { scroll-padding-top: var(--nav-h,54px); }
 
 @media(max-width:480px){
   .s{padding:2.5rem 1rem;}
-  .hero-content{padding:6rem 1rem 2.5rem;}
   nav{padding:0 .7rem;}
-  .nav-links a{font-size:.58rem;padding:0 .65rem;}
 
   .hero-desc{font-size:.68rem;}
   .s-title{font-size:clamp(2rem,10vw,4rem);}
@@ -707,20 +686,14 @@ body{cursor:auto!important;}
 
 /* logo do topo = o mesmo das outras páginas (caramujo-h.webp: selo + CARAMUJO RECORDS),
    148x27 no computador e 122x22 no celular, padrão de 26/09/2026 (DESIGN.md) */
-.nav-logo{display:flex;align-items:center;text-decoration:none;}
 .nav-logo img{width:148px!important;height:27px!important;opacity:1!important;border-radius:0!important;object-fit:contain;}
 @media(max-width:899px){.nav-logo img{width:122px!important;height:22px!important;}}
-.nav-links a{font-family:var(--sans)!important;}
 
 /* HERO */
 #hero{justify-content:center!important;}
-.hero-content{position:relative;z-index:3;}
 .hero-title{font-family:var(--serif)!important;font-weight:500!important;text-transform:none!important;letter-spacing:.01em!important;line-height:.94!important;font-size:clamp(3.4rem,9vw,7.4rem)!important;text-shadow:none!important;}
 .hero-title .sub{display:block;font-family:var(--sans)!important;font-weight:700!important;font-size:.14em!important;letter-spacing:.6em!important;color:var(--clay)!important;margin-top:1.1rem;-webkit-text-fill-color:var(--clay)!important;}
 .hero-lede{font-family:var(--serif);font-style:italic;font-size:clamp(1.3rem,2.4vw,1.9rem);line-height:1.45;color:var(--amber);max-width:27ch;letter-spacing:.01em;margin:1.8rem 0 2.6rem;display:block;}
-.hero-desc{margin-top:0!important;}
-.hero-desc{font-family:var(--sans)!important;color:var(--read)!important;}
-.hero-eyebrow{color:var(--clay)!important;font-family:var(--sans)!important;}
 
 /* caramujo grande à direita (baixa opacidade) */
 .hero-logo-wrap{position:absolute!important;left:auto!important;right:-3%!important;top:50%!important;bottom:auto!important;transform:translateY(-50%)!important;width:auto!important;height:auto!important;opacity:1!important;overflow:visible!important;z-index:0!important;mix-blend-mode:normal!important;}
@@ -741,7 +714,6 @@ body{cursor:auto!important;}
 
 /* pacotes / serviços */
 .pack-n,.svc-name{font-family:var(--serif)!important;font-weight:600!important;text-transform:none!important;}
-.pack-tag,.svc-name span{font-family:var(--sans)!important;}
 
 /* contato serif */
 .c-desc{font-family:var(--serif)!important;font-style:italic;font-size:clamp(1.3rem,2.2vw,1.7rem)!important;line-height:1.45!important;color:var(--amber)!important;}
@@ -786,7 +758,6 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 }
 
 /* ═══ NOVO: BEAT DA SEMANA (hero) ═══ */
-.hero-week{margin-top:1.6rem;width:100%;max-width:380px;border:1px solid var(--clay);background:rgba(34,30,24,.72);backdrop-filter:blur(4px);padding:1rem;}
 .hw-head{display:flex;justify-content:space-between;align-items:center;}
 .hw-kick{font-size:.6rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--fire);}
 
@@ -804,9 +775,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 
 /* ═══ NOVO: BARRA TOCANDO AGORA ═══ */
 .np-bar{position:fixed;left:50%;bottom:1.1rem;transform:translateX(-50%) translateY(160%);z-index:7000;display:flex;flex-direction:column;align-items:stretch;gap:.5rem;background:rgba(26,24,21,.96);border:1px solid var(--clay);padding:.6rem .9rem;min-width:300px;max-width:min(92vw,460px);backdrop-filter:blur(8px);box-shadow:0 8px 30px rgba(0,0,0,.5);transition:transform .3s cubic-bezier(.4,0,.2,1);}
-.np-bar.on{transform:translateX(-50%) translateY(0);}
 
-@media(max-width:600px){.np-bar{left:0;right:0;bottom:0;transform:translateY(160%);max-width:none;min-width:0;border-left:0;border-right:0;padding-right:.9rem;}.np-bar.on{transform:translateY(0);}}
 
 /* ═══ AJUSTES v2 ═══ */
 .hero-week{position:absolute;right:4rem;top:52%;transform:translateY(-50%);z-index:4;width:min(430px,42vw);max-width:none;margin:0;padding:1.4rem;background:rgba(20,17,13,.72);border:1px solid var(--clay);backdrop-filter:blur(6px);}
@@ -814,11 +783,8 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .hw-chips{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem;}
 .hw-chip{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);border:1px solid var(--wire);padding:.28rem .5rem;}
 .hw-add{margin-top:.9rem;}
-@media(max-width:900px){.hero-week{position:static;transform:none;width:100%;max-width:430px;margin:1.8rem 0 0;}.hero-week .hw-name{font-size:2rem;}}
+@media(max-width:900px){.hero-week .hw-name{font-size:2rem;}}
 
-.svc-flag{display:inline-block;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.55rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:.26rem .55rem;margin-left:.5rem;vertical-align:middle;color:var(--black);}
-.svc-flag-fire{background:var(--fire);}
-.svc-flag-amber{background:var(--amber);}
 
 /* ═══ AJUSTES v3 ═══ */
 .hero-logo-wrap{justify-content:flex-start;padding-left:1vw;}
@@ -834,12 +800,6 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .svc-flag-fire{color:var(--fire);background:none;}
 .svc-flag-amber{color:var(--amber);background:none;}
 
-@media(max-width:600px){
-  .np-bar{padding-right:.9rem;gap:.55rem;}
-
-  .np-bar.on ~ .cart-btn{bottom:5.4rem;}
-
-}
 @media(max-width:600px){
   .nav-links{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;justify-content:flex-start;}
   .nav-links::-webkit-scrollbar{display:none;}
@@ -859,7 +819,6 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .nav-ig svg{width:22px;height:22px;display:block;}
 
 /* v12: sem scroll lateral + filtros/controles/paginação compactos no mobile */
-html,body{overflow-x:hidden;}
 @media(max-width:600px){
   .pg-controls{flex-wrap:wrap;width:100%;}
   .pg-controls>*{flex:1 1 auto;text-align:center;}
@@ -889,7 +848,6 @@ html,body{overflow-x:hidden;}
 
 /* v13: setas do carrossel do estúdio (só mobile) */
 .studio-carousel{position:relative;}
-.studio-nav{display:none;}
 @media(max-width:760px){
   .studio-nav{display:flex;align-items:center;justify-content:center;position:absolute;top:140px;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:rgba(20,17,13,.82);border:1px solid var(--clay);color:var(--cream);font-size:1.35rem;line-height:1;cursor:pointer;z-index:3;padding:0;}
   .studio-nav.prev{left:2px;}
@@ -953,7 +911,7 @@ html,body{overflow-x:hidden;}
   .studio-eu .eu-sel{left:8px;right:8px;bottom:8px;padding:8px 10px;}
   .studio-eu .eu-sel b{font-size:1.05rem;}
   .studio-eu .eu-sel i{font-size:.52rem;letter-spacing:.16em;}
-  .sp-0{flex-grow:.8;} .sp-1{flex-grow:1;} .sp-2{flex-grow:.6957;} .sp-3{flex-grow:.5322;} .sp-4{flex-grow:.7826;}
+  .sp-0{flex-grow:.8;} .sp-2{flex-grow:.6957;} .sp-3{flex-grow:.5322;} .sp-4{flex-grow:.7826;}
 }
 
 @media(max-width:760px){
@@ -969,7 +927,6 @@ html,body{overflow-x:hidden;}
   .sp-3>img{aspect-ratio:.5322;}
   .sp-4>video{aspect-ratio:.7826;}
   .studio-eu .eu-box{height:var(--sh);width:auto;aspect-ratio:4/5;}
-  .studio-ph figcaption{max-width:100%;}
 }
 
 /* ══ NOVO v18 — player do Drive (sai o SoundCloud) ═══════════════════
@@ -1078,26 +1035,17 @@ html,body{overflow-x:hidden;}
 .hw-play .tb.principal{width:44px;height:44px}
 @media(max-width:760px){
   #beatCards .nome{font-size:1.05rem}
-  #beatCards .ficha{font-size:.64rem}
   #beatCards .item{gap:10px;padding:9px 2px}
   #beatCards .cel-num{width:26px}
-  #beatCards .cel-num b{width:26px;height:26px}
   .capa{width:40px;height:40px}
   #beatCards .dur{display:none}
   .preco{padding:.5rem .62rem;font-size:.72rem;gap:0}
   .preco svg{display:none}
-  #beatCards .vendido{padding:.5rem .6rem;font-size:.54rem}
-  .pe-seek{padding:8px 14px 0;gap:8px}
   .pe-baixo{gap:8px;padding:8px 14px calc(10px + env(safe-area-inset-bottom,0px))}
-  .pe-info{flex:1;min-width:0}
   .pe-info .capa{width:34px;height:34px}
   .pe-nome .t{font-size:.95rem}
   .pe-nome .quem{display:none}
-  .transporte{gap:2px}
-  .tb{width:30px;height:30px}
-  .tb.principal{width:36px;height:36px}
   .pe-dir{flex:none}
-  .pe-dir .vol-wrap{display:none}
 }
 
 
@@ -1115,7 +1063,6 @@ html,body{overflow-x:hidden;}
    compartilhar. Computador: aleatório, anterior, PLAY, próxima, volume;
    compartilhar à direita, do lado do preço (arrumaBarra move os dois). */
 .pe-dir #npShare{flex:none}
-.transporte .vol-wrap{display:flex}
 @media(max-width:600px){
   .pe-baixo{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"info dir" "ctl ctl";row-gap:6px;column-gap:10px}
   .pe-info{grid-area:info}
@@ -1124,7 +1071,6 @@ html,body{overflow-x:hidden;}
   .np-bar #npShuffle{display:flex}
   html body.tocando{padding-bottom:140px}
 }
-@media(max-width:400px){ .transporte{gap:10px} }
 /* modal do pacote: ouvir antes de escolher */
 .pkg-beat-item{position:relative}
 .pkg-play{flex:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;
@@ -1805,7 +1751,7 @@ html,body{overflow-x:hidden;}
 
       <!-- CONFIRMADO -->
       <div id="mpPixConfirmed" style="display:none;">
-        <div style="font-size:2.5rem;margin-bottom:1rem;">🐌</div>
+        <img src="assets/brand/selo-creme.svg" alt="" width="56" height="56" style="display:block;width:56px;height:56px;margin:0 auto 1rem;opacity:.9">
         <div style="font-family:'Cormorant Garamond',sans-serif;font-size:1.6rem;color:var(--cream);letter-spacing:.1em;margin-bottom:.8rem;">PEDIDO CONFIRMADO!</div>
         <p style="font-size:.78rem;color:var(--read);line-height:1.8;max-width:320px;margin:0 auto 1.2rem;">
           Pagamento aprovado! Os arquivos serão entregues via email seguindo os prazos estipulados no contrato.<br/><br/>
@@ -1938,7 +1884,6 @@ html,body{overflow-x:hidden;}
 body.tocando{padding-bottom:104px}
 @media(max-width:760px){
   /* a ficha não desce de 11px: piso de leitura da casa */
-  #beatCards .ficha{font-size:.68rem}
   #beatCards .item{padding:11px 2px}
   #beatCards .cel-num b{width:30px;height:30px}
   /* sem hover no celular, a barra já nasce grossa e com o pino à mostra */
@@ -1952,13 +1897,12 @@ body.tocando{padding-bottom:104px}
   #npShuffle{display:none}
   /* no celular o volume ocupa o lugar do carrinho (o carrinho da página já
      está ali do lado). Se o aparelho não deixa mexer no volume por software,
-     como o iPhone, o carrinho volta: controle morto não fica na tela. */
-  .pe-dir .vol-wrap{display:flex}
+     como o iPhone, o carrinho volta: controle morto não fica na tela.
+     (03/10/2026: as regras do volume saíram daqui. Até 600px o player A esconde
+     o volume e acima disso o arrumaBarra leva ele pros controles, então nenhuma
+     regra de .pe-dir .vol-wrap chegava a valer.) */
   .pe-dir #npPreco{display:none}
-  body.sem-volume .pe-dir .vol-wrap{display:none}
   body.sem-volume .pe-dir #npPreco{display:inline-flex}
-  .vol-pop{padding:14px 10px}
-  .vol-pop input{height:120px;width:26px}
   body.tocando{padding-bottom:96px}
 }
 
@@ -2036,7 +1980,6 @@ html{-webkit-text-size-adjust:100%}
   /* a barra do pé também: gênero, BPM e tom inteiros, sem reticência */
   .pe-baixo{gap:6px;padding-left:10px;padding-right:10px}
   .pe-nome small{font-size:.62rem}
-  .transporte{gap:0}
   .tb{width:34px;height:34px}
   .pe-info{gap:9px}
 }
@@ -2051,7 +1994,6 @@ html{-webkit-text-size-adjust:100%}
 
 @keyframes piscada{0%{transform:scale(1)}22%{transform:scale(1.16)}60%{transform:scale(.98)}100%{transform:scale(1)}}
 @keyframes piscada-cor{0%,100%{background:var(--fire);border-color:var(--fire)}45%{background:var(--cream);border-color:var(--cream)}}
-.piscou{animation:piscada .5s ease}
 #navCart.piscou{animation:piscada .55s ease;color:var(--fire)}
 .preco.piscou{animation:piscada .5s ease,piscada-cor .5s ease}
 
@@ -2094,6 +2036,13 @@ body.vol-aberto .cart-btn{transform:translateY(-76px)}
       opaco ele não aparecia, e custava processamento a cada quadro da rolagem. */
 .cp-body,.pkg-modal-body,.mp-modal-inner,.lb{overscroll-behavior:contain}
 @media(max-width:860px){ nav{backdrop-filter:none;-webkit-backdrop-filter:none} }
+/* hero no notebook (03/10/2026, opção B do Bruno): entre 901 e 1500px de largura o card do
+   Beat em destaque cobria o fim do "Caramujo". Só nessa faixa o título encolhe um pouco e o
+   card vai um tico pra direita. Celular e telas maiores seguem como sempre. */
+@media(min-width:901px) and (max-width:1500px){
+  .hero-title{font-size:clamp(3.4rem,6.6vw,7.4rem)!important}
+  .hero-week{width:min(400px,36vw)!important;left:56%!important}
+}
 /* faixa do PIX que ficou aberto (03/10/2026): embaixo, acima do player, abaixo do véu */
 .pix-volta{position:fixed;left:0;right:0;bottom:0;z-index:8150;background:var(--deep);border-top:1px solid var(--fire);
   padding:16px 18px calc(18px + env(safe-area-inset-bottom,0px))}
@@ -2438,14 +2387,18 @@ function feelingLucky(){
   showToast(`✦ Na sorte: "${pick.name}"`);
 }
 
-// Schema.org: catálogo como lista de produtos (SEO)
-(function(){
+// Schema.org: catálogo como lista de produtos (SEO). Desde 03/10/2026 cada beat leva a
+// capa da beat tape dele (quando a vitrine responde, a lista é refeita com as capas).
+window.__ldCatalogo=(function(){
   const SITE_IMAGE="https://caramujorecords.com.br/og-image.png";
   const GENRE_LABEL={trap:'trap',boombap:'boom bap',plug:'plug',hoodtrap:'hood trap',experimental:'experimental',hard:'hard',detroit:'detroit',drumless:'drumless',funk:'funk',pluggnb:'plugg&b',bounce:'bounce',nomelody:'no melody',drill:'drill'};
+  const imagem=(b)=>{ const f=(window.__VIT||{})[String(b.id)]; return f&&f.capaG ? 'https://caramujorecords.com.br'+f.capaG : SITE_IMAGE; };
+  let tag=null;
+  return function monta(){
   const ld={"@context":"https://schema.org","@type":"ItemList","name":"Catálogo de beats — Caramujo Records",
     "itemListElement":BEATS.map((b,i)=>({"@type":"ListItem","position":i+1,
       "item":{"@type":"Product","name":b.name,
-        "image":SITE_IMAGE,
+        "image":imagem(b),
         "description":`Beat ${GENRE_LABEL[b.genre]||b.genre}, ${b.bpm} BPM, tom ${b.key}. Produzido por @rideblan33 (Caramujo Records). Licença exclusiva: a faixa sai do catálogo assim que é vendida.`,
         "brand":{"@type":"Brand","name":"Caramujo Records"},
         "offers":{"@type":"Offer","priceCurrency":"BRL","price":PRICE_BEAT,
@@ -2459,9 +2412,11 @@ function feelingLucky(){
             "deliveryTime":{"@type":"ShippingDeliveryTime",
               "handlingTime":{"@type":"QuantitativeValue","minValue":0,"maxValue":0,"unitCode":"DAY"},
               "transitTime":{"@type":"QuantitativeValue","minValue":0,"maxValue":1,"unitCode":"DAY"}}}}}}))};
-  const s=document.createElement('script');s.type='application/ld+json';
-  s.textContent=JSON.stringify(ld);document.head.appendChild(s);
+  if(!tag){ tag=document.createElement('script'); tag.type='application/ld+json'; tag.id='ldCatalogo'; document.head.appendChild(tag); }
+  tag.textContent=JSON.stringify(ld);
+  };
 })();
+window.__ldCatalogo();
 
 function changePage(dir,doScroll=true){
   curPage+=dir;
@@ -2949,7 +2904,7 @@ function avisoPagamento(msg){
     let box=document.getElementById('mpBrickError');
     if(!box){
       box=document.createElement('div'); box.id='mpBrickError';
-      box.style.cssText='margin:-.5rem 0 .8rem;padding:.7rem 1rem;background:#3a1008;border:1px solid var(--rust);color:#f5a090;font-size:.74rem;font-family:"IBM Plex Mono",monospace;line-height:1.5;';
+      box.style.cssText='margin:-.5rem 0 .8rem;padding:.7rem 1rem;background:var(--mole);border:1px solid var(--wire);border-left:3px solid var(--blood);color:var(--bone);font-size:.74rem;font-family:"IBM Plex Mono",monospace;line-height:1.5;';
       const c=document.getElementById('mpBrickContainer'); if(!c) return; c.before(box);
     }
     box.textContent=msg; box.style.display='block';
@@ -3033,12 +2988,18 @@ async function goToPayment(){
           style:{
             theme:'dark',
             customVariables:{
-              baseColor:'#b82c08',
-              baseColorFirstVariant:'#e84c18',
-              baseColorSecondVariant:'#6e1408',
-              outlinePrimaryColor:'#b82c08',
-              outlineSecondaryColor:'#2e2416',
-              buttonTextColor:'#f5edda',
+              // paleta da casa (03/10/2026; antes vermelho/laranja da paleta antiga).
+              // errorColor fica o do Mercado Pago: o blood some no fundo escuro.
+              baseColor:'#b98f5e',
+              baseColorFirstVariant:'#c3a074',
+              baseColorSecondVariant:'#A87B4A',
+              outlinePrimaryColor:'#b98f5e',
+              outlineSecondaryColor:'#332c22',
+              buttonTextColor:'#14110d',
+              textPrimaryColor:'#E8E0CF',
+              textSecondaryColor:'#b89e72',
+              inputBackgroundColor:'#221e18',
+              formBackgroundColor:'#1A1815',
               fontSizeExtraSmall:'11px',
               fontSizeSmall:'13px',
               fontSizeMedium:'14px',
@@ -3114,33 +3075,33 @@ async function goToPayment(){
           // Mapeia erros comuns do MP para mensagens amigáveis
           const cause = err?.cause?.[0]?.code || '';
           const friendlyErrors = {
-            'E301': '⚠️ Número do cartão inválido. Verifique e tente novamente.',
-            'E302': '⚠️ Data de vencimento inválida. Use o formato MM/AA.',
-            'E303': '⚠️ Código de segurança (CVV) inválido.',
-            'E304': '⚠️ Nome do titular inválido. Digite como aparece no cartão.',
-            'E305': '⚠️ Documento (CPF) inválido.',
-            'E401': '⚠️ Cartão recusado. Verifique os dados ou tente outro cartão.',
-            'E501': '⚠️ E-mail inválido. Verifique e tente novamente.',
-            '205':  '⚠️ Preencha o número do cartão.',
-            '208':  '⚠️ Preencha o mês de vencimento.',
-            '209':  '⚠️ Preencha o ano de vencimento.',
-            '212':  '⚠️ Preencha o CPF do titular.',
-            '213':  '⚠️ CPF inválido.',
-            '214':  '⚠️ Preencha o nome do titular.',
-            '220':  '⚠️ Preencha o banco emissor.',
-            '221':  '⚠️ Preencha o nome como está no cartão.',
-            '224':  '⚠️ Preencha o código de segurança (CVV).',
+            'E301': 'Número do cartão inválido. Verifique e tente novamente.',
+            'E302': 'Data de vencimento inválida. Use o formato MM/AA.',
+            'E303': 'Código de segurança (CVV) inválido.',
+            'E304': 'Nome do titular inválido. Digite como aparece no cartão.',
+            'E305': 'Documento (CPF) inválido.',
+            'E401': 'Cartão recusado. Verifique os dados ou tente outro cartão.',
+            'E501': 'E-mail inválido. Verifique e tente novamente.',
+            '205':  'Preencha o número do cartão.',
+            '208':  'Preencha o mês de vencimento.',
+            '209':  'Preencha o ano de vencimento.',
+            '212':  'Preencha o CPF do titular.',
+            '213':  'CPF inválido.',
+            '214':  'Preencha o nome do titular.',
+            '220':  'Preencha o banco emissor.',
+            '221':  'Preencha o nome como está no cartão.',
+            '224':  'Preencha o código de segurança (CVV).',
           };
           const msg = friendlyErrors[cause]
-            || (err?.message ? '⚠️ ' + err.message : null)
-            || (err?.cause?.[0]?.description ? '⚠️ ' + err.cause[0].description : null)
-            || '⚠️ Verifique os dados do cartão e tente novamente.';
+            || (err?.message ? err.message : null)
+            || (err?.cause?.[0]?.description ? err.cause[0].description : null)
+            || 'Verifique os dados do cartão e tente novamente.';
           // Mostra mensagem inline no Brick em vez de alert
           let errBox = document.getElementById('mpBrickError');
           if (!errBox) {
             errBox = document.createElement('div');
             errBox.id = 'mpBrickError';
-            errBox.style.cssText = 'margin:-.5rem 0 .8rem;padding:.7rem 1rem;background:#3a1008;border:1px solid var(--rust);color:#f5a090;font-size:.74rem;font-family:"IBM Plex Mono",monospace;line-height:1.5;';
+            errBox.style.cssText = 'margin:-.5rem 0 .8rem;padding:.7rem 1rem;background:var(--mole);border:1px solid var(--wire);border-left:3px solid var(--blood);color:var(--bone);font-size:.74rem;font-family:"IBM Plex Mono",monospace;line-height:1.5;';
             document.getElementById('mpBrickContainer').before(errBox);
           }
           errBox.textContent = msg;
@@ -3163,7 +3124,7 @@ async function goToPayment(){
     document.getElementById('mpBrickContainer').innerHTML=`
       <div style="padding:1.5rem;border:1px solid var(--wire);background:var(--mole);">
         <p style="font-family:'Cormorant Garamond',sans-serif;font-size:1rem;color:var(--cream);letter-spacing:.1em;margin-bottom:.5rem;">PAGAMENTO VIA PIX</p>
-        <p style="font-size:.66rem;color:var(--rust);margin-bottom:1rem;">⚠ O módulo de cartão não carregou. Use PIX abaixo ou recarregue a página.</p>
+        <p style="font-size:.66rem;color:var(--amber);margin-bottom:1rem;">O módulo de cartão não carregou. Use PIX abaixo ou recarregue a página.</p>
         <p style="font-size:.76rem;color:var(--dim);line-height:1.8;">
           Envie <strong style="color:var(--cream)">R$ ${totalFallback}</strong> via PIX para:<br/>
           <strong style="color:var(--bone);font-size:.9rem;">contato@caramujorecords.com.br</strong><br/><br/>
@@ -3230,7 +3191,7 @@ function startPixPolling(paymentId) {
       if (data.status === 'approved') { showPixConfirmed(); return; }
       if (data.status === 'rejected' || data.status === 'cancelled') {
         document.getElementById('mpPixStatusText').textContent = 'Pagamento não aprovado. Feche e tente novamente.';
-        document.getElementById('mpPixStatusDot').style.background = '#e74c3c';
+        document.getElementById('mpPixStatusDot').style.background = 'var(--blood)';
         return;
       }
       schedule();
@@ -3326,7 +3287,7 @@ function showModalErr(msg) {
   if (!e) {
     e = document.createElement('div');
     e.id = 'mpStep1Err';
-    e.style.cssText = 'margin-bottom:.8rem;padding:.6rem 1rem;background:#3a1008;border:1px solid var(--ember);color:#f5a090;font-size:.72rem;font-family:"IBM Plex Mono",monospace;';
+    e.style.cssText = 'margin-bottom:.8rem;padding:.6rem 1rem;background:var(--mole);border:1px solid var(--wire);border-left:3px solid var(--blood);color:var(--bone);font-size:.72rem;font-family:"IBM Plex Mono",monospace;';
     const btn = document.getElementById('mpStep1Btn');
     btn.parentNode.insertBefore(e, btn);
   }
@@ -3710,6 +3671,7 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
     var m={};
     beats.forEach(function(b){ m[String(b.id)]={mp3:b.mp3,capa:b.capa?b.capa+'?p':null,capaG:b.capa,dur:b.dur}; });
     window.__VIT=m; window.__VIT_OK=true;
+    try{ if(window.__ldCatalogo) window.__ldCatalogo(); }catch(_){}    // lista do Google com as capas
     var av=$('foraAr'); if(av && !av.dataset.lista) av.remove();
     if(typeof renderCards==='function') renderCards();
     renderFeatured();
@@ -4110,7 +4072,7 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-09-27b';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-10-03a';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });

@@ -8,6 +8,7 @@
 // alguma coisa (esquecerPerfil).
 
 import { db } from './db.js';
+import { MIDIA } from './midia.js';
 import { PADRAO as NUM_PADRAO, deTexto as numDeTexto, limpar as numLimpar, curto, longo } from './numeros.js';
 
 const VALIDADE = 60 * 1000;
@@ -147,7 +148,7 @@ const ICONES = {
   compartilhar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 13.3l7.4 4.4"/><path d="M15.7 6.3l-7.4 4.4"/></svg>'
 };
 // o mesmo ?v das outras páginas: trocar junto com index.html e catalogo/app.html
-export const STORY_JS = '/assets/story.js?v=2026-09-27b';
+export const STORY_JS = '/assets/story.js?v=2026-10-03a';
 
 const ICONE_FOGO = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 4-3 5-3 9a3 3 0 006 0c0-1.5-.6-2.4-1-3 2.5 1 4 3.6 4 6.5A6 6 0 016 14.5C6 9 11 7 12 2z"/></svg>';
 function pastilha(t, nova, emAlta) {
@@ -473,6 +474,9 @@ ${grade(tapes, idNova, idEmAlta)}
   if(T && T.faixas && T.faixas.length && caixa){
     var som=new Audio(); som.preload='none';
     var i=-1, contados={};
+    // de onde sai o MP3 (03/10/2026): o domínio próprio do armazenamento, quando ligado
+    var MIDIA=${JSON.stringify(MIDIA)};
+    function somDe(id){ return MIDIA ? MIDIA+'/mp3/'+id+'.mp3' : '/audio/'+id; }
     // sempre em ordem aleatória (27/09/2026): embaralha no 1º play e de novo a cada volta
     // completa, sem repetir o beat que acabou de tocar
     function embaralha(){
@@ -491,7 +495,7 @@ ${grade(tapes, idNova, idEmAlta)}
     function vai(n){
       i=(n+T.faixas.length)%T.faixas.length;
       var f=T.faixas[i];
-      som.src='/audio/'+f.id; nome.textContent=f.t;
+      som.src=somDe(f.id); nome.textContent=f.t;
       caixa.hidden=false; document.body.classList.add('com-player');
       som.play().catch(function(){ marca(); });
       if(!contados[f.id]){ contados[f.id]=1; manda({kind:'play',trackId:f.id,artistId:T.tape.id,origem:'perfil'}); }
@@ -539,7 +543,7 @@ ${grade(tapes, idNova, idEmAlta)}
         if(i<0||!som.duration||som.currentTime/som.duration<0.5) return;
         var f=T.faixas[i+1]; if(!f||aquecidos[f.id]) return;
         aquecidos[f.id]=1;
-        fetch('/audio/'+f.id,{headers:{Range:'bytes=0-1'},cache:'no-store'}).catch(function(){});
+        fetch(somDe(f.id),{headers:{Range:'bytes=0-1'},cache:'no-store'}).catch(function(){});
       }catch(e){}
     });
   }

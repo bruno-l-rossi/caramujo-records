@@ -77,7 +77,8 @@ selo em SVG primeiro (`/assets/brand/selo-creme.svg`), depois o PNG de 180px pro
 ## Logo do topo (padrão de todas as páginas)
 
 Toda página do site, inclusive as que ainda vão existir, usa no cabeçalho o mesmo logo
-horizontal: selo + CARAMUJO RECORDS em imagem (`/assets/brand/caramujo-h.webp`, 296x54).
+horizontal: selo + CARAMUJO RECORDS em imagem (`/assets/brand/caramujo-h.webp`, 504x90,
+19 KB desde 03/10/2026: cobre 3x o maior uso, os 168px do perfil).
 Nunca o selo sozinho e nunca o nome montado em texto. Tamanho: 148x27 no computador e
 122x22 abaixo de 900px (o perfil usa 168/118 por causa do botão ao lado). Liga pra vitrine
 (`/`), exceto na própria vitrine. Hoje: vitrine (`nav .nav-logo`), tapes e pastas
@@ -136,6 +137,21 @@ nas redes ("2,5 mi de streams", curto), nos dados pro Google ("2,5 milhões") e 
 
 Na frase "Beats exclusivos, mixagem e masterização por @rideblan33." o @ é o link do perfil,
 igual ao das tapes: bone em negrito, sublinhado discreto e a setinha, que anda no hover.
+
+## Hero no notebook (desde 03/10/2026)
+
+Entre 901 e 1500px de largura o "Caramujo" encolhe um pouco (6,6% da largura, até 7,4rem)
+e o card do Beat em destaque vai pros 56% da tela com até 400px, pra um nunca encostar
+no outro. Acima de 1500px e no celular o hero segue como era. Escolha do Bruno (opção B
+das prévias de 03/10).
+
+## Checkout na paleta (desde 03/10/2026)
+
+O formulário do cartão (Mercado Pago) usa as cores da casa: botão e destaques em `fire`,
+hover em âmbar claro, campo `#221e18`, fundo `#1A1815`, texto `cream`/`read`. Caixa de
+erro do pagamento: fundo `mole`, borda `wire` e fio de 3px em `blood` à esquerda, texto
+`bone` (o `blood` sozinho não dá pra ler no escuro). Sem emoji em lugar nenhum do checkout:
+o PEDIDO CONFIRMADO leva o selo creme de 56px no lugar do 🐌, e os avisos não têm ⚠.
 
 ## Faixa do PIX aguardando (desde 03/10/2026)
 
