@@ -258,6 +258,9 @@ __META__
     padding-bottom:env(safe-area-inset-bottom,0px);
   }
   .dock[hidden]{display:none}
+  /* celular (03/10/2026): sem o desfoque atrás do player. Com o fundo 94% opaco ele
+     quase não aparecia e era refeito a cada quadro da rolagem da lista */
+  @media (max-width:899px){ .dock{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(12,12,12,.97)} }
   .dock-in{max-width:1180px;margin:0 auto;padding:7px 16px 9px}
 
   .pl{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"scrub scrub" "info acao" "ctl ctl";
@@ -771,9 +774,11 @@ __META__
     var sk=$('seek');
     sk.max=Math.max(1,Math.round(dur));sk.value=Math.round(pos);
     sk.style.setProperty('--pct',(dur?pos/dur*100:0)+'%');
-    $('plIcon').innerHTML = audio.paused
+    // o relógio chama o paint ~4 vezes por segundo: o ícone só é refeito quando muda
+    var icone = audio.paused
       ? '<path d="M7 4l12 8-12 8z"></path>'
       : '<rect x="5" y="4" width="5" height="16"></rect><rect x="14" y="4" width="5" height="16"></rect>';
+    if($('plIcon').__ico !== icone){ $('plIcon').innerHTML = icone; $('plIcon').__ico = icone; }
     $('plToggle').setAttribute('aria-label',audio.paused?'Tocar':'Pausar');
     pintarAcao(t);
   }

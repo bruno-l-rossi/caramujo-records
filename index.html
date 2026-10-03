@@ -26,6 +26,9 @@
 <link rel="preload" href="/assets/fonts/cormorant-garamond-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin/>
 <link rel="preload" href="/assets/fonts/cormorant-garamond-latin-400-italic.woff2" as="font" type="font/woff2" crossorigin/>
 <link rel="preload" href="/assets/fonts/ibm-plex-mono-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin/>
+<!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
+     a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
+<link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
 <style>
 @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
 @font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:400;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-400-italic.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
@@ -54,6 +57,9 @@
   /* ── Versão contraste: cores de leitura mais claras ── */
   --read:   #b89e72;      /* subtextos corridos (era --dim #4a3e2a → +80% mais claro) */
   --label:  #9e7c48;      /* labels/kickers (era --clay #7a5c30 → +30% mais claro) */
+  /* --rust era usada no PIX (bolinha do "aguardando", borda do aviso de erro) e
+     nunca foi definida: a bolinha e a borda saíam invisíveis (revisão de 03/10/2026) */
+  --rust:   var(--fire);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
@@ -1218,9 +1224,6 @@ html,body{overflow-x:hidden;}
 </head>
 <body>
 
-<div class="cur" id="cur"></div>
-<div class="cur-r" id="curR"></div>
-
 <!-- NAV -->
 <nav>
   <a class="nav-logo" href="#" aria-label="Caramujo Records">
@@ -1345,7 +1348,7 @@ html,body{overflow-x:hidden;}
   </div>
   <div class="filters-row">
     <div class="pg-search">
-      <input class="pg-search-input" id="beatSearchTop" type="text" placeholder="Buscar beat pelo nome…" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false"/>
+      <input class="pg-search-input" id="beatSearchTop" type="text" placeholder="Buscar beat pelo nome…" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false" enterkeyhint="search"/>
     </div>
     <div class="pg-controls">
       <select class="sort-select" id="beatSort" onchange="sortBeats(this.value)">
@@ -1369,7 +1372,7 @@ html,body{overflow-x:hidden;}
   <div class="beat-cards" id="beatCards"></div>
   <div class="pagination" id="pagination">
     <div class="pg-search">
-      <input class="pg-search-input" id="beatSearchBottom" type="text" placeholder="Buscar beat pelo nome…" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false"/>
+      <input class="pg-search-input" id="beatSearchBottom" type="text" placeholder="Buscar beat pelo nome…" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false" enterkeyhint="search"/>
     </div>
     <div class="pagination-btns">
       <button class="pg-btn" id="pgPrev" onclick="changePage(-1)">←</button>
@@ -1520,18 +1523,18 @@ html,body{overflow-x:hidden;}
       <span class="eu-cap">Quem faz o som</span>
     </a>
     <figure class="studio-ph sp-1" tabindex="0" role="button" aria-label="Ampliar foto do estúdio" onclick="openLB('img','assets/studio-hero.jpg')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLB('img','assets/studio-hero.jpg');}">
-      <img src="assets/studio-hero.jpg" alt="rideblan no estúdio, produzindo no FL Studio" loading="lazy">
+      <img src="assets/studio-hero.jpg" alt="rideblan no estúdio, produzindo no FL Studio" loading="lazy" decoding="async" width="768" height="768">
       <figcaption>Onde tudo acontece</figcaption>
     </figure>
     <figure class="studio-ph studio-vid sp-2" tabindex="0" role="button" aria-label="Assistir retorno do Fab" onclick="openLB('video-audio','assets/depo-fab.mp4')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLB('video-audio','assets/depo-fab.mp4');}">
       <div class="vid-thumb">
-        <img src="assets/depo-fab-poster.jpg" alt="Retorno do Fab pelo WhatsApp" loading="lazy">
+        <img src="assets/depo-fab-poster.jpg" alt="Retorno do Fab pelo WhatsApp" loading="lazy" decoding="async" width="576" height="828">
         <span class="play-badge" aria-hidden="true">▶</span>
       </div>
       <figcaption>Colaboração fatal</figcaption>
     </figure>
     <figure class="studio-ph sp-3" tabindex="0" role="button" aria-label="Ampliar direct do Candy" onclick="openLB('img','assets/depo-candy.jpg')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLB('img','assets/depo-candy.jpg');}">
-      <img src="assets/depo-candy.jpg" alt="Depoimento de Candyboi sobre a mixagem" loading="lazy">
+      <img src="assets/depo-candy.jpg" alt="Depoimento de Candyboi sobre a mixagem" loading="lazy" decoding="async" width="720" height="1353">
       <figcaption>Parcerias de destaque</figcaption>
     </figure>
     <figure class="studio-ph sp-4" tabindex="0" role="button" aria-label="Ampliar sessão ao vivo" onclick="openLB('video-loop','assets/sessao.mp4')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLB('video-loop','assets/sessao.mp4');}">
@@ -1576,15 +1579,15 @@ html,body{overflow-x:hidden;}
     <div class="rv">
       <div class="cf">
         <div class="cf-f">
-          <label class="cf-lbl">Nome artístico</label>
-          <input id="cfName" type="text" placeholder="Como você se chama?"/>
+          <label class="cf-lbl" for="cfName">Nome artístico</label>
+          <input id="cfName" type="text" placeholder="Como você se chama?" autocomplete="nickname"/>
         </div>
         <div class="cf-f">
-          <label class="cf-lbl">Email</label>
-          <input id="cfEmail" type="email" placeholder="seu@email.com"/>
+          <label class="cf-lbl" for="cfEmail">Email</label>
+          <input id="cfEmail" type="email" placeholder="seu@email.com" autocomplete="email" inputmode="email"/>
         </div>
         <div class="cf-f">
-          <label class="cf-lbl">Assunto</label>
+          <label class="cf-lbl" for="cfSubject">Assunto</label>
           <select id="cfSubject">
             <option>Compra de beat</option>
             <option>Pack de beats</option>
@@ -1596,7 +1599,7 @@ html,body{overflow-x:hidden;}
           </select>
         </div>
         <div class="cf-f">
-          <label class="cf-lbl">Mensagem</label>
+          <label class="cf-lbl" for="cfMessage">Mensagem</label>
           <textarea id="cfMessage" rows="4" placeholder="Fala sobre o seu projeto..."></textarea>
         </div>
         <div id="cfStatus" style="font-size:.68rem;min-height:1rem;margin-bottom:.5rem;letter-spacing:.05em;"></div>
@@ -1661,7 +1664,7 @@ html,body{overflow-x:hidden;}
   <div class="cp-foot">
     <div class="cp-coupon" id="cpCouponArea">
       <div class="cp-coupon-row">
-        <input class="cp-coupon-input" id="cpCouponInput" type="text" placeholder="CUPOM DE DESCONTO" maxlength="20" autocomplete="off" spellcheck="false"/>
+        <input class="cp-coupon-input" id="cpCouponInput" type="text" placeholder="CUPOM DE DESCONTO" maxlength="20" autocomplete="off" spellcheck="false" autocapitalize="characters" enterkeyhint="done"/>
         <button class="cp-coupon-btn" id="cpCouponBtn" onclick="applyCoupon()">APLICAR</button>
       </div>
       <div class="cp-coupon-msg" id="cpCouponMsg"></div>
@@ -1688,7 +1691,7 @@ html,body{overflow-x:hidden;}
     </div>
     <div class="pkg-modal-body" id="pkgModalBody">
       <div class="pkg-search">
-        <input class="pkg-search-input" id="pkgSearchInput" type="text" placeholder="Buscar beat..." oninput="filterPkgBeats(this.value)" autocomplete="off" spellcheck="false"/>
+        <input class="pkg-search-input" id="pkgSearchInput" type="text" placeholder="Buscar beat..." oninput="filterPkgBeats(this.value)" autocomplete="off" spellcheck="false" enterkeyhint="search"/>
       </div>
       <div id="pkgBeatList"></div>
     </div>
@@ -1713,22 +1716,22 @@ html,body{overflow-x:hidden;}
     <!-- step 1: dados + aceite -->
     <div id="mpStep1">
       <div class="mp-field-group">
-        <label class="mp-lbl">Seu email (para receber os arquivos)</label>
-        <input class="mp-input" id="mpEmail" type="email" placeholder="seu@email.com" oninput="mpValidateEmail()"/>
+        <label class="mp-lbl" for="mpEmail">Seu email (para receber os arquivos)</label>
+        <input class="mp-input" id="mpEmail" type="email" placeholder="seu@email.com" autocomplete="email" inputmode="email" oninput="mpValidateEmail()"/>
         <span class="mp-err" id="mpEmailErr"></span>
       </div>
       <div class="mp-field-group">
-        <label class="mp-lbl">Nome artístico</label>
-        <input class="mp-input" id="mpArtist" type="text" placeholder="Como você quer ser chamado"/>
+        <label class="mp-lbl" for="mpArtist">Nome artístico</label>
+        <input class="mp-input" id="mpArtist" type="text" placeholder="Como você quer ser chamado" autocomplete="nickname"/>
         <span class="mp-err" id="mpArtistErr"></span>
       </div>
       <div class="mp-field-group">
-        <label class="mp-lbl">Nome completo</label>
-        <input class="mp-input" id="mpName" type="text" placeholder="Seu nome"/>
+        <label class="mp-lbl" for="mpName">Nome completo</label>
+        <input class="mp-input" id="mpName" type="text" placeholder="Seu nome" autocomplete="name"/>
       </div>
       <div class="mp-field-group">
-        <label class="mp-lbl">CPF</label>
-        <input class="mp-input" id="mpCpf" type="text" placeholder="000.000.000-00" maxlength="14" oninput="mpMaskCpf(this)"/>
+        <label class="mp-lbl" for="mpCpf">CPF</label>
+        <input class="mp-input" id="mpCpf" type="text" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" autocomplete="off" oninput="mpMaskCpf(this)"/>
         <span class="mp-err" id="mpCpfErr"></span>
       </div>
 
@@ -1776,7 +1779,7 @@ html,body{overflow-x:hidden;}
           <input id="mpPixCode" type="text" readonly
             style="flex:1;font-size:.62rem;font-family:monospace;background:var(--mole);border:1px solid var(--wire);color:var(--bone);padding:.5rem .7rem;min-width:0;border-radius:3px 0 0 3px;"/>
           <button onclick="copyPixCode()" id="mpPixCopyBtn"
-            style="background:var(--rust);border:1px solid var(--rust);color:#fff;font-family:'Cormorant Garamond',sans-serif;font-size:.8rem;letter-spacing:.08em;padding:.5rem .9rem;cursor:pointer;white-space:nowrap;border-radius:0 3px 3px 0;">
+            style="background:var(--bone);border:1px solid var(--bone);color:var(--deep);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.12em;padding:.5rem 1rem;min-height:44px;cursor:pointer;white-space:nowrap;border-radius:0;">
             COPIAR
           </button>
         </div>
@@ -2074,6 +2077,14 @@ body.vol-aberto .cart-btn{transform:translateY(-76px)}
 @media(max-width:480px){
   .hero-content{padding:5rem 1rem 1.6rem}
 }
+
+/* ══ Revisão de 03/10/2026 — leveza e celular, sem mudar o desenho ══════════
+   1) Rolar dentro do carrinho, da escolha do pacote, do checkout ou da mídia
+      ampliada não arrasta mais a página que está atrás (no celular arrastava).
+   2) No celular o menu de cima perde o desfoque do fundo: com o fundo 97%
+      opaco ele não aparecia, e custava processamento a cada quadro da rolagem. */
+.cp-body,.pkg-modal-body,.mp-modal-inner,.lb{overscroll-behavior:contain}
+@media(max-width:860px){ nav{backdrop-filter:none;-webkit-backdrop-filter:none} }
 </style>
 
 <script>
@@ -2121,12 +2132,8 @@ function downloadContract() {
   }
 }
 
-/* cursor */
-const cur=document.getElementById('cur'),curR=document.getElementById('curR');
-document.addEventListener('mousemove',e=>{
-  cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';
-  setTimeout(()=>{curR.style.left=e.clientX+'px';curR.style.top=e.clientY+'px';},90);
-});
+/* cursor: o cursor próprio saiu no redesenho (CSS esconde .cur), mas o código
+   seguia mexendo em dois elementos invisíveis a cada movimento do mouse. Saiu (03/10/2026). */
 
 /* beats data
    A lista mora no banco (painel > Vitrine). A cada visita o servidor
@@ -3398,6 +3405,10 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
     }catch(_){}
   }
 
+  // O relógio do áudio chama o repintar ~4 vezes por segundo. Trocar o ícone só
+  // quando ele muda poupa refazer o SVG de cada linha a cada tique (com a lista
+  // do pacote aberta eram mais de 100 botões por tique). 03/10/2026.
+  function ico(el,h){ if(el.__ico!==h||!el.firstChild){ el.innerHTML=h; el.__ico=h; } }
   function repintar(){
     var f=som.duration?som.currentTime/som.duration:0;
     var tocando=atual!==null && !som.paused;
@@ -3405,14 +3416,14 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
     if($('npSeek')) $('npSeek').classList.toggle('zerada',!(f>0.004));
     if($('npTAgora')) $('npTAgora').textContent=mm(som.currentTime);
     if(som.duration && $('npTime')) $('npTime').textContent=mm(som.duration);
-    if($('npPlay')){ $('npPlay').innerHTML=tocando?ICO_PA:ICO_P;
+    if($('npPlay')){ ico($('npPlay'),tocando?ICO_PA:ICO_P);
       $('npPlay').setAttribute('aria-label',tocando?'Pausar':'Tocar'); }
     var linhas=document.querySelectorAll('#beatCards .item');
     for(var i=0;i<linhas.length;i++){
       var el=linhas[i], meu=String(el.dataset.bid)===String(atual);
       el.classList.toggle('tocando',meu);
       el.classList.toggle('rodando',meu&&tocando);
-      var b=el.querySelector('.cel-num b'); if(b) b.innerHTML=(meu&&tocando)?ICO_PAUSE:ICO_PLAY;
+      var b=el.querySelector('.cel-num b'); if(b) ico(b,(meu&&tocando)?ICO_PAUSE:ICO_PLAY);
       var c=el.querySelector('.corrida'); if(c) c.style.width=meu?(f*100)+'%':'0';
     }
     pintarHero(f,tocando);
@@ -3420,7 +3431,7 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
     var pk=document.querySelectorAll('#pkgBeatList .pkg-play');
     for(var k=0;k<pk.length;k++){
       var meu2=String(pk[k].dataset.bid)===String(atual), item=pk[k].parentNode;
-      pk[k].innerHTML=(meu2&&tocando)?ICO_PA:ICO_P;
+      ico(pk[k],(meu2&&tocando)?ICO_PA:ICO_P);
       pk[k].setAttribute('aria-pressed',meu2&&tocando?'true':'false');
       item.classList.toggle('tocando',meu2);
       var cr=item.querySelector('.pkg-corrida'); if(cr) cr.style.width=meu2?(f*100)+'%':'0';
@@ -3431,7 +3442,7 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
   function pintarHero(f,tocando){
     var meu=String(atual)===String(FEATURED_BEAT_ID);
     var bt=$('hwBtn'); if(!bt) return;
-    bt.innerHTML=(meu&&tocando)?ICO_PA:ICO_P;
+    ico(bt,(meu&&tocando)?ICO_PA:ICO_P);
     if($('hwFill')) $('hwFill').style.width=meu?(f*100)+'%':'0';
     if($('hwSeek')) $('hwSeek').classList.toggle('zerada',!(meu&&f>0.004));
     if($('hwTempo')){
@@ -3565,7 +3576,10 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
   /* teclado: espaço toca, setas andam e mexem no volume */
   document.addEventListener('keydown',function(e){
     var t=(e.target&&e.target.tagName)||'';
-    if(t==='INPUT'||t==='TEXTAREA'||e.target.isContentEditable) return;
+    if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT'||e.target.isContentEditable) return;
+    // espaço num botão ou link focado é do botão (teclado): antes ele tocava o beat
+    // em vez de, por exemplo, pôr no carrinho (03/10/2026)
+    if(e.code==='Space' && (t==='BUTTON'||t==='A'||(e.target.getAttribute&&e.target.getAttribute('role')==='button'))) return;
     if(e.code==='Space'){ e.preventDefault(); window.npToggle(); }
     else if(e.key==='ArrowRight'&&atual!==null){ som.currentTime=Math.min(som.duration||0,som.currentTime+5); repintar(); }
     else if(e.key==='ArrowLeft'&&atual!==null){ som.currentTime=Math.max(0,som.currentTime-5); repintar(); }
@@ -4218,6 +4232,32 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
 
   if(document.readyState==='complete') marca('visita');
   else window.addEventListener('load',function(){ marca('visita'); });
+})();
+</script>
+<script>
+/* ── PIX: VOLTOU DO APP DO BANCO (03/10/2026) ──────────────────────────
+   No celular a pessoa copia o código, paga no app do banco e volta pro site. A
+   conferência automática roda de 5 em 5 (depois 8, 12) segundos; quando a aba
+   volta a aparecer, confiro na hora, e o PEDIDO CONFIRMADO aparece sem espera.
+   Só envelopo por fora: startPixPolling e showPixConfirmed seguem iguais. */
+(function(){
+  var pagamento=null, conferindo=false;
+  var orig=window.startPixPolling;
+  if(typeof orig!=='function') return;
+  window.startPixPolling=function(id){ pagamento=id||null; return orig.apply(this,arguments); };
+  function pendente(){
+    var p=document.getElementById('mpPixPending'), m=document.getElementById('mpModal');
+    return !!(pagamento && p && p.style.display==='block' && m && m.classList.contains('open'));
+  }
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState!=='visible' || conferindo || !pendente()) return;
+    conferindo=true;
+    fetch('/api/check-payment?id='+encodeURIComponent(pagamento),{cache:'no-store'})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){ if(d && d.status==='approved' && pendente()) showPixConfirmed(); })
+      .catch(function(){})
+      .then(function(){ conferindo=false; });
+  });
 })();
 </script>
 </body>

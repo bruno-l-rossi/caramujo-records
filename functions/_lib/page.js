@@ -62,9 +62,15 @@ export async function pagina(request, env, { titulo, descricao, url, capa, cat, 
   const molde = await env.ASSETS.fetch(new URL('/catalogo/app.html', request.url));
   if (!molde.ok) return new Response('molde nao encontrado', { status: 500 });
 
+  // A capa é a maior coisa da tela e entra por CSS, que o navegador só descobre
+  // depois de ler o script do fim da página. O aviso no <head> adianta o download
+  // dela (e do fundo desfocado, que é a mesma imagem). 03/10/2026.
+  const capaCedo = cat && cat.artist && cat.artist.cover
+    ? `\n<link rel="preload" as="image" href="${escapar(cat.artist.cover)}" fetchpriority="high">` : '';
+
   const html = (await molde.text())
     .replace('__TITULO__', escapar(titulo))
-    .replace('__META__', metas({ titulo, descricao, url, capa, indexar, descricaoGoogle }) +
+    .replace('__META__', metas({ titulo, descricao, url, capa, indexar, descricaoGoogle }) + capaCedo +
       (indexar ? '\n' + tapeLd({ titulo, url, capa, cat }) : ''))
     .replace('<!--DADOS-->', `<script>window.__CAT__=${dados(cat)}</script>`);
 
