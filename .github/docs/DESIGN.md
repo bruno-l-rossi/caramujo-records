@@ -153,6 +153,25 @@ erro do pagamento: fundo `mole`, borda `wire` e fio de 3px em `blood` à esquerd
 `bone` (o `blood` sozinho não dá pra ler no escuro). Sem emoji em lugar nenhum do checkout:
 o PEDIDO CONFIRMADO leva o selo creme de 56px no lugar do 🐌, e os avisos não têm ⚠.
 
+## Página de cada beat e de cada gênero (desde 03/10/2026)
+
+`/beat/<nome>` e `/beats/<genero>`, pra quem chega pelo Google. Topo e rodapé iguais aos da
+vitrine (logo, seções, anel do @rideblan33, carrinho, ☰ no celular). Linhas de beat iguais às
+da vitrine (número que vira play, capinha, nome em serif, ficha em mono, botão de preço creme,
+VENDIDO em `blood` com o nome riscado).
+- **Beat:** capa grande com o play em `fire` no canto, kicker "Beat exclusivo · Gênero", nome
+  em serif grande, "prod. @rideblan33", chips em mono (BPM, tom com o nome em português,
+  duração), tocador com trilha e compartilhar, preço em serif com "Licença exclusiva", os
+  pacotes de 2 e 3 com o selo de % off (`fire`, texto escuro, caixa alta) e o botão creme
+  "Adicionar ao carrinho". Sem texto descritivo. No computador o card da beat tape fica
+  embaixo da capa. Embaixo, "Beats parecidos".
+- **Beat vendido:** selo VENDIDO na capa, preço riscado em `blood`, a caixa "Esse beat já tem
+  dono" (fio `blood` à esquerda) e "Podem te interessar".
+- **Gênero:** "Beats de <Gênero>" com o gênero em `clay`, texto curto (quantos à venda, faixa
+  de BPM, licença), "Tocar todos", preço avulso e pacotes com selo, mosaico de 4 capas no
+  computador, gêneros em pílulas (o atual em `fire`), lista com os vendidos no fim, bloco de
+  pacotes e a barra do player no pé.
+
 ## Faixa do PIX aguardando (desde 03/10/2026)
 
 Barra embaixo, de ponta a ponta, fundo `deep` com o fio de cima em `fire`. Bolinha `fire`,

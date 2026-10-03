@@ -9,7 +9,7 @@ import { MIDIA } from '../_lib/midia.js';
 
 // caminhos do site que não são artista
 const RESERVADO = new Set(['api', 'audio', 'assets', 'docs', 'previews', 'functions',
-  'mockups-antigos', 'catalogo', 'painel', 'dl', 'f', 'p', 'b', 'capa', 'cdn-cgi', 'rideblan33']);
+  'mockups-antigos', 'catalogo', 'painel', 'dl', 'f', 'p', 'b', 'beat', 'beats', 'capa', 'cdn-cgi', 'rideblan33']);
 
 export async function onRequestGet({ params, request, env }) {
   const slug = String(params.artista || '').toLowerCase();

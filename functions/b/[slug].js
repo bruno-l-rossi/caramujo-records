@@ -5,6 +5,7 @@
 // o beat na barra do player (/#beat=<slug>), e o ?de=beat marca a origem no funil.
 // Os robôs de prévia (Instagram, WhatsApp, iMessage) leem as meta tags e não
 // seguem o redirecionamento; gente segue na hora.
+// 03/10/2026: a página oficial do beat pro Google é /beat/<nome> (canonical aponta pra lá).
 
 import { montarVitrine } from '../api/vitrine.js';
 
@@ -38,7 +39,7 @@ export async function onRequestGet({ params, request, env }) {
 <title>${esc(titulo)}</title>
 <meta name="description" content="${esc(texto)}">
 <meta name="robots" content="noindex">
-<link rel="canonical" href="${SITE}/b/${esc(b.slug)}">
+<link rel="canonical" href="${SITE}/beat/${esc(b.slug)}">
 <meta property="og:type" content="music.song">
 <meta property="og:site_name" content="Caramujo Records">
 <meta property="og:locale" content="pt_BR">

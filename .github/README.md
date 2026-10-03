@@ -12,6 +12,8 @@ Site do estúdio Caramujo Records (São Carlos, SP): vitrine de beats exclusivos
 |---|---|---|
 | **Vitrine** | `/` | Beats à venda com player contínuo, pacotes (1, 2 ou 3 beats), serviços (beat sob encomenda, mix, master), carrinho e checkout Mercado Pago (cartão e PIX) com contrato digital. |
 | **Link de beat** | `/b/<beat>` | Prévia pro Direct/WhatsApp com capa, ficha e preço. Abre a vitrine com o beat tocando. |
+| **Página do beat** | `/beat/<beat>` | Desde 03/10/2026, pro Google: capa, ficha, prévia, preço, pacotes com % off, beats parecidos. Vendido fica com o preço riscado e "Podem te interessar". O carrinho e o pagamento continuam na vitrine (`/#add=<beat>`, `/#carrinho`). |
+| **Página do gênero** | `/beats/<gênero>` | Desde 03/10/2026: todos os beats do gênero (ex.: `/beats/boom-bap`), Tocar todos, ordem por BPM, pacotes. `/beats` sozinho vai pra vitrine. Gêneros e beats entram no `/sitemap.xml`. |
 | **Beat tapes** | `/<tape>/<código>` | Cada tape do @rideblan33 é uma página pública: ouvir, comprar o beat disponível, compartilhar no story e seguir pras outras tapes. Indexada no Google. |
 | **Pastas de artista** | `/<artista>/<código>` | Catálogo privado de cada artista (beats e músicas do Drive), com download e prévia pro story. Fora do Google. |
 | **Portfólio** | `/rideblan33` | Foto, apresentação, redes e a grade de todas as beat tapes na ordem escolhida no painel, com as pastilhas NOVA e EM ALTA. Toca a última tape direto do topo e tem o botão de compartilhar (story do perfil ou do catálogo, e o link). A vitrine leva pra cá pelo anel com a camisa 33 no topo e pelo 1º card do Sobre nós. |
@@ -98,7 +100,7 @@ Origem das visitas: `?de=<rótulo>` nos links divulgados (ex.: `/rideblan33?de=b
 | Nome | Tipo | Pra quê |
 |---|---|---|
 | `DB` | D1 | banco `caramujo` |
-| `AUDIO` | R2 | bucket `caramujo-audio` |
+| `AUDIO` | R2 | bucket `caramujo-records` (prefixos `mp3/`, `capa/`, `onda/`; domínio público `som.caramujorecords.com.br`) |
 | `MP_ACCESS_TOKEN` | secret | Mercado Pago |
 | `RESEND_API_KEY`, `NOTIFY_EMAIL`, `NOTIFY_FROM` | secret | e-mails de venda |
 | `PAINEL_SENHA` | secret | senha do painel e chave do cookie (trocar derruba as sessões; exige redeploy) |
@@ -106,10 +108,11 @@ Origem das visitas: `?de=<rótulo>` nos links divulgados (ex.: `/rideblan33?de=b
 | `GDRIVE_SA_JSON` | secret (Pages e GitHub) | leitura do Drive |
 | `GITHUB_TOKEN` | secret | painel dispara a conversão no Actions |
 
-**Áudio por domínio próprio (desligado até conferir).** `functions/_lib/midia.js` tem `MIDIA = ''`: o MP3 passa pela função `/audio/<id>`, que guarda cópia na borda. Pra o MP3 sair direto do R2 pela CDN, sem gastar chamada de função:
-1. Cloudflare > R2 > `caramujo-audio` > Settings > Custom Domains > Connect Domain > `som.caramujorecords.com.br`.
+**Áudio por domínio próprio (ligado em 03/10/2026).** `functions/_lib/midia.js` tem `MIDIA = 'https://som.caramujorecords.com.br'`: vitrine, tapes, pastas, links `/f/` e `/p/` e o perfil tocam o MP3 direto do R2 pela CDN, sem gastar chamada de função. Capas e ondas seguem pelas funções. O que está ligado na Cloudflare:
+1. R2 > `caramujo-records` > Settings > Custom Domains: `som.caramujorecords.com.br` (o bucket só tem `mp3/`, `capa/` e `onda/`; o WAV vem do Drive pela `/dl`, nunca do R2).
 2. No mesmo lugar, CORS Policy: `[{"AllowedOrigins":["https://caramujorecords.com.br","https://www.caramujorecords.com.br"],"AllowedMethods":["GET","HEAD"],"AllowedHeaders":["Range"],"ExposeHeaders":["Content-Range","Content-Length","Accept-Ranges","ETag"],"MaxAgeSeconds":86400}]`
-3. Conferir `https://som.caramujorecords.com.br/mp3/<id>.mp3` com Range (206 e Content-Range) e o CORS, trocar `MIDIA` pra `'https://som.caramujorecords.com.br'` e publicar. A CSP do site já libera o domínio. Capas e ondas seguem pelas funções (a capa pequena e a média têm volta pra grande).
+3. Zona caramujorecords.com.br > Rules > Transform Rules > Response Header: "Audio som.caramujorecords: permissao de tocar no site", `http.host eq "som.caramujorecords.com.br"`, Set static `Access-Control-Allow-Origin: *` e `Access-Control-Expose-Headers: Content-Range, Content-Length, Accept-Ranges, ETag`. O R2 só põe o CORS quando o pedido traz Origin, e a cópia da CDN guarda o que veio primeiro: sem a regra, um play sem CORS deixava a tape (que toca com crossOrigin) muda. Não apagar.
+Pra voltar ao caminho antigo: `MIDIA = ''` e publicar (as três coisas da Cloudflare podem ficar).
 
 Workflows: **Catálogo dos artistas** (madrugada e manual), **Catálogo, carga geral** (6 frentes em paralelo) e **Catálogo, ondas das faixas**.
 

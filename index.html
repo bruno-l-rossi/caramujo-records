@@ -2393,11 +2393,13 @@ window.__ldCatalogo=(function(){
   const SITE_IMAGE="https://caramujorecords.com.br/og-image.png";
   const GENRE_LABEL={trap:'trap',boombap:'boom bap',plug:'plug',hoodtrap:'hood trap',experimental:'experimental',hard:'hard',detroit:'detroit',drumless:'drumless',funk:'funk',pluggnb:'plugg&b',bounce:'bounce',nomelody:'no melody',drill:'drill'};
   const imagem=(b)=>{ const f=(window.__VIT||{})[String(b.id)]; return f&&f.capaG ? 'https://caramujorecords.com.br'+f.capaG : SITE_IMAGE; };
+  // cada beat tem a página dele desde 03/10/2026 (/beat/<nome>): o Google liga o item a ela
+  const pagina=(b)=>'https://caramujorecords.com.br/beat/'+String(b.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
   let tag=null;
   return function monta(){
   const ld={"@context":"https://schema.org","@type":"ItemList","name":"Catálogo de beats — Caramujo Records",
     "itemListElement":BEATS.map((b,i)=>({"@type":"ListItem","position":i+1,
-      "item":{"@type":"Product","name":b.name,
+      "item":{"@type":"Product","name":b.name,"url":pagina(b),
         "image":imagem(b),
         "description":`Beat ${GENRE_LABEL[b.genre]||b.genre}, ${b.bpm} BPM, tom ${b.key}. Produzido por @rideblan33 (Caramujo Records). Licença exclusiva: a faixa sai do catálogo assim que é vendida.`,
         "brand":{"@type":"Brand","name":"Caramujo Records"},
@@ -4002,6 +4004,19 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
   if(/^#(beat|add)=/i.test(location.hash)){
     if(document.readyState!=='loading') openBeatFromHash();
     else document.addEventListener('DOMContentLoaded',openBeatFromHash);
+  }
+
+  // #carrinho (03/10/2026): o carrinho do topo das páginas de beat e de gênero abre o
+  // carrinho daqui, com o que a pessoa já tinha guardado. O endereço volta limpo.
+  function abreCarrinhoDoLink(){
+    try{
+      if(typeof openCart==='function') openCart();
+      if(history.replaceState) history.replaceState(null,'',location.pathname+location.search);
+    }catch(_){}
+  }
+  if(location.hash==='#carrinho'){
+    if(document.readyState!=='loading') setTimeout(abreCarrinhoDoLink,300);
+    else document.addEventListener('DOMContentLoaded',function(){ setTimeout(abreCarrinhoDoLink,300); });
   }
 })();
 </script>
