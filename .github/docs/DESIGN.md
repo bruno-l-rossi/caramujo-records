@@ -43,6 +43,8 @@ Regra: nunca introduzir cor fora dessa paleta. Nada de azul, roxo, verde, neon.
 - Display/títulos: Cormorant Garamond (serif), peso 500-600, mixed-case, letter-spacing quase zero. Títulos grandes, presença editorial.
 - UI/labels/botões: Helvetica Neue (sans), bold, caixa alta, letter-spacing largo (.12em a .3em), tamanhos pequenos.
 - Dados/mono: IBM Plex Mono pra números, metadados (BPM, tom), inputs e microcopy técnica.
+- Tapes, pastas, painel e perfil usam a Schibsted Grotesk num arquivo só (variável, pesos 400 a
+  900; desde 04/10/2026, no lugar de quatro arquivos).
 
 O contraste serif grande + sans miúda espaçada + mono técnica É a identidade tipográfica. Manter as três no papel de cada uma.
 
@@ -169,10 +171,11 @@ vitrine (logo, seções, anel do @rideblan33, carrinho, ☰ no celular). Linhas 
 da vitrine (número que vira play, capinha, nome em serif, ficha em mono, botão de preço creme,
 VENDIDO em `blood` com o nome riscado).
 - **Beat:** capa grande com o play em `fire` no canto, kicker "Beat exclusivo · Gênero", nome
-  em serif grande, "prod. @rideblan33", chips em mono (BPM, tom com o nome em português,
-  duração), tocador com trilha e compartilhar, preço em serif com "Licença exclusiva", os
+  em serif grande, "prod. @rideblan33", chips em mono (BPM, tom no formato "Bbm // Si bemol
+  menor" desde 04/10/2026, duração), tocador com trilha e compartilhar, preço em serif com "Licença exclusiva", os
   pacotes de 2 e 3 com o selo de % off (`fire`, texto escuro, caixa alta) e o botão creme
-  "Adicionar ao carrinho". Sem texto descritivo. No computador o card da beat tape fica
+  "Adicionar ao carrinho" e a lista "Só seu / Contrato no seu nome / MP3 + WAV, entrega em até
+  1 dia útil" (o site não fala mais em MP3 320). Sem texto descritivo. No computador o card da beat tape fica
   embaixo da capa. Embaixo, "Beats parecidos".
 - **Beat vendido:** selo VENDIDO na capa, preço riscado em `blood`, a caixa "Esse beat já tem
   dono" (fio `blood` à esquerda) e "Podem te interessar".
@@ -190,6 +193,20 @@ VENDIDO em `blood` com o nome riscado).
   carrinho com `+` e o liga/desliga de sempre.
 - Lista: no computador o nome do beat é link da página dele (sublinha em `fire` com o mouse);
   no celular o toque em qualquer parte da linha toca, como sempre.
+- Páginas de beat e de gênero: tocar em qualquer parte da linha toca, inclusive no nome (o
+  link fica no HTML pro Google e pro Ctrl/⌘+clique). A página de um beat abre pela barra do
+  pé (capinha, nome e `›`), que na página do beat aparece quando toca um dos parecidos.
+
+## Gêneros no site (desde 04/10/2026)
+
+- Pílulas de gênero da vitrine: mesma cara de sempre, mas são links da página do gênero (o
+  clique filtra ali mesmo; Ctrl/⌘+clique ou segurar abre a página).
+- Menu do BEATS (computador, mouse em cima): caixa no fundo do topo, `TODOS OS BEATS` em
+  sans caixa alta com fio `wire` embaixo, e os 13 gêneros em duas colunas em serif `read`
+  (vira `fire`). Na página de gênero o atual fica em `fire`. No celular não aparece.
+- Rodapé (vitrine, perfil, páginas de beat e de gênero): linha "BEATS POR GÊNERO" (mono
+  `clay`, caixa alta espaçada) e os gêneros em serif `read`, acima do selo, com fio `wire`.
+- A lista de gêneros mora em `functions/_lib/generos.js` (a vitrine leva o mesmo HTML colado).
 
 ## Faixa do PIX aguardando (desde 03/10/2026)
 

@@ -10,6 +10,7 @@
 import { db } from './db.js';
 import { MIDIA } from './midia.js';
 import { ICONES as ICONES_ABA, SELO_GRANDE } from './icones.js';
+import { RODAPE_GENEROS, CSS_RODAPE_GENEROS } from './generos.js';
 import { PADRAO as NUM_PADRAO, deTexto as numDeTexto, limpar as numLimpar, curto, longo } from './numeros.js';
 
 const VALIDADE = 60 * 1000;
@@ -149,7 +150,7 @@ const ICONES = {
   compartilhar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 13.3l7.4 4.4"/><path d="M15.7 6.3l-7.4 4.4"/></svg>'
 };
 // o mesmo ?v das outras páginas: trocar junto com index.html e catalogo/app.html
-export const STORY_JS = '/assets/story.js?v=2026-10-03a';
+export const STORY_JS = '/assets/story.js?v=2026-10-04a';
 
 const ICONE_FOGO = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 4-3 5-3 9a3 3 0 006 0c0-1.5-.6-2.4-1-3 2.5 1 4 3.6 4 6.5A6 6 0 016 14.5C6 9 11 7 12 2z"/></svg>';
 function pastilha(t, nova, emAlta) {
@@ -255,8 +256,7 @@ ${FAVICON}
 <style>
 @font-face{font-family:'Cormorant Garamond';font-weight:500;font-style:italic;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-500-italic.woff2) format('woff2')}
 @font-face{font-family:'Cormorant Garamond';font-weight:600;font-style:normal;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-600-normal.woff2) format('woff2')}
-@font-face{font-family:'Schibsted Grotesk';font-weight:500;font-display:swap;src:url(/assets/fonts/schibsted-grotesk-latin-500-normal.woff2) format('woff2')}
-@font-face{font-family:'Schibsted Grotesk';font-weight:700;font-display:swap;src:url(/assets/fonts/schibsted-grotesk-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Schibsted Grotesk';font-weight:400 900;font-display:swap;src:url(/assets/fonts/schibsted-grotesk-latin-wght-normal.woff2) format('woff2')}
 @font-face{font-family:'IBM Plex Mono';font-weight:400;font-display:swap;src:url(/assets/fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2')}
 :root{color-scheme:dark;
   --black:#14110d;--deep:#1A1815;--dark:#1e1a15;--mole:#221e18;
@@ -359,6 +359,7 @@ footer a.foot-perfil{color:inherit;text-decoration:none;border-bottom:1px solid 
 @media (hover:hover){footer a.foot-perfil:hover{color:var(--fire);border-bottom-color:var(--fire)}}
 @media (max-width:860px){footer{flex-direction:column;align-items:flex-start;padding:1.2rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom,0px))}footer p{font-size:.63rem}}
 @media (max-width:480px){footer{gap:.5rem}}
+${CSS_RODAPE_GENEROS}
 body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 @media (max-width:1100px){.grade{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:820px){
@@ -446,6 +447,7 @@ ${grade(tapes, idNova, idEmAlta)}
 </main>
 
 <footer>
+  ${RODAPE_GENEROS}
   <a href="/?de=perfil" aria-label="Caramujo Records"><img loading="lazy" width="400" height="400" src="/assets/brand/selo-creme.svg" alt="Caramujo Records"></a>
   <p>© 2026 Caramujo Records — São Carlos, SP</p>
   <p><a class="foot-perfil" href="/rideblan33">@rideblan33</a> · Todos os direitos reservados</p>

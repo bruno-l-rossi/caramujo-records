@@ -17,6 +17,7 @@ import { montarVitrine } from '../api/vitrine.js';
 import { lerEstatico } from './loja.js';
 import { tapesDoPerfil, SITE } from './perfil.js';
 import { ICONES } from './icones.js';
+import { RODAPE_GENEROS, menuGeneros, CSS_RODAPE_GENEROS } from './generos.js';
 import { slug } from './casar.js';
 import { CABECALHOS } from './cabecalhos.js';
 
@@ -118,6 +119,14 @@ img{display:block}
 .topo ul a{display:block;font-size:.76rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--bone);padding:0 1rem;line-height:54px}
 .topo ul a:hover,.topo ul a.ativo{color:var(--fire)}
 .topo .dir{display:flex;align-items:center;gap:14px}
+.topo li.tem-sub{position:relative}
+.sub-gen{display:none;position:absolute;top:100%;left:0;min-width:340px;background:rgba(5,4,3,.98);border:1px solid var(--wire);border-top:0;padding:14px 20px 16px;z-index:51}
+@media(hover:hover) and (pointer:fine){.tem-sub:hover>.sub-gen,.tem-sub:focus-within>.sub-gen{display:block}}
+.topo .sub-gen a{line-height:1.2;padding:7px 0;font:500 1.05rem var(--serif);letter-spacing:0;text-transform:none;color:var(--read)}
+.topo .sub-gen a:hover,.topo .sub-gen a[aria-current]{color:var(--fire)}
+.topo .sub-gen a.sg-todos{font:700 .66rem var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--bone);padding:4px 0 12px;margin-bottom:8px;border-bottom:1px solid var(--wire)}
+.topo .sub-gen a.sg-todos:hover{color:var(--fire)}
+.sg-lista{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
 .anel{width:32px;height:32px;border-radius:50%;border:1px solid var(--clay);overflow:hidden;display:block}
 .anel img{width:100%;height:100%;object-fit:cover}
 .ico-btn{position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--bone)}
@@ -171,6 +180,7 @@ img{display:block}
 .rodape{margin-top:72px;padding:1.4rem 2.4rem;border-top:1px solid var(--wire);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
 .rodape img{width:34px;height:34px;opacity:.85}
 .rodape a{color:var(--read);text-decoration:underline;text-underline-offset:3px}
+${CSS_RODAPE_GENEROS}
 .aviso{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:80;background:var(--bone);color:var(--black);font:500 .78rem var(--mono);padding:.7rem 1rem;transition:opacity .2s,transform .2s}
 .aviso.on{opacity:1;transform:translate(-50%,0)}
 body.tocando .aviso{bottom:96px}
@@ -256,8 +266,10 @@ body.tocando{padding-bottom:64px}
 .barra .t{font:400 .7rem var(--mono);color:var(--dim);flex:none}
 .barra .trilha{flex:1;max-width:420px}
 .barra .capinha{width:38px;height:38px}
-.barra .nm{font:600 1.05rem var(--serif);color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
-.barra .nm:hover{color:var(--fire)}
+.barra .quem{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+.barra .nm{font:600 1.05rem var(--serif);color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.barra .ir{flex:none;font:500 1.4rem/1 var(--serif);color:var(--clay);margin-left:-4px}
+.barra .quem:hover .nm,.barra .quem:hover .ir{color:var(--fire)}
 .barra .ctl{display:flex;align-items:center;gap:4px;flex:none}
 .barra .ctl button{width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--bone)}
 .barra .ctl button svg{width:16px;height:16px}
@@ -295,12 +307,14 @@ body.tocando{padding-bottom:64px}
 }
 `;
 
-function topo(de) {
+function topo(de, genAtual = '') {
   const links = [['/#beats', 'Beats', true], ['/#packages', 'Pacotes'], ['/#services', 'Serviços'], ['/#estudio', 'Sobre nós'], ['/#contact', 'Contato']];
   const lis = links.map(([h, t, a]) => `<li><a href="${h}"${a ? ' class="ativo"' : ''}>${t}</a></li>`).join('');
+  // no computador, o mouse em BEATS abre "Todos os beats" e os gêneros (04/10/2026)
+  const lisTopo = lis.replace('<li><a href="/#beats" class="ativo">Beats</a></li>', `<li class="tem-sub"><a href="/#beats" class="ativo" aria-haspopup="true">Beats</a>${menuGeneros('/#beats', genAtual)}</li>`);
   return `<header class="topo">
 <a class="logo" href="/?de=${de}" aria-label="Caramujo Records, página inicial"><img src="/assets/brand/caramujo-h.webp" alt="Caramujo Records" width="148" height="27"></a>
-<nav aria-label="Seções do site"><ul>${lis}</ul></nav>
+<nav aria-label="Seções do site"><ul>${lisTopo}</ul></nav>
 <div class="dir">
 <a class="anel" href="/rideblan33?de=${de}" aria-label="Portfólio do @rideblan33"><img src="/assets/perfil/rideblan33-camisa.webp" alt="" width="128" height="128"></a>
 <a class="ico-btn js-carrinho" href="/?de=${de}#carrinho" aria-label="Abrir o carrinho">${ICO.cart}<b class="js-n" hidden>0</b></a>
@@ -310,7 +324,7 @@ function topo(de) {
 <ul class="menu-cel" id="menuCel">${lis}</ul>`;
 }
 
-const RODAPE = `<footer class="rodape"><img src="/assets/brand/selo-creme.svg" alt="" width="34" height="34" loading="lazy"><span>© 2026 Caramujo Records — São Carlos, SP</span><span><a href="/rideblan33">@rideblan33</a> · Todos os direitos reservados</span></footer>
+const RODAPE = `<footer class="rodape">${RODAPE_GENEROS}<img src="/assets/brand/selo-creme.svg" alt="" width="34" height="34" loading="lazy"><span>© 2026 Caramujo Records — São Carlos, SP</span><span><a href="/rideblan33">@rideblan33</a> · Todos os direitos reservados</span></footer>
 <div class="aviso" role="status" aria-live="polite"></div>`;
 
 const capaP = (b) => (b.capa ? b.capa + '?p' : null);
@@ -376,6 +390,15 @@ ${preload ? `<link rel="preload" as="image" href="${esc(preload)}" fetchpriority
 }
 
 // O que o tocador precisa de cada beat (vai pro navegador)
+// Barra do pé (página de gênero, e na do beat quando toca um parecido). Capa, nome e a
+// seta levam pra página do beat: é por ela (e não pela lista) que se abre a página (04/10/2026).
+const BARRA = `<div class="barra" aria-label="Tocando agora">
+<span class="t js-agora">0:00</span><div class="trilha js-trilha" data-bid="" role="slider" tabindex="0" aria-label="Posição na faixa" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div><span class="t js-total">0:00</span>
+<a class="quem js-blink" href="#"><img class="capinha js-bcapa" src="/assets/brand/selo-creme.svg" alt="" width="38" height="38"><span class="nm js-bnome">&nbsp;</span><span class="ir" aria-hidden="true">›</span></a>
+<div class="ctl"><button class="ant js-ant" type="button" aria-label="Beat anterior">${ICO.prev}</button><button class="pp js-tocar js-bpp" type="button" data-bid="" aria-label="Tocar">${PLAYPAUSE}</button><button class="prox js-prox" type="button" aria-label="Próximo beat">${ICO.next}</button></div>
+<span class="js-bacao"></span>
+</div>`;
+
 const praTela = (b) => ({ id: b.id, s: b.slug, n: b.name, mp3: b.mp3 || null, capa: b.capa || null, dur: b.dur || 0, sold: !!b.sold });
 
 /* ---------- página do beat ---------- */
@@ -427,7 +450,7 @@ export function paginaBeat(b, loja) {
 <div class="dono"><p>Esse beat já tem dono.</p><span>A licença é exclusiva: quando alguém compra, o beat sai da loja. Os de baixo estão à venda.</span></div>`
     : `<div class="compra"><div class="linha"><div class="valor">${real(preco)}<small>Licença exclusiva</small></div>${pacotesTexto(pk)}</div>
 <a class="btn js-add" data-bid="${b.id}" href="${linkAdd(b, de)}">${ICO.cart}<span>Adicionar ao carrinho</span></a>
-<ul class="inclui"><li><b>Só seu:</b> depois da compra o beat sai da loja</li><li><b>Contrato no seu nome</b>, com uso comercial liberado</li><li><b>MP3 320 + WAV</b>, entrega na hora</li></ul></div>`;
+<ul class="inclui"><li><b>Só seu:</b> depois da compra o beat sai da loja</li><li><b>Contrato no seu nome</b>, com uso comercial liberado</li><li><b>MP3 + WAV</b>, entrega em até 1 dia útil</li></ul></div>`;
 
   const capaG = b.capa
     ? `<div class="capa-g"><img src="${esc(b.capa)}" alt="Capa da beat tape${tape ? ' ' + esc(tape.name) : ''}" width="1000" height="1000" fetchpriority="high">`
@@ -447,15 +470,16 @@ ${capaG}${b.sold ? '<span class="selo">Vendido</span>' : ''}${b.mp3 ? `<button c
 <div class="kicker">${b.sold ? 'Beat vendido' : 'Beat exclusivo'} · ${esc(gen)}</div>
 <h1>${esc(b.name)}</h1>
 <div class="por">prod. <a href="/rideblan33?de=${de}">@rideblan33 ›</a></div>
-<ul class="chips">${b.bpm ? `<li>${esc(b.bpm)} BPM</li>` : ''}${b.key ? `<li>${esc(b.key)}${tom ? ' · ' + esc(tom) : ''}</li>` : ''}${b.dur ? `<li>${mmss(b.dur)}</li>` : ''}</ul>
+<ul class="chips">${b.bpm ? `<li>${esc(b.bpm)} BPM</li>` : ''}${b.key ? `<li>${esc(b.key)}${tom ? ' // ' + esc(tom) : ''}</li>` : ''}${b.dur ? `<li>${mmss(b.dur)}</li>` : ''}</ul>
 ${b.mp3 ? `<div class="tocador" data-bid="${b.id}"><button class="pp js-tocar" type="button" data-bid="${b.id}" aria-label="Tocar ${esc(b.name)}">${PLAYPAUSE}</button><span class="t js-agora">0:00</span><div class="trilha js-trilha" data-bid="${b.id}" role="slider" tabindex="0" aria-label="Posição na faixa" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div><span class="t">${mmss(b.dur)}</span><button class="sh js-compartilhar" type="button" data-url="${SITE}/b/${esc(b.slug)}" data-titulo="${esc(b.name)} · @rideblan33" aria-label="Compartilhar ${esc(b.name)}">${ICO.share}</button></div>` : ''}
 ${compra}
 </div>
 ${tapeCard}
 </article>
 ${par.length ? `<section class="secao" aria-labelledby="tParecidos"><div class="cab"><h2 id="tParecidos">${b.sold ? 'Podem te interessar' : 'Beats parecidos'}</h2><a class="ver" href="${genUrl}">Todos de ${esc(gen)} ›</a></div>
-<ol class="lista">${par.map((x, i) => linha(x, i, de, preco)).join('')}</ol></section>` : ''}
+<ol class="lista js-lista">${par.map((x, i) => linha(x, i, de, preco)).join('')}</ol></section>` : ''}
 </main>
+${par.length ? BARRA : ''}
 ${RODAPE}
 <script>window.__PG=${jsonSeguro({ pagina: 'beat', atual: b.id, beats: lista.map(praTela) })}</script>
 <script>${JS}</script>
@@ -485,10 +509,10 @@ export function paginaGenero(gslug, loja) {
   const faixaBpm = bpms.length > 1 ? `, de ${Math.min(...bpms)} a ${Math.max(...bpms)} BPM` : bpms.length ? `, ${bpms[0]} BPM` : '';
   const nVenda = venda.length === 1 ? `1 beat de ${String(gen).toLowerCase()} à venda` : `${venda.length} beats de ${String(gen).toLowerCase()} à venda`;
   const intro = venda.length
-    ? `<b>${nVenda}</b>${faixaBpm}, produzidos por @rideblan33. Cada beat é vendido uma vez só, com contrato no seu nome, em MP3 320 e WAV.`
+    ? `<b>${nVenda}</b>${faixaBpm}, produzidos por @rideblan33. Cada beat é vendido uma vez só, com contrato no seu nome, em MP3 e WAV.`
     : `Os beats de ${esc(String(gen).toLowerCase())} do @rideblan33 já foram todos vendidos. Ouça os que saíram e veja os outros gêneros.`;
   const descricao = venda.length
-    ? `${nVenda}${faixaBpm}, produzidos por @rideblan33. Licença exclusiva com contrato no seu nome, MP3 320 e WAV. ${real(preco)} cada.`
+    ? `${nVenda}${faixaBpm}, produzidos por @rideblan33. Licença exclusiva com contrato no seu nome, MP3 e WAV. ${real(preco)} cada.`
     : `Beats de ${String(gen).toLowerCase()} do @rideblan33, todos vendidos. Veja os outros gêneros à venda.`;
 
   // gêneros com beat na loja, na ordem de quantidade à venda
@@ -522,7 +546,7 @@ export function paginaGenero(gslug, loja) {
     ? `<div class="pacote"><div><div class="k">Pacotes</div><p>Leva mais de um? ${pk.map((p) => `<span>${p.n} beats por ${real(p.preco)}<span class="off">${p.off}% off</span></span>`).join(', ')}.</p></div><a href="/?de=${de}#packages">Ver pacotes ›</a></div>`
     : '';
   const corpo = `<body class="pg-genero">
-${topo(de)}
+${topo(de, gslug)}
 <main class="wrap">
 <nav class="migalha" aria-label="Você está em"><a href="/#beats">Beats</a><span class="bar">/</span><span aria-current="page">${esc(gen)}</span></nav>
 <div class="topo-g"><div>
@@ -536,12 +560,7 @@ ${topo(de)}
 <ol class="lista js-lista">${ordem.map((b, i) => linha(b, i, de, preco)).join('')}</ol>
 ${pacoteBloco}
 </main>
-<div class="barra" aria-label="Tocando agora">
-<span class="t js-agora">0:00</span><div class="trilha js-trilha" data-bid="" role="slider" tabindex="0" aria-label="Posição na faixa" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div><span class="t js-total">0:00</span>
-<img class="capinha js-bcapa" src="/assets/brand/selo-creme.svg" alt="" width="38" height="38"><a class="nm js-bnome" href="#">&nbsp;</a>
-<div class="ctl"><button class="ant js-ant" type="button" aria-label="Beat anterior">${ICO.prev}</button><button class="pp js-tocar js-bpp" type="button" data-bid="" aria-label="Tocar">${PLAYPAUSE}</button><button class="prox js-prox" type="button" aria-label="Próximo beat">${ICO.next}</button></div>
-<span class="js-bacao"></span>
-</div>
+${BARRA}
 ${RODAPE}
 <script>window.__PG=${jsonSeguro({ pagina: 'genero', preco, beats: ordem.map(praTela) })}</script>
 <script>${JS}</script>
@@ -645,8 +664,11 @@ const JS = `(function(){
 
   /* tocar */
   function fila(){ return $$('.js-lista .item').map(function(li){ return Number(li.getAttribute('data-bid')); }).filter(function(id){ return porId[id]&&porId[id].mp3; }); }
+  // a barra aparece no gênero e, na página do beat, quando toca um dos parecidos
+  function naBarra(id){ return id!==null && (P.pagina==='genero' || id!==P.atual); }
   function vizinho(passo){
-    var f=P.pagina==='genero'?fila():[]; if(!f.length) return null;
+    if(P.pagina==='beat'&&atual===P.atual) return null;   // o beat da página termina e para
+    var f=fila(); if(!f.length) return null;
     var i=f.indexOf(atual); if(i<0) return passo>0?f[0]:null;
     return f[i+passo]!==undefined?f[i+passo]:null;
   }
@@ -662,11 +684,12 @@ const JS = `(function(){
       if(b) bt.setAttribute('aria-label',(rod?'Pausar ':'Tocar ')+b.n);
     });
     var todos=$('.js-todos'); if(todos){ var s=todos.querySelector('span'); if(s) s.textContent=rodando?'Pausar':(atual!==null?'Continuar':'Tocar todos'); todos.classList.toggle('rodando',rodando); }
-    document.body.classList.toggle('tocando',P.pagina==='genero'&&atual!==null);
+    document.body.classList.toggle('tocando',naBarra(atual)&&!!$('.barra'));
     var b=porId[atual];
-    if(b&&P.pagina==='genero'){
+    if(b&&naBarra(atual)){
       var bc=$('.js-bcapa'); if(bc) bc.src=b.capa?b.capa+'?p':'/assets/brand/selo-creme.svg';
-      var bn=$('.js-bnome'); if(bn){ bn.textContent=b.n; bn.href='/beat/'+b.s; }
+      var bn=$('.js-bnome'); if(bn) bn.textContent=b.n;
+      var bl=$('.js-blink'); if(bl){ bl.href='/beat/'+b.s; bl.setAttribute('aria-label','Abrir a página de '+b.n); }
       var tt=$('.barra .js-total'); if(tt) tt.textContent=mmss(b.dur);
       var ac=$('.js-bacao'); if(ac&&ac.getAttribute('data-bid')!==String(b.id)){
         ac.setAttribute('data-bid',String(b.id));
@@ -682,7 +705,7 @@ const JS = `(function(){
       navigator.mediaSession.metadata=new MediaMetadata({title:b.n,artist:'@rideblan33',album:'Caramujo Records',artwork:art});
       var liga=function(a,fn){ try{ navigator.mediaSession.setActionHandler(a,fn); }catch(_){} };
       liga('play',function(){ som.play().catch(nada); }); liga('pause',function(){ som.pause(); });
-      if(P.pagina==='genero'){ liga('nexttrack',function(){ var p=vizinho(1); if(p!==null) tocar(p); }); liga('previoustrack',function(){ var p=vizinho(-1); if(p!==null) tocar(p); }); }
+      if(naBarra(b.id)){ liga('nexttrack',function(){ var p=vizinho(1); if(p!==null) tocar(p); }); liga('previoustrack',function(){ var p=vizinho(-1); if(p!==null) tocar(p); }); }
     }catch(_){}
   }
   function tocar(id){
@@ -694,6 +717,8 @@ const JS = `(function(){
   document.addEventListener('click',function(e){
     var bt=e.target.closest('.js-tocar');
     if(bt){ e.preventDefault(); var id=bt.classList.contains('js-bpp')?atual:Number(bt.getAttribute('data-bid')); if(id!==null) tocar(id); return; }
+    var nm=e.target.closest('.item a.nome');
+    if(nm){ if(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||e.button) return; e.preventDefault(); tocar(Number(nm.closest('.item').getAttribute('data-bid'))); return; }
     if(e.target.closest('a,button,select,label,.trilha')) return;
     var li=e.target.closest('.item'); if(li) tocar(Number(li.getAttribute('data-bid')));
   });
@@ -712,7 +737,7 @@ const JS = `(function(){
     $$('.js-trilha').forEach(function(t){ var alvo=t.getAttribute('data-bid'); if(alvo&&Number(alvo)!==atual) return; var i=t.querySelector('i'); if(i) i.style.width=pc+'%'; t.setAttribute('aria-valuenow',String(Math.round(pc))); });
     $$('.js-agora').forEach(function(a){ var tr=a.parentNode.querySelector('.js-trilha'), alvo=tr&&tr.getAttribute('data-bid'); if(alvo&&Number(alvo)!==atual) return; a.textContent=mmss(som.currentTime); });
     var cr=$('.item.tocando .corrida'); if(cr) cr.style.width=pc+'%';
-    if(pc>50&&P.pagina==='genero'&&aquecido!==atual){ aquecido=atual; var p=vizinho(1), b=porId[p]; if(b&&b.mp3) fetch(b.mp3,{headers:{Range:'bytes=0-1'},cache:'no-store'}).catch(nada); }
+    if(pc>50&&naBarra(atual)&&aquecido!==atual){ aquecido=atual; var p=vizinho(1), b=porId[p]; if(b&&b.mp3) fetch(b.mp3,{headers:{Range:'bytes=0-1'},cache:'no-store'}).catch(nada); }
   });
 
   /* arrastar na trilha */

@@ -17,7 +17,7 @@ export function dados(obj) {
 // o link com código só vai pra quem o Bruno manda.
 // descricaoGoogle: o texto do resultado de busca; a prévia no Direct/WhatsApp segue
 // com a descrição curta de sempre (og:description).
-export function metas({ titulo, descricao, url, capa, indexar = false, descricaoGoogle = null }) {
+export function metas({ titulo, descricao, url, capa, indexar = false, descricaoGoogle = null, ogUrl = null }) {
   const t = escapar(titulo);
   const d = escapar(descricao);
   return [
@@ -28,7 +28,7 @@ export function metas({ titulo, descricao, url, capa, indexar = false, descricao
     `<meta property="og:type" content="music.playlist">`,
     `<meta property="og:title" content="${t}">`,
     `<meta property="og:description" content="${d}">`,
-    `<meta property="og:url" content="${escapar(url)}">`,
+    `<meta property="og:url" content="${escapar(ogUrl || url)}">`,
     capa ? `<meta property="og:image" content="${escapar(capa)}">` : '',
     `<meta name="twitter:card" content="summary_large_image">`
   ].filter(Boolean).join('\n');
@@ -58,7 +58,7 @@ function tapeLd({ titulo, url, capa, cat }) {
   return `<script type="application/ld+json">${dados(ld)}</script>`;
 }
 
-export async function pagina(request, env, { titulo, descricao, url, capa, cat, indexar = false, descricaoGoogle = null }) {
+export async function pagina(request, env, { titulo, descricao, url, capa, cat, indexar = false, descricaoGoogle = null, ogUrl = null }) {
   const molde = await env.ASSETS.fetch(new URL('/catalogo/app.html', request.url));
   if (!molde.ok) return new Response('molde nao encontrado', { status: 500 });
 
@@ -70,7 +70,7 @@ export async function pagina(request, env, { titulo, descricao, url, capa, cat, 
 
   const html = (await molde.text())
     .replace('__TITULO__', escapar(titulo))
-    .replace('__META__', metas({ titulo, descricao, url, capa, indexar, descricaoGoogle }) + capaCedo +
+    .replace('__META__', metas({ titulo, descricao, url, capa, indexar, descricaoGoogle, ogUrl }) + capaCedo +
       (indexar ? '\n' + tapeLd({ titulo, url, capa, cat }) : ''))
     .replace('<!--DADOS-->', `<script>window.__CAT__=${dados(cat)}</script>`);
 

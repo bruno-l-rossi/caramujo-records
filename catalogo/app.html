@@ -12,13 +12,9 @@
 <title>__TITULO__</title>
 __META__
 <!-- fonte servida daqui (assets/fonts, licença OFL): sem Google no caminho -->
-<link rel="preload" href="/assets/fonts/schibsted-grotesk-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="/assets/fonts/schibsted-grotesk-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-@font-face{font-family:'Schibsted Grotesk';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/schibsted-grotesk-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
-@font-face{font-family:'Schibsted Grotesk';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/schibsted-grotesk-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
-@font-face{font-family:'Schibsted Grotesk';font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/schibsted-grotesk-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
-@font-face{font-family:'Schibsted Grotesk';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/schibsted-grotesk-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Schibsted Grotesk';font-style:normal;font-weight:400 900;font-display:swap;src:url(/assets/fonts/schibsted-grotesk-latin-wght-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
   :root{
     --bg:#000000;
     --panel:rgba(14,14,14,.82);
@@ -764,6 +760,26 @@ __META__
     if(audio.paused) audio.play().catch(function(){});
     else audio.pause();
   }
+  // ?faixa=<nome> (04/10/2026): o link de um beat compartilhado da tape abre já nele,
+  // na barra e marcado na lista. Toca se o navegador deixar; se não (celular sem toque
+  // ainda), fica pronto no play. O play só conta quando o som sai de verdade.
+  function abrirNaFaixa(){
+    var alvo=''; try{ alvo=(new URLSearchParams(location.search).get('faixa')||'').toLowerCase(); }catch(_){}
+    if(!alvo || preview) return;
+    var i=-1; rows.forEach(function(t,k){ if(i<0 && slugFaixa(t.title)===alvo) i=k; });
+    if(i<0) return;
+    var t=rows[i];
+    cur=i; pos=0;
+    player.hidden=false; dlDock.hidden=true;
+    audio.src=som(t.id);
+    if(CAT.artist.tape || podeEnviar()) prepararStory();
+    tarja(t);
+    paint(); render();
+    var p=audio.play();
+    if(p && p.then) p.then(function(){ conta(t); paint(); render(); }).catch(function(){ paint(); render(); });
+    var linha=list.querySelectorAll('.row')[i];
+    if(linha) setTimeout(function(){ try{ linha.scrollIntoView({block:'center'}); }catch(_){ } },60);
+  }
   function paint(){
     var t=rows[cur];if(!t)return;
     var dur = audio.duration && isFinite(audio.duration) ? audio.duration : (t.dur || 0);
@@ -1126,7 +1142,7 @@ __META__
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-10-03a';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-10-04a';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });
@@ -1200,18 +1216,19 @@ __META__
       });
     }).catch(linkSimples);
   }
-  // Uma faixa da tape: vídeo com o som dela. À venda no site: link do beat (/b/...);
-  // senão, o link da própria tape.
+  // Uma faixa da tape: vídeo com o som dela e o link da TAPE já nessa faixa (?faixa=),
+  // à venda ou vendida (04/10/2026, pedido do Bruno; antes o beat à venda ia pro /b/).
+  // A prévia do link mostra o nome e a ficha do beat; quem abre cai na tape com ele.
   function storyDaFaixa(t){
     destravarSom();
     pausar();                                   // a faixa da página para e a folha toca o trecho
     destravarPrevia(som(t.id));
-    var u = t.buy ? location.origin + '/b/' + t.buy : location.origin + location.pathname;
+    var u = location.origin + location.pathname + '?faixa=' + slugFaixa(t.title);
     carregarStory().then(function(){
       var nome = String(t.title||'').toLocaleUpperCase('pt-BR');
       window.CaramujoStory.abrir({
         tema:'catalogo', titulo:nome,
-        url:u, urlStory:t.buy ? u+'?de=story' : u, nomeArquivo:'caramujo-'+(t.buy||slugTape()),
+        url:u, urlStory:u+'&de=story', nomeArquivo:'caramujo-'+(slugFaixa(t.title)||slugTape()),
         arte:{ capa:CAT.artist.cover||null, titulo:nome,
           ficha:[t.genero||'', t.bpm?t.bpm+' BPM':'', t.key||''] },
         audio:trechoDe(t),
@@ -1279,6 +1296,8 @@ __META__
     }).catch(function(){ soltarPrevia(); flash('Não consegui abrir o compartilhar. Tenta de novo.'); });
   }
   function slugTape(){ return (location.pathname.split('/')[1]||'tape').replace(/[^a-z0-9-]/gi,''); }
+  // o mesmo slug do site (functions/_lib/casar.js): "Aquela Sorte" -> aquela-sorte
+  function slugFaixa(s){ return norm(s||'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
   // sem a folha (arquivo não carregou): o de antes, link copiado
   function linkSimples(){
     var u = location.origin + location.pathname;
@@ -1551,6 +1570,7 @@ __META__
 
     ligarCapa();
     render();
+    abrirNaFaixa();
     maisDoPerfil();
     // ?de= do link (perfil, mais, bio...) vai junto, pro analytics saber de onde veio
     var de=''; try{ de=(new URLSearchParams(location.search).get('de')||''); }catch(_){}

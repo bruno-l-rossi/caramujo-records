@@ -31,10 +31,10 @@
     var lista = [
       ['Cormorant Garamond', '/assets/fonts/cormorant-garamond-latin-600-normal.woff2', '600'],
       ['IBM Plex Mono', '/assets/fonts/ibm-plex-mono-latin-400-normal.woff2', '400'],
-      ['Schibsted Grotesk', '/assets/fonts/schibsted-grotesk-latin-600-normal.woff2', '600'],
+      // Schibsted num arquivo só, com todos os pesos (04/10/2026; antes 600 e 700 separados)
+      ['Schibsted Grotesk', '/assets/fonts/schibsted-grotesk-latin-wght-normal.woff2', '400 900'],
       // artes do perfil (27/09/2026): bio em itálico e a pastilha NOVA
-      ['Cormorant Garamond', '/assets/fonts/cormorant-garamond-latin-500-italic.woff2', '500', 'italic'],
-      ['Schibsted Grotesk', '/assets/fonts/schibsted-grotesk-latin-700-normal.woff2', '700']
+      ['Cormorant Garamond', '/assets/fonts/cormorant-garamond-latin-500-italic.woff2', '500', 'italic']
     ];
     prontas = Promise.all(lista.map(function (f) {
       try {

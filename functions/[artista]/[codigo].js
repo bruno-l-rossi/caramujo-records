@@ -6,6 +6,7 @@ import { pagina, faixa } from '../_lib/page.js';
 import { vitrine, indexar, achar } from '../_lib/vitrine.js';
 import { tapesDoPerfil } from '../_lib/perfil.js';
 import { MIDIA } from '../_lib/midia.js';
+import { slug as slugDe } from '../_lib/casar.js';
 
 // caminhos do site que não são artista
 const RESERVADO = new Set(['api', 'audio', 'assets', 'docs', 'previews', 'functions',
@@ -89,6 +90,13 @@ export async function onRequestGet({ params, request, env }) {
   }
   const nBeats = tracks.filter((t) => t.kind === 'beat').length;
 
+  // Link de um beat da tape (?faixa=<nome>, 04/10/2026): a prévia no Direct/WhatsApp mostra
+  // o beat no formato do /b/ ("NOME · @rideblan33" + ficha). O Google segue vendo a tape
+  // (canonical sem o ?faixa) e a página abre já na faixa.
+  const pedida = tape ? String(url.searchParams.get('faixa') || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 80) : '';
+  const fx = pedida ? tracks.find((t) => t.kind === 'beat' && slugDe(t.title) === pedida) : null;
+  const fichaFx = fx ? [fx.genero, fx.bpm ? fx.bpm + ' BPM' : '', fx.key].filter(Boolean).join(' · ') : '';
+
   return pagina(request, env, {
     // Tape vai pro Google (pedido de 26/09/2026); pasta de artista segue privada
     indexar: tape,
@@ -96,11 +104,15 @@ export async function onRequestGet({ params, request, env }) {
       ? `${artist.name}: beat tape do @rideblan33 com ${nBeats} ${nBeats === 1 ? 'beat' : 'beats'} de rap pra ouvir. Beats exclusivos e produção completa na Caramujo Records, São Carlos, SP.`
       : null,
     // textos da prévia no Direct/WhatsApp (formato do Bruno, 25/09/2026)
-    titulo: tape ? `${artist.name} · @rideblan33` : `${artist.name} · Caramujo Records`,
-    descricao: tape
-      ? 'Catálogo completo com beats exclusivos. © Caramujo Records'
-      : `Beats e músicas de ${artist.name} com @rideblan33.`,
+    titulo: fx ? `${String(fx.title).toLocaleUpperCase('pt-BR')} · @rideblan33`
+      : tape ? `${artist.name} · @rideblan33` : `${artist.name} · Caramujo Records`,
+    descricao: fx
+      ? `${fichaFx}${fx.tag === 'vendido' ? ' · vendido' : ''}${fichaFx || fx.tag === 'vendido' ? '. ' : ''}Beats e produção completa. © Caramujo Records`
+      : tape
+        ? 'Catálogo completo com beats exclusivos. © Caramujo Records'
+        : `Beats e músicas de ${artist.name} com @rideblan33.`,
     url: url.origin + url.pathname,
+    ogUrl: fx ? `${url.origin}${url.pathname}?faixa=${pedida}` : null,
     capa,
     cat: {
       artist: {
