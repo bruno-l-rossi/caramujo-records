@@ -204,7 +204,8 @@ VENDIDO em `blood` com o nome riscado).
   no celular o toque em qualquer parte da linha toca, como sempre.
 - Páginas de beat e de gênero: no celular, tocar em qualquer parte da linha toca, inclusive
   no nome. No computador (desde 04/10/2026, como na vitrine) o nome abre a página do beat e
-  sublinha em `fire` com o mouse (o vendido não sublinha); o resto da linha toca. A página de
+  sublinha em `fire` só com o mouse em cima do texto (o link tem a largura do nome; a cor não
+  muda; o vendido não sublinha); o resto da linha toca. A página de
   um beat também abre pela barra do pé (capinha, nome e `›`), que na página do beat aparece
   quando toca um dos parecidos.
 - Barra da tape (desde 04/10/2026): o nome e a capa do beat que está tocando levam pra página
@@ -219,7 +220,14 @@ VENDIDO em `blood` com o nome riscado).
   clique filtra ali mesmo; Ctrl/⌘+clique ou segurar abre a página).
 - Menu do BEATS (computador, mouse em cima): caixa no fundo do topo, `TODOS OS BEATS` em
   sans caixa alta com fio `wire` embaixo, e os 13 gêneros em duas colunas em serif `read`
-  (vira `fire`). Na página de gênero o atual fica em `fire`. No celular não aparece.
+  (vira `fire`). Na página de gênero o atual fica em `fire`.
+- Menu ☰ do celular (vitrine e páginas de beat/gênero, desde 04/10/2026, opção A): BEATS abre
+  e fecha um acordeão (seta que vira pra cima; aberto, BEATS fica em `fire`). Dentro, primeiro
+  "TODOS OS BEATS" em destaque: caixa com fio `clay`, fundo `fire` a 10%, texto `fire` em caixa
+  alta espaçada, "N à venda" em mono `bone` e `›` em serif. Embaixo, os 13 gêneros em duas
+  colunas em serif `read` com quantos estão à venda em mono `dim` (gênero sem beat à venda fica
+  sem número). Na página de gênero o atual fica em `cream` sublinhado em `fire`. O número só
+  aparece no celular.
 - Rodapé (vitrine, perfil, páginas de beat e de gênero): linha "BEATS POR GÊNERO" (mono
   `clay`, caixa alta espaçada) e os gêneros em serif `read`, acima do selo, com fio `wire`.
 - A lista de gêneros mora em `functions/_lib/generos.js` (a vitrine leva o mesmo HTML colado).

@@ -17,7 +17,7 @@ import { montarVitrine } from '../api/vitrine.js';
 import { lerEstatico } from './loja.js';
 import { tapesDoPerfil, SITE } from './perfil.js';
 import { ICONES } from './icones.js';
-import { RODAPE_GENEROS, menuGeneros, CSS_RODAPE_GENEROS } from './generos.js';
+import { GENEROS, RODAPE_GENEROS, menuGeneros, CSS_RODAPE_GENEROS } from './generos.js';
 import { slug } from './casar.js';
 import { CABECALHOS } from './cabecalhos.js';
 
@@ -158,8 +158,8 @@ img{display:block}
 .capinha{width:46px;height:46px;flex:none;border:1px solid var(--wire);background:var(--mole);object-fit:cover}
 .capinha.vazia{display:flex;align-items:center;justify-content:center}.capinha.vazia img{opacity:.3}
 .item .info{flex:1;min-width:0}
-.item .nome{display:block;font:600 1.28rem/1.15 var(--serif);color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.item .nome:hover{color:var(--fire)}
+/* o link do nome tem a largura do texto: o sublinhado (mouse) só aparece em cima do nome, como na vitrine (04/10/2026) */
+.item .nome{display:block;width:fit-content;max-width:100%;font:600 1.28rem/1.15 var(--serif);color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(hover:hover) and (pointer:fine){.item:not(.fora) a.nome:hover{text-decoration:underline;text-decoration-color:var(--fire);text-decoration-thickness:1px;text-underline-offset:4px}}
 .item .ficha{font:400 .7rem var(--mono);color:var(--read);margin-top:3px;letter-spacing:.02em}
 .item .ficha em{font-style:normal;color:var(--clay);text-transform:uppercase;font-size:.64rem;letter-spacing:.1em}
@@ -292,6 +292,21 @@ body.tocando{padding-bottom:64px}
   .menu-cel.on{display:block}
   .menu-cel a{display:block;padding:14px 1rem;font-size:.8rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase}
   .menu-cel a.ativo{color:var(--fire)}
+  /* acordeão do BEATS (04/10/2026): "Todos os beats" em destaque + gêneros com quantos à venda */
+  .menu-cel{max-height:calc(100vh - 54px);max-height:calc(100dvh - 54px);overflow-y:auto;overscroll-behavior:contain}
+  .mc-sub>a{position:relative}
+  .mc-sub>a::after{content:'';position:absolute;right:1.2rem;top:50%;width:8px;height:8px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-70%) rotate(45deg)}
+  .mc-sub.abre>a::after{transform:translateY(-25%) rotate(-135deg)}
+  .mc-gen{display:none;padding:2px 1rem 16px;border-bottom:1px solid var(--wire);background:rgba(20,17,13,.6)}
+  .mc-sub.abre>.mc-gen{display:block}
+  .menu-cel .mc-todos{display:flex;align-items:center;gap:10px;margin:6px 0 10px;padding:15px 16px;border:1px solid var(--clay);background:rgba(185,143,94,.1);color:var(--fire);font-size:.76rem}
+  .mc-todos span{flex:1}
+  .mc-todos i{font:400 .68rem var(--mono);letter-spacing:.02em;text-transform:none;font-style:normal;color:var(--bone)}
+  .mc-todos::after{content:'›';font:500 1.5rem/1 var(--serif);color:var(--fire)}
+  .mc-lista{display:grid;grid-template-columns:1fr 1fr;column-gap:24px}
+  .menu-cel .mc-lista a{padding:9px 0;font:500 1.12rem/1.2 var(--serif);letter-spacing:0;text-transform:none;color:var(--read)}
+  .menu-cel .mc-lista a[aria-current]{color:var(--cream);text-decoration:underline;text-decoration-color:var(--fire);text-decoration-thickness:1px;text-underline-offset:4px}
+  .mc-lista a i{font:400 .68rem var(--mono);font-style:normal;color:var(--dim);margin-left:7px}
   .topo .dir{gap:2px}
   .wrap{padding:0 16px}
   .rodape{flex-direction:column;align-items:flex-start;padding:1.4rem 16px}
@@ -315,9 +330,14 @@ body.tocando{padding-bottom:64px}
 }
 `;
 
-function topo(de, genAtual = '') {
+function topo(de, genAtual = '', cont = null) {
   const links = [['/#beats', 'Beats', true], ['/#packages', 'Pacotes'], ['/#services', 'Serviços'], ['/#estudio', 'Sobre nós'], ['/#contact', 'Contato']];
   const lis = links.map(([h, t, a]) => `<li><a href="${h}"${a ? ' class="ativo"' : ''}>${t}</a></li>`).join('');
+  // celular (04/10/2026, opção A do Bruno): BEATS abre um acordeão com "Todos os beats" em
+  // destaque e os gêneros em duas colunas, com quantos estão à venda
+  const n = (x) => (x ? `<i>${x}</i>` : '');
+  const acordeao = `<li class="mc-sub"><a href="/#beats" class="ativo" aria-expanded="false" aria-controls="mcGen">Beats</a><div class="mc-gen" id="mcGen"><a class="mc-todos" href="/?de=${de}#beats"><span>Todos os beats</span>${cont && cont.total ? `<i>${cont.total} à venda</i>` : ''}</a><div class="mc-lista">${GENEROS.map(([sl, nm]) => `<a href="/beats/${sl}"${sl === genAtual ? ' aria-current="page"' : ''}>${nm}${n(cont && cont.por.get(sl))}</a>`).join('')}</div></div></li>`;
+  const lisCel = lis.replace('<li><a href="/#beats" class="ativo">Beats</a></li>', acordeao);
   // no computador, o mouse em BEATS abre "Todos os beats" e os gêneros (04/10/2026)
   const lisTopo = lis.replace('<li><a href="/#beats" class="ativo">Beats</a></li>', `<li class="tem-sub"><a href="/#beats" class="ativo" aria-haspopup="true">Beats</a>${menuGeneros('/#beats', genAtual)}</li>`);
   return `<header class="topo">
@@ -329,7 +349,7 @@ function topo(de, genAtual = '') {
 <button class="ico-btn burger js-menu" type="button" aria-label="Abrir o menu" aria-expanded="false" aria-controls="menuCel"><span><i></i><i></i><i></i></span></button>
 </div>
 </header>
-<ul class="menu-cel" id="menuCel">${lis}</ul>`;
+<ul class="menu-cel" id="menuCel">${lisCel}</ul>`;
 }
 
 const RODAPE = `<footer class="rodape">${RODAPE_GENEROS}<img src="/assets/brand/selo-creme.svg" alt="" width="34" height="34" loading="lazy"><span>© 2026 Caramujo Records — São Carlos, SP</span><span><a href="/rideblan33">@rideblan33</a> · Todos os direitos reservados</span></footer>
@@ -409,6 +429,13 @@ const BARRA = `<div class="barra" aria-label="Tocando agora">
 
 const praTela = (b) => ({ id: b.id, s: b.slug, n: b.name, mp3: b.mp3 || null, capa: b.capa || null, dur: b.dur || 0, sold: !!b.sold });
 
+// quantos à venda no total e por gênero (o acordeão do menu do celular)
+function aVendaPorGenero(beats) {
+  const por = new Map(); let total = 0;
+  for (const b of beats || []) if (!b.sold) { total++; por.set(b.gslug, (por.get(b.gslug) || 0) + 1); }
+  return { total, por };
+}
+
 /* ---------- página do beat ---------- */
 
 export function paginaBeat(b, loja) {
@@ -478,7 +505,7 @@ export function paginaBeat(b, loja) {
 
   const lista = [b].concat(par);
   const corpo = `<body class="pg-beat">
-${topo(de)}
+${topo(de, '', aVendaPorGenero(beats))}
 <main class="wrap">
 <nav class="migalha" aria-label="Você está em"><a href="/#beats">Beats</a><span class="bar">/</span><a href="${genUrl}">${esc(gen)}</a><span class="bar">/</span><span aria-current="page">${esc(b.name)}</span></nav>
 <article class="beat${b.sold ? ' fora' : ''}" data-bid="${b.id}">
@@ -563,7 +590,7 @@ export function paginaGenero(gslug, loja) {
     ? `<div class="pacote"><div><div class="k">Pacotes</div><p>Leva mais de um? ${pk.map((p) => `<span>${p.n} beats por ${real(p.preco)}<span class="off">${p.off}% off</span></span>`).join(', ')}.</p></div><a href="/?de=${de}#packages">Ver pacotes ›</a></div>`
     : '';
   const corpo = `<body class="pg-genero">
-${topo(de, gslug)}
+${topo(de, gslug, aVendaPorGenero(beats))}
 <main class="wrap">
 <nav class="migalha" aria-label="Você está em"><a href="/#beats">Beats</a><span class="bar">/</span><span aria-current="page">${esc(gen)}</span></nav>
 <div class="topo-g"><div>
@@ -678,6 +705,9 @@ const JS = `(function(){
   /* menu do celular */
   var mb=$('.js-menu'), mc=$('#menuCel');
   if(mb&&mc) mb.addEventListener('click',function(){ var on=!mc.classList.contains('on'); mc.classList.toggle('on',on); mb.setAttribute('aria-expanded',on?'true':'false'); });
+  // BEATS no menu do celular abre e fecha os gêneros (não sai da página)
+  var ms=$('.mc-sub>a');
+  if(ms) ms.addEventListener('click',function(e){ e.preventDefault(); var li=ms.parentNode, on=!li.classList.contains('abre'); li.classList.toggle('abre',on); ms.setAttribute('aria-expanded',on?'true':'false'); });
 
   /* tocar */
   function fila(){ return $$('.js-lista .item').map(function(li){ return Number(li.getAttribute('data-bid')); }).filter(function(id){ return porId[id]&&porId[id].mp3; }); }
