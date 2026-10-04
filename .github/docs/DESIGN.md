@@ -178,8 +178,18 @@ VENDIDO em `blood` com o nome riscado).
   dono" (fio `blood` à esquerda) e "Podem te interessar".
 - **Gênero:** "Beats de <Gênero>" com o gênero em `clay`, texto curto (quantos à venda, faixa
   de BPM, licença), "Tocar todos", preço avulso e pacotes com selo, mosaico de 4 capas no
-  computador, gêneros em pílulas (o atual em `fire`), lista com os vendidos no fim, bloco de
+  computador, gêneros em pílulas (o atual em `fire`), lista na ordem da vitrine (vendidos no lugar deles, desde 04/10/2026), bloco de
   pacotes e a barra do player no pé.
+
+## Player do rodapé da vitrine (desde 04/10/2026)
+
+- Capa e nome do beat que está tocando são o link da página dele (`/beat/<nome>`), com a seta
+  `›` em `clay` do lado (vira `fire` e o nome sublinha com o mouse em cima).
+- Botão de preço: `+ R$119` (creme) põe no carrinho; com o beat lá dentro vira `✓ No carrinho ›`
+  (aceso em `fire`) e abre o carrinho. Tirar fica dentro do carrinho. A lista segue com o
+  carrinho com `+` e o liga/desliga de sempre.
+- Lista: no computador o nome do beat é link da página dele (sublinha em `fire` com o mouse);
+  no celular o toque em qualquer parte da linha toca, como sempre.
 
 ## Faixa do PIX aguardando (desde 03/10/2026)
 

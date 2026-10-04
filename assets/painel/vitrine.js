@@ -311,7 +311,7 @@
     c.scrollTop = 0;
     c.querySelector('[data-close]').addEventListener('click', fechar);
     var site = location.origin + '/b/' + slug(b.name);
-    c.querySelector('[data-act=abrir]').addEventListener('click', function () { window.open(location.origin + '/#beat=' + slug(b.name), '_blank', 'noopener'); });
+    c.querySelector('[data-act=abrir]').addEventListener('click', function () { window.open(location.origin + '/beat/' + slug(b.name), '_blank', 'noopener'); });   // 04/10/2026: abre a página do beat
     c.querySelector('[data-act=link]').addEventListener('click', function () {
       if (navigator.clipboard) navigator.clipboard.writeText(site);
       flash('Link do ' + b.name + ' copiado.');

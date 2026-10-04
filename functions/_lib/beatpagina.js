@@ -479,7 +479,8 @@ export function paginaGenero(gslug, loja) {
   const url = `${SITE}/beats/${gslug}`;
   const venda = doGenero.filter((b) => !b.sold);
   const vendidos = doGenero.filter((b) => b.sold);
-  const ordem = venda.concat(vendidos);
+  // na ordem da vitrine, vendidos no lugar deles (04/10/2026, pedido do Bruno; antes iam pro fim)
+  const ordem = doGenero;
   const bpms = venda.map((b) => Number(b.bpm)).filter(Boolean);
   const faixaBpm = bpms.length > 1 ? `, de ${Math.min(...bpms)} a ${Math.max(...bpms)} BPM` : bpms.length ? `, ${bpms[0]} BPM` : '';
   const nVenda = venda.length === 1 ? `1 beat de ${String(gen).toLowerCase()} à venda` : `${venda.length} beats de ${String(gen).toLowerCase()} à venda`;
@@ -728,12 +729,11 @@ const JS = `(function(){
       if(e.key==='ArrowLeft'){ som.currentTime=Math.max(0,som.currentTime-5); e.preventDefault(); } });
   });
 
-  /* ordem da lista (gênero): vendidos sempre no fim */
+  /* ordem da lista (gênero): vendidos no meio, como na vitrine (04/10/2026) */
   var sel=$('.js-ordem'), lista=$('.js-lista');
   if(sel&&lista) sel.addEventListener('change',function(){
     var itens=$$('.item',lista), v=sel.value;
     itens.sort(function(a,b){
-      var fa=a.classList.contains('fora'), fb=b.classList.contains('fora'); if(fa!==fb) return fa?1:-1;
       if(v==='novos') return Number(a.getAttribute('data-ordem'))-Number(b.getAttribute('data-ordem'));
       var d=Number(a.getAttribute('data-bpm'))-Number(b.getAttribute('data-bpm')); return v==='bpm+'?-d:d;
     });

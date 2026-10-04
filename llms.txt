@@ -14,6 +14,8 @@
 
 - Site e catálogo (100+ beats com player): https://caramujorecords.com.br
 - Portfólio do @rideblan33 (todas as beat tapes pra ouvir): https://caramujorecords.com.br/rideblan33
+- Beats por gênero (os beats de cada estilo, com prévia e preço): https://caramujorecords.com.br/beats/trap, https://caramujorecords.com.br/beats/boom-bap, https://caramujorecords.com.br/beats/plug, https://caramujorecords.com.br/beats/experimental, https://caramujorecords.com.br/beats/hard, https://caramujorecords.com.br/beats/detroit, https://caramujorecords.com.br/beats/funk, https://caramujorecords.com.br/beats/drumless, https://caramujorecords.com.br/beats/pluggnb, https://caramujorecords.com.br/beats/no-melody, https://caramujorecords.com.br/beats/drill, https://caramujorecords.com.br/beats/bounce, https://caramujorecords.com.br/beats/hood-trap
+- Página de cada beat (ficha, prévia, preço, se ainda está à venda): https://caramujorecords.com.br/beat/<nome-do-beat>, todas no mapa do site https://caramujorecords.com.br/sitemap.xml
 - YouTube: https://www.youtube.com/@rideblan33
 - Spotify: https://open.spotify.com/artist/15K9QWM2Q6Zyxb6RsAn9RZ
 - Termos de licença: https://caramujorecords.com.br/assets/termos-de-licenca.pdf

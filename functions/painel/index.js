@@ -307,7 +307,7 @@ function pagina() {
   <div id="vitrine" hidden></div>
 </div>
 <script src="/assets/painel/analytics.js?v=2026-09-27c" defer></script>
-<script src="/assets/painel/vitrine.js?v=2026-09-25a" defer></script>
+<script src="/assets/painel/vitrine.js?v=2026-10-04a" defer></script>
 
 <div class="veil" id="veil" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>

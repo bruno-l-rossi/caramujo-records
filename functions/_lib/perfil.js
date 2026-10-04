@@ -435,7 +435,7 @@ ${tocador ? `<div class="tocando" id="tocando" hidden>
 </div>
 <script type="application/json" id="tocadorDados">${jsonSeguro(tocador)}</script>` : ''}
 
-<script type="application/json" id="compDados">${jsonSeguro({ total: tapes.length, capas: tapes.slice(0, 9).map((t) => (t.capa ? '/capa/' + t.capa : null)) })}</script>
+<script type="application/json" id="compDados">${jsonSeguro({ total: tapes.length, capas: tapes.slice(0, 9).map((t) => (t.capa ? '/capa/' + t.capa + '?m' : null)) })}</script>
 <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
 
 <main class="preto" id="tapes">
