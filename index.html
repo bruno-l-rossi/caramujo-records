@@ -229,7 +229,7 @@ nav{
 .pg-btn:disabled{opacity:.3;cursor:default;}
 
 .pg-search{display:flex;align-items:center;gap:.4rem;flex:1;min-width:210px;}
-.pg-search-input{background:var(--mole);border:1px solid var(--clay);color:var(--cream);font-family:'IBM Plex Mono',monospace;font-size:.8rem;padding:.55rem .9rem;transition:border-color .14s,box-shadow .14s;width:100%;max-width:none;}
+.pg-search-input{background:var(--mole);border:1px solid var(--clay);color:var(--cream);font-family:'IBM Plex Mono',monospace;font-size:.8rem;padding:.55rem .9rem;outline:none;transition:border-color .14s,box-shadow .14s;width:100%;max-width:none;}
 .pg-search-input::placeholder{color:var(--read);}
 .pg-search-input:focus{border-color:var(--fire);box-shadow:0 0 0 1px var(--fire);}
 
@@ -335,7 +335,7 @@ nav{
   color:var(--clay);padding:.6rem 1.2rem 0;
 }
 .cf-f input,.cf-f textarea,.cf-f select{
-  background:transparent;border:none;
+  background:transparent;border:none;outline:none;
   color:var(--bone);font-family:'IBM Plex Mono',monospace;
   font-size:.82rem;padding:.3rem 1.2rem .8rem;
   resize:none;appearance:none;transition:background .12s;
@@ -424,7 +424,7 @@ footer p{
   flex:1;background:var(--pit);border:1px solid var(--wire);
   color:var(--cream);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
   font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;
-  padding:.55rem .7rem;
+  padding:.55rem .7rem;outline:none;
 }
 .cp-coupon-input:focus{border-color:var(--ember);}
 .cp-coupon-input::placeholder{color:var(--dim);}
@@ -681,7 +681,7 @@ body{cursor:auto;}
 @media(max-width:760px){ .hero-logo-wrap{right:-22%!important;opacity:.22!important;} .hero-mark{width:80vw!important;} }
 
 /* botões → primário creme */
-.btn{font-family:var(--sans);}
+.btn{font-family:var(--sans);border-radius:0;}  /* botão no iPhone vem redondo sem isso (o Chromium não mostra; voltou em 04/10) */
 .btn-fire{background:var(--bone)!important;color:var(--deep);}
 .btn-fire:hover{background:var(--clay)!important;color:var(--deep)!important;}
 .btn-ghost{border-color:var(--wire)!important;color:var(--bone)!important;}
@@ -1679,7 +1679,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
           </span>
           <span class="mp-terms-text">
             Li e concordo com os
-            <a href="/assets/termos-de-licenca.pdf" target="_blank" class="mp-terms-link">Termos de Licença da Caramujo Records</a>.
+            <a href="/assets/termos-de-licenca.pdf?v=2026-10-04" target="_blank" class="mp-terms-link">Termos de Licença da Caramujo Records</a>.
             Estou ciente de que este aceite tem validade jurídica.
           </span>
         </label>
@@ -1796,7 +1796,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .mp-input{
   background:var(--mole);border:1px solid var(--wire);
   color:var(--bone);font-family:'IBM Plex Mono',monospace;font-size:.85rem;
-  padding:.65rem 1rem;transition:border-color .14s;
+  padding:.65rem 1rem;outline:none;transition:border-color .14s;
 }
 .mp-input:focus{border-color:var(--ember);}
 .mp-err{font-size:.62rem;color:var(--fire);font-family:'IBM Plex Mono',monospace;position:absolute;bottom:-1.1rem;left:0;}

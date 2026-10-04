@@ -75,7 +75,6 @@ ${ICONES}
   .barra .pill{flex:0 0 auto}
   .barra[hidden],#resumo[hidden],#lista[hidden],#analytics[hidden],#vitrine[hidden]{display:none}
   @media (max-width:560px){
-    .campo{flex:1 1 100%}
     .barra .pill{margin-left:auto}
     h1{font-size:30px}
     .wrap{padding:0 16px 120px}
@@ -98,14 +97,14 @@ ${ICONES}
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .capa-lista{width:44px;height:44px;flex-shrink:0;border-radius:9px;overflow:hidden;background:#171717;
     border:1px solid var(--linha);display:flex;align-items:center;justify-content:center}
-  .capa-lista img{width:100%;height:100%;object-fit:cover;display:block}
+  .capa-lista img{width:100%;height:100%;object-fit:cover}
   .capa-lista.vazia img{width:18px;height:18px;object-fit:contain;opacity:.28}
   .copiar{width:42px;height:42px;flex-shrink:0;border-radius:11px;border:1px solid var(--borda);
     background:#141414;display:flex;align-items:center;justify-content:center;cursor:pointer}
   .vazio{padding:40px 0;color:#5a5a5a;font-size:14px}
   .andamento{display:flex;align-items:center;gap:10px;margin-top:8px}
   .trilho{flex:1;height:4px;border-radius:3px;background:#242424;overflow:hidden}
-  .trilho i{display:block;height:4px;background:#fff;width:0;transition:width .4s ease}
+  .trilho i{display:block;height:4px;background:#fff;transition:width .4s ease}
   .trilho.indef i{width:35%;animation:vaivem 1.1s ease-in-out infinite}
   @keyframes vaivem{0%{margin-left:-35%}100%{margin-left:100%}}
   .andamento small{font-size:11.5px;color:var(--ink3);white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -115,12 +114,12 @@ ${ICONES}
   .card{width:100%;max-width:560px;background:#141414;border:1px solid var(--borda);
     border-radius:20px 20px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom,0px));
     max-height:86vh;overflow-y:auto}
-  .card h2{margin:0 0 3px;font-size:20px;font-weight:700;overflow-wrap:anywhere}
+  .card h2{margin:0 0 3px;font-size:20px;overflow-wrap:anywhere}
   .cab{display:flex;align-items:center;gap:13px}
   .cab-txt{flex:1;min-width:0}
   .capa-mini{width:62px;height:62px;flex:none;border-radius:8px;overflow:hidden;background:#171717;
     border:1px solid var(--linha);display:flex;align-items:center;justify-content:center}
-  .capa-mini img{width:100%;height:100%;object-fit:cover;display:block}
+  .capa-mini img{width:100%;height:100%;object-fit:cover}
   .capa-mini.vazia{color:var(--ink4);font-size:10px;letter-spacing:.08em;text-align:center;padding:4px}
   .card .end{font-size:13px;color:var(--ink4);word-break:break-all}
   .card p{margin:0;font-size:13.5px;color:var(--ink3)}
@@ -135,7 +134,7 @@ ${ICONES}
   .capa-lista.perfil,.capa-mini.perfil{border-radius:50%}
   .pf-lista{list-style:none;margin:0;padding:0;counter-reset:pf}
   .pf-lista{position:relative}
-  .pf-lista li{position:relative;display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--linha);background:#141414;touch-action:auto;will-change:transform}
+  .pf-lista li{position:relative;display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--linha);background:#141414;will-change:transform}
   .pf-lista li.pego{z-index:3;background:#1e1e1e;box-shadow:0 14px 34px rgba(0,0,0,.6);border-radius:10px;border-bottom-color:transparent}
   .pf-n{width:26px;flex:none;text-align:right;font-size:13px;font-weight:700;color:var(--ink3);font-variant-numeric:tabular-nums}
   .pf-capa{width:40px;height:40px;flex:none;border-radius:6px;overflow:hidden;background:#171717}
@@ -149,7 +148,6 @@ ${ICONES}
   .pf-alca:focus-visible{outline:2px solid #fff;outline-offset:-2px}
   .pf-alca:hover{color:#fff;background:#1a1a1a}
   .pf-alca:active{cursor:grabbing}
-  .pf-dica{font-size:12.5px;color:var(--ink4);margin:0 0 10px}
   .pf-fora li .pill{padding:8px 12px;font-size:13px}
   .rot{font-size:11px;letter-spacing:.2em;color:var(--ink4);margin-bottom:10px}
   .desc{width:100%;min-height:104px;resize:vertical;background:var(--campo);border:1px solid var(--borda);
@@ -192,7 +190,7 @@ ${ICONES}
   .toggle[aria-pressed="true"] i{left:23px;background:#000}
   .numeros{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
   .numeros div{background:#101010;border:1px solid var(--borda);border-radius:12px;padding:12px 10px}
-  .numeros b{display:block;font-size:21px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+  .numeros b{display:block;font-size:21px;line-height:1.1;font-variant-numeric:tabular-nums}
   .numeros span{display:block;margin-top:6px;font-size:10px;letter-spacing:.09em;color:var(--ink4);
     text-transform:uppercase;line-height:1.3}
   .pag{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
@@ -240,7 +238,7 @@ ${ICONES}
     transition:background .15s,border-color .15s}
   .home button:hover{background:#161616;border-color:#343434}
   .home .ico{width:40px;height:40px;border-radius:11px;background:#1b1b1b;display:flex;align-items:center;justify-content:center}
-  .home b{font-size:20px;font-weight:700;letter-spacing:-.01em}
+  .home b{font-size:20px;letter-spacing:-.01em}
   .home small{display:block;margin-top:4px;font-size:13px;color:var(--ink3);line-height:1.4}
   .home small em{font-style:normal;color:#e0b155}
   .periodo{display:flex;gap:8px;margin:14px 0 4px}
@@ -915,7 +913,9 @@ function pagina() {
     var texto = a.job_estado==='na fila' ? 'na fila'
       : (total ? feitos+' de '+total : 'lendo a pasta');
     var indef = (a.job_estado==='na fila' || !total);
-    return '<span class="andamento"><span class="trilho'+(indef?' indef':'')+'"><i style="width:'+pct+'%"></i></span>'+
+    // na fila / lendo a pasta: a barra que vai e volta (.trilho.indef i); a largura fixa por cima
+    // escondia ela (achado na faxina de 04/10)
+    return '<span class="andamento"><span class="trilho'+(indef?' indef':'')+'"><i'+(indef?'':' style="width:'+pct+'%"')+'></i></span>'+
       '<small>'+texto+'</small></span>';
   }
 

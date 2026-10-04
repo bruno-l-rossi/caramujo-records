@@ -180,9 +180,18 @@ VENDIDO em `blood` com o nome riscado).
 - **Beat vendido:** selo VENDIDO na capa, preço riscado em `blood`, a caixa "Esse beat já tem
   dono" (fio `blood` à esquerda) e "Podem te interessar".
 - **Gênero:** "Beats de <Gênero>" com o gênero em `clay`, texto curto (quantos à venda, faixa
-  de BPM, licença), "Tocar todos", preço avulso e pacotes com selo, mosaico de 4 capas no
-  computador, gêneros em pílulas (o atual em `fire`), lista na ordem da vitrine (vendidos no lugar deles, desde 04/10/2026), bloco de
+  de BPM, licença), "Tocar todos", preço avulso e pacotes com selo, as capas das tapes no
+  computador (4 ou mais: grade 2x2; 3 ou 2: capas em escada, uma por cima da outra, a primeira
+  na frente, com sombra; 1: a capa inteira, desde 04/10/2026), gêneros em pílulas (o atual em `fire`), lista na ordem da vitrine (vendidos no lugar deles, desde 04/10/2026), bloco de
   pacotes e a barra do player no pé.
+- **Texto pro Google (desde 04/10/2026, texto do Bruno):** só na descrição da busca/prévia e na
+  ficha do Product; nada disso aparece na tela. À venda: "NOME: beat de gênero exclusivo
+  produzido por @rideblan33, 152 BPM em Ré menor (Dm). Licença exclusiva com contrato, MP3 + WAV,
+  por R$ 119." Vendido: "NOME: beat de gênero produzido por @rideblan33 (172 BPM, Lá bemol
+  menor), já vendido com licença exclusiva. Ouça e descubra beats parecidos à venda." A ficha
+  diz duração, BPM, tom, a tape ("Faz parte da beat tape X, produzida por @rideblan33." ou, sem
+  tape, "Produzido por @rideblan33.") e a licença ("... em MP3 e WAV, com entrega em até 1 dia
+  útil."). Faltou BPM, tom ou duração: o pedaço some.
 
 ## Player do rodapé da vitrine (desde 04/10/2026)
 
@@ -193,9 +202,16 @@ VENDIDO em `blood` com o nome riscado).
   carrinho com `+` e o liga/desliga de sempre.
 - Lista: no computador o nome do beat é link da página dele (sublinha em `fire` com o mouse);
   no celular o toque em qualquer parte da linha toca, como sempre.
-- Páginas de beat e de gênero: tocar em qualquer parte da linha toca, inclusive no nome (o
-  link fica no HTML pro Google e pro Ctrl/⌘+clique). A página de um beat abre pela barra do
-  pé (capinha, nome e `›`), que na página do beat aparece quando toca um dos parecidos.
+- Páginas de beat e de gênero: no celular, tocar em qualquer parte da linha toca, inclusive
+  no nome. No computador (desde 04/10/2026, como na vitrine) o nome abre a página do beat e
+  sublinha em `fire` com o mouse (o vendido não sublinha); o resto da linha toca. A página de
+  um beat também abre pela barra do pé (capinha, nome e `›`), que na página do beat aparece
+  quando toca um dos parecidos.
+- Barra da tape (desde 04/10/2026): o nome e a capa do beat que está tocando levam pra página
+  dele (`/beat/<nome>?de=tape`), com a `›` do lado (só beat que existe na loja). Link de um
+  beat da tape abre tocando; se o navegador não deixar tocar sem um toque (celular), a barra
+  fica no beat e o play pulsa num anel branco até a pessoa tocar (com menos movimento: anel
+  parado).
 
 ## Gêneros no site (desde 04/10/2026)
 

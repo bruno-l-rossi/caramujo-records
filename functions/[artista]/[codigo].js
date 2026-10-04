@@ -65,6 +65,8 @@ export async function onRequestGet({ params, request, env }) {
       // o gênero só existe na loja: beat da tape com par lá leva o gênero pro compartilhar
       // (beat sem par fica sem, nunca adivinhado)
       if (b.generoLabel) t.genero = b.generoLabel;
+      // o beat existe na loja: o nome na barra do player leva pra página dele (04/10/2026)
+      if (b.slug) t.pagina = b.slug;
       if (b.sold) { t.tag = 'vendido'; continue; }
       if (!artist.dl_beats && t.tag === 'disponivel') t.buy = b.slug;
     }

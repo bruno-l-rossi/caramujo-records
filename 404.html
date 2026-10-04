@@ -29,7 +29,7 @@ body{margin:0;background:var(--black);color:var(--bone);
 main{max-width:520px;width:100%}
 /* o selo vai embutido com a moldura apertada no desenho: o arquivo original
    tem quase metade de ar em volta, então caixa grande virava espiral pequena */
-.selo{height:190px;width:auto;opacity:.85;display:block;margin:0 auto 2.6rem}
+.selo{height:190px;opacity:.85;display:block;margin:0 auto 2.6rem}
 @media(max-width:600px){.selo{height:132px;margin-bottom:2rem}}
 .codigo{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.24em;
   text-transform:uppercase;color:var(--clay);margin:0}
@@ -40,12 +40,12 @@ p.texto a{color:var(--fire);text-decoration:underline;text-underline-offset:3px;
   text-decoration-color:rgba(185,143,94,.45)}
 p.texto a:hover{color:var(--cream);text-decoration-color:var(--cream)}
 .saidas{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:2rem}
-a.btn{font-family:'Cormorant Garamond',serif;font-size:1rem;letter-spacing:.1em;
+a.btn{font-family:'Cormorant Garamond',serif;letter-spacing:.1em;
   text-transform:uppercase;text-decoration:none;padding:.7rem 1.6rem;min-height:44px;
   display:inline-flex;align-items:center;justify-content:center;transition:background .18s,border-color .18s,color .18s}
 .fogo{background:var(--ember);color:var(--cream)}
 .fogo:hover{background:var(--fire)}
-.fantasma{background:transparent;color:var(--bone);border:1px solid var(--wire)}
+.fantasma{color:var(--bone);border:1px solid var(--wire)}
 .fantasma:hover{border-color:var(--clay);color:var(--cream)}
 </style>
 </head>

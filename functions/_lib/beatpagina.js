@@ -114,9 +114,8 @@ img{display:block}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 /* topo igual ao da vitrine */
 .topo{position:sticky;top:0;z-index:50;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 2.4rem;background:rgba(5,4,3,.97);border-bottom:1px solid var(--wire)}
-.topo .logo img{width:148px;height:27px}
 .topo ul{display:flex;list-style:none}
-.topo ul a{display:block;font-size:.76rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--bone);padding:0 1rem;line-height:54px}
+.topo ul a{display:block;font-size:.76rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:0 1rem;line-height:54px}
 .topo ul a:hover,.topo ul a.ativo{color:var(--fire)}
 .topo .dir{display:flex;align-items:center;gap:14px}
 .topo li.tem-sub{position:relative}
@@ -127,7 +126,7 @@ img{display:block}
 .topo .sub-gen a.sg-todos{font:700 .66rem var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--bone);padding:4px 0 12px;margin-bottom:8px;border-bottom:1px solid var(--wire)}
 .topo .sub-gen a.sg-todos:hover{color:var(--fire)}
 .sg-lista{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
-.anel{width:32px;height:32px;border-radius:50%;border:1px solid var(--clay);overflow:hidden;display:block}
+.anel{width:32px;height:32px;border-radius:50%;border:1px solid var(--clay);overflow:hidden}
 .anel img{width:100%;height:100%;object-fit:cover}
 .ico-btn{position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--bone)}
 .ico-btn svg{width:22px;height:22px}
@@ -157,14 +156,15 @@ img{display:block}
 .item:hover .num .i-play,.item.tocando:not(.rodando) .num .i-play,.item.tocando.rodando .num .i-pause{display:block}
 .item.tocando.rodando:hover .num .i-play{display:none}
 .capinha{width:46px;height:46px;flex:none;border:1px solid var(--wire);background:var(--mole);object-fit:cover}
-.capinha.vazia{display:flex;align-items:center;justify-content:center}.capinha.vazia img{width:24px;height:24px;opacity:.3}
+.capinha.vazia{display:flex;align-items:center;justify-content:center}.capinha.vazia img{opacity:.3}
 .item .info{flex:1;min-width:0}
 .item .nome{display:block;font:600 1.28rem/1.15 var(--serif);color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item .nome:hover{color:var(--fire)}
+@media(hover:hover) and (pointer:fine){.item:not(.fora) a.nome:hover{text-decoration:underline;text-decoration-color:var(--fire);text-decoration-thickness:1px;text-underline-offset:4px}}
 .item .ficha{font:400 .7rem var(--mono);color:var(--read);margin-top:3px;letter-spacing:.02em}
 .item .ficha em{font-style:normal;color:var(--clay);text-transform:uppercase;font-size:.64rem;letter-spacing:.1em}
 .item .dur{flex:none;font:400 .72rem var(--mono);color:var(--dim)}
-.item .corrida{position:absolute;left:0;bottom:-1px;height:2px;background:var(--fire);width:0}
+.item .corrida{position:absolute;left:0;bottom:-1px;height:2px;background:var(--fire)}
 .preco{flex:none;display:inline-flex;align-items:center;gap:7px;background:var(--bone);color:var(--black);border:1px solid var(--bone);font:500 .76rem var(--mono);padding:.52rem .8rem;white-space:nowrap;transition:background .14s,border-color .14s}
 .preco svg{width:15px;height:15px}
 .preco:hover,.preco.no-carrinho{background:var(--fire);border-color:var(--fire)}
@@ -178,7 +178,7 @@ img{display:block}
 .secao h2{font:500 2.2rem/1.1 var(--serif);color:var(--cream)}
 .secao .ver{font-size:.66rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--fire);white-space:nowrap}
 .rodape{margin-top:72px;padding:1.4rem 2.4rem;border-top:1px solid var(--wire);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
-.rodape img{width:34px;height:34px;opacity:.85}
+.rodape img{opacity:.85}
 .rodape a{color:var(--read);text-decoration:underline;text-underline-offset:3px}
 ${CSS_RODAPE_GENEROS}
 .aviso{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:80;background:var(--bone);color:var(--black);font:500 .78rem var(--mono);padding:.7rem 1rem;transition:opacity .2s,transform .2s}
@@ -229,7 +229,7 @@ body.tocando .aviso{bottom:96px}
 .dono span{display:block;margin-top:8px;font-size:.84rem;line-height:1.6;color:var(--read)}
 .tape{grid-area:tape;display:flex;align-items:center;gap:14px;padding:12px;border:1px solid var(--wire);background:var(--mole);transition:border-color .14s}
 .tape:hover{border-color:var(--clay)}
-.tape img{width:62px;height:62px;flex:none;object-fit:cover;border:1px solid var(--wire)}
+.tape img{flex:none;object-fit:cover;border:1px solid var(--wire)}
 .tape .k{font-size:.56rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--label)}
 .tape .n{font:600 1.1rem/1.2 var(--serif);color:var(--cream);margin-top:4px}
 .tape .q{font:400 .68rem var(--mono);color:var(--read);margin-top:3px}
@@ -246,6 +246,15 @@ body.tocando .aviso{bottom:96px}
 .acoes .pacs{text-align:left;line-height:1.7}
 .mosaico{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .mosaico img{width:100%;aspect-ratio:1;object-fit:cover;border:1px solid var(--wire)}
+/* 04/10/2026: com 1, 2 ou 3 tapes as capas também aparecem. 1 = capa inteira; 2 e 3 = capas
+   empilhadas em escada (a da tape mais nova na frente), como discos um sobre o outro */
+.mosaico.n1{grid-template-columns:1fr}
+.mosaico.pilha{display:block;position:relative;width:300px;height:300px}
+.mosaico.pilha img{position:absolute;width:220px;box-shadow:0 14px 34px rgba(0,0,0,.5)}
+.mosaico.pilha img:nth-child(1){left:0;top:0;z-index:3}
+.mosaico.n2 img:nth-child(2){left:80px;top:80px;z-index:2}
+.mosaico.n3 img:nth-child(2){left:40px;top:40px;z-index:2}
+.mosaico.n3 img:nth-child(3){left:80px;top:80px;z-index:1}
 .generos{display:flex;flex-wrap:wrap;gap:8px;padding:18px 0;border-top:1px solid var(--wire);list-style:none}
 .generos a{display:block;font-size:.62rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--read);border:1px solid var(--wire);padding:.6rem .85rem;white-space:nowrap}
 .generos a:hover{border-color:var(--clay);color:var(--bone)}
@@ -258,13 +267,13 @@ body.tocando .aviso{bottom:96px}
 .pacote p{font:500 1.5rem/1.35 var(--serif);color:var(--cream);margin-top:6px}
 .pacote p span{white-space:nowrap}
 .pacote p .off{font-size:.52rem;vertical-align:4px}
-.pacote>a{flex:none;font-size:.7rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);border:1px solid var(--wire);padding:.9rem 1.2rem}
+.pacote>a{flex:none;font-size:.7rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;border:1px solid var(--wire);padding:.9rem 1.2rem}
 .pacote>a:hover{border-color:var(--clay);color:var(--fire)}
 .barra{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--deep);border-top:1px solid var(--wire);padding:10px 2.4rem calc(12px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:14px;transform:translateY(110%);transition:transform .25s ease}
 body.tocando .barra{transform:none}
 body.tocando{padding-bottom:64px}
 .barra .t{font:400 .7rem var(--mono);color:var(--dim);flex:none}
-.barra .trilha{flex:1;max-width:420px}
+.barra .trilha{max-width:420px}
 .barra .capinha{width:38px;height:38px}
 .barra .quem{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
 .barra .nm{font:600 1.05rem var(--serif);color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -274,7 +283,6 @@ body.tocando{padding-bottom:64px}
 .barra .ctl button{width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--bone)}
 .barra .ctl button svg{width:16px;height:16px}
 .barra .ctl .pp{background:var(--fire);color:var(--black)}
-.barra .preco,.barra .vendido{flex:none}
 @media (prefers-reduced-motion:reduce){.barra,.item:before,.aviso{transition:none}}
 
 @media(max-width:899px){.topo .logo img{width:122px;height:22px}}
@@ -282,7 +290,7 @@ body.tocando{padding-bottom:64px}
   .topo{padding:0 .7rem 0 1rem}.topo ul{display:none}.burger{display:flex}
   .menu-cel{position:fixed;top:54px;left:0;right:0;z-index:49;background:rgba(5,4,3,.98);border-bottom:1px solid var(--wire);list-style:none;padding:6px 0}
   .menu-cel.on{display:block}
-  .menu-cel a{display:block;padding:14px 1rem;font-size:.8rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--bone)}
+  .menu-cel a{display:block;padding:14px 1rem;font-size:.8rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase}
   .menu-cel a.ativo{color:var(--fire)}
   .topo .dir{gap:2px}
   .wrap{padding:0 16px}
@@ -413,14 +421,23 @@ export function paginaBeat(b, loja) {
   const tape = tapeDo(b, porCapa);
   const par = parecidos(b, beats);
   const img = b.capa ? { url: SITE + b.capa, w: 1000, h: 1000 } : { url: SITE + '/og-image.png', w: 1200, h: 630 };
-  const fichaTxt = [b.bpm ? b.bpm + ' BPM' : '', tom ? `${tom} (${b.key})` : b.key].filter(Boolean).join(', ');
+  // Textos só pro Google (04/10/2026, aprovados pelo Bruno): a descrição curta (resultado da busca
+  // e prévia do link) e a ficha (Product.description). Faltando BPM, tom ou duração, o pedaço some.
+  const g = String(gen).toLowerCase();
+  const tomTxt = tom ? `${tom} (${b.key})` : b.key || '';
+  const bpmTxt = b.bpm ? `${b.bpm} BPM` : '';
+  const quem = tape ? `Faz parte da beat tape ${tape.name}, produzida por @rideblan33.` : 'Produzido por @rideblan33.';
+  const fichaCab = `${b.name} é um beat de ${g}${b.dur ? ' de ' + mmss(b.dur) : ''}${bpmTxt || tomTxt ? ', ' + [bpmTxt, tomTxt ? 'em ' + tomTxt : ''].filter(Boolean).join(', ') : ''}.`;
   const descricao = b.sold
-    ? `${b.name} já foi vendido. Ouça a prévia e conheça outros beats de ${String(gen).toLowerCase()} à venda do @rideblan33.`
-    : `Beat de ${String(gen).toLowerCase()} exclusivo, ${fichaTxt}, produzido por @rideblan33. Ouça a prévia e compre com licença exclusiva: ${real(preco)}, contrato no seu nome, MP3 e WAV.`;
+    ? `${b.name}: beat de ${g} produzido por @rideblan33${bpmTxt || tom || b.key ? ` (${[bpmTxt, tom || b.key].filter(Boolean).join(', ')})` : ''}, já vendido com licença exclusiva. Ouça e descubra beats parecidos à venda.`
+    : `${b.name}: beat de ${g} exclusivo produzido por @rideblan33${bpmTxt || tomTxt ? ', ' + [bpmTxt, tomTxt ? 'em ' + tomTxt : ''].filter(Boolean).join(' ') : ''}. Licença exclusiva com contrato, MP3 + WAV, por ${real(preco)}.`;
+  const ficha = b.sold
+    ? `${fichaCab} ${quem} Já foi vendido com licença exclusiva. Ouça e descubra beats parecidos à venda.`
+    : `${fichaCab} ${quem} Licença exclusiva: o beat é vendido uma vez só, com contrato no nome de quem compra e uso comercial liberado, em MP3 e WAV, com entrega em até 1 dia útil.`;
   const ld = [
     {
       '@context': 'https://schema.org', '@type': 'Product', name: b.name, url,
-      image: img.url, description: descricao, category: `Beat de ${gen}`,
+      image: img.url, description: ficha, category: `Beat de ${gen}`,
       brand: { '@type': 'Brand', name: 'Caramujo Records' },
       additionalProperty: [
         b.bpm ? { '@type': 'PropertyValue', name: 'BPM', value: Number(b.bpm) } : null,
@@ -554,7 +571,7 @@ ${topo(de, gslug)}
 <h1>Beats de <em>${esc(gen)}</em></h1>
 <p>${intro}</p>
 <div class="acoes">${venda.some((b) => b.mp3) ? `<button class="btn js-todos" type="button">${PLAYPAUSE}<span>Tocar todos</span></button>` : ''}<ul class="pacs"><li>${real(preco)} cada</li>${p2 || p3 ? [p2, p3].filter(Boolean).map((p) => `<li>${p.n} por ${real(p.preco)}<span class="off">${p.off}% off</span></li>`).join('') : ''}</ul></div>
-</div>${capasTape.length >= 4 ? `<div class="mosaico" aria-hidden="true">${capasTape.map((c) => `<img src="${esc(c)}?m" alt="" width="147" height="147" loading="lazy">`).join('')}</div>` : '<div></div>'}</div>
+</div>${capasTape.length ? `<div class="mosaico ${capasTape.length >= 4 ? 'n4' : capasTape.length === 1 ? 'n1' : 'pilha n' + capasTape.length}" aria-hidden="true">${capasTape.map((c) => `<img src="${esc(c)}?m" alt="" width="${capasTape.length >= 4 ? 147 : capasTape.length === 1 ? 300 : 220}" height="${capasTape.length >= 4 ? 147 : capasTape.length === 1 ? 300 : 220}" loading="lazy">`).join('')}</div>` : '<div></div>'}</div>
 <nav aria-label="Outros gêneros"><ul class="generos">${generos.map((g) => `<li><a href="/beats/${esc(g.slug)}"${g.slug === gslug ? ' aria-current="page"' : ''}>${esc(g.nome)}<i>${g.venda}</i></a></li>`).join('')}</ul></nav>
 <div class="ordem"><span>${venda.length} à venda${vendidos.length ? ` · ${vendidos.length} ${vendidos.length === 1 ? 'vendido' : 'vendidos'}` : ''}</span><label><span class="sr">Ordem da lista</span><select class="js-ordem"><option value="novos">Mais novos</option><option value="bpm-">BPM: do mais lento</option><option value="bpm+">BPM: do mais rápido</option></select></label></div>
 <ol class="lista js-lista">${ordem.map((b, i) => linha(b, i, de, preco)).join('')}</ol>
@@ -714,11 +731,13 @@ const JS = `(function(){
     atual=id; aquecido=null; som.src=b.mp3; som.play().catch(nada); sessao(b); marca();
   }
   window.__tocarBeat=tocar;
+  var comMouse=false; try{ comMouse=matchMedia('(hover:hover) and (pointer:fine)').matches; }catch(_){}
   document.addEventListener('click',function(e){
     var bt=e.target.closest('.js-tocar');
     if(bt){ e.preventDefault(); var id=bt.classList.contains('js-bpp')?atual:Number(bt.getAttribute('data-bid')); if(id!==null) tocar(id); return; }
+    // nome do beat: no computador (mouse) abre a página dele, como na vitrine; no dedo toca (04/10/2026)
     var nm=e.target.closest('.item a.nome');
-    if(nm){ if(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||e.button) return; e.preventDefault(); tocar(Number(nm.closest('.item').getAttribute('data-bid'))); return; }
+    if(nm){ if(comMouse||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||e.button) return; e.preventDefault(); tocar(Number(nm.closest('.item').getAttribute('data-bid'))); return; }
     if(e.target.closest('a,button,select,label,.trilha')) return;
     var li=e.target.closest('.item'); if(li) tocar(Number(li.getAttribute('data-bid')));
   });

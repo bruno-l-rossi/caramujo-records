@@ -62,7 +62,7 @@ export function contratoHtml({ name, cpf, email, items, category, amount, paymen
   <p>O Licenciado receberá, no email informado no pedido, os seguintes arquivos após a confirmação do pagamento:</p>
   <ul><li>Arquivo MP3</li><li>Arquivo WAV</li><li>Stems separados por instrumento — somente se contratado o pacote Beat + Stems</li><li>Uma via deste contrato assinado pelo Produtor</li></ul>
   <h4>4. Prazos de Entrega</h4>
-  <ul><li>Beat catálogo (disponível no site): até 24 horas</li><li>Beat personalizado (produção sob encomenda): até 2 semanas</li><li>Mixagem, Masterização ou Mix + Master: até 3 semanas</li></ul>
+  <ul><li>Beat catálogo (disponível no site): até 1 dia útil</li><li>Beat personalizado (produção sob encomenda): até 2 semanas</li><li>Mixagem, Masterização ou Mix + Master: até 3 semanas</li></ul>
   <p>Em caso de imprevistos que possam impactar os prazos, o Produtor notificará o Licenciado por email com antecedência.</p>
   <h4>5. Crédito Obrigatório</h4>
   <p>O uso da Obra em qualquer plataforma digital exige a creditação do Produtor da seguinte forma:</p>
@@ -164,7 +164,7 @@ export function htmlComprador({ greeting, itemsList, contractHtml }) {
                 style="font-family:'Courier New',Courier,monospace;font-size:11px;color:#b89e72;">
                 <tr>
                   <td style="padding:3px 16px 3px 0;white-space:nowrap;">&mdash; Beat catálogo</td>
-                  <td style="padding:3px 0;white-space:nowrap;">até 24 horas</td>
+                  <td style="padding:3px 0;white-space:nowrap;">até 1 dia útil</td>
                 </tr>
                 <tr>
                   <td style="padding:3px 16px 3px 0;white-space:nowrap;">&mdash; Beat personalizado</td>
