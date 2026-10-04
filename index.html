@@ -19,7 +19,10 @@
 <meta name="twitter:description" content="Estúdio musical popular e independente em São Carlos, SP. Beats exclusivos e produção completa por @rideblan33."/>
 <meta name="twitter:image" content="https://caramujorecords.com.br/og-image.png"/>
 <meta name="theme-color" content="#050403"/>
-<link rel="icon" type="image/svg+xml" href="/assets/brand/selo-creme.svg"/>
+<link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/selo-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/selo-180.png">
+<link rel="manifest" href="/site.webmanifest">
 <!-- Fontes servidas daqui mesmo (subset latin, licença OFL em assets/fonts/).
      Antes vinham do Google: 2 domínios a mais pra resolver e um CSS que
      segurava a primeira pintura. As 3 de cima são as que o hero usa. -->
@@ -1163,10 +1166,8 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 
 <link rel="canonical" href="https://caramujorecords.com.br"/>
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"ProfessionalService","name":"Caramujo Records","url":"https://caramujorecords.com.br","logo":"https://caramujorecords.com.br/assets/brand/Caramujo_Records.png","image":"https://caramujorecords.com.br/og-image.png","description":"Estúdio de rap/hip hop popular e independente. Beats exclusivos, mixagem e masterização por @rideblan33. São Carlos, SP, desde 2018.","email":"contato@caramujorecords.com.br","foundingDate":"2018","founder":{"@type":"Person","@id":"https://caramujorecords.com.br/rideblan33#pessoa","name":"@rideblan33","alternateName":["rideblan33","rideblan"],"jobTitle":"Produtor musical e beatmaker","url":"https://caramujorecords.com.br/rideblan33","sameAs":["https://www.instagram.com/rideblan33","https://www.youtube.com/@rideblan33","https://open.spotify.com/artist/15K9QWM2Q6Zyxb6RsAn9RZ"]},"address":{"@type":"PostalAddress","addressLocality":"São Carlos","addressRegion":"SP","addressCountry":"BR"},"sameAs":["https://soundcloud.com/rideblan33","https://www.instagram.com/rideblan33","https://www.youtube.com/@rideblan33","https://open.spotify.com/artist/15K9QWM2Q6Zyxb6RsAn9RZ"],"priceRange":"R$79-R$299","makesOffer":[{"@type":"Offer","priceCurrency":"BRL","price":"119","itemOffered":{"@type":"Service","name":"Beat exclusivo do catálogo","description":"Licença exclusiva, MP3 320kbps + WAV, contrato digital. O beat sai do catálogo após a venda."}},{"@type":"Offer","priceCurrency":"BRL","price":"219","itemOffered":{"@type":"Service","name":"Pacote 2 beats"}},{"@type":"Offer","priceCurrency":"BRL","price":"299","itemOffered":{"@type":"Service","name":"Pacote 3 beats"}},{"@type":"Offer","priceCurrency":"BRL","price":"149","itemOffered":{"@type":"Service","name":"Beat personalizado"}},{"@type":"Offer","priceCurrency":"BRL","price":"149","itemOffered":{"@type":"Service","name":"Mixagem"}},{"@type":"Offer","priceCurrency":"BRL","price":"79","itemOffered":{"@type":"Service","name":"Masterização"}},{"@type":"Offer","priceCurrency":"BRL","price":"199","itemOffered":{"@type":"Service","name":"Mix + Master"}}]}
+{"@context":"https://schema.org","@type":"ProfessionalService","name":"Caramujo Records","url":"https://caramujorecords.com.br","logo":"https://caramujorecords.com.br/assets/brand/selo-512.png","image":"https://caramujorecords.com.br/og-image.png","description":"Estúdio de rap/hip hop popular e independente. Beats exclusivos, mixagem e masterização por @rideblan33. São Carlos, SP, desde 2018.","email":"contato@caramujorecords.com.br","foundingDate":"2018","founder":{"@type":"Person","@id":"https://caramujorecords.com.br/rideblan33#pessoa","name":"@rideblan33","alternateName":["rideblan33","rideblan"],"jobTitle":"Produtor musical e beatmaker","url":"https://caramujorecords.com.br/rideblan33","sameAs":["https://www.instagram.com/rideblan33","https://www.youtube.com/@rideblan33","https://open.spotify.com/artist/15K9QWM2Q6Zyxb6RsAn9RZ"]},"address":{"@type":"PostalAddress","addressLocality":"São Carlos","addressRegion":"SP","addressCountry":"BR"},"sameAs":["https://soundcloud.com/rideblan33","https://www.instagram.com/rideblan33","https://www.youtube.com/@rideblan33","https://open.spotify.com/artist/15K9QWM2Q6Zyxb6RsAn9RZ"],"priceRange":"R$79-R$299","makesOffer":[{"@type":"Offer","priceCurrency":"BRL","price":"119","itemOffered":{"@type":"Service","name":"Beat exclusivo do catálogo","description":"Licença exclusiva, MP3 320kbps + WAV, contrato digital. O beat sai do catálogo após a venda."}},{"@type":"Offer","priceCurrency":"BRL","price":"219","itemOffered":{"@type":"Service","name":"Pacote 2 beats"}},{"@type":"Offer","priceCurrency":"BRL","price":"299","itemOffered":{"@type":"Service","name":"Pacote 3 beats"}},{"@type":"Offer","priceCurrency":"BRL","price":"149","itemOffered":{"@type":"Service","name":"Beat personalizado"}},{"@type":"Offer","priceCurrency":"BRL","price":"149","itemOffered":{"@type":"Service","name":"Mixagem"}},{"@type":"Offer","priceCurrency":"BRL","price":"79","itemOffered":{"@type":"Service","name":"Masterização"}},{"@type":"Offer","priceCurrency":"BRL","price":"199","itemOffered":{"@type":"Service","name":"Mix + Master"}}]}
 </script>
-<link rel="icon" type="image/png" sizes="180x180" href="/assets/brand/icone-180.png"/>
-<link rel="apple-touch-icon" href="/assets/brand/icone-180.png"/>
 </head>
 <body>
 
@@ -4180,7 +4181,8 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
     else if(/bing\.com$|duckduckgo\.com$/.test(ref)) origem='busca';
     else if(ref && ref===location.hostname){                     // veio de uma página de tape
       var cam=''; try{ cam=new URL(document.referrer).pathname.split('/').filter(Boolean); }catch(_){ cam=[]; }
-      origem=(cam.length===2 && cam[0]!=='b') ? ('tape-'+cam[0]).slice(0,40) : 'beat-tape';
+      origem=cam[0]==='beat' ? 'pagina-beat' : cam[0]==='beats' ? 'pagina-genero'
+        : (cam.length===2 && cam[0]!=='b') ? ('tape-'+cam[0]).slice(0,40) : 'beat-tape';
     }
     else if(ref) origem='outro-site';
     else origem='direto';

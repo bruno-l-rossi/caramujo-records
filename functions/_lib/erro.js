@@ -2,6 +2,8 @@
 // função de página que quebrou (bug num deploy, banco fora do ar).
 // O molde é o próprio 404.html servido: mudou o 404.html, muda tudo junto.
 
+import { ICONES } from './icones.js';
+
 const IG = '<a href="https://ig.me/m/rideblan33" rel="noopener">@rideblan33</a>';
 // 27/09/2026: link quebrado aponta pro catálogo de beat tapes (perfil) e o @ abre o Direct
 const PERFIL = '<a href="/rideblan33?de=404">catálogo de beat tapes</a>';
@@ -41,6 +43,7 @@ async function molde(request, env) {
 function reserva(t) {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+${ICONES}
 <title>${esc(t.titulo)} · Caramujo Records</title>
 <style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#14110d;color:#E8E0CF;
 font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;padding:2rem 1.4rem}main{max-width:520px}

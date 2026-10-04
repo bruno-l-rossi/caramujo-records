@@ -2,6 +2,7 @@
 // Mostra os artistas, o link de cada um, a permissão de download e quem ouviu o quê.
 
 import { COOKIE, DIAS, assinar, igual, autenticado } from '../_lib/sessao.js';
+import { ICONES } from '../_lib/icones.js';
 
 /* ---------- entrada ---------- */
 
@@ -47,8 +48,7 @@ function html(corpo, status = 200) {
 const BASE = `
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<link rel="icon" type="image/svg+xml" href="/assets/brand/selo-creme.svg">
-<link rel="icon" type="image/png" sizes="180x180" href="/assets/brand/icone-180.png">
+${ICONES}
 <meta name="theme-color" content="#0a0a0a">
 <!-- fonte servida daqui (assets/fonts, licença OFL): sem Google no caminho -->
 <link rel="preload" href="/assets/fonts/schibsted-grotesk-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>

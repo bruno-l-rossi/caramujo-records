@@ -9,6 +9,7 @@
 
 import { db } from './db.js';
 import { MIDIA } from './midia.js';
+import { ICONES as ICONES_ABA, SELO_GRANDE } from './icones.js';
 import { PADRAO as NUM_PADRAO, deTexto as numDeTexto, limpar as numLimpar, curto, longo } from './numeros.js';
 
 const VALIDADE = 60 * 1000;
@@ -169,9 +170,8 @@ function grade(tapes, nova = null, emAlta = null) {
 
 // Ícones da aba do navegador: o padrão de TODAS as páginas do site (selo em SVG,
 // PNG de 180 pro iPhone). Página nova usa esse mesmo bloco.
-export const FAVICON = '<link rel="icon" type="image/svg+xml" href="/assets/brand/selo-creme.svg">\n' +
-  '<link rel="icon" type="image/png" sizes="180x180" href="/assets/brand/icone-180.png">\n' +
-  '<link rel="apple-touch-icon" href="/assets/brand/icone-180.png">';
+// ícones: um lugar só, em _lib/icones.js (04/10/2026); o nome FAVICON fica pra quem já usa
+export const FAVICON = ICONES_ABA;
 
 // barraFixa: a barra fina com a foto e o @ que aparece presa no topo quando a pessoa
 // desce pras capas (o Bruno decide se fica; 26/09/2026).
@@ -184,7 +184,7 @@ export function paginaPerfil(dados, { url, barraFixa = true } = {}) {
   const tocador = nova && faixas.length ? {
     tape: { id: nova.id, name: nova.name, url: `/${nova.slug}/${nova.code}?de=perfil`, capa: nova.capa ? `/capa/${nova.capa}?p` : '/assets/brand/caramujo-v.webp',
       // a tela de bloqueio usa a arte inteira, igual à página da tape
-      arte: nova.capa ? `/capa/${nova.capa}` : '/assets/brand/Caramujo_Records.png' },
+      arte: nova.capa ? `/capa/${nova.capa}` : SELO_GRANDE },
     faixas
   } : null;
   const titulo = '@rideblan33 · Portfólio';

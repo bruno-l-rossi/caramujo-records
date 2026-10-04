@@ -35,10 +35,11 @@ export async function avulso(kind, { params, request, env }) {
   const podeBaixar = tracks.some((t) => (t.kind === 'beat' ? artist.dl_beats : artist.dl_sons));
 
   return pagina(request, env, {
-    // textos com o @rideblan33 (03/10/2026, escolha do Bruno; sem o "Toca direto, sem baixar nada")
-    titulo: umaSo ? `${tracks[0].title} · @rideblan33` : `${artist.name} · Caramujo Records`,
+    // Uma faixa só (o /f/, ou um /p/ que ficou com uma): "faixa · artista" e a assinatura
+    // da casa (04/10/2026, pedido do Bruno). Mais de uma: o texto de 03/10.
+    titulo: umaSo ? `${tracks[0].title} · ${artist.name}` : `${artist.name} · Caramujo Records`,
     descricao: umaSo
-      ? `${tracks[0].title}, produzido por @rideblan33.`
+      ? 'Produzido por @rideblan33 © Caramujo Records'
       : `${tracks.length} faixas de ${artist.name} com @rideblan33.`,
     url: url.origin + url.pathname,
     capa: artist.cover_key ? `${url.origin}/capa/${artist.cover_key}` : `${url.origin}/og-image.png`,

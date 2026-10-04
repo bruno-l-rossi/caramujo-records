@@ -15,7 +15,8 @@
 
 import { montarVitrine } from '../api/vitrine.js';
 import { lerEstatico } from './loja.js';
-import { tapesDoPerfil, FAVICON, SITE } from './perfil.js';
+import { tapesDoPerfil, SITE } from './perfil.js';
+import { ICONES } from './icones.js';
 import { slug } from './casar.js';
 import { CABECALHOS } from './cabecalhos.js';
 
@@ -366,7 +367,7 @@ function cabecalho({ titulo, descricao, url, img, imgAlt, ogTitulo, ogDescricao,
 <meta name="twitter:description" content="${esc(ogDescricao || descricao)}">
 <meta name="twitter:image" content="${esc(img.url)}">
 <meta name="theme-color" content="#14110d">
-${FAVICON}
+${ICONES}
 ${preload ? `<link rel="preload" as="image" href="${esc(preload)}" fetchpriority="high">` : ''}
 <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/cormorant-garamond-latin-500-normal.woff2" crossorigin>
 <script type="application/ld+json">${jsonSeguro(ld)}</script>
@@ -574,6 +575,52 @@ const JS = `(function(){
   try{ if(/(^|\\.)google\\./.test(document.referrer?new URL(document.referrer).hostname:'')) sessionStorage.setItem('cr_pg_google','1'); veioGoogle=sessionStorage.getItem('cr_pg_google')==='1'; }catch(_){}
   if(veioGoogle) $$('a[href*="de=pagina-"]').forEach(function(a){ a.setAttribute('href',a.getAttribute('href').replace('de=pagina-','de=google-')); });
 
+  /* funil (04/10/2026): a página conta a visita e o play, como a vitrine (/api/funil).
+     A origem fica guardada na aba (cr_origem): quem chegou pelo link do story e foi
+     comprar na vitrine continua contando como "story". Nada pessoal: a sessão é um
+     número aleatório que morre com a aba. */
+  var ss=function(k,v){ try{ if(v===undefined) return sessionStorage.getItem(k); sessionStorage.setItem(k,v); }catch(_){ return null; } };
+  var funil=nada, robo=false;
+  try{ robo=!!navigator.webdriver; }catch(_){}
+  if(!robo){
+    var sid=ss('cr_sessao');
+    if(!sid){
+      try{ var rr=new Uint32Array(3); crypto.getRandomValues(rr); sid=Array.prototype.map.call(rr,function(n){ return n.toString(36); }).join('').slice(0,24); }
+      catch(_){ sid=(Date.now().toString(36)+Math.random().toString(36).slice(2)).slice(0,24); }
+      if(sid.length<10) sid=(sid+'0000000000').slice(0,10);
+      ss('cr_sessao',sid);
+    }
+    var aparelho='computador'; try{ if(matchMedia('(max-width: 760px)').matches||/Mobi|Android|iPhone/i.test(navigator.userAgent)) aparelho='celular'; }catch(_){}
+    var origem=ss('cr_origem');
+    if(!origem){
+      var de=null; try{ de=new URLSearchParams(location.search).get('de'); }catch(_){}
+      var ua=navigator.userAgent||'', ref='', cam=[];
+      try{ if(document.referrer){ var ru=new URL(document.referrer); ref=ru.hostname; cam=ru.pathname.split('/').filter(Boolean); } }catch(_){}
+      var tipo=P.pagina==='genero'?'genero':'beat';
+      if(de) origem=de.toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,40)||'direto';
+      else if(/(^|\\.)google\\./.test(ref)) origem='google-'+tipo;
+      else if(/Instagram/i.test(ua)||/instagram\\.com$/.test(ref)) origem='instagram';
+      else if(/FBAN|FBAV/i.test(ua)||/facebook\\.com$/.test(ref)) origem='facebook';
+      else if(/WhatsApp/i.test(ua)||/whatsapp/.test(ref)) origem='whatsapp';
+      else if(/TikTok|musical_ly|BytedanceWebview/i.test(ua)||/tiktok\\.com$/.test(ref)) origem='tiktok';
+      else if(/youtube\\.com$|youtu\\.be$/.test(ref)) origem='youtube';
+      else if(/bing\\.com$|duckduckgo\\.com$/.test(ref)) origem='busca';
+      else if(ref&&ref===location.hostname) origem=cam[0]==='rideblan33'?'perfil':(cam.length===2&&['b','beat','beats','f','p'].indexOf(cam[0])<0)?('tape-'+cam[0]).slice(0,40):'pagina-'+tipo;
+      else if(ref) origem='outro-site';
+      else origem='direto';
+      ss('cr_origem',origem);
+    }
+    var envia=function(corpo){ var txt=JSON.stringify(corpo); try{ if(navigator.sendBeacon&&navigator.sendBeacon('/api/funil',txt)) return; fetch('/api/funil',{method:'POST',body:txt,keepalive:true}).catch(nada); }catch(_){} };
+    funil=function(etapa,beatId){
+      var n=Number(beatId);
+      if(etapa==='toque'){ if(!(n>0)||ss('cr_b_toque_'+n)) return; ss('cr_b_toque_'+n,'1'); envia({s:sid,e:'toque',a:aparelho,o:origem,b:n}); return; }
+      if(ss('cr_f_'+etapa)) return; ss('cr_f_'+etapa,'1');
+      var corpo={s:sid,e:etapa,a:aparelho,o:origem}; if(n>0) corpo.b=n; envia(corpo);
+    };
+  }
+  /* o ?de= já cumpriu o papel: sai da barra de endereço (quem copiar o link leva ele limpo) */
+  try{ if(/[?&]de=/.test(location.search)&&history.replaceState) history.replaceState(null,'',location.pathname+location.hash); }catch(_){}
+
   /* o carrinho guardado da vitrine: número no topo e "No carrinho" nos beats que já estão lá */
   try{
     var c=JSON.parse(localStorage.getItem('caramujo_carrinho_v1')||'null');
@@ -657,6 +704,7 @@ const JS = `(function(){
 
   var aquecido=null;
   ['play','pause','ended'].forEach(function(ev){ som.addEventListener(ev,marca); });
+  som.addEventListener('playing',function(){ if(atual===null) return; funil('play',atual); funil('toque',atual); });
   som.addEventListener('ended',function(){ var p=vizinho(1); if(p!==null) tocar(p); });
   som.addEventListener('timeupdate',function(){
     var d=som.duration||(porId[atual]||{}).dur||0, pc=d?Math.min(100,som.currentTime/d*100):0;
@@ -692,7 +740,7 @@ const JS = `(function(){
     itens.forEach(function(li,i){ lista.appendChild(li); var n=li.querySelector('.num i'); if(n) n.textContent=(i<9?'0':'')+(i+1); });
   });
 
-  /* compartilhar: o mesmo link /b/ que o Bruno usa (abre a vitrine com o beat tocando) */
+  /* compartilhar: o mesmo link /b/ que o Bruno usa (prévia com capa; abre esta página) */
   $$('.js-compartilhar').forEach(function(bt){
     bt.addEventListener('click',function(){
       var u=bt.getAttribute('data-url')+'?de=compartilhar', t=bt.getAttribute('data-titulo');
@@ -701,4 +749,5 @@ const JS = `(function(){
     });
   });
   marca();
+  if(document.readyState==='complete') funil('visita'); else window.addEventListener('load',function(){ funil('visita'); });
 })();`;

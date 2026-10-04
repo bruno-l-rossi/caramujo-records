@@ -70,9 +70,18 @@ Público acessa 80%+ pelo celular, vindo do Instagram (bio e Direct). Mobile-fir
 ## Ícone da aba (padrão de todas as páginas)
 
 Toda página do site, inclusive as que ainda vão existir, usa o mesmo bloco no `<head>`:
-selo em SVG primeiro (`/assets/brand/selo-creme.svg`), depois o PNG de 180px pro iPhone
-(`/assets/brand/icone-180.png`, também como `apple-touch-icon`). Em código: `FAVICON` em
-`functions/_lib/perfil.js`.
+`ICONES` em `functions/_lib/icones.js` (desde 04/10/2026). As páginas `.html` fixas
+(`index.html`, `404.html`, `catalogo/app.html`) levam o bloco colado igual.
+- `/assets/brand/favicon.svg`: o selo creme (no navegador em tema claro, sépia `clay`).
+- `/assets/brand/selo-32.png`: navegador que não lê SVG.
+- `/assets/brand/selo-180.png`: iPhone e iPad (aba, favoritos, tela de início).
+- `/site.webmanifest` com `selo-192.png` e `selo-512.png`: Android e Google.
+- Os PNGs são a espiral creme (`bone`) sobre o fundo `black` (#14110d), sem texto.
+- Na raiz: `/favicon.ico`, `/apple-touch-icon.png` e o manifesto, pra página sem o bloco.
+- Até 04/10/2026 o PNG do celular (`icone-180.png`) ainda era o caramujo antigo: por isso
+  a aba do celular mostrava o logo velho. O arquivo foi trocado pelo selo novo.
+- Tela de bloqueio sem capa e logo do Google: `selo-512.png` (`SELO_GRANDE`).
+- O `teste33` reprova página nova sem o bloco.
 
 ## Logo do topo (padrão de todas as páginas)
 
