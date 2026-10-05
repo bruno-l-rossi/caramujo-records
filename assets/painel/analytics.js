@@ -516,6 +516,8 @@
     compartilhar: 'Abriu o compartilhar', 'story-perfil': 'Postou o story do perfil', 'story-catalogo': 'Postou o story do catálogo', link: 'Enviou o link do perfil',
     // 05/10/2026: aba Músicas
     'aba-musicas': 'Abriu a aba Músicas', 'aba-tapes': 'Abriu a aba Beat tapes', trecho: 'Ouviu o trecho de uma música',
+    // 06/10/2026: a música toca inteira no perfil
+    'musica-play': 'Ouviu uma música no perfil',
     'musica-spotify': 'Abriu uma música no Spotify', 'musica-youtube': 'Abriu uma música no YouTube', 'portfolio-spotify': 'Portfólio completo no Spotify' };
   function perfil(j, corpo) {
     var a = j.agora, an = j.antes;

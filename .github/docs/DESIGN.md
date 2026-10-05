@@ -110,19 +110,23 @@ em peso normal). Sem música no ar, o bloco volta a ser só "Beat tapes" como an
 - **Destaques** (a ordem é do Bruno, no painel): fileira de capas grandes que desliza. 4 por
   linha no computador (setas redondas no cabeçalho quando passa de 4), 76% da largura no
   celular (a próxima aparece na beirada). Play branco redondo no canto de baixo da capa só
-  quando tem trecho; sem trecho, a capa leva pro Spotify. Embaixo: nome (16px, 700),
+  quando tem áudio; sem áudio, a capa leva pro Spotify. Embaixo: nome (16px, 700),
   artistas em cinza e os botões redondos do Spotify/YouTube (só dos links que existem). A
-  que está tocando ganha a barra fina branca do trecho embaixo.
-- **Recentes** (a mais nova primeiro, pela data de lançamento): lista na caixa `#141414` com
-  borda `#1f1f1f`: capinha 52px, nome, artistas, data "jul 2026" em mono (só no computador),
-  botões e o play.
-- **Chamada no fim:** caixa com borda `#2a2a2a`, ícone do Spotify, "OUVIR O PORTFÓLIO
-  COMPLETO" + "Todas as produções no Spotify do @rideblan33" e a seta ↗. Abre o perfil de
+  que está tocando ganha a barra fina branca do andamento embaixo.
+- **Recentes** (a mais nova primeiro, pela data de lançamento; ou na ordem que o Bruno
+  arrastar no painel): lista na caixa `#141414` com borda `#1f1f1f`: capinha 52px, nome,
+  artistas, data "jul 2026" em mono (só no computador), botões e o play.
+- **Chamada no fim:** caixa com borda `#2a2a2a`, ícone do Spotify, só o título "OUVIR O
+  PORTFÓLIO COMPLETO" e a seta ↗ (desde 06/10/2026, sem subtítulo). Abre o perfil de
   artista no Spotify.
-- **Trecho:** 30 s do pedaço mais forte (a conta do story), do arquivo da pasta do artista no
-  catálogo. Toca no mesmo mini player do "Ouça a última beat tape": capa da música, nome,
-  "Trecho · artistas"; tocar no player abre a música inteira no Spotify. Acabou, vai pro
-  trecho da próxima da página.
+- **Música inteira** (desde 06/10/2026; antes eram 30 s): do arquivo da pasta do artista no
+  catálogo. Toca no mesmo mini player do topo: capa da música, nome, artistas; tocar no
+  player abre a música no Spotify. Acabou, vai pra próxima da página (destaques e depois
+  recentes); depois da última, para.
+- **Botão do topo muda com a aba:** em Músicas é "OUÇA O ÚLTIMO LANÇAMENTO" (toca o 1º
+  destaque e segue em ordem até as recentes); em Beat tapes, "OUÇA A ÚLTIMA BEAT TAPE".
+  Abaixo de 380px o logo do topo do perfil fica com 104px e o texto do botão mais junto,
+  pra caber em 360px.
 - **Prévia:** com o "No ar" desligado, só quem está logado no painel vê a aba, com uma faixa
   tracejada avisando.
 

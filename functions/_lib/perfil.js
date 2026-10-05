@@ -12,7 +12,7 @@ import { MIDIA } from './midia.js';
 import { ICONES as ICONES_ABA, SELO_GRANDE } from './icones.js';
 import { RODAPE_GENEROS, CSS_RODAPE_GENEROS } from './generos.js';
 import { PADRAO as NUM_PADRAO, deTexto as numDeTexto, limpar as numLimpar, curto, longo } from './numeros.js';
-import { CHAVE as MUS_CHAVE, deTexto as musDeTexto, separar, TRECHO } from './musicas.js';
+import { CHAVE as MUS_CHAVE, deTexto as musDeTexto, separar } from './musicas.js';
 
 const VALIDADE = 60 * 1000;
 const REGIAO = '/__cache/perfil-v3';
@@ -173,9 +173,9 @@ function grade(tapes, nova = null, emAlta = null) {
 
 /* ---------- aba Músicas (05/10/2026, direção A) ----------
    Destaques: fileira de capas grandes que desliza (ordem do Bruno). Recentes: lista em
-   caixa, a mais nova primeiro. No fim, a chamada pro portfólio inteiro no Spotify.
-   Música com arquivo na pasta do artista ganha o play do trecho (30 s no mini player);
-   sem arquivo, a capa leva pro Spotify/YouTube. */
+   caixa, a mais nova primeiro (ou a ordem dele). No fim, a chamada pro portfólio inteiro
+   no Spotify. Música com arquivo na pasta do artista ganha o play (toca INTEIRA no mini
+   player desde 06/10/2026); sem arquivo, a capa leva pro Spotify/YouTube. */
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 export const mesAno = (d) => {
   const m = String(d || '').match(/^(\d{4})(?:-(\d{2}))?/);
@@ -190,27 +190,27 @@ function capaMus(m) {
   return { src: '/assets/brand/caramujo-v.webp', grande: SELO_GRANDE, srcset: '', sem: true };
 }
 const linkMus = (m) => m.spotify || m.youtube;
-const temTrecho = (m) => !!(m.faixa && m.ini != null);
+const temAudio = (m) => !!m.faixa;
 const ICONE_SETA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>';
 
 function redesMus(m) {
   return `<span class="mx-redes">${m.spotify ? `<a href="${esc(m.spotify)}" target="_blank" rel="noopener" aria-label="Ouvir ${esc(m.nome)} no Spotify" title="Spotify" data-rede="musica-spotify">${ICONES.spotify}</a>` : ''}${m.youtube ? `<a href="${esc(m.youtube)}" target="_blank" rel="noopener" aria-label="Ver ${esc(m.nome)} no YouTube" title="YouTube" data-rede="musica-youtube">${ICONES.youtube}</a>` : ''}</span>`;
 }
-const playMus = (m, k) => `<button class="mx-play" type="button" data-m="${k}" data-nome="${esc(m.nome)}" aria-label="Ouvir o trecho de ${esc(m.nome)}">${ICONE_TOCA}${ICONE_PAUSA}</button>`;
+const playMus = (m, k) => `<button class="mx-play" type="button" data-m="${k}" data-nome="${esc(m.nome)}" aria-label="Ouvir ${esc(m.nome)}">${ICONE_TOCA}${ICONE_PAUSA}</button>`;
 
 function cardDestaque(m, k) {
   const c = capaMus(m);
   const img = `<img class="mx-img${c.sem ? ' sem' : ''}" src="${esc(c.src)}"${c.srcset ? ` srcset="${esc(c.srcset)}" sizes="(max-width:600px) 76vw, 280px"` : ''} alt="Capa de ${esc(m.nome)}" width="640" height="640"${k < 2 ? '' : ' loading="lazy"'} decoding="async">`;
-  const capa = temTrecho(m)
+  const capa = temAudio(m)
     ? `<div class="mx-c">${img}${playMus(m, k)}</div>`
     : `<a class="mx-c" href="${esc(linkMus(m))}" target="_blank" rel="noopener" data-rede="${m.spotify ? 'musica-spotify' : 'musica-youtube'}" aria-label="Ouvir ${esc(m.nome)} ${m.spotify ? 'no Spotify' : 'no YouTube'}">${img}</a>`;
-  return `<article class="mx-card" data-m="${k}">${capa}<div class="mx-txt"><div class="mx-info"><b class="mx-n">${esc(m.nome)}</b>${m.artistas ? `<span class="mx-a">${esc(m.artistas)}</span>` : ''}</div>${redesMus(m)}</div>${temTrecho(m) ? '<span class="mx-trecho" aria-hidden="true"><i></i></span>' : ''}</article>`;
+  return `<article class="mx-card" data-m="${k}">${capa}<div class="mx-txt"><div class="mx-info"><b class="mx-n">${esc(m.nome)}</b>${m.artistas ? `<span class="mx-a">${esc(m.artistas)}</span>` : ''}</div>${redesMus(m)}</div>${temAudio(m) ? '<span class="mx-barra" aria-hidden="true"><i></i></span>' : ''}</article>`;
 }
 
 function linhaRecente(m, k, vaga) {
   const c = capaMus(m);
   const quando = mesAno(m.data);
-  return `<li class="mx-row" data-m="${k}"><img class="mx-mini${c.sem ? ' sem' : ''}" src="${esc(c.src)}" alt="" width="52" height="52" loading="lazy" decoding="async"><div class="mx-info"><b class="mx-n">${esc(m.nome)}</b>${m.artistas ? `<span class="mx-a">${esc(m.artistas)}</span>` : ''}</div>${quando ? `<time class="mx-data" datetime="${esc(m.data)}">${quando}</time>` : ''}${redesMus(m)}${temTrecho(m) ? playMus(m, k) : vaga ? '<span class="mx-vaga" aria-hidden="true"></span>' : ''}</li>`;
+  return `<li class="mx-row" data-m="${k}"><img class="mx-mini${c.sem ? ' sem' : ''}" src="${esc(c.src)}" alt="" width="52" height="52" loading="lazy" decoding="async"><div class="mx-info"><b class="mx-n">${esc(m.nome)}</b>${m.artistas ? `<span class="mx-a">${esc(m.artistas)}</span>` : ''}</div>${quando ? `<time class="mx-data" datetime="${esc(m.data)}">${quando}</time>` : ''}${redesMus(m)}${temAudio(m) ? playMus(m, k) : vaga ? '<span class="mx-vaga" aria-hidden="true"></span>' : ''}</li>`;
 }
 
 export function abaMusicas(mus, { previa = false } = {}) {
@@ -223,8 +223,9 @@ export function abaMusicas(mus, { previa = false } = {}) {
     h += `<section class="mx-sec" aria-labelledby="mxDest"><div class="cab"><h3 id="mxDest">Destaques</h3><span class="mx-direita"><span>${destaques.length} ${destaques.length === 1 ? 'música' : 'músicas'}</span><span class="mx-setas" hidden><button type="button" id="mxAnt" aria-label="Destaques anteriores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><button type="button" id="mxProx" aria-label="Mais destaques"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></span></span></div>` +
       `<div class="mx-trilho" id="mxTrilho">${destaques.map((m, k) => cardDestaque(m, k)).join('')}</div></section>`;
   }
-  const vaga = recentes.some(temTrecho);
-  const todas = `<a class="mx-todas" href="${REDES.spotify}" target="_blank" rel="noopener" data-rede="portfolio-spotify">${ICONES.spotify}<span>Ouvir o portfólio completo<small>Todas as produções no Spotify do @rideblan33</small></span>${ICONE_SETA}</a>`;
+  const vaga = recentes.some(temAudio);
+  // só o título (06/10/2026: o subtítulo saiu)
+  const todas = `<a class="mx-todas" href="${REDES.spotify}" target="_blank" rel="noopener" data-rede="portfolio-spotify" aria-label="Ouvir o portfólio completo no Spotify">${ICONES.spotify}<span>Ouvir o portfólio completo</span>${ICONE_SETA}</a>`;
   h += recentes.length
     ? `<section class="mx-sec" aria-labelledby="mxRec"><div class="cab"><h3 id="mxRec">${destaques.length ? 'Recentes' : 'Músicas'}</h3><span>mais novas primeiro</span></div>` +
       `<ul class="mx-lista">${recentes.map((m, k) => linhaRecente(m, destaques.length + k, vaga)).join('')}</ul>${todas}</section>`
@@ -232,11 +233,12 @@ export function abaMusicas(mus, { previa = false } = {}) {
   return { html: h, n };
 }
 
-// O que o mini player precisa pra tocar os trechos, na ordem da página
-export function trechosDoPerfil(mus) {
+// O que o mini player precisa pra tocar as músicas (inteiras), na ordem da página:
+// destaques e depois as recentes
+export function musicasDoPerfil(mus) {
   const { destaques, recentes } = separar(mus);
-  return destaques.concat(recentes).map((m, k) => (temTrecho(m) ? {
-    k, n: m.nome, a: m.artistas || '@rideblan33', f: m.faixa, ini: m.ini, url: linkMus(m), sp: !!m.spotify,
+  return destaques.concat(recentes).map((m, k) => (temAudio(m) ? {
+    k, n: m.nome, a: m.artistas || '', f: m.faixa, url: linkMus(m), sp: !!m.spotify,
     capa: capaMus(m).src, arte: capaMus(m).grande
   } : null)).filter(Boolean);
 }
@@ -291,9 +293,13 @@ export function paginaPerfil(dados, { url, barraFixa = true, aba = 'musicas', pr
   const mus = !Array.isArray(dados) && dados.musicas && Array.isArray(dados.musicas.lista) && dados.musicas.lista.length ? dados.musicas : null;
   const comMusicas = !!(mus && (mus.noAr || previa));
   const abaMus = comMusicas ? abaMusicas(mus, { previa }) : null;
-  const trechos = comMusicas ? trechosDoPerfil(mus) : [];
+  const tocaveis = comMusicas ? musicasDoPerfil(mus) : [];
   const abaIni = comMusicas && aba === 'tapes' ? 'tapes' : 'musicas';
-  const tocaAlgo = !!(tocador || trechos.length);
+  const tocaAlgo = !!(tocador || tocaveis.length);
+  // o botão do topo muda com a aba (06/10/2026): em Músicas toca o último lançamento (o 1º
+  // destaque e segue em ordem até as recentes); em Beat tapes, a última beat tape
+  const ROT_TAPE = 'Ouça a última beat tape', ROT_MUS = 'Ouça o último lançamento';
+  const rotOuca = tocaveis.length && (abaIni === 'musicas' || !tocador) ? ROT_MUS : ROT_TAPE;
   const titulo = '@rideblan33 · Portfólio';
   // com as músicas no ar, o Google lê os artistas que ele produziu (os 3 primeiros da lista)
   const parceiros = comMusicas ? [...new Set(mus.lista.flatMap((m) => String(m.artistas || '').split(/\s*,\s*/)).filter(Boolean))].slice(0, 3) : [];
@@ -500,9 +506,9 @@ a.mx-c .mx-img{transition:transform .35s ease}
 .mx-redes a{display:grid;place-items:center;width:36px;height:36px;border:1px solid #2a2a2a;border-radius:50%;color:#cfcfcf;transition:border-color .2s,color .2s}
 .mx-redes svg{width:17px;height:17px}
 @media (hover:hover){.mx-redes a:hover{border-color:var(--branco);color:var(--branco)}}
-.mx-trecho{display:block;height:3px;margin-top:12px;background:#2a2a2a;visibility:hidden}
-.mx-trecho i{display:block;width:0;height:100%;background:var(--branco)}
-.mx-card.atual .mx-trecho{visibility:visible}
+.mx-barra{display:block;height:3px;margin-top:12px;background:#2a2a2a;visibility:hidden}
+.mx-barra i{display:block;width:0;height:100%;background:var(--branco)}
+.mx-card.atual .mx-barra{visibility:visible}
 .mx-lista{list-style:none;margin:0;padding:0;background:var(--folha);border:1px solid var(--div)}
 .mx-row{display:flex;align-items:center;gap:14px;padding:12px 14px;border-bottom:1px solid var(--div)}
 .mx-row:last-child{border-bottom:0}
@@ -518,7 +524,6 @@ a.mx-c .mx-img{transition:transform .35s ease}
 .mx-todas>svg{width:22px;height:22px;flex:none}
 .mx-todas>svg:last-child{width:18px;height:18px;color:var(--meta);transition:color .2s}
 .mx-todas span{flex:1;min-width:0;font:700 13px/1.3 var(--grot);letter-spacing:.16em;text-transform:uppercase}
-.mx-todas small{display:block;margin-top:5px;font:500 13px/1.3 var(--grot);letter-spacing:0;text-transform:none;color:var(--meta)}
 @media (hover:hover){.mx-todas:hover{border-color:var(--branco);background:#0b0b0b}.mx-todas:hover>svg:last-child{color:var(--branco)}}
 /* rodapé igual ao da vitrine (26/09/2026): selo, © e @rideblan33, mesmas letras e disposição */
 footer{padding:1.4rem 2.4rem calc(1.4rem + env(safe-area-inset-bottom,0px));background:var(--black);border-top:1px solid var(--wire);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
@@ -555,6 +560,8 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
   .leg b{font:500 15px/1.2 var(--grot);overflow-wrap:anywhere}
   .leg i{font:500 13px/1 var(--grot);font-style:normal;color:var(--meta)}
 }
+/* celular estreito (06/10/2026): "Ouça o último lançamento" cabe do lado do logo em 360px */
+@media (max-width:380px){.topo .logo img{width:104px}.topo .ouca{letter-spacing:.08em;padding:0 11px 0 10px;gap:6px}}
 /* celular: 3 capas por linha (26/09/2026) */
 @media (max-width:600px){
   .abas{gap:26px;margin-bottom:28px}
@@ -579,7 +586,7 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
 <header class="terra">
   <nav class="topo" aria-label="Caramujo Records">
     <a class="logo" href="/?de=perfil" aria-label="Caramujo Records, beats à venda"><img src="/assets/brand/caramujo-h.webp" alt="Caramujo Records" width="296" height="54"></a>
-    ${tocador ? `<button class="ouca" id="ouca" type="button" aria-pressed="false">${ICONE_TOCA}${ICONE_PAUSA}<span>Ouça a última beat tape</span></button>` : ''}
+    ${tocaAlgo ? `<button class="ouca" id="ouca" type="button" aria-pressed="false" aria-label="${rotOuca}">${ICONE_TOCA}${ICONE_PAUSA}<span>${rotOuca}</span></button>` : ''}
   </nav>
   <section class="palco">
     <div class="texto">
@@ -601,10 +608,10 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
     </div>
   </section>
 </header>
-${barraFixa ? `<div class="fixa" id="fixa" aria-hidden="true"><img src="/assets/perfil/rideblan33-avatar.webp" alt="" width="34" height="34"><b>@rideblan33</b>${tocador ? `<button class="ouca" type="button" data-ouca aria-pressed="false" tabindex="-1">${ICONE_TOCA}${ICONE_PAUSA}<span>Ouça a última tape</span></button>` : ''}</div>` : ''}
+${barraFixa ? `<div class="fixa" id="fixa" aria-hidden="true"><img src="/assets/perfil/rideblan33-avatar.webp" alt="" width="34" height="34"><b>@rideblan33</b>${tocaAlgo ? `<button class="ouca" type="button" data-ouca aria-pressed="false" tabindex="-1">${ICONE_TOCA}${ICONE_PAUSA}<span>${rotOuca}</span></button>` : ''}</div>` : ''}
 ${tocaAlgo ? `<div class="tocando" id="tocando" hidden>
-  <a class="t-link" id="tLink" href="${esc(tocador ? tocador.tape.url : trechos[0].url)}" aria-label="${tocador ? `Abrir a tape ${esc(tocador.tape.name)}` : `Ouvir ${esc(trechos[0].n)} completa`}"></a>
-  <span class="t-capa"><img src="${esc(tocador ? tocador.tape.capa : trechos[0].capa)}" alt="" width="44" height="44"></span>
+  <a class="t-link" id="tLink" href="${esc(tocador ? tocador.tape.url : tocaveis[0].url)}" aria-label="${tocador ? `Abrir a tape ${esc(tocador.tape.name)}` : `Abrir ${esc(tocaveis[0].n)} no Spotify`}"></a>
+  <span class="t-capa"><img src="${esc(tocador ? tocador.tape.capa : tocaveis[0].capa)}" alt="" width="44" height="44"></span>
   <div class="t-txt"><b id="tNome">—</b><small id="tSub">${esc(tocador ? tocador.tape.name : '')}</small></div>
   <button id="tAnt" type="button" aria-label="Beat anterior"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14h2.6V5zM19 5l-9 7 9 7z"/></svg></button>
   <button class="t-play" id="tPlay" type="button" aria-label="Pausar">${ICONE_TOCA}${ICONE_PAUSA}</button>
@@ -612,7 +619,7 @@ ${tocaAlgo ? `<div class="tocando" id="tocando" hidden>
   <span class="barra"><i id="tBarra"></i></span>
 </div>` : ''}
 ${tocador ? `<script type="application/json" id="tocadorDados">${jsonSeguro(tocador)}</script>` : ''}
-${trechos.length ? `<script type="application/json" id="trechosDados">${jsonSeguro(trechos)}</script>` : ''}
+${tocaveis.length ? `<script type="application/json" id="musicasDados">${jsonSeguro({ lista: tocaveis, rotulos: { tape: ROT_TAPE, mus: ROT_MUS } })}</script>` : ''}
 
 <script type="application/json" id="compDados">${jsonSeguro({ total: tapes.length, capas: tapes.slice(0, 9).map((t) => (t.capa ? '/capa/' + t.capa + '?m' : null)) })}</script>
 <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
@@ -653,26 +660,34 @@ ${comMusicas ? '  </div>\n' : ''}</main>
     else manda({kind:'perfil-rede',trackId:a.dataset.rede,origem:de});
   });
 
-  // O player do perfil (05/10/2026): um som só pra duas coisas.
-  // - "Ouça a última beat tape": os beats da tape mais nova, um atrás do outro, em ordem
+  // O player do perfil: um som só pra duas coisas.
+  // - A última beat tape: os beats da tape mais nova, um atrás do outro, em ordem
   //   aleatória. Cada beat conta como play da tape (origem perfil).
-  // - Trecho das músicas: 30 s do pedaço mais forte, do arquivo da pasta do artista; acabou
-  //   um, vai pro próximo da página. Tocar no player abre a música inteira no Spotify.
-  var T=null, M=null;
+  // - As músicas (06/10/2026: inteiras, antes eram 30 s), do arquivo da pasta do artista,
+  //   na ordem da página: destaques e depois recentes. Acabou uma, vai pra próxima; depois
+  //   da última, para. Tocar no player abre a música no Spotify.
+  // O botão do topo muda com a aba: em Músicas é "Ouça o último lançamento" (começa no 1º
+  // destaque); em Beat tapes, "Ouça a última beat tape".
+  var T=null, MD=null, M=null, aoTrocarAba=function(){};
   try{ var te=document.getElementById('tocadorDados'); T=te?JSON.parse(te.textContent):null; }catch(e){ T=null; }
-  try{ var me=document.getElementById('trechosDados'); M=me?JSON.parse(me.textContent):null; }catch(e){ M=null; }
-  var temTape=!!(T && T.faixas && T.faixas.length), temTrecho=!!(M && M.length);
+  try{ var me=document.getElementById('musicasDados'); MD=me?JSON.parse(me.textContent):null; }catch(e){ MD=null; }
+  M=MD&&MD.lista&&MD.lista.length?MD.lista:null;
+  var temTape=!!(T && T.faixas && T.faixas.length), temMus=!!M;
   var botoes=[].slice.call(document.querySelectorAll('#ouca,[data-ouca]'));
   var caixa=document.getElementById('tocando');
-  if(caixa && (temTape||temTrecho)){
+  if(caixa && (temTape||temMus)){
     var som=new Audio(); som.preload='none';
-    var modo='', i=-1, j=-1, contados={}, ouvidos={}, TR=${TRECHO}, virando=false;
+    var modo='', i=-1, j=-1, contados={}, ouvidos={}, acabou=false;
+    var ROT=(MD&&MD.rotulos)||{tape:'Ouça a última beat tape',mus:'Ouça o último lançamento'};
     // de onde sai o MP3 (03/10/2026): o domínio próprio do armazenamento, quando ligado
     var MIDIA=${JSON.stringify(MIDIA)};
     function somDe(id){ return MIDIA ? MIDIA+'/mp3/'+id+'.mp3' : '/audio/'+id; }
     var nome=document.getElementById('tNome'), sub=document.getElementById('tSub'), barra=document.getElementById('tBarra');
     var link=document.getElementById('tLink'), capa=caixa.querySelector('.t-capa img');
     var bAnt=document.getElementById('tAnt'), bProx=document.getElementById('tProx'), bPlay=document.getElementById('tPlay');
+    // o que o botão do topo faz agora: 'musica' (aba Músicas aberta) ou 'tape'
+    function abaAberta(){ var a=document.querySelector('.abas [aria-selected="true"]'); return a?a.dataset.aba:'tapes'; }
+    function modoBotao(){ return temMus && (abaAberta()==='musicas' || !temTape) ? 'musica' : 'tape'; }
     // sempre em ordem aleatória (27/09/2026): embaralha no 1º play e de novo a cada volta
     // completa, sem repetir o beat que acabou de tocar
     function embaralha(){
@@ -682,17 +697,23 @@ ${comMusicas ? '  </div>\n' : ''}</main>
     }
     function proxima(){ if(i+1>=T.faixas.length){ embaralha(); vaiTape(0); } else vaiTape(i+1); }
     function marca(){
-      var toca=!som.paused, atual=modo==='trecho'&&j>=0?M[j].k:-1;
-      botoes.forEach(function(b){ var on=toca&&modo==='tape'; b.setAttribute('aria-pressed',on?'true':'false'); b.setAttribute('aria-label',on?'Pausar a última beat tape':'Ouça a última beat tape'); });
+      var toca=!som.paused, atual=modo==='musica'&&j>=0?M[j].k:-1, mb=modoBotao();
+      botoes.forEach(function(b){
+        var on=toca&&modo===mb, r=mb==='musica'?ROT.mus:ROT.tape;
+        b.setAttribute('aria-pressed',on?'true':'false');
+        b.setAttribute('aria-label',on?(mb==='musica'?'Pausar a música':'Pausar a última beat tape'):r);
+        var sp=b.querySelector('span'); if(sp && sp.textContent!==r) sp.textContent=r;
+      });
       caixa.classList.toggle('toca',toca);
       bPlay.setAttribute('aria-label',toca?'Pausar':'Tocar');
       [].forEach.call(document.querySelectorAll('.mx-play[data-m]'),function(b){
         var on=toca && +b.dataset.m===atual;
         b.classList.toggle('toca',on);
-        b.setAttribute('aria-label',(on?'Pausar o trecho de ':'Ouvir o trecho de ')+b.dataset.nome);
+        b.setAttribute('aria-label',(on?'Pausar ':'Ouvir ')+b.dataset.nome);
       });
       [].forEach.call(document.querySelectorAll('.mx-card[data-m],.mx-row[data-m]'),function(el){ el.classList.toggle('atual',+el.dataset.m===atual); });
     }
+    aoTrocarAba=marca;
     function mostra(src,titulo,subt,href,fora,rotulo){
       capa.src=src; nome.textContent=titulo; sub.textContent=subt; barra.style.width='0%';
       link.href=href; link.setAttribute('aria-label',rotulo);
@@ -700,115 +721,106 @@ ${comMusicas ? '  </div>\n' : ''}</main>
       caixa.hidden=false; document.body.classList.add('com-player');
     }
     function vaiTape(n){
-      modo='tape'; i=(n+T.faixas.length)%T.faixas.length;
+      modo='tape'; acabou=false; i=(n+T.faixas.length)%T.faixas.length;
       var f=T.faixas[i];
-      try{ som.volume=1; }catch(e){}
       som.src=somDe(f.id);
       mostra(T.tape.capa,f.t,T.tape.name,T.tape.url,false,'Abrir a tape '+T.tape.name);
       bAnt.setAttribute('aria-label','Beat anterior'); bProx.setAttribute('aria-label','Próximo beat');
       som.play().catch(function(){ marca(); });
       if(!contados[f.id]){ contados[f.id]=1; manda({kind:'play',trackId:f.id,artistId:T.tape.id,origem:'perfil'}); }
-      tarja(f.t,'@rideblan33','Caramujo Records',T.tape.arte);
+      tarja(f.t,'@rideblan33','Caramujo Records',T.tape.arte,'1000x1000');
       marca();
     }
-    function vaiTrecho(n){
-      modo='trecho'; j=(n+M.length)%M.length; virando=false;
+    function vaiMusica(n){
+      modo='musica'; acabou=false; j=(n+M.length)%M.length;
       var m=M[j];
-      try{ som.volume=0; }catch(e){}
-      som.src=somDe(m.f)+'#t='+m.ini;
-      mostra(m.capa,m.n,'Trecho · '+m.a,m.url,true,'Ouvir '+m.n+' completa '+(m.sp?'no Spotify':'no YouTube'));
-      bAnt.setAttribute('aria-label','Trecho anterior'); bProx.setAttribute('aria-label','Próximo trecho');
+      som.src=somDe(m.f);
+      mostra(m.capa,m.n,m.a||'@rideblan33',m.url,true,'Abrir '+m.n+(m.sp?' no Spotify':' no YouTube'));
+      bAnt.setAttribute('aria-label','Música anterior'); bProx.setAttribute('aria-label','Próxima música');
       som.play().catch(function(){ marca(); });
-      if(!ouvidos[m.k]){ ouvidos[m.k]=1; manda({kind:'perfil-rede',trackId:'trecho',origem:de}); }
-      tarja(m.n,m.a,'Trecho · @rideblan33',m.arte);
+      if(!ouvidos[m.k]){ ouvidos[m.k]=1; manda({kind:'perfil-rede',trackId:'musica-play',origem:de}); }
+      // tela de bloqueio igual à aba Músicas das pastas: "artistas & @rideblan33"
+      tarja(m.n,m.a?m.a+' & @rideblan33':'@rideblan33','Caramujo Records',m.arte,'640x640');
       marca();
     }
-    // acabou o trecho: vai pro próximo da página; depois do último, para
-    function fimTrecho(){
-      if(virando) return; virando=true;
-      if(j+1<M.length) return vaiTrecho(j+1);
-      som.pause(); try{ som.currentTime=M[j].ini; som.volume=1; }catch(e){}
-      barra.style.width='0%'; var bc=document.querySelector('.mx-card.atual .mx-trecho i'); if(bc) bc.style.width='0%';
-      virando=false;
+    // acabou a música: vai pra próxima da página; depois da última, para (o play recomeça do 1º)
+    function fimMusica(){
+      if(j+1<M.length) return vaiMusica(j+1);
+      acabou=true; som.pause(); barra.style.width='0%';
+      var bc=document.querySelector('.mx-card.atual .mx-barra i'); if(bc) bc.style.width='0%';
+      marca();
     }
     // Tela de bloqueio e notificação no padrão da vitrine (e das tapes): nome, artista,
     // álbum, capa inteira, e os mesmos botões.
-    function tarja(titulo,artista,album,arte){
+    function tarja(titulo,artista,album,arte,tam){
       if(!('mediaSession' in navigator)) return;
       var url=/^https?:/.test(arte)?arte:location.origin+arte, tipo=/\\.png$/i.test(url)?'image/png':'image/jpeg';
       try{ navigator.mediaSession.metadata=new MediaMetadata({ title:titulo, artist:artista, album:album,
-        artwork:[{src:url,sizes:modo==='tape'?'1000x1000':'640x640',type:tipo}] }); }catch(e){}
+        artwork:[{src:url,sizes:tam,type:tipo}] }); }catch(e){}
       var liga=function(a,fn){ try{ navigator.mediaSession.setActionHandler(a,fn) }catch(e){} };
       liga('play',function(){ som.play().catch(function(){}) });
       liga('pause',function(){ som.pause() });
       liga('previoustrack',function(){ anterior(); });
       liga('nexttrack',function(){ seguinte(); });
-      var solta=modo==='tape';
-      liga('seekbackward',solta?function(d){ som.currentTime=Math.max(0,som.currentTime-(d&&d.seekOffset||15)); }:null);
-      liga('seekforward',solta?function(d){ som.currentTime=Math.min(som.duration||1e9,som.currentTime+(d&&d.seekOffset||15)); }:null);
-      liga('seekto',solta?function(d){ if(d&&d.seekTime!=null) som.currentTime=d.seekTime; }:null);
-      liga('stop',function(){ som.pause(); });
+      liga('seekbackward',function(d){ som.currentTime=Math.max(0,som.currentTime-(d&&d.seekOffset||15)); });
+      liga('seekforward',function(d){ som.currentTime=Math.min(som.duration||1e9,som.currentTime+(d&&d.seekOffset||15)); });
+      liga('seekto',function(d){ if(d&&d.seekTime!=null) som.currentTime=d.seekTime; });
+      liga('stop',function(){ som.pause(); som.currentTime=0; });
     }
     function posicao(){
       if(!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState) return;
-      if(modo!=='tape'){ try{ navigator.mediaSession.setPositionState(); }catch(e){} return; }
       var dur=som.duration; if(!dur||!isFinite(dur)) return;
       try{ navigator.mediaSession.setPositionState({ duration:dur, position:Math.min(som.currentTime,dur), playbackRate:som.playbackRate||1 }); }catch(e){}
     }
-    // anterior: no começo volta pro anterior; passou de 4 s, volta pro começo dele
+    // anterior: no começo volta pra anterior; passou de 4 s, volta pro começo dela
     function anterior(){
-      if(modo==='trecho'){ var m=M[j]; if(som.currentTime-m.ini>4){ som.currentTime=m.ini; if(som.paused) som.play().catch(function(){}); } else vaiTrecho(j-1); return; }
-      if(som.currentTime>4){ som.currentTime=0; if(som.paused) som.play().catch(function(){}); } else vaiTape(i-1);
+      if(som.currentTime>4){ som.currentTime=0; if(som.paused) som.play().catch(function(){}); return; }
+      if(modo==='musica') vaiMusica(j-1); else vaiTape(i-1);
     }
-    function seguinte(){ if(modo==='trecho') vaiTrecho(j+1); else proxima(); }
-    function alternaTape(){
-      if(modo!=='tape'){ if(i<0) embaralha(); return vaiTape(i<0?0:i); }
+    function seguinte(){ if(modo==='musica') vaiMusica(j+1); else proxima(); }
+    function alterna(){
+      if(acabou) return modo==='musica' ? vaiMusica(0) : proxima();
       if(som.paused) som.play().catch(function(){}); else som.pause();
     }
-    if(temTape) botoes.forEach(function(b){ b.addEventListener('click',alternaTape); });
-    bPlay.addEventListener('click',function(){ if(!modo) return; if(som.paused) som.play().catch(function(){}); else som.pause(); });
+    // o botão do topo: o mesmo modo pausa/continua; o outro começa (música = do 1º destaque)
+    botoes.forEach(function(b){ b.addEventListener('click',function(){
+      var mb=modoBotao();
+      if(modo===mb && !acabou) return alterna();
+      if(mb==='musica') return vaiMusica(0);
+      if(i<0) embaralha();
+      vaiTape(i<0?0:i);
+    }); });
+    bPlay.addEventListener('click',function(){ if(modo) alterna(); });
     bProx.addEventListener('click',seguinte);
     bAnt.addEventListener('click',anterior);
-    // o play de cada música: a mesma toca/pausa; outra começa o trecho dela
-    if(temTrecho) document.addEventListener('click',function(e){
+    // o play de cada música: a mesma toca/pausa; outra começa ela (e segue a fila da página)
+    if(temMus) document.addEventListener('click',function(e){
       var b=e.target.closest&&e.target.closest('.mx-play[data-m]'); if(!b) return;
       var k=+b.dataset.m, n=-1;
       for(var x=0;x<M.length;x++) if(M[x].k===k){ n=x; break; }
       if(n<0) return;
-      if(modo==='trecho' && j===n){ if(som.paused) som.play().catch(function(){}); else som.pause(); return; }
-      vaiTrecho(n);
+      if(modo==='musica' && j===n && !acabou){ if(som.paused) som.play().catch(function(){}); else som.pause(); return; }
+      vaiMusica(n);
     });
     som.addEventListener('play',function(){ marca(); if('mediaSession' in navigator) navigator.mediaSession.playbackState='playing'; });
     som.addEventListener('pause',function(){ marca(); if('mediaSession' in navigator) navigator.mediaSession.playbackState='paused'; });
-    som.addEventListener('loadedmetadata',function(){
-      // o #t= do endereço já começa no trecho; alguns navegadores ignoram e começam do zero
-      if(modo==='trecho' && som.currentTime<M[j].ini-1){ try{ som.currentTime=M[j].ini; }catch(e){} }
-      posicao();
-    });
-    som.addEventListener('seeked',posicao);
-    som.addEventListener('ended',function(){ if(modo==='trecho') fimTrecho(); else proxima(); });
+    som.addEventListener('loadedmetadata',posicao); som.addEventListener('seeked',posicao);
+    som.addEventListener('ended',function(){ if(modo==='musica') fimMusica(); else proxima(); });
     som.addEventListener('timeupdate',function(){
-      if(modo==='trecho'){
-        var m=M[j], p=som.currentTime-m.ini, fim=Math.min(TR,(som.duration||1e9)-m.ini);
-        // entra e sai de mansinho (0,8 s e 1,5 s); no iPhone o volume é do aparelho e isso não muda nada
-        try{ som.volume=Math.max(0,Math.min(1,p/0.8,(fim-p)/1.5)); }catch(e){}
-        var pct=Math.max(0,Math.min(100,p/fim*100))+'%';
-        barra.style.width=pct;
-        var bc=document.querySelector('.mx-card.atual .mx-trecho i'); if(bc) bc.style.width=pct;
-        if(p>=fim-0.1) fimTrecho();
-        return;
-      }
-      barra.style.width=(som.duration?som.currentTime/som.duration*100:0)+'%';
+      var pct=(som.duration?som.currentTime/som.duration*100:0)+'%';
+      barra.style.width=pct;
+      if(modo==='musica'){ var bc=document.querySelector('.mx-card.atual .mx-barra i'); if(bc) bc.style.width=pct; }
     });
-    // o próximo beat já fica pronto na borda (03/10/2026): passou da metade, um pedido de
-    // 2 bytes faz o servidor guardar o próximo inteiro, e ele começa sem espera
+    // a próxima já fica pronta na borda (03/10/2026): passou da metade, um pedido de
+    // 2 bytes faz o servidor guardar a próxima inteira, e ela começa sem espera
     var aquecidos={};
     som.addEventListener('timeupdate',function(){
       try{
-        if(modo!=='tape'||i<0||!som.duration||som.currentTime/som.duration<0.5) return;
-        var f=T.faixas[i+1]; if(!f||aquecidos[f.id]) return;
-        aquecidos[f.id]=1;
-        fetch(somDe(f.id),{headers:{Range:'bytes=0-1'},cache:'no-store'}).catch(function(){});
+        if(!som.duration||som.currentTime/som.duration<0.5) return;
+        var id=modo==='tape'?(T.faixas[i+1]||{}).id:modo==='musica'?(M[j+1]||{}).f:null;
+        if(!id||aquecidos[id]) return;
+        aquecidos[id]=1;
+        fetch(somDe(id),{headers:{Range:'bytes=0-1'},cache:'no-store'}).catch(function(){});
       }catch(e){}
     });
   }
@@ -832,7 +844,7 @@ ${comMusicas ? '  </div>\n' : ''}</main>
     });
     try{ history.replaceState(history.state,'',location.pathname+location.search+'#'+qual); }catch(e){}
     if(conta) manda({kind:'perfil-rede',trackId:'aba-'+qual,origem:de});
-    setas();
+    setas(); aoTrocarAba();
   }
   if(abas.length){
     abas.forEach(function(b,k){

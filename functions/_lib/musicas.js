@@ -1,8 +1,9 @@
 // Músicas do perfil (05/10/2026): a aba "Músicas" do /rideblan33. O Bruno cola no painel
 // o link do Spotify (ou do YouTube) de uma música que produziu; nome, artistas, data e
 // capa vêm do próprio link. Duas seções: DESTAQUES (ordem dele) e RECENTES (a mais nova
-// primeiro, pela data de lançamento). O trecho de 30 s toca do arquivo que já está na
-// pasta do artista no catálogo (o pedaço mais forte, pela onda); sem arquivo, só os botões.
+// primeiro, pela data de lançamento, ou na ordem dele quando ligar a ordem personalizada).
+// A música toca INTEIRA no perfil (06/10/2026; antes eram 30 s) do arquivo que já está na
+// pasta do artista no catálogo; sem arquivo, só os botões do Spotify/YouTube.
 //
 // Tudo numa linha da meta ('musicas'): o perfil já lê a meta numa consulta só, então a
 // aba nova não custa consulta a mais. A capa vai pra prateleira (R2) como capa/mus-<id>,
@@ -12,7 +13,6 @@ import { slug } from './casar.js';
 import { somUrl as somPadrao } from './midia.js';
 
 export const CHAVE = 'musicas';
-export const TRECHO = 30;              // segundos do trecho no perfil
 export const MAX = 60;                 // músicas na lista (destaques + recentes)
 
 /* ---------- de onde a pessoa veio e em que aba o perfil abre ---------- */
@@ -63,7 +63,7 @@ function item(x) {
   const youtube = RE_YOUTUBE.test(x.youtube || '') ? x.youtube : null;
   if (!spotify && !youtube) return null;
   const id = String(x.id || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40) || (normalizarLink(spotify || youtube) || {}).id;
-  const n = (v) => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) ? null : Math.max(0, Math.round(Number(v))));
+  const dur = Number(x.dur);
   return {
     id,
     secao: x.secao === 'destaque' ? 'destaque' : 'recente',
@@ -74,7 +74,7 @@ function item(x) {
     capaUrl: RE_CAPA_FORA.test(x.capaUrl || '') ? x.capaUrl : null,
     data: /^\d{4}(-\d{2}(-\d{2})?)?$/.test(x.data || '') ? x.data : null,
     faixa: /^[A-Za-z0-9_-]{1,80}$/.test(x.faixa || '') ? x.faixa : null,
-    ini: n(x.ini), dur: n(x.dur),
+    dur: x.dur != null && x.dur !== '' && Number.isFinite(dur) && dur > 0 ? Math.round(dur) : null,
     buscou: !!x.buscou   // já procurou o arquivo na pasta do artista (não procura de novo sozinho)
   };
 }
@@ -88,20 +88,23 @@ export function limpar(o) {
     vistos.add(it.id); lista.push(it);
     if (lista.length >= MAX) break;
   }
-  return { noAr: !!(o && o.noAr), lista };
+  // ordemRecentes: 'data' (padrão, a mais nova primeiro) ou 'manual' (a ordem da lista)
+  return { noAr: !!(o && o.noAr), ordemRecentes: o && o.ordemRecentes === 'manual' ? 'manual' : 'data', lista };
 }
 
 export function deTexto(valor) {
-  try { return limpar(JSON.parse(valor)); } catch (_) { return { noAr: false, lista: [] }; }
+  try { return limpar(JSON.parse(valor)); } catch (_) { return { noAr: false, ordemRecentes: 'data', lista: [] }; }
 }
 
-// Destaques na ordem do Bruno; recentes da mais nova pra mais velha (sem data vai pro fim)
+// recentes da mais nova pra mais velha (sem data vai pro fim; empate fica como estava)
+const porData = (l) => l.map((x, i) => [x, i]).sort((a, b) => (b[0].data || '').localeCompare(a[0].data || '') || a[1] - b[1]).map((p) => p[0]);
+
+// Destaques na ordem do Bruno; recentes pela data ou na ordem dele
 export function separar(m) {
   const lista = (m && m.lista) || [];
   const destaques = lista.filter((x) => x.secao === 'destaque');
-  const recentes = lista.filter((x) => x.secao !== 'destaque')
-    .map((x, i) => [x, i]).sort((a, b) => (b[0].data || '').localeCompare(a[0].data || '') || a[1] - b[1]).map((p) => p[0]);
-  return { destaques, recentes };
+  const soRecentes = lista.filter((x) => x.secao !== 'destaque');
+  return { destaques, recentes: m && m.ordemRecentes === 'manual' ? soRecentes : porData(soRecentes) };
 }
 
 /* ---------- ler o link (painel) ---------- */
@@ -186,35 +189,9 @@ export async function guardarCapa(env, it) {
   return id;
 }
 
-/* ---------- o trecho (arquivo da pasta do artista) ---------- */
+/* ---------- o áudio (arquivo da pasta do artista) ---------- */
 
-// Os 30 s de mais energia (a conta do story.js, maisForte), sem entrar na cauda
-export function maisForte(o, dur = TRECHO) {
-  const p = (o && o.p) || [], passo = (o && o.passo) || 0.5, n = Math.round(dur / passo);
-  if (!p.length) return null;
-  let max = 0, i;
-  for (i = 0; i < p.length; i++) if (p[i] > max) max = p[i];
-  for (i = p.length - 1; i > 0 && p[i] < max * 0.08; i--);
-  const ult = Math.floor(((i + 1) * passo) / passo) - n;
-  if (ult <= 0) return 0;
-  let soma = 0, melhor = 0, maior = -1;
-  for (i = 0; i < n; i++) soma += p[i] * p[i];
-  for (i = 0; i <= ult; i++) {
-    if (i > 0) soma += p[i + n - 1] * p[i + n - 1] - p[i - 1] * p[i - 1];
-    if (soma > maior) { maior = soma; melhor = i; }
-  }
-  return Math.round(melhor * passo);
-}
-
-export async function inicioDoTrecho(env, faixa, dur) {
-  try {
-    const obj = env && env.AUDIO ? await env.AUDIO.get(`onda/${faixa}.json`) : null;
-    if (obj) { const ini = maisForte(await obj.json()); if (ini !== null) return ini; }
-  } catch (_) { /* sem onda: o pedaço de 1/3 da música */ }
-  return dur ? Math.max(0, Math.round(Math.min(dur * 0.3, dur - TRECHO))) : 0;
-}
-
-// Faixas do catálogo com o nome parecido (pra ligar o trecho). Uma consulta, só no painel.
+// Faixas do catálogo com o nome parecido (pra ligar o áudio). Uma consulta, só no painel.
 // Pontos: nome igual 100; igual sem o parêntese/" - Remix" 90; contém o nome 70; o nome
 // contém a faixa 40; música (não beat) +10; pasta com o nome de um dos artistas +20;
 // remix/ao vivo/acústico de um lado só -30. Liga sozinho só música com 100 ou mais.
@@ -259,7 +236,7 @@ export async function candidatos(d, nome, artistas = '') {
 
 async function ler(d) {
   const r = await d.prepare(`SELECT valor FROM meta WHERE chave = '${CHAVE}'`).first();
-  return r ? deTexto(r.valor) : { noAr: false, lista: [] };
+  return r ? deTexto(r.valor) : { noAr: false, ordemRecentes: 'data', lista: [] };
 }
 async function gravar(d, m) {
   const limpo = limpar(m);
@@ -267,21 +244,17 @@ async function gravar(d, m) {
   return limpo;
 }
 
-// liga o trecho: confere a faixa e acha o pedaço mais forte
-async function ligarTrecho(d, env, it, faixa, ini) {
-  if (!faixa) { it.faixa = null; it.ini = null; it.dur = null; return true; }
+// liga o áudio: confere que a faixa existe e está pronta
+async function ligarAudio(d, it, faixa) {
+  if (!faixa) { it.faixa = null; it.dur = null; return true; }
   const t = await d.prepare('SELECT id, dur FROM tracks WHERE id = ? AND ready = 1').bind(String(faixa)).first();
   if (!t) return false;
-  const mesma = it.faixa === t.id;
   it.faixa = t.id; it.dur = t.dur || null;
-  const pedido = ini === '' || ini == null ? NaN : Number(ini);
-  if (Number.isFinite(pedido) && pedido >= 0) it.ini = Math.round(t.dur ? Math.min(pedido, Math.max(0, t.dur - 5)) : pedido);
-  else if (!mesma || it.ini == null) it.ini = await inicioDoTrecho(env, t.id, t.dur);
   return true;
 }
 
 // O que a tela do painel mostra: a lista na ordem da página, com o nome do arquivo do
-// trecho e o endereço do som pra ouvir ali mesmo. Uma consulta pras faixas ligadas.
+// áudio e o endereço do som pra ouvir ali mesmo. Uma consulta pras faixas ligadas.
 async function resposta(d, m, somUrl) {
   const { destaques, recentes } = separar(m);
   const ids = [...new Set(m.lista.map((x) => x.faixa).filter(Boolean))];
@@ -295,13 +268,13 @@ async function resposta(d, m, somUrl) {
   const mostra = (x) => ({
     ...x,
     capaSrc: x.capa ? `/capa/${x.capa}?p` : x.capaUrl || null,
-    trecho: x.faixa && nomes[x.faixa] ? { titulo: nomes[x.faixa].title, pasta: nomes[x.faixa].pasta, som: somUrl(x.faixa) } : null
+    audio: x.faixa && nomes[x.faixa] ? { titulo: nomes[x.faixa].title, pasta: nomes[x.faixa].pasta, som: somUrl(x.faixa) } : null
   });
   const faltamCapas = m.lista.filter((x) => !x.capa && x.capaUrl).length;
-  return { ok: true, noAr: m.noAr, destaques: destaques.map(mostra), recentes: recentes.map(mostra), max: MAX, trechoSeg: TRECHO, faltamCapas };
+  return { ok: true, noAr: m.noAr, ordemRecentes: m.ordemRecentes, destaques: destaques.map(mostra), recentes: recentes.map(mostra), max: MAX, faltamCapas };
 }
 
-// Abrir a tela: guarda as capas que faltam (até 4 por vez) e procura o trecho de quem
+// Abrir a tela: guarda as capas que faltam (até 4 por vez) e procura o áudio de quem
 // ainda não procurou. Volta { corpo, mudou }.
 export async function painelLer(d, env, somUrl = somPadrao) {
   const m = await ler(d);
@@ -316,7 +289,7 @@ export async function painelLer(d, env, somUrl = somPadrao) {
       it.buscou = true; mudou = true;
       if (!it.faixa) {
         const cs = await candidatos(d, it.nome, it.artistas).catch(() => []);
-        if (cs[0] && cs[0].musica && cs[0].pts >= LIGA_SOZINHO) await ligarTrecho(d, env, it, cs[0].id);
+        if (cs[0] && cs[0].musica && cs[0].pts >= LIGA_SOZINHO) await ligarAudio(d, it, cs[0].id);
       }
     }
   }
@@ -363,29 +336,48 @@ export async function painelAcao(op, d, env, body, somUrl = somPadrao) {
       if (m.lista.length >= MAX) return erro(`A lista já tem ${MAX} músicas. Tira uma antes.`);
       it = { id, buscou: true };
     }
-    const virouDestaque = !novo && it.secao !== 'destaque' && body.secao === 'destaque';
+    const secao = body.secao === 'destaque' ? 'destaque' : 'recente';
+    const mudouSecao = !novo && it.secao !== secao;
     Object.assign(it, {
-      nome, artistas: texto(semMim(body.artistas), 200), secao: body.secao === 'destaque' ? 'destaque' : 'recente',
+      nome, artistas: texto(semMim(body.artistas), 200), secao,
       spotify: sp ? sp.url : null, youtube: yt ? yt.url : null, data: body.data || null, buscou: true
     });
     if (body.capaUrl && RE_CAPA_FORA.test(body.capaUrl) && body.capaUrl !== it.capaUrl) { it.capaUrl = body.capaUrl; it.capa = null; }
     if (!it.capaUrl && yt) it.capaUrl = `https://i.ytimg.com/vi/${yt.id.slice(2)}/hqdefault.jpg`;
     if (!it.capa && it.capaUrl) it.capa = await guardarCapa(env, it).catch(() => null);
-    if ('faixa' in body && !(await ligarTrecho(d, env, it, body.faixa || null, body.ini))) return erro('Não achei esse arquivo do trecho. Escolhe outro.');
-    if (novo) m.lista.push(it);
-    else if (virouDestaque) { m.lista.splice(m.lista.indexOf(it), 1); m.lista.push(it); }   // entra como o último destaque
+    if ('faixa' in body && !(await ligarAudio(d, it, body.faixa || null))) return erro('Não achei esse arquivo de áudio. Escolhe outro.');
+    // destaque novo (ou que virou destaque) entra no fim dos destaques; recente nova na
+    // ordem personalizada entra em 1º das recentes (na ordem por data, a data decide)
+    if (mudouSecao) m.lista.splice(m.lista.indexOf(it), 1);
+    if (novo || mudouSecao) {
+      if (it.secao === 'destaque') m.lista.push(it);
+      else { const k = m.lista.findIndex((x) => x.secao !== 'destaque'); m.lista.splice(k < 0 ? m.lista.length : k, 0, it); }
+    }
   } else if (op === 'musica-tirar') {
     const n = m.lista.findIndex((x) => x.id === body.id);
     if (n < 0) return erro('Essa música já não está na lista.');
     m.lista.splice(n, 1);
     if (!m.lista.length) m.noAr = false;
-  } else if (op === 'musica-mover') {
-    // só os destaques têm ordem (as recentes vão pela data)
-    const dest = m.lista.filter((x) => x.secao === 'destaque');
-    const k = dest.findIndex((x) => x.id === body.id), alvo = k + (Number(body.dir) < 0 ? -1 : 1);
-    if (k < 0 || alvo < 0 || alvo >= dest.length) return erro('Não dá pra mover pra lá.');
-    const a = m.lista.indexOf(dest[k]), b = m.lista.indexOf(dest[alvo]);
-    [m.lista[a], m.lista[b]] = [m.lista[b], m.lista[a]];
+  } else if (op === 'musicas-ordem') {
+    // a ordem nova de uma seção inteira (arrastar no painel). Recentes arrastadas = ordem
+    // personalizada ligada.
+    const secao = body.secao === 'destaque' ? 'destaque' : 'recente';
+    const da = m.lista.filter((x) => x.secao === secao);
+    const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
+    if (ids.length !== da.length || new Set(ids).size !== ids.length || !ids.every((id) => da.some((x) => x.id === id))) return erro('A lista mudou enquanto você arrastava. Recarrega a página.');
+    const nova = ids.map((id) => da.find((x) => x.id === id));
+    const resto = m.lista.filter((x) => x.secao !== secao);
+    m.lista = secao === 'destaque' ? nova.concat(resto) : resto.concat(nova);
+    if (secao === 'recente') m.ordemRecentes = 'manual';
+  } else if (op === 'musicas-ordem-recentes') {
+    // Personalizada começa da ordem que estava na tela (a por data); voltar pra data só troca a chave
+    if (body.modo === 'manual') {
+      if (m.ordemRecentes !== 'manual') {
+        const { recentes } = separar(m);
+        m.lista = m.lista.filter((x) => x.secao === 'destaque').concat(recentes);
+      }
+      m.ordemRecentes = 'manual';
+    } else m.ordemRecentes = 'data';
   } else return null;
   const final = await gravar(d, m);
   return { corpo: await resposta(d, final, somUrl), mudou: true };
@@ -405,5 +397,5 @@ export const INICIAIS = [
   ['recente', 'Só Eu Sei', 'Marrom', 'album/22m1FpdUUb4ZAxodvQPVQk', '2025-10-31', 'cba71af3cbf1ee571f1e9d4e']
 ].map(([secao, nome, artistas, sp, data, capa]) => ({
   id: 'sp' + sp.split('/')[1], secao, nome, artistas, spotify: 'https://open.spotify.com/' + sp, youtube: null,
-  capa: null, capaUrl: 'https://i.scdn.co/image/ab67616d0000b273' + capa, data, faixa: null, ini: null, dur: null, buscou: false
+  capa: null, capaUrl: 'https://i.scdn.co/image/ab67616d0000b273' + capa, data, faixa: null, dur: null, buscou: false
 }));
