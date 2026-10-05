@@ -73,7 +73,7 @@ ${ICONES}
   .sub{font-size:14px;color:var(--ink4)}
   .barra{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
   .barra .pill{flex:0 0 auto}
-  .barra[hidden],#resumo[hidden],#lista[hidden],#analytics[hidden],#vitrine[hidden]{display:none}
+  .barra[hidden],#resumo[hidden],#lista[hidden],#analytics[hidden],#vitrine[hidden],#musicas[hidden]{display:none}
   @media (max-width:560px){
     .barra .pill{margin-left:auto}
     h1{font-size:30px}
@@ -299,9 +299,11 @@ function pagina() {
   <div id="lista"><div class="vazio">carregando…</div></div>
   <div id="analytics" hidden></div>
   <div id="vitrine" hidden></div>
+  <div id="musicas" hidden></div>
 </div>
-<script src="/assets/painel/analytics.js?v=2026-09-27c" defer></script>
+<script src="/assets/painel/analytics.js?v=2026-10-05a" defer></script>
 <script src="/assets/painel/vitrine.js?v=2026-10-04a" defer></script>
+<script src="/assets/painel/musicas.js?v=2026-10-05a" defer></script>
 
 <div class="veil" id="veil" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>
@@ -311,6 +313,7 @@ function pagina() {
   var $=function(i){return document.getElementById(i)};
   var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='home', filtro='', ordem='modificado', perfilVisto=null;
   var lojaResumo=null, lojaPedida=false, consumoHoje=null, consumoPedido=false, numerosSite=null, numerosPedido=false;
+  var musicasResumo=null, musicasPedido=false;
   var ORDENS={modificado:'Modificação', atividade:'Atividade', az:'A a Z', faixas:'Mais faixas', perfil:'Ordem do perfil'};
   // Perfil do @rideblan33 (26/09/2026): a mesma conta da página (tape sem ordem = nova = topo)
   function chavePerfil(a){ return a.perfil_ordem!=null ? Number(a.perfil_ordem) : -1000000000 - a.id; }
@@ -395,9 +398,9 @@ function pagina() {
     });
   }
 
-  var TITULOS={home:'Painel',artistas:'Artistas',tapes:'Beat tapes',vitrine:'Vitrine',analytics:'Analytics'};
+  var TITULOS={home:'Painel',artistas:'Artistas',tapes:'Beat tapes',vitrine:'Vitrine',analytics:'Analytics',musicas:'Músicas do perfil'};
   function irPara(v){
-    if(v==='home'){ lojaPedida=false; consumoPedido=false; numerosPedido=false; }   // volta com os números novos
+    if(v==='home'){ lojaPedida=false; consumoPedido=false; numerosPedido=false; musicasPedido=false; }   // volta com os números novos
     vista=v; filtro=''; $('q').value='';
     if(v!=='tapes' && ordem==='perfil'){ ordem='modificado'; $('ordemLabel').textContent=ORDENS[ordem]; }
     $('q').placeholder = v==='tapes' ? 'Buscar beat tape' : 'Buscar artista';
@@ -437,8 +440,27 @@ function pagina() {
     nb.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/></svg></span>'+
       '<span><b>Números do site</b><small>'+(numerosSite?esc(textoNumeros(numerosSite,'curto')):'artistas, faixas e streams')+'</small></span><span class="seta" aria-hidden="true">›</span>';
     nb.addEventListener('click',abrirNumeros);
+    // Músicas do perfil (05/10/2026): a aba Músicas do /rideblan33 (linha larga, acima dos números)
+    var mb=document.createElement('button'); mb.type='button'; mb.className='num'; mb.id='musPerfil';
+    mb.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></span>'+
+      '<span><b>Músicas do perfil</b><small>'+textoMusicas()+'</small></span><span class="seta" aria-hidden="true">›</span>';
+    mb.addEventListener('click',function(){ irPara('musicas'); });
+    box.appendChild(mb);
     box.appendChild(nb);
     return box;
+  }
+  function textoMusicas(){
+    var r=musicasResumo;
+    if(!r) return 'destaques, recentes e o trecho de cada uma';
+    return r.n+(r.n===1?' música':' músicas')+' · '+(r.noAr?'no ar':'<em>fora do ar (prévia)</em>');
+  }
+  function pedirMusicas(){
+    if(musicasPedido) return; musicasPedido=true;
+    fetch('/api/painel?op=musicas').then(function(r){return r.json()}).then(function(j){
+      if(!j||!j.ok) return;
+      musicasResumo={ n:j.destaques.length+j.recentes.length, noAr:!!j.noAr };
+      var el=$('musPerfil'); if(el&&vista==='home') el.querySelector('small').innerHTML=textoMusicas();
+    }).catch(function(){});
   }
   function milharPonto(n){ return String(Math.round(n)).replace(/\\B(?=(\\d{3})+(?!\\d))/g,'.'); }
   function streamsCurto(n){ return n>=1e6?(Math.floor(n/1e5)/10).toString().replace('.',',')+' mi':n>=1e3?Math.floor(n/1e3)+' mil':String(n); }
@@ -489,10 +511,20 @@ function pagina() {
     document.querySelector('.topo .marca').setAttribute('aria-label', vista==='home' ? 'Voltar pro site' : 'Voltar pro painel');
     $('barra').hidden = !(vista==='artistas'||vista==='tapes');
     $('resumo').hidden = vista==='analytics';
-    $('lista').hidden = vista==='analytics'||vista==='vitrine';
+    $('lista').hidden = vista==='analytics'||vista==='vitrine'||vista==='musicas';
     $('analytics').hidden = vista!=='analytics';
     $('vitrine').hidden = vista!=='vitrine';
-    if(vista==='home'){ pedirResumoFunil(); pedirResumoLoja(); pedirConsumo(); pedirNumeros(); $('lista').innerHTML=''; $('lista').appendChild(home()); pintarConsumo(); return; }
+    $('musicas').hidden = vista!=='musicas';
+    if(vista==='home'){ pedirResumoFunil(); pedirResumoLoja(); pedirConsumo(); pedirNumeros(); pedirMusicas(); $('lista').innerHTML=''; $('lista').appendChild(home()); pintarConsumo(); return; }
+    if(vista==='musicas'){
+      // monta uma vez só; depois só redesenha (a lista de artistas recarrega sozinha)
+      if(!$('musicas').dataset.montado && window.CaramujoMusicas){
+        $('musicas').dataset.montado='1';
+        window.CaramujoMusicas.abrir($('musicas'));
+      } else if(window.CaramujoMusicas) window.CaramujoMusicas.pintar();
+      if(!window.CaramujoMusicas) $('musicas').innerHTML='<div class="vazio">carregando…</div>';
+      return;
+    }
     if(vista==='vitrine'){
       // monta uma vez só (igual ao analytics): a lista de artistas recarrega sozinha
       // durante conversão e não pode apagar o que você está digitando aqui
@@ -573,7 +605,7 @@ function pagina() {
     });
   }
   function pintarResumo(usado){
-    if(vista==='vitrine') return;            // lá o resumo é da loja
+    if(vista==='vitrine'||vista==='musicas') return;            // lá o resumo é da loja / das músicas
     var r=$('resumo');
     r.textContent = artistas.length+(artistas.length===1?' artista no ar':' artistas no ar')+
       (tapes.length?' · '+tapes.length+(tapes.length===1?' beat tape':' beat tapes'):'')+

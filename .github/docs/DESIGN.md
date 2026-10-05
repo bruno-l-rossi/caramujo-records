@@ -102,6 +102,35 @@ direita, foto tratada em 3 tons com o 33 em fogo e o "33" gigante só no contorn
 grade preta das tapes embaixo (regras do DESIGN-catalogo). Foto e avatar em
 `assets/perfil/`. O avatar (costas, camisa 33) é a cara do @rideblan33 em chip, card e painel.
 
+## Aba Músicas do perfil (desde 05/10/2026)
+
+O bloco preto do /rideblan33 ganha duas abas: **MÚSICAS n | BEAT TAPES n** (Schibsted 700
+caixa alta, espaçada; a ativa branca com traço branco embaixo, a outra cinza `#8a8a8a`; o n
+em peso normal). Sem música no ar, o bloco volta a ser só "Beat tapes" como antes.
+- **Destaques** (a ordem é do Bruno, no painel): fileira de capas grandes que desliza. 4 por
+  linha no computador (setas redondas no cabeçalho quando passa de 4), 76% da largura no
+  celular (a próxima aparece na beirada). Play branco redondo no canto de baixo da capa só
+  quando tem trecho; sem trecho, a capa leva pro Spotify. Embaixo: nome (16px, 700),
+  artistas em cinza e os botões redondos do Spotify/YouTube (só dos links que existem). A
+  que está tocando ganha a barra fina branca do trecho embaixo.
+- **Recentes** (a mais nova primeiro, pela data de lançamento): lista na caixa `#141414` com
+  borda `#1f1f1f`: capinha 52px, nome, artistas, data "jul 2026" em mono (só no computador),
+  botões e o play.
+- **Chamada no fim:** caixa com borda `#2a2a2a`, ícone do Spotify, "OUVIR O PORTFÓLIO
+  COMPLETO" + "Todas as produções no Spotify do @rideblan33" e a seta ↗. Abre o perfil de
+  artista no Spotify.
+- **Trecho:** 30 s do pedaço mais forte (a conta do story), do arquivo da pasta do artista no
+  catálogo. Toca no mesmo mini player do "Ouça a última beat tape": capa da música, nome,
+  "Trecho · artistas"; tocar no player abre a música inteira no Spotify. Acabou, vai pro
+  trecho da próxima da página.
+- **Prévia:** com o "No ar" desligado, só quem está logado no painel vê a aba, com uma faixa
+  tracejada avisando.
+
+Em que aba abre (escolha do Bruno): Beat tapes quando vem da página de beat ou de gênero, de
+uma tape, do "Ver tudo"/"Portfólio completo" da pasta de artista, da página de erro ou do
+story do catálogo. O resto (vitrine, @ da pasta, story do perfil, link, bio, Instagram,
+Google, redes, direto) abre em Músicas.
+
 ## Pastilhas do perfil (desde 27/09/2026)
 
 Na grade do /rideblan33, canto de cima à esquerda da capa, o mesmo desenho do DISPONÍVEL

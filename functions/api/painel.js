@@ -11,6 +11,8 @@ import { tomDeCopia, ehBeatNovo } from '../_lib/tom.js';
 import { esquecerApiVitrine } from './vitrine.js';
 import { esquecerPerfil } from '../_lib/perfil.js';
 import { PADRAO as NUM_PADRAO, deTexto as numDeTexto } from '../_lib/numeros.js';
+import { painelLer as musicasLer, painelAcao as musicasAcao } from '../_lib/musicas.js';
+import { somUrl } from '../_lib/midia.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
 
@@ -36,6 +38,12 @@ export async function onRequest({ request, env }) {
   if (op === 'loja') return loja(d, request, env);
   if (op === 'cupom-usos') return cupomUsos(d, url.searchParams.get('codigo'));
   if (op === 'numeros' && request.method !== 'POST') return numerosLer(d);
+  // Músicas do perfil (05/10/2026): abrir a tela já guarda as capas e liga os trechos que faltam
+  if (op === 'musicas' && request.method !== 'POST') {
+    const r = await musicasLer(d, env, somUrl);
+    if (r.mudou) await esquecerPerfil(request);
+    return json(r.corpo);
+  }
   if (request.method !== 'POST') return json({ erro: 'op desconhecida' }, 400);
 
   const body = await request.json().catch(() => ({}));
@@ -49,6 +57,13 @@ export async function onRequest({ request, env }) {
     return r;
   }
   if (op === 'venda') return venda(d, body);
+  if (/^musicas?-/.test(op)) {
+    const r = await musicasAcao(op, d, env, body, somUrl);
+    if (r) {
+      if (r.mudou) await esquecerPerfil(request);
+      return json(r.corpo, r.status || 200);
+    }
+  }
   if (op === 'sync') return sync(env, d, body);
   if (LOJA_POST[op]) {
     const r = await LOJA_POST[op](d, body, request, env);

@@ -17,7 +17,7 @@ Site do estúdio Caramujo Records (São Carlos, SP): vitrine de beats exclusivos
 | **Beat tapes** | `/<tape>/<código>` | `?faixa=<beat>` (04/10/2026) abre a tape já no beat, com a prévia do beat no Direct/WhatsApp: é o link do compartilhar de uma faixa da tape, vendida ou não. Cada tape do @rideblan33 é uma página pública: ouvir, comprar o beat disponível, compartilhar no story e seguir pras outras tapes. Indexada no Google. |
 | **Pastas de artista** | `/<artista>/<código>` | Catálogo privado de cada artista (beats e músicas do Drive), com download e prévia pro story. Fora do Google. |
 | **Link de faixa e de seleção** | `/f/<código>` e `/p/<código>` | Saem do ENVIAR da pasta de artista: marcou uma faixa, `/f/`; duas ou mais, `/p/`. Só aquelas faixas, ouvir sem conta (baixar segue a permissão da pasta). Prévia de uma faixa (04/10/2026): "faixa · artista" + "Produzido por @rideblan33 © Caramujo Records"; de várias: "artista · Caramujo Records" + "N faixas de artista com @rideblan33.". Fora do Google. |
-| **Portfólio** | `/rideblan33` | Foto, apresentação, redes e a grade de todas as beat tapes na ordem escolhida no painel, com as pastilhas NOVA e EM ALTA. Toca a última tape direto do topo e tem o botão de compartilhar (story do perfil ou do catálogo, e o link). A vitrine leva pra cá pelo anel com a camisa 33 no topo e pelo 1º card do Sobre nós. |
+| **Portfólio** | `/rideblan33` | Foto, apresentação, redes e duas abas: Músicas (destaques e recentes que o Bruno produziu, com trecho de 30 s e a chamada pro portfólio no Spotify) e Beat tapes (a grade na ordem escolhida no painel, com as pastilhas NOVA e EM ALTA). A aba que abre depende de onde a pessoa veio. Toca a última tape direto do topo e tem o botão de compartilhar (story do perfil ou do catálogo, e o link). A vitrine leva pra cá pelo anel com a camisa 33 no topo e pelo 1º card do Sobre nós. |
 | **Painel** | `/painel` | Com senha. Artistas, Beat tapes (ordem do portfólio incluída), Vitrine (beats, fila, cupons) e Analytics. |
 
 ---
@@ -41,7 +41,7 @@ index.html              vitrine (HTML + CSS + JS)
 catalogo/app.html       molde das beat tapes e pastas de artista
 404.html  _headers  _routes.json  robots.txt  llms.txt  og-image.png
 assets/                 marca, fontes próprias, mídias do estúdio, perfil/, story.js,
-                        mp4-muxer.js, painel/ (analytics.js, vitrine.js), termos-de-licenca.pdf
+                        mp4-muxer.js, painel/ (analytics.js, vitrine.js, musicas.js), termos-de-licenca.pdf
 functions/
   index.js              serve a home com a lista de beats do banco
   [artista]/[codigo].js tapes e pastas de artista
@@ -51,7 +51,7 @@ functions/
   audio/ capa/ dl/      áudio, capas e downloads
   painel/               painel
   api/                  pagamento, webhook, cupom, vitrine, funil, play, ingest, painel
-  _lib/                 banco, loja, perfil, e-mails, casamento de beats, sessão, erro
+  _lib/                 banco, loja, perfil, músicas do perfil, e-mails, casamento de beats, sessão, erro
 scripts/                conversor do Drive e cálculo da onda de cada faixa
 .github/                este README, docs/DESIGN*.md, prévia do e-mail de entrega, workflows
 ```
@@ -81,6 +81,7 @@ scripts/                conversor do Drive e cálculo da onda de cada faixa
 - **Artistas:** conversão, download, capa e atividade de cada pasta.
 - **Beat tapes:** a linha fixa do @rideblan33 abre a atividade do portfólio e a ordem das tapes (arrastar e soltar). Cada tape tem a chave "Mostrar no perfil".
 - **Vitrine:** beats (editar, vender, destaque, tirar), fila de publicação e cupons.
+- **Músicas do perfil:** colar o link do Spotify ou do YouTube (nome, artistas, data e capa vêm sozinhos), Destaque ou Recente, ordem dos destaques, trecho de 30 s (arquivo da pasta do artista, achado pelo nome), tirar e a chave "No ar" (desligada = só quem está logado vê a prévia).
 - **Analytics:** Vitrine (funil de venda), Beat tapes, Artistas e Portfólio, com período livre e comparação.
 - A home do painel mostra o consumo do banco no dia.
 

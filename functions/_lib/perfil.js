@@ -12,6 +12,7 @@ import { MIDIA } from './midia.js';
 import { ICONES as ICONES_ABA, SELO_GRANDE } from './icones.js';
 import { RODAPE_GENEROS, CSS_RODAPE_GENEROS } from './generos.js';
 import { PADRAO as NUM_PADRAO, deTexto as numDeTexto, limpar as numLimpar, curto, longo } from './numeros.js';
+import { CHAVE as MUS_CHAVE, deTexto as musDeTexto, separar, TRECHO } from './musicas.js';
 
 const VALIDADE = 60 * 1000;
 const REGIAO = '/__cache/perfil-v3';
@@ -42,16 +43,17 @@ export function escolherEmAlta(ranking, nova) {
   return top ? top[0] : null;
 }
 
-// Uma consulta pra meta (ranking do em alta + números do site); a conta dos plays só
-// quando o ranking guardado passou de 6 h.
+// Uma consulta pra meta (ranking do em alta + números do site + músicas do perfil); a
+// conta dos plays só quando o ranking guardado passou de 6 h.
 async function lerMetaPerfil(d, nova) {
-  let ranking = null, numeros = { ...NUM_PADRAO };
+  let ranking = null, numeros = { ...NUM_PADRAO }, musicas = { noAr: false, lista: [] };
   try {
     const { results } = await d.prepare(
-      `SELECT chave, valor FROM meta WHERE chave IN ('${EM_ALTA_CHAVE}', 'numeros')`
+      `SELECT chave, valor FROM meta WHERE chave IN ('${EM_ALTA_CHAVE}', 'numeros', '${MUS_CHAVE}')`
     ).all();
     for (const r of results || []) {
       if (r.chave === 'numeros') numeros = numDeTexto(r.valor);
+      else if (r.chave === MUS_CHAVE) musicas = musDeTexto(r.valor);
       else { try { ranking = JSON.parse(r.valor); } catch (_) { ranking = null; } }
     }
   } catch (_) { /* segue com o padrão */ }
@@ -69,7 +71,7 @@ async function lerMetaPerfil(d, nova) {
         .bind(JSON.stringify(ranking)).run();
     } catch (_) { if (!ranking || !Array.isArray(ranking.top)) ranking = { top: [] }; }
   }
-  return { emAlta: escolherEmAlta(ranking.top, nova), numeros };
+  return { emAlta: escolherEmAlta(ranking.top, nova), numeros, musicas };
 }
 
 // O perfil inteiro: { tapes: [{ id, name, slug, code, capa, n }], faixas: [...], nova, emAlta }.
@@ -111,7 +113,7 @@ export async function lerPerfil(request, env) {
   const nova = tapes.length ? tapes[0].id : null;
   const meta = await lerMetaPerfil(d, nova);
   const emAlta = meta.emAlta;
-  const dados = { tapes, faixas, nova, emAlta: tapes.some((t) => t.id === emAlta) ? emAlta : null, numeros: meta.numeros };
+  const dados = { tapes, faixas, nova, emAlta: tapes.some((t) => t.id === emAlta) ? emAlta : null, numeros: meta.numeros, musicas: meta.musicas };
   cache = { at: Date.now(), dados };
   if (c && chave) {
     try {
@@ -169,6 +171,101 @@ function grade(tapes, nova = null, emAlta = null) {
   }).join('\n');
 }
 
+/* ---------- aba Músicas (05/10/2026, direção A) ----------
+   Destaques: fileira de capas grandes que desliza (ordem do Bruno). Recentes: lista em
+   caixa, a mais nova primeiro. No fim, a chamada pro portfólio inteiro no Spotify.
+   Música com arquivo na pasta do artista ganha o play do trecho (30 s no mini player);
+   sem arquivo, a capa leva pro Spotify/YouTube. */
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+export const mesAno = (d) => {
+  const m = String(d || '').match(/^(\d{4})(?:-(\d{2}))?/);
+  if (!m) return '';
+  return m[2] && +m[2] >= 1 && +m[2] <= 12 ? `${MESES[+m[2] - 1]} ${m[1]}` : m[1];
+};
+const SP_PEQUENA = (u) => (/ab67616d0000b273/.test(u) ? u.replace('ab67616d0000b273', 'ab67616d00001e02') : u);
+// capa guardada na prateleira (/capa/mus-…); enquanto o painel não guardou, a do próprio Spotify/YouTube
+function capaMus(m) {
+  if (m.capa) return { src: `/capa/${m.capa}?p`, grande: `/capa/${m.capa}`, srcset: `/capa/${m.capa}?p 300w, /capa/${m.capa} 640w` };
+  if (m.capaUrl) return { src: SP_PEQUENA(m.capaUrl), grande: m.capaUrl, srcset: SP_PEQUENA(m.capaUrl) !== m.capaUrl ? `${SP_PEQUENA(m.capaUrl)} 300w, ${m.capaUrl} 640w` : '' };
+  return { src: '/assets/brand/caramujo-v.webp', grande: SELO_GRANDE, srcset: '', sem: true };
+}
+const linkMus = (m) => m.spotify || m.youtube;
+const temTrecho = (m) => !!(m.faixa && m.ini != null);
+const ICONE_SETA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>';
+
+function redesMus(m) {
+  return `<span class="mx-redes">${m.spotify ? `<a href="${esc(m.spotify)}" target="_blank" rel="noopener" aria-label="Ouvir ${esc(m.nome)} no Spotify" title="Spotify" data-rede="musica-spotify">${ICONES.spotify}</a>` : ''}${m.youtube ? `<a href="${esc(m.youtube)}" target="_blank" rel="noopener" aria-label="Ver ${esc(m.nome)} no YouTube" title="YouTube" data-rede="musica-youtube">${ICONES.youtube}</a>` : ''}</span>`;
+}
+const playMus = (m, k) => `<button class="mx-play" type="button" data-m="${k}" data-nome="${esc(m.nome)}" aria-label="Ouvir o trecho de ${esc(m.nome)}">${ICONE_TOCA}${ICONE_PAUSA}</button>`;
+
+function cardDestaque(m, k) {
+  const c = capaMus(m);
+  const img = `<img class="mx-img${c.sem ? ' sem' : ''}" src="${esc(c.src)}"${c.srcset ? ` srcset="${esc(c.srcset)}" sizes="(max-width:600px) 76vw, 280px"` : ''} alt="Capa de ${esc(m.nome)}" width="640" height="640"${k < 2 ? '' : ' loading="lazy"'} decoding="async">`;
+  const capa = temTrecho(m)
+    ? `<div class="mx-c">${img}${playMus(m, k)}</div>`
+    : `<a class="mx-c" href="${esc(linkMus(m))}" target="_blank" rel="noopener" data-rede="${m.spotify ? 'musica-spotify' : 'musica-youtube'}" aria-label="Ouvir ${esc(m.nome)} ${m.spotify ? 'no Spotify' : 'no YouTube'}">${img}</a>`;
+  return `<article class="mx-card" data-m="${k}">${capa}<div class="mx-txt"><div class="mx-info"><b class="mx-n">${esc(m.nome)}</b>${m.artistas ? `<span class="mx-a">${esc(m.artistas)}</span>` : ''}</div>${redesMus(m)}</div>${temTrecho(m) ? '<span class="mx-trecho" aria-hidden="true"><i></i></span>' : ''}</article>`;
+}
+
+function linhaRecente(m, k, vaga) {
+  const c = capaMus(m);
+  const quando = mesAno(m.data);
+  return `<li class="mx-row" data-m="${k}"><img class="mx-mini${c.sem ? ' sem' : ''}" src="${esc(c.src)}" alt="" width="52" height="52" loading="lazy" decoding="async"><div class="mx-info"><b class="mx-n">${esc(m.nome)}</b>${m.artistas ? `<span class="mx-a">${esc(m.artistas)}</span>` : ''}</div>${quando ? `<time class="mx-data" datetime="${esc(m.data)}">${quando}</time>` : ''}${redesMus(m)}${temTrecho(m) ? playMus(m, k) : vaga ? '<span class="mx-vaga" aria-hidden="true"></span>' : ''}</li>`;
+}
+
+export function abaMusicas(mus, { previa = false } = {}) {
+  const { destaques, recentes } = separar(mus);
+  const n = destaques.length + recentes.length;
+  let h = '';
+  if (previa && !mus.noAr) h += '<p class="mx-previa">Prévia: só você vê esta aba, porque está logado no painel. Ela aparece pra todo mundo quando você ligar "No ar" em Músicas do perfil.</p>';
+  h += `<h2 class="so-leitor">Músicas produzidas pelo @rideblan33</h2>`;
+  if (destaques.length) {
+    h += `<section class="mx-sec" aria-labelledby="mxDest"><div class="cab"><h3 id="mxDest">Destaques</h3><span class="mx-direita"><span>${destaques.length} ${destaques.length === 1 ? 'música' : 'músicas'}</span><span class="mx-setas" hidden><button type="button" id="mxAnt" aria-label="Destaques anteriores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><button type="button" id="mxProx" aria-label="Mais destaques"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></span></span></div>` +
+      `<div class="mx-trilho" id="mxTrilho">${destaques.map((m, k) => cardDestaque(m, k)).join('')}</div></section>`;
+  }
+  const vaga = recentes.some(temTrecho);
+  const todas = `<a class="mx-todas" href="${REDES.spotify}" target="_blank" rel="noopener" data-rede="portfolio-spotify">${ICONES.spotify}<span>Ouvir o portfólio completo<small>Todas as produções no Spotify do @rideblan33</small></span>${ICONE_SETA}</a>`;
+  h += recentes.length
+    ? `<section class="mx-sec" aria-labelledby="mxRec"><div class="cab"><h3 id="mxRec">${destaques.length ? 'Recentes' : 'Músicas'}</h3><span>mais novas primeiro</span></div>` +
+      `<ul class="mx-lista">${recentes.map((m, k) => linhaRecente(m, destaques.length + k, vaga)).join('')}</ul>${todas}</section>`
+    : `<section class="mx-sec">${todas}</section>`;
+  return { html: h, n };
+}
+
+// O que o mini player precisa pra tocar os trechos, na ordem da página
+export function trechosDoPerfil(mus) {
+  const { destaques, recentes } = separar(mus);
+  return destaques.concat(recentes).map((m, k) => (temTrecho(m) ? {
+    k, n: m.nome, a: m.artistas || '@rideblan33', f: m.faixa, ini: m.ini, url: linkMus(m), sp: !!m.spotify,
+    capa: capaMus(m).src, arte: capaMus(m).grande
+  } : null)).filter(Boolean);
+}
+
+// Pro Google: cada música é uma gravação produzida pelo @rideblan33 (a mesma pessoa do topo)
+function jsonMusicas(mus) {
+  const { destaques, recentes } = separar(mus);
+  const todas = destaques.concat(recentes);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Músicas produzidas pelo @rideblan33',
+    numberOfItems: todas.length,
+    itemListElement: todas.map((m, i) => {
+      const c = capaMus(m);
+      const item = {
+        '@type': 'MusicRecording', name: m.nome, url: linkMus(m),
+        producer: { '@id': SITE + '/rideblan33#pessoa' }
+      };
+      if (m.artistas) item.byArtist = m.artistas.split(/\s*,\s*/).filter(Boolean).map((a) => ({ '@type': 'MusicGroup', name: a }));
+      if (m.data) item.datePublished = m.data;
+      if (!c.sem) item.image = c.grande.startsWith('/') ? SITE + c.grande : c.grande;
+      const mesmo = [m.spotify, m.youtube].filter(Boolean);
+      if (mesmo.length > 1) item.sameAs = mesmo;
+      return { '@type': 'ListItem', position: i + 1, item };
+    })
+  };
+}
+
 // Ícones da aba do navegador: o padrão de TODAS as páginas do site (selo em SVG,
 // PNG de 180 pro iPhone). Página nova usa esse mesmo bloco.
 // ícones: um lugar só, em _lib/icones.js (04/10/2026); o nome FAVICON fica pra quem já usa
@@ -176,7 +273,9 @@ export const FAVICON = ICONES_ABA;
 
 // barraFixa: a barra fina com a foto e o @ que aparece presa no topo quando a pessoa
 // desce pras capas (o Bruno decide se fica; 26/09/2026).
-export function paginaPerfil(dados, { url, barraFixa = true } = {}) {
+// aba: em que aba o bloco preto abre ('musicas' ou 'tapes'; vem da origem, _lib/musicas.js).
+// previa: a aba Músicas fora do ar aparece mesmo assim (quem está logado no painel).
+export function paginaPerfil(dados, { url, barraFixa = true, aba = 'musicas', previa = false } = {}) {
   const tapes = Array.isArray(dados) ? dados : dados.tapes;
   const faixas = Array.isArray(dados) ? [] : (dados.faixas || []);
   const idNova = !Array.isArray(dados) && dados.nova != null ? dados.nova : (tapes.length ? tapes[0].id : null);
@@ -188,8 +287,19 @@ export function paginaPerfil(dados, { url, barraFixa = true } = {}) {
       arte: nova.capa ? `/capa/${nova.capa}` : SELO_GRANDE },
     faixas
   } : null;
+  // aba Músicas (05/10/2026): só com música na lista e com o "No ar" ligado (ou na prévia)
+  const mus = !Array.isArray(dados) && dados.musicas && Array.isArray(dados.musicas.lista) && dados.musicas.lista.length ? dados.musicas : null;
+  const comMusicas = !!(mus && (mus.noAr || previa));
+  const abaMus = comMusicas ? abaMusicas(mus, { previa }) : null;
+  const trechos = comMusicas ? trechosDoPerfil(mus) : [];
+  const abaIni = comMusicas && aba === 'tapes' ? 'tapes' : 'musicas';
+  const tocaAlgo = !!(tocador || trechos.length);
   const titulo = '@rideblan33 · Portfólio';
-  const descricaoGoogle = `Portfólio do @rideblan33, produtor e beatmaker de rap em São Carlos, SP. ${tapes.length} beat tapes pra ouvir, beats exclusivos e produção completa na Caramujo Records.`;
+  // com as músicas no ar, o Google lê os artistas que ele produziu (os 3 primeiros da lista)
+  const parceiros = comMusicas ? [...new Set(mus.lista.flatMap((m) => String(m.artistas || '').split(/\s*,\s*/)).filter(Boolean))].slice(0, 3) : [];
+  const descricaoGoogle = parceiros.length
+    ? `Portfólio do @rideblan33, produtor e beatmaker de rap em São Carlos, SP. Produções com ${parceiros.join(', ')}, ${tapes.length} beat tapes pra ouvir e beats exclusivos na Caramujo Records.`
+    : `Portfólio do @rideblan33, produtor e beatmaker de rap em São Carlos, SP. ${tapes.length} beat tapes pra ouvir, beats exclusivos e produção completa na Caramujo Records.`;
   // os números grandes vêm do painel (Números do site); sem eles, os de sempre
   const num = numLimpar(!Array.isArray(dados) && dados.numeros ? dados.numeros : NUM_PADRAO);
   const descricaoPrevia = `Produtor & beatmaker. 33 memórias distantes. ${num.artistas}+ artistas · ${num.faixas}+ faixas · ${curto(num.streams)} de streams.`;
@@ -253,7 +363,7 @@ ${FAVICON}
 <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/cormorant-garamond-latin-600-normal.woff2" crossorigin>
 <script type="application/ld+json">${jsonSeguro(pessoa)}</script>
 <script type="application/ld+json">${jsonSeguro(lista)}</script>
-<style>
+${comMusicas ? `<script type="application/ld+json">${jsonSeguro(jsonMusicas(mus))}</script>\n` : ''}<style>
 @font-face{font-family:'Cormorant Garamond';font-weight:500;font-style:italic;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-500-italic.woff2) format('woff2')}
 @font-face{font-family:'Cormorant Garamond';font-weight:600;font-style:normal;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-600-normal.woff2) format('woff2')}
 @font-face{font-family:'Schibsted Grotesk';font-weight:400 900;font-display:swap;src:url(/assets/fonts/schibsted-grotesk-latin-wght-normal.woff2) format('woff2')}
@@ -350,6 +460,66 @@ h1{font:600 clamp(56px,8.6vw,124px)/.9 var(--serif);color:var(--cream);margin:0;
 .pst svg{width:10px;height:10px;flex:none}
 @media (hover:hover){.tape:hover .sobre,.tape:focus-visible .sobre{opacity:1}.tape:hover img:not(.semcapa){transform:scale(1.035);filter:saturate(.85)}}
 @media (hover:none){.sobre{display:none}.leg{display:flex;flex-direction:column;gap:5px;padding-top:10px}.leg b{font:500 15px/1.2 var(--grot);overflow-wrap:anywhere}.leg i{font:500 13px/1 var(--grot);font-style:normal;color:var(--meta)}}
+/* abas Músicas | Beat tapes e a aba Músicas (05/10/2026, direção A) */
+.abas{max-width:1180px;margin:0 auto 34px;display:flex;gap:30px;border-bottom:1px solid var(--div)}
+.abas button{background:none;border:0;padding:0 0 14px;margin:0 0 -1px;font:700 13px/1 var(--grot);letter-spacing:.2em;text-transform:uppercase;color:var(--meta);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.abas button[aria-selected="true"]{color:var(--branco);border-bottom-color:var(--branco)}
+.abas button i{font-style:normal;font-weight:500;letter-spacing:0;color:var(--meta);margin-left:6px;font-variant-numeric:tabular-nums}
+@media (hover:hover){.abas button:hover{color:var(--branco)}}
+.so-leitor{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.mx-previa{max-width:1180px;margin:-12px auto 28px;padding:11px 14px;border:1px dashed #3a3a3a;font:400 12.5px/1.5 var(--mono);color:var(--apoio)}
+.mx-sec{max-width:1180px;margin:0 auto 46px}
+.mx-sec:last-child{margin-bottom:0}
+.cab h3{margin:0;font:700 13px/1 var(--grot);letter-spacing:.2em;text-transform:uppercase}
+.mx-direita{display:flex;align-items:center;gap:14px}
+.mx-setas{display:flex;gap:6px}
+.mx-setas[hidden]{display:none}
+.mx-setas button{display:grid;place-items:center;width:34px;height:34px;padding:0;border:1px solid #2a2a2a;border-radius:50%;background:none;color:var(--branco);cursor:pointer;transition:border-color .2s,opacity .2s}
+.mx-setas button:disabled{opacity:.3;cursor:default}
+.mx-setas svg{width:16px;height:16px}
+@media (hover:hover){.mx-setas button:not(:disabled):hover{border-color:var(--branco)}}
+@media (hover:none){.mx-setas{display:none}}
+.mx-trilho{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:4px}
+.mx-trilho::-webkit-scrollbar{display:none}
+.mx-card{flex:0 0 calc((100% - 48px)/4);min-width:0;scroll-snap-align:start}
+.mx-c{position:relative;display:block;aspect-ratio:1;overflow:hidden;border:1px solid var(--div);background:#0a0a0a}
+.mx-img{display:block;width:100%;height:100%;object-fit:cover}
+.mx-img.sem,.mx-mini.sem{object-fit:contain;padding:22%;background:var(--preto)}
+a.mx-c .mx-img{transition:transform .35s ease}
+@media (hover:hover){a.mx-c:hover .mx-img{transform:scale(1.035)}}
+.mx-play{display:grid;place-items:center;flex:none;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:var(--branco);color:var(--preto);cursor:pointer}
+.mx-play svg{width:16px;height:16px}
+.mx-play .i-pausa,.mx-play.toca .i-toca{display:none}
+.mx-play.toca .i-pausa{display:block}
+.mx-c .mx-play{position:absolute;right:12px;bottom:12px;box-shadow:0 8px 20px rgba(0,0,0,.5)}
+.mx-txt{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-top:12px}
+.mx-info{min-width:0}
+.mx-n{display:block;font:700 16px/1.25 var(--grot);color:var(--branco);overflow-wrap:anywhere}
+.mx-a{display:block;margin-top:3px;font:500 13px/1.35 var(--grot);color:var(--meta)}
+.mx-redes{display:inline-flex;gap:6px;flex:none}
+.mx-redes a{display:grid;place-items:center;width:36px;height:36px;border:1px solid #2a2a2a;border-radius:50%;color:#cfcfcf;transition:border-color .2s,color .2s}
+.mx-redes svg{width:17px;height:17px}
+@media (hover:hover){.mx-redes a:hover{border-color:var(--branco);color:var(--branco)}}
+.mx-trecho{display:block;height:3px;margin-top:12px;background:#2a2a2a;visibility:hidden}
+.mx-trecho i{display:block;width:0;height:100%;background:var(--branco)}
+.mx-card.atual .mx-trecho{visibility:visible}
+.mx-lista{list-style:none;margin:0;padding:0;background:var(--folha);border:1px solid var(--div)}
+.mx-row{display:flex;align-items:center;gap:14px;padding:12px 14px;border-bottom:1px solid var(--div)}
+.mx-row:last-child{border-bottom:0}
+.mx-mini{display:block;flex:none;width:52px;height:52px;object-fit:cover;background:#0a0a0a}
+.mx-row .mx-info{flex:1}
+.mx-row .mx-n{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mx-row .mx-a{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mx-row.atual .mx-n{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
+.mx-data{margin-right:6px;font:400 12px/1 var(--mono);color:#6a6a6a;white-space:nowrap}
+.mx-row .mx-play,.mx-vaga{width:38px;height:38px;flex:none}
+/* a chamada pro portfólio inteiro no Spotify, no fim das recentes */
+.mx-todas{display:flex;align-items:center;gap:14px;margin-top:14px;padding:16px 18px;border:1px solid #2a2a2a;color:var(--branco);transition:border-color .2s,background .2s}
+.mx-todas>svg{width:22px;height:22px;flex:none}
+.mx-todas>svg:last-child{width:18px;height:18px;color:var(--meta);transition:color .2s}
+.mx-todas span{flex:1;min-width:0;font:700 13px/1.3 var(--grot);letter-spacing:.16em;text-transform:uppercase}
+.mx-todas small{display:block;margin-top:5px;font:500 13px/1.3 var(--grot);letter-spacing:0;text-transform:none;color:var(--meta)}
+@media (hover:hover){.mx-todas:hover{border-color:var(--branco);background:#0b0b0b}.mx-todas:hover>svg:last-child{color:var(--branco)}}
 /* rodapé igual ao da vitrine (26/09/2026): selo, © e @rideblan33, mesmas letras e disposição */
 footer{padding:1.4rem 2.4rem calc(1.4rem + env(safe-area-inset-bottom,0px));background:var(--black);border-top:1px solid var(--wire);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
 footer img{height:30px;width:auto;display:block}
@@ -387,6 +557,14 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
 }
 /* celular: 3 capas por linha (26/09/2026) */
 @media (max-width:600px){
+  .abas{gap:26px;margin-bottom:28px}
+  .abas button{font-size:12px;letter-spacing:.16em}
+  .mx-card{flex-basis:76%}
+  .mx-data{display:none}
+  .mx-row{gap:11px;padding:11px 10px}
+  .mx-redes a{width:32px;height:32px}
+  .mx-todas{padding:14px}
+  .mx-todas span{font-size:12px;letter-spacing:.12em}
   .grade{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 8px}
   .leg{gap:4px;padding-top:8px}
   .leg b{font-size:12.5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
@@ -424,26 +602,35 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
   </section>
 </header>
 ${barraFixa ? `<div class="fixa" id="fixa" aria-hidden="true"><img src="/assets/perfil/rideblan33-avatar.webp" alt="" width="34" height="34"><b>@rideblan33</b>${tocador ? `<button class="ouca" type="button" data-ouca aria-pressed="false" tabindex="-1">${ICONE_TOCA}${ICONE_PAUSA}<span>Ouça a última tape</span></button>` : ''}</div>` : ''}
-${tocador ? `<div class="tocando" id="tocando" hidden>
-  <a class="t-link" id="tLink" href="${esc(tocador.tape.url)}" aria-label="Abrir a tape ${esc(tocador.tape.name)}"></a>
-  <span class="t-capa"><img src="${esc(tocador.tape.capa)}" alt="" width="44" height="44"></span>
-  <div class="t-txt"><b id="tNome">—</b><small>${esc(tocador.tape.name)}</small></div>
+${tocaAlgo ? `<div class="tocando" id="tocando" hidden>
+  <a class="t-link" id="tLink" href="${esc(tocador ? tocador.tape.url : trechos[0].url)}" aria-label="${tocador ? `Abrir a tape ${esc(tocador.tape.name)}` : `Ouvir ${esc(trechos[0].n)} completa`}"></a>
+  <span class="t-capa"><img src="${esc(tocador ? tocador.tape.capa : trechos[0].capa)}" alt="" width="44" height="44"></span>
+  <div class="t-txt"><b id="tNome">—</b><small id="tSub">${esc(tocador ? tocador.tape.name : '')}</small></div>
   <button id="tAnt" type="button" aria-label="Beat anterior"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14h2.6V5zM19 5l-9 7 9 7z"/></svg></button>
   <button class="t-play" id="tPlay" type="button" aria-label="Pausar">${ICONE_TOCA}${ICONE_PAUSA}</button>
   <button id="tProx" type="button" aria-label="Próximo beat"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17 5v14h-2.6V5zM5 5l9 7-9 7z"/></svg></button>
   <span class="barra"><i id="tBarra"></i></span>
-</div>
-<script type="application/json" id="tocadorDados">${jsonSeguro(tocador)}</script>` : ''}
+</div>` : ''}
+${tocador ? `<script type="application/json" id="tocadorDados">${jsonSeguro(tocador)}</script>` : ''}
+${trechos.length ? `<script type="application/json" id="trechosDados">${jsonSeguro(trechos)}</script>` : ''}
 
 <script type="application/json" id="compDados">${jsonSeguro({ total: tapes.length, capas: tapes.slice(0, 9).map((t) => (t.capa ? '/capa/' + t.capa + '?m' : null)) })}</script>
 <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
 
 <main class="preto" id="tapes">
-  <div class="cab"><h2>Beat tapes</h2><span>${tapes.length} ${tapes.length === 1 ? 'tape' : 'tapes'}</span></div>
+${comMusicas ? `  <div class="abas" role="tablist" aria-label="Portfólio do @rideblan33">
+    <button type="button" role="tab" id="abaMusicas" data-aba="musicas" aria-controls="pMusicas" aria-selected="${abaIni === 'musicas'}" tabindex="${abaIni === 'musicas' ? 0 : -1}">Músicas<i>${abaMus.n}</i></button>
+    <button type="button" role="tab" id="abaTapes" data-aba="tapes" aria-controls="pTapes" aria-selected="${abaIni === 'tapes'}" tabindex="${abaIni === 'tapes' ? 0 : -1}">Beat tapes<i>${tapes.length}</i></button>
+  </div>
+  <div class="aba-corpo" id="pMusicas" role="tabpanel" aria-labelledby="abaMusicas"${abaIni === 'musicas' ? '' : ' hidden'}>
+${abaMus.html}
+  </div>
+  <div class="aba-corpo" id="pTapes" role="tabpanel" aria-labelledby="abaTapes"${abaIni === 'tapes' ? '' : ' hidden'}>
+  <h2 class="so-leitor">Beat tapes</h2>` : `  <div class="cab"><h2>Beat tapes</h2><span>${tapes.length} ${tapes.length === 1 ? 'tape' : 'tapes'}</span></div>`}
   <div class="moldura"><div class="grade">
 ${grade(tapes, idNova, idEmAlta)}
   </div></div>
-</main>
+${comMusicas ? '  </div>\n' : ''}</main>
 
 <footer>
   ${RODAPE_GENEROS}
@@ -466,87 +653,204 @@ ${grade(tapes, idNova, idEmAlta)}
     else manda({kind:'perfil-rede',trackId:a.dataset.rede,origem:de});
   });
 
-  // "Ouça a última beat tape": toca os beats da tape mais nova aqui mesmo, um atrás
-  // do outro, sem sair da página. Cada beat conta como play da tape (origem perfil).
-  var dadosEl=document.getElementById('tocadorDados'), T=null;
-  try{ T=dadosEl?JSON.parse(dadosEl.textContent):null; }catch(e){ T=null; }
+  // O player do perfil (05/10/2026): um som só pra duas coisas.
+  // - "Ouça a última beat tape": os beats da tape mais nova, um atrás do outro, em ordem
+  //   aleatória. Cada beat conta como play da tape (origem perfil).
+  // - Trecho das músicas: 30 s do pedaço mais forte, do arquivo da pasta do artista; acabou
+  //   um, vai pro próximo da página. Tocar no player abre a música inteira no Spotify.
+  var T=null, M=null;
+  try{ var te=document.getElementById('tocadorDados'); T=te?JSON.parse(te.textContent):null; }catch(e){ T=null; }
+  try{ var me=document.getElementById('trechosDados'); M=me?JSON.parse(me.textContent):null; }catch(e){ M=null; }
+  var temTape=!!(T && T.faixas && T.faixas.length), temTrecho=!!(M && M.length);
   var botoes=[].slice.call(document.querySelectorAll('#ouca,[data-ouca]'));
   var caixa=document.getElementById('tocando');
-  if(T && T.faixas && T.faixas.length && caixa){
+  if(caixa && (temTape||temTrecho)){
     var som=new Audio(); som.preload='none';
-    var i=-1, contados={};
+    var modo='', i=-1, j=-1, contados={}, ouvidos={}, TR=${TRECHO}, virando=false;
     // de onde sai o MP3 (03/10/2026): o domínio próprio do armazenamento, quando ligado
     var MIDIA=${JSON.stringify(MIDIA)};
     function somDe(id){ return MIDIA ? MIDIA+'/mp3/'+id+'.mp3' : '/audio/'+id; }
+    var nome=document.getElementById('tNome'), sub=document.getElementById('tSub'), barra=document.getElementById('tBarra');
+    var link=document.getElementById('tLink'), capa=caixa.querySelector('.t-capa img');
+    var bAnt=document.getElementById('tAnt'), bProx=document.getElementById('tProx'), bPlay=document.getElementById('tPlay');
     // sempre em ordem aleatória (27/09/2026): embaralha no 1º play e de novo a cada volta
     // completa, sem repetir o beat que acabou de tocar
     function embaralha(){
-      var a=T.faixas, atual=i>=0?a[i]:null, k, j, x;
-      for(k=a.length-1;k>0;k--){ j=Math.floor(Math.random()*(k+1)); x=a[k]; a[k]=a[j]; a[j]=x; }
+      var a=T.faixas, atual=i>=0?a[i]:null, k, x, y;
+      for(k=a.length-1;k>0;k--){ y=Math.floor(Math.random()*(k+1)); x=a[k]; a[k]=a[y]; a[y]=x; }
       if(atual && a.length>1 && a[0]===atual){ x=a[0]; a[0]=a[1]; a[1]=x; }
     }
-    function proxima(){ if(i+1>=T.faixas.length){ embaralha(); vai(0); } else vai(i+1); }
-    var nome=document.getElementById('tNome'), barra=document.getElementById('tBarra');
+    function proxima(){ if(i+1>=T.faixas.length){ embaralha(); vaiTape(0); } else vaiTape(i+1); }
     function marca(){
-      var toca=!som.paused;
-      botoes.forEach(function(b){ b.setAttribute('aria-pressed',toca?'true':'false'); b.setAttribute('aria-label',toca?'Pausar a última beat tape':'Ouça a última beat tape'); });
+      var toca=!som.paused, atual=modo==='trecho'&&j>=0?M[j].k:-1;
+      botoes.forEach(function(b){ var on=toca&&modo==='tape'; b.setAttribute('aria-pressed',on?'true':'false'); b.setAttribute('aria-label',on?'Pausar a última beat tape':'Ouça a última beat tape'); });
       caixa.classList.toggle('toca',toca);
-      document.getElementById('tPlay').setAttribute('aria-label',toca?'Pausar':'Tocar');
+      bPlay.setAttribute('aria-label',toca?'Pausar':'Tocar');
+      [].forEach.call(document.querySelectorAll('.mx-play[data-m]'),function(b){
+        var on=toca && +b.dataset.m===atual;
+        b.classList.toggle('toca',on);
+        b.setAttribute('aria-label',(on?'Pausar o trecho de ':'Ouvir o trecho de ')+b.dataset.nome);
+      });
+      [].forEach.call(document.querySelectorAll('.mx-card[data-m],.mx-row[data-m]'),function(el){ el.classList.toggle('atual',+el.dataset.m===atual); });
     }
-    function vai(n){
-      i=(n+T.faixas.length)%T.faixas.length;
-      var f=T.faixas[i];
-      som.src=somDe(f.id); nome.textContent=f.t;
+    function mostra(src,titulo,subt,href,fora,rotulo){
+      capa.src=src; nome.textContent=titulo; sub.textContent=subt; barra.style.width='0%';
+      link.href=href; link.setAttribute('aria-label',rotulo);
+      if(fora){ link.target='_blank'; link.rel='noopener'; } else { link.removeAttribute('target'); link.removeAttribute('rel'); }
       caixa.hidden=false; document.body.classList.add('com-player');
+    }
+    function vaiTape(n){
+      modo='tape'; i=(n+T.faixas.length)%T.faixas.length;
+      var f=T.faixas[i];
+      try{ som.volume=1; }catch(e){}
+      som.src=somDe(f.id);
+      mostra(T.tape.capa,f.t,T.tape.name,T.tape.url,false,'Abrir a tape '+T.tape.name);
+      bAnt.setAttribute('aria-label','Beat anterior'); bProx.setAttribute('aria-label','Próximo beat');
       som.play().catch(function(){ marca(); });
       if(!contados[f.id]){ contados[f.id]=1; manda({kind:'play',trackId:f.id,artistId:T.tape.id,origem:'perfil'}); }
-      tarja(f);
+      tarja(f.t,'@rideblan33','Caramujo Records',T.tape.arte);
+      marca();
     }
-    // Tela de bloqueio e notificação no padrão da vitrine (e das tapes): nome do beat,
-    // @rideblan33, Caramujo Records, capa inteira, e os mesmos botões.
-    function tarja(f){
+    function vaiTrecho(n){
+      modo='trecho'; j=(n+M.length)%M.length; virando=false;
+      var m=M[j];
+      try{ som.volume=0; }catch(e){}
+      som.src=somDe(m.f)+'#t='+m.ini;
+      mostra(m.capa,m.n,'Trecho · '+m.a,m.url,true,'Ouvir '+m.n+' completa '+(m.sp?'no Spotify':'no YouTube'));
+      bAnt.setAttribute('aria-label','Trecho anterior'); bProx.setAttribute('aria-label','Próximo trecho');
+      som.play().catch(function(){ marca(); });
+      if(!ouvidos[m.k]){ ouvidos[m.k]=1; manda({kind:'perfil-rede',trackId:'trecho',origem:de}); }
+      tarja(m.n,m.a,'Trecho · @rideblan33',m.arte);
+      marca();
+    }
+    // acabou o trecho: vai pro próximo da página; depois do último, para
+    function fimTrecho(){
+      if(virando) return; virando=true;
+      if(j+1<M.length) return vaiTrecho(j+1);
+      som.pause(); try{ som.currentTime=M[j].ini; som.volume=1; }catch(e){}
+      barra.style.width='0%'; var bc=document.querySelector('.mx-card.atual .mx-trecho i'); if(bc) bc.style.width='0%';
+      virando=false;
+    }
+    // Tela de bloqueio e notificação no padrão da vitrine (e das tapes): nome, artista,
+    // álbum, capa inteira, e os mesmos botões.
+    function tarja(titulo,artista,album,arte){
       if(!('mediaSession' in navigator)) return;
-      var url=location.origin+T.tape.arte, tipo=/\\.png$/i.test(url)?'image/png':'image/jpeg';
-      // igual à vitrine do site: nome do beat, @rideblan33, Caramujo Records, capa inteira
-      try{ navigator.mediaSession.metadata=new MediaMetadata({ title:f.t, artist:'@rideblan33', album:'Caramujo Records',
-        artwork:[{src:url,sizes:'1000x1000',type:tipo}] }); }catch(e){}
+      var url=/^https?:/.test(arte)?arte:location.origin+arte, tipo=/\\.png$/i.test(url)?'image/png':'image/jpeg';
+      try{ navigator.mediaSession.metadata=new MediaMetadata({ title:titulo, artist:artista, album:album,
+        artwork:[{src:url,sizes:modo==='tape'?'1000x1000':'640x640',type:tipo}] }); }catch(e){}
       var liga=function(a,fn){ try{ navigator.mediaSession.setActionHandler(a,fn) }catch(e){} };
       liga('play',function(){ som.play().catch(function(){}) });
       liga('pause',function(){ som.pause() });
-      liga('previoustrack',function(){ if(som.currentTime>4){ som.currentTime=0; return; } vai(i-1); });
-      liga('nexttrack',function(){ proxima(); });
-      liga('seekbackward',function(d){ som.currentTime=Math.max(0,som.currentTime-(d&&d.seekOffset||15)); });
-      liga('seekforward',function(d){ som.currentTime=Math.min(som.duration||1e9,som.currentTime+(d&&d.seekOffset||15)); });
-      liga('seekto',function(d){ if(d&&d.seekTime!=null) som.currentTime=d.seekTime; });
-      liga('stop',function(){ som.pause(); som.currentTime=0; });
+      liga('previoustrack',function(){ anterior(); });
+      liga('nexttrack',function(){ seguinte(); });
+      var solta=modo==='tape';
+      liga('seekbackward',solta?function(d){ som.currentTime=Math.max(0,som.currentTime-(d&&d.seekOffset||15)); }:null);
+      liga('seekforward',solta?function(d){ som.currentTime=Math.min(som.duration||1e9,som.currentTime+(d&&d.seekOffset||15)); }:null);
+      liga('seekto',solta?function(d){ if(d&&d.seekTime!=null) som.currentTime=d.seekTime; }:null);
+      liga('stop',function(){ som.pause(); });
     }
     function posicao(){
       if(!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState) return;
+      if(modo!=='tape'){ try{ navigator.mediaSession.setPositionState(); }catch(e){} return; }
       var dur=som.duration; if(!dur||!isFinite(dur)) return;
       try{ navigator.mediaSession.setPositionState({ duration:dur, position:Math.min(som.currentTime,dur), playbackRate:som.playbackRate||1 }); }catch(e){}
     }
-    function alterna(){ if(i<0){ embaralha(); return vai(0); } if(som.paused) som.play().catch(function(){}); else som.pause(); }
-    botoes.forEach(function(b){ b.addEventListener('click',alterna); });
-    document.getElementById('tPlay').addEventListener('click',alterna);
-    document.getElementById('tProx').addEventListener('click',function(){ proxima(); });
-    // anterior: no começo do beat volta pro anterior; passou de 4 s, volta pro começo dele
-    document.getElementById('tAnt').addEventListener('click',function(){ if(som.currentTime>4){ som.currentTime=0; if(som.paused) som.play().catch(function(){}); } else vai(i-1); });
+    // anterior: no começo volta pro anterior; passou de 4 s, volta pro começo dele
+    function anterior(){
+      if(modo==='trecho'){ var m=M[j]; if(som.currentTime-m.ini>4){ som.currentTime=m.ini; if(som.paused) som.play().catch(function(){}); } else vaiTrecho(j-1); return; }
+      if(som.currentTime>4){ som.currentTime=0; if(som.paused) som.play().catch(function(){}); } else vaiTape(i-1);
+    }
+    function seguinte(){ if(modo==='trecho') vaiTrecho(j+1); else proxima(); }
+    function alternaTape(){
+      if(modo!=='tape'){ if(i<0) embaralha(); return vaiTape(i<0?0:i); }
+      if(som.paused) som.play().catch(function(){}); else som.pause();
+    }
+    if(temTape) botoes.forEach(function(b){ b.addEventListener('click',alternaTape); });
+    bPlay.addEventListener('click',function(){ if(!modo) return; if(som.paused) som.play().catch(function(){}); else som.pause(); });
+    bProx.addEventListener('click',seguinte);
+    bAnt.addEventListener('click',anterior);
+    // o play de cada música: a mesma toca/pausa; outra começa o trecho dela
+    if(temTrecho) document.addEventListener('click',function(e){
+      var b=e.target.closest&&e.target.closest('.mx-play[data-m]'); if(!b) return;
+      var k=+b.dataset.m, n=-1;
+      for(var x=0;x<M.length;x++) if(M[x].k===k){ n=x; break; }
+      if(n<0) return;
+      if(modo==='trecho' && j===n){ if(som.paused) som.play().catch(function(){}); else som.pause(); return; }
+      vaiTrecho(n);
+    });
     som.addEventListener('play',function(){ marca(); if('mediaSession' in navigator) navigator.mediaSession.playbackState='playing'; });
     som.addEventListener('pause',function(){ marca(); if('mediaSession' in navigator) navigator.mediaSession.playbackState='paused'; });
-    som.addEventListener('loadedmetadata',posicao); som.addEventListener('seeked',posicao);
-    som.addEventListener('ended',function(){ proxima(); });
-    som.addEventListener('timeupdate',function(){ barra.style.width=(som.duration?som.currentTime/som.duration*100:0)+'%'; });
+    som.addEventListener('loadedmetadata',function(){
+      // o #t= do endereço já começa no trecho; alguns navegadores ignoram e começam do zero
+      if(modo==='trecho' && som.currentTime<M[j].ini-1){ try{ som.currentTime=M[j].ini; }catch(e){} }
+      posicao();
+    });
+    som.addEventListener('seeked',posicao);
+    som.addEventListener('ended',function(){ if(modo==='trecho') fimTrecho(); else proxima(); });
+    som.addEventListener('timeupdate',function(){
+      if(modo==='trecho'){
+        var m=M[j], p=som.currentTime-m.ini, fim=Math.min(TR,(som.duration||1e9)-m.ini);
+        // entra e sai de mansinho (0,8 s e 1,5 s); no iPhone o volume é do aparelho e isso não muda nada
+        try{ som.volume=Math.max(0,Math.min(1,p/0.8,(fim-p)/1.5)); }catch(e){}
+        var pct=Math.max(0,Math.min(100,p/fim*100))+'%';
+        barra.style.width=pct;
+        var bc=document.querySelector('.mx-card.atual .mx-trecho i'); if(bc) bc.style.width=pct;
+        if(p>=fim-0.1) fimTrecho();
+        return;
+      }
+      barra.style.width=(som.duration?som.currentTime/som.duration*100:0)+'%';
+    });
     // o próximo beat já fica pronto na borda (03/10/2026): passou da metade, um pedido de
     // 2 bytes faz o servidor guardar o próximo inteiro, e ele começa sem espera
     var aquecidos={};
     som.addEventListener('timeupdate',function(){
       try{
-        if(i<0||!som.duration||som.currentTime/som.duration<0.5) return;
+        if(modo!=='tape'||i<0||!som.duration||som.currentTime/som.duration<0.5) return;
         var f=T.faixas[i+1]; if(!f||aquecidos[f.id]) return;
         aquecidos[f.id]=1;
         fetch(somDe(f.id),{headers:{Range:'bytes=0-1'},cache:'no-store'}).catch(function(){});
       }catch(e){}
     });
+  }
+
+  // abas Músicas | Beat tapes (05/10/2026): o servidor já abre a certa pela origem; o
+  // #musicas / #tapes do endereço manda (e guarda a escolha pra quem volta pra página)
+  var abas=[].slice.call(document.querySelectorAll('.abas [role=tab]'));
+  var trilho=document.getElementById('mxTrilho'), sAnt=document.getElementById('mxAnt'), sProx=document.getElementById('mxProx');
+  function setas(){
+    if(!trilho||!sAnt) return;
+    var sobra=trilho.scrollWidth-trilho.clientWidth;
+    sAnt.parentNode.hidden=!(sobra>4);
+    sAnt.disabled=trilho.scrollLeft<4; sProx.disabled=trilho.scrollLeft>=sobra-4;
+  }
+  function abre(qual,foco,conta){
+    abas.forEach(function(b){
+      var on=b.dataset.aba===qual;
+      b.setAttribute('aria-selected',on?'true':'false'); b.tabIndex=on?0:-1;
+      document.getElementById(b.getAttribute('aria-controls')).hidden=!on;
+      if(on&&foco) b.focus();
+    });
+    try{ history.replaceState(history.state,'',location.pathname+location.search+'#'+qual); }catch(e){}
+    if(conta) manda({kind:'perfil-rede',trackId:'aba-'+qual,origem:de});
+    setas();
+  }
+  if(abas.length){
+    abas.forEach(function(b,k){
+      b.addEventListener('click',function(){ if(b.getAttribute('aria-selected')!=='true') abre(b.dataset.aba,false,true); });
+      b.addEventListener('keydown',function(e){
+        var d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0; if(!d) return;
+        e.preventDefault(); abre(abas[(k+d+abas.length)%abas.length].dataset.aba,true,true);
+      });
+    });
+    var h=(location.hash||'').slice(1);
+    if(h==='musicas'||h==='tapes'){ var sel=document.querySelector('.abas [aria-selected="true"]'); if(sel && sel.dataset.aba!==h) abre(h,false,false); }
+  }
+  if(trilho&&sAnt){
+    trilho.addEventListener('scroll',setas,{passive:true});
+    window.addEventListener('resize',setas);
+    sAnt.addEventListener('click',function(){ trilho.scrollBy({left:-trilho.clientWidth,behavior:'smooth'}); });
+    sProx.addEventListener('click',function(){ trilho.scrollBy({left:trilho.clientWidth,behavior:'smooth'}); });
+    setas();
   }
 
   // compartilhar o perfil (27/09/2026): a folha do story.js com as duas artes (Perfil e

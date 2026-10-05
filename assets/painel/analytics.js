@@ -126,7 +126,10 @@
     beat: 'Link de beat', bio: 'Bio do Instagram', story: 'Story', 'beat-tape': 'Beat tape',
     perfil: 'Perfil @rideblan33', tape: 'De uma beat tape', mais: 'Mais do @rideblan33', site: 'Site da Caramujo', spotify: 'Spotify',
     // 27/09/2026: caminhos novos pro perfil
-    anel: 'Anel do topo da vitrine', sobre: 'Card do Sobre nós', hero: '@ do topo da vitrine', '404': 'Link quebrado (página de erro)', 'story-catalogo': 'Story do catálogo', link: 'Link compartilhado do perfil'
+    anel: 'Anel do topo da vitrine', sobre: 'Card do Sobre nós', hero: '@ do topo da vitrine', '404': 'Link quebrado (página de erro)', 'story-catalogo': 'Story do catálogo', link: 'Link compartilhado do perfil',
+    // 05/10/2026: as páginas de beat e de gênero, a pasta de artista e o painel
+    'pagina-beat': 'Página de beat', 'pagina-genero': 'Página de gênero', artista: '@ da pasta de artista',
+    'artista-mais': 'Ver tudo da pasta de artista', painel: 'Painel (você)'
   };
   var nomeOrigem = function (o) { return o.nome ? 'Tape: ' + o.nome : (ORIGEM[o.origem] || o.origem); };
 
@@ -510,7 +513,10 @@
   // Portfólio (26/09/2026): o perfil caramujorecords.com.br/rideblan33
   var REDES = { vitrine: 'Selo da Caramujo (vitrine)', spotify: 'Spotify', youtube: 'YouTube', instagram: 'Instagram',
     // 27/09/2026: o 5º botão (compartilhar) e o que a pessoa fez na folha
-    compartilhar: 'Abriu o compartilhar', 'story-perfil': 'Postou o story do perfil', 'story-catalogo': 'Postou o story do catálogo', link: 'Enviou o link do perfil' };
+    compartilhar: 'Abriu o compartilhar', 'story-perfil': 'Postou o story do perfil', 'story-catalogo': 'Postou o story do catálogo', link: 'Enviou o link do perfil',
+    // 05/10/2026: aba Músicas
+    'aba-musicas': 'Abriu a aba Músicas', 'aba-tapes': 'Abriu a aba Beat tapes', trecho: 'Ouviu o trecho de uma música',
+    'musica-spotify': 'Abriu uma música no Spotify', 'musica-youtube': 'Abriu uma música no YouTube', 'portfolio-spotify': 'Portfólio completo no Spotify' };
   function perfil(j, corpo) {
     var a = j.agora, an = j.antes;
     corpo.appendChild(tiles([

@@ -2,6 +2,7 @@
 // Criado sob demanda: a primeira chamada garante as tabelas.
 
 import { chave } from './casar.js';
+import { INICIAIS as MUSICAS_INICIAIS } from './musicas.js';
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS artists (
@@ -270,7 +271,13 @@ export const UMA_VEZ = [
     `INSERT OR IGNORE INTO beat_evento (sessao, beat_id, tipo, dia)
        SELECT sessao, beat_id, CASE etapa WHEN 'play' THEN 'toque' ELSE 'adicao' END, dia
          FROM funil WHERE etapa IN ('play', 'carrinho') AND beat_id IS NOT NULL`],
-  ['perfil-ordem-2026-09-26', ordemInicialPerfil]
+  ['perfil-ordem-2026-09-26', ordemInicialPerfil],
+  // aba Músicas do perfil (05/10/2026): as 9 músicas que o Bruno mandou entram fora do ar
+  // (ele confere a prévia e liga o "No ar" no painel). Não pisa numa lista que já exista.
+  ['musicas-iniciais-2026-10-05', async (DB) => {
+    await DB.prepare("INSERT OR IGNORE INTO meta (chave, valor) VALUES ('musicas', ?)")
+      .bind(JSON.stringify({ noAr: false, lista: MUSICAS_INICIAIS })).run();
+  }]
 ];
 
 let ready = false;

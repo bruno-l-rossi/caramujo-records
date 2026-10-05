@@ -1018,7 +1018,9 @@ __META__
     w.appendChild(a);
     var lista=CAT.mais||[];
     if(!lista.length) return;
-    var deOnde=CAT.artist.tape?'tape':'artista';
+    // "Ver tudo" e "Portfólio completo" da pasta abrem o perfil nas beat tapes; o @ da
+    // pasta abre em Músicas (escolha do Bruno, 05/10/2026: _lib/musicas.js)
+    var deOnde=CAT.artist.tape?'tape':'artista-mais';
     // pasta de artista: o bloco se apresenta como o catálogo de tapes (26/09/2026)
     if(!CAT.artist.tape) $('maisTit').textContent='Explorar beats';
     var tr=$('maisTrilho'); tr.textContent='';
