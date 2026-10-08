@@ -33,6 +33,11 @@
 /og-image.png
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 
+# PDF dos termos (07/10/2026): apoio do checkout, fora da busca do Google.
+# O endereço antigo (/termos-de-licenca.pdf) redireciona pra cá (functions/termos-de-licenca.pdf.js).
+/assets/termos-de-licenca.pdf
+  X-Robots-Tag: noindex
+
 # Ícones da raiz (04/10/2026): o navegador pede sozinho quando a página não diz qual é
 /favicon.ico
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
