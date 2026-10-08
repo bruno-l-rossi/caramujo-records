@@ -13,6 +13,7 @@ import { ICONES as ICONES_ABA, SELO_GRANDE } from './icones.js';
 import { RODAPE_GENEROS, CSS_RODAPE_GENEROS } from './generos.js';
 import { PADRAO as NUM_PADRAO, deTexto as numDeTexto, limpar as numLimpar, curto, longo } from './numeros.js';
 import { CHAVE as MUS_CHAVE, deTexto as musDeTexto, separar } from './musicas.js';
+import { LEVA_DE, deAttr } from './origem.js';
 
 const VALIDADE = 60 * 1000;
 const REGIAO = '/__cache/perfil-v3';
@@ -163,11 +164,12 @@ function pastilha(t, nova, emAlta) {
 
 function grade(tapes, nova = null, emAlta = null) {
   return tapes.map((t, i) => {
-    const href = `/${t.slug}/${t.code}?de=perfil`;
+    // endereço limpo pro Google; a origem vai no data-de (_lib/origem.js, 08/10/2026)
+    const href = `/${t.slug}/${t.code}`;
     const img = t.capa
       ? `<img src="/capa/${esc(t.capa)}" srcset="/capa/${esc(t.capa)}?p 200w, /capa/${esc(t.capa)}?m 480w, /capa/${esc(t.capa)} 1000w" sizes="(max-width:600px) 31vw, (max-width:820px) 24vw, 222px" alt="Capa da beat tape ${esc(t.name)}" width="1000" height="1000"${i < 6 ? '' : ' loading="lazy"'} decoding="async">`
       : `<img class="semcapa" src="/assets/brand/caramujo-v.webp" alt="Beat tape ${esc(t.name)}" width="300" height="300"${i < 6 ? '' : ' loading="lazy"'}>`;
-    return `<a class="tape" href="${esc(href)}" data-id="${t.id}"><span class="capa">${img}<span class="sobre" aria-hidden="true"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span>${pastilha(t, nova, emAlta)}</span><span class="leg"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span></a>`;
+    return `<a class="tape" href="${esc(href)}"${deAttr('perfil')} data-id="${t.id}"><span class="capa">${img}<span class="sobre" aria-hidden="true"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span>${pastilha(t, nova, emAlta)}</span><span class="leg"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span></a>`;
   }).join('\n');
 }
 
@@ -284,7 +286,7 @@ export function paginaPerfil(dados, { url, barraFixa = true, aba = 'musicas', pr
   const idEmAlta = Array.isArray(dados) ? null : (dados.emAlta ?? null);
   const nova = tapes[0] || null;
   const tocador = nova && faixas.length ? {
-    tape: { id: nova.id, name: nova.name, url: `/${nova.slug}/${nova.code}?de=perfil`, capa: nova.capa ? `/capa/${nova.capa}?p` : '/assets/brand/caramujo-v.webp',
+    tape: { id: nova.id, name: nova.name, url: `/${nova.slug}/${nova.code}`, capa: nova.capa ? `/capa/${nova.capa}?p` : '/assets/brand/caramujo-v.webp',
       // a tela de bloqueio usa a arte inteira, igual à página da tape
       arte: nova.capa ? `/capa/${nova.capa}` : SELO_GRANDE },
     faixas
@@ -585,7 +587,7 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
 <body>
 <header class="terra">
   <nav class="topo" aria-label="Caramujo Records">
-    <a class="logo" href="/?de=perfil" aria-label="Caramujo Records, beats à venda"><img src="/assets/brand/caramujo-h.webp" alt="Caramujo Records" width="296" height="54"></a>
+    <a class="logo" href="/"${deAttr('perfil')} aria-label="Caramujo Records, beats à venda"><img src="/assets/brand/caramujo-h.webp" alt="Caramujo Records" width="296" height="54"></a>
     ${tocaAlgo ? `<button class="ouca" id="ouca" type="button" aria-pressed="false" aria-label="${rotOuca}">${ICONE_TOCA}${ICONE_PAUSA}<span>${rotOuca}</span></button>` : ''}
   </nav>
   <section class="palco">
@@ -595,7 +597,7 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
       <p class="bio">Produtor &amp; beatmaker.<br>33 memórias distantes.</p>
       <p class="numeros"><span><b>${num.artistas}+</b> artistas</span> · <span><b>${num.faixas}+</b> faixas</span> · <span><b>${curto(num.streams)}</b> de streams</span></p>
       <div class="botoes">
-        <a class="casa" href="/?de=perfil#beats" aria-label="Beats à venda na Caramujo Records" title="Beats à venda" data-rede="vitrine"><img src="/assets/brand/selo-creme.svg" alt="" width="26" height="26"></a>
+        <a class="casa" href="/#beats"${deAttr('perfil')} aria-label="Beats à venda na Caramujo Records" title="Beats à venda" data-rede="vitrine"><img src="/assets/brand/selo-creme.svg" alt="" width="26" height="26"></a>
         <a href="${REDES.spotify}" target="_blank" rel="noopener" aria-label="Spotify" title="Spotify" data-rede="spotify">${ICONES.spotify}</a>
         <a href="${REDES.youtube}" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" data-rede="youtube">${ICONES.youtube}</a>
         <a href="${REDES.instagram}" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram" data-rede="instagram">${ICONES.instagram}</a>
@@ -610,7 +612,7 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
 </header>
 ${barraFixa ? `<div class="fixa" id="fixa" aria-hidden="true"><img src="/assets/perfil/rideblan33-avatar.webp" alt="" width="34" height="34"><b>@rideblan33</b>${tocaAlgo ? `<button class="ouca" type="button" data-ouca aria-pressed="false" tabindex="-1">${ICONE_TOCA}${ICONE_PAUSA}<span>${rotOuca}</span></button>` : ''}</div>` : ''}
 ${tocaAlgo ? `<div class="tocando" id="tocando" hidden>
-  <a class="t-link" id="tLink" href="${esc(tocador ? tocador.tape.url : tocaveis[0].url)}" aria-label="${tocador ? `Abrir a tape ${esc(tocador.tape.name)}` : `Abrir ${esc(tocaveis[0].n)} no Spotify`}"></a>
+  <a class="t-link" id="tLink"${deAttr('perfil')} href="${esc(tocador ? tocador.tape.url : tocaveis[0].url)}" aria-label="${tocador ? `Abrir a tape ${esc(tocador.tape.name)}` : `Abrir ${esc(tocaveis[0].n)} no Spotify`}"></a>
   <span class="t-capa"><img src="${esc(tocador ? tocador.tape.capa : tocaveis[0].capa)}" alt="" width="44" height="44"></span>
   <div class="t-txt"><b id="tNome">—</b><small id="tSub">${esc(tocador ? tocador.tape.name : '')}</small></div>
   <button id="tAnt" type="button" aria-label="Beat anterior"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14h2.6V5zM19 5l-9 7 9 7z"/></svg></button>
@@ -641,7 +643,7 @@ ${comMusicas ? '  </div>\n' : ''}</main>
 
 <footer>
   ${RODAPE_GENEROS}
-  <a href="/?de=perfil" aria-label="Caramujo Records"><img loading="lazy" width="400" height="400" src="/assets/brand/selo-creme.svg" alt="Caramujo Records"></a>
+  <a href="/"${deAttr('perfil')} aria-label="Caramujo Records"><img loading="lazy" width="400" height="400" src="/assets/brand/selo-creme.svg" alt="Caramujo Records"></a>
   <p>© 2026 Caramujo Records — São Carlos, SP</p>
   <p><a class="foot-perfil" href="/rideblan33">@rideblan33</a> · Todos os direitos reservados</p>
 </footer>
@@ -925,5 +927,6 @@ ${comMusicas ? '  </div>\n' : ''}</main>
   }
 })();
 </script>
+${LEVA_DE}
 </body></html>`;
 }

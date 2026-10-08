@@ -20,6 +20,7 @@ import { ICONES } from './icones.js';
 import { GENEROS, RODAPE_GENEROS, menuGeneros, CSS_RODAPE_GENEROS } from './generos.js';
 import { slug } from './casar.js';
 import { CABECALHOS } from './cabecalhos.js';
+import { LEVA_DE, deAttr } from './origem.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const jsonSeguro = (o) => JSON.stringify(o).replace(/[<>&\u2028\u2029]/g, (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
@@ -336,16 +337,16 @@ function topo(de, genAtual = '', cont = null) {
   // celular (04/10/2026, opção A do Bruno): BEATS abre um acordeão com "Todos os beats" em
   // destaque e os gêneros em duas colunas, com quantos estão à venda
   const n = (x) => (x ? `<i>${x}</i>` : '');
-  const acordeao = `<li class="mc-sub"><a href="/#beats" class="ativo" aria-expanded="false" aria-controls="mcGen">Beats</a><div class="mc-gen" id="mcGen"><a class="mc-todos" href="/?de=${de}#beats"><span>Todos os beats</span>${cont && cont.total ? `<i>${cont.total} à venda</i>` : ''}</a><div class="mc-lista">${GENEROS.map(([sl, nm]) => `<a href="/beats/${sl}"${sl === genAtual ? ' aria-current="page"' : ''}>${nm}${n(cont && cont.por.get(sl))}</a>`).join('')}</div></div></li>`;
+  const acordeao = `<li class="mc-sub"><a href="/#beats" class="ativo" aria-expanded="false" aria-controls="mcGen">Beats</a><div class="mc-gen" id="mcGen"><a class="mc-todos" href="/#beats"${deAttr(de)}><span>Todos os beats</span>${cont && cont.total ? `<i>${cont.total} à venda</i>` : ''}</a><div class="mc-lista">${GENEROS.map(([sl, nm]) => `<a href="/beats/${sl}"${sl === genAtual ? ' aria-current="page"' : ''}>${nm}${n(cont && cont.por.get(sl))}</a>`).join('')}</div></div></li>`;
   const lisCel = lis.replace('<li><a href="/#beats" class="ativo">Beats</a></li>', acordeao);
   // no computador, o mouse em BEATS abre "Todos os beats" e os gêneros (04/10/2026)
   const lisTopo = lis.replace('<li><a href="/#beats" class="ativo">Beats</a></li>', `<li class="tem-sub"><a href="/#beats" class="ativo" aria-haspopup="true">Beats</a>${menuGeneros('/#beats', genAtual)}</li>`);
   return `<header class="topo">
-<a class="logo" href="/?de=${de}" aria-label="Caramujo Records, página inicial"><img src="/assets/brand/caramujo-h.webp" alt="Caramujo Records" width="148" height="27"></a>
+<a class="logo" href="/"${deAttr(de)} aria-label="Caramujo Records, página inicial"><img src="/assets/brand/caramujo-h.webp" alt="Caramujo Records" width="148" height="27"></a>
 <nav aria-label="Seções do site"><ul>${lisTopo}</ul></nav>
 <div class="dir">
-<a class="anel" href="/rideblan33?de=${de}" aria-label="Portfólio do @rideblan33"><img src="/assets/perfil/rideblan33-camisa.webp" alt="" width="128" height="128"></a>
-<a class="ico-btn js-carrinho" href="/?de=${de}#carrinho" aria-label="Abrir o carrinho">${ICO.cart}<b class="js-n" hidden>0</b></a>
+<a class="anel" href="/rideblan33"${deAttr(de)} aria-label="Portfólio do @rideblan33"><img src="/assets/perfil/rideblan33-camisa.webp" alt="" width="128" height="128"></a>
+<a class="ico-btn js-carrinho" href="/#carrinho"${deAttr(de)} aria-label="Abrir o carrinho">${ICO.cart}<b class="js-n" hidden>0</b></a>
 <button class="ico-btn burger js-menu" type="button" aria-label="Abrir o menu" aria-expanded="false" aria-controls="menuCel"><span><i></i><i></i><i></i></span></button>
 </div>
 </header>
@@ -362,13 +363,14 @@ function capinha(b, cls = 'capinha') {
     : `<span class="${cls} vazia"><img src="/assets/brand/selo-creme.svg" alt="" width="24" height="24"></span>`;
 }
 const ficha = (b) => `<em>${esc(b.genero || b.genre)}</em> · ${esc(b.bpm)} BPM${b.key ? ' · ' + esc(b.key) : ''}`;
-const linkAdd = (b, de) => `/?de=${de}#add=${encodeURIComponent(b.slug)}`;
+// endereço limpo no href; a origem vai no data-de (_lib/origem.js, 08/10/2026)
+const linkAdd = (b) => `/#add=${encodeURIComponent(b.slug)}`;
 
 function linha(b, i, de, preco) {
   const n = String(i + 1).padStart(2, '0');
   const acao = b.sold
     ? '<span class="vendido">Vendido</span>'
-    : `<a class="preco js-add" data-bid="${b.id}" href="${linkAdd(b, de)}" aria-label="Pôr ${esc(b.name)} no carrinho, ${real(preco)}">${ICO.cart}<span>R$${preco}</span></a>`;
+    : `<a class="preco js-add" data-bid="${b.id}" href="${linkAdd(b)}"${deAttr(de)} aria-label="Pôr ${esc(b.name)} no carrinho, ${real(preco)}">${ICO.cart}<span>R$${preco}</span></a>`;
   return `<li class="item${b.sold ? ' fora' : ''}" data-bid="${b.id}" data-bpm="${Number(b.bpm) || 0}" data-ordem="${i}">
 <button class="num js-tocar" type="button" data-bid="${b.id}" aria-label="Tocar ${esc(b.name)}"${b.mp3 ? '' : ' disabled'}><i>${n}</i>${PLAYPAUSE}</button>
 ${capinha(b)}
@@ -493,14 +495,14 @@ export function paginaBeat(b, loja) {
     ? `<div class="compra"><div class="linha"><div class="valor"><s>${real(preco)}</s><small>Vendido · licença exclusiva</small></div></div></div>
 <div class="dono"><p>Esse beat já tem dono.</p><span>A licença é exclusiva: quando alguém compra, o beat sai da loja. Os de baixo estão à venda.</span></div>`
     : `<div class="compra"><div class="linha"><div class="valor">${real(preco)}<small>Licença exclusiva</small></div>${pacotesTexto(pk)}</div>
-<a class="btn js-add" data-bid="${b.id}" href="${linkAdd(b, de)}">${ICO.cart}<span>Adicionar ao carrinho</span></a>
+<a class="btn js-add" data-bid="${b.id}" href="${linkAdd(b)}"${deAttr(de)}>${ICO.cart}<span>Adicionar ao carrinho</span></a>
 <ul class="inclui"><li><b>Só seu:</b> depois da compra o beat sai da loja</li><li><b>Contrato no seu nome</b>, com uso comercial liberado</li><li><b>MP3 + WAV</b>, entrega em até 1 dia útil</li></ul></div>`;
 
   const capaG = b.capa
     ? `<div class="capa-g"><img src="${esc(b.capa)}" alt="Capa da beat tape${tape ? ' ' + esc(tape.name) : ''}" width="1000" height="1000" fetchpriority="high">`
     : '<div class="capa-g vazia"><img src="/assets/brand/selo-creme.svg" alt="" width="120" height="120">';
   const tapeCard = tape
-    ? `<a class="tape" href="/${esc(tape.slug)}/${esc(tape.code)}?de=beat"><img src="/capa/${esc(tape.capa)}?p" alt="" width="62" height="62" loading="lazy"><div><div class="k">Da beat tape</div><div class="n">${esc(tape.name)}</div><div class="q">${tape.n ? tape.n + (tape.n === 1 ? ' beat' : ' beats') + ' · ' : ''}ouvir a tape</div></div><span class="seta" aria-hidden="true">›</span></a>`
+    ? `<a class="tape" href="/${esc(tape.slug)}/${esc(tape.code)}"${deAttr('beat')}><img src="/capa/${esc(tape.capa)}?p" alt="" width="62" height="62" loading="lazy"><div><div class="k">Da beat tape</div><div class="n">${esc(tape.name)}</div><div class="q">${tape.n ? tape.n + (tape.n === 1 ? ' beat' : ' beats') + ' · ' : ''}ouvir a tape</div></div><span class="seta" aria-hidden="true">›</span></a>`
     : '';
 
   const lista = [b].concat(par);
@@ -513,7 +515,7 @@ ${capaG}${b.sold ? '<span class="selo">Vendido</span>' : ''}${b.mp3 ? `<button c
 <div class="info">
 <div class="kicker">${b.sold ? 'Beat vendido' : 'Beat exclusivo'} · ${esc(gen)}</div>
 <h1>${esc(b.name)}</h1>
-<div class="por">prod. <a href="/rideblan33?de=${de}">@rideblan33 ›</a></div>
+<div class="por">prod. <a href="/rideblan33"${deAttr(de)}>@rideblan33 ›</a></div>
 <ul class="chips">${b.bpm ? `<li>${esc(b.bpm)} BPM</li>` : ''}${b.key ? `<li>${esc(b.key)}${tom ? ' // ' + esc(tom) : ''}</li>` : ''}${b.dur ? `<li>${mmss(b.dur)}</li>` : ''}</ul>
 ${b.mp3 ? `<div class="tocador" data-bid="${b.id}"><button class="pp js-tocar" type="button" data-bid="${b.id}" aria-label="Tocar ${esc(b.name)}">${PLAYPAUSE}</button><span class="t js-agora">0:00</span><div class="trilha js-trilha" data-bid="${b.id}" role="slider" tabindex="0" aria-label="Posição na faixa" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div><span class="t">${mmss(b.dur)}</span><button class="sh js-compartilhar" type="button" data-url="${SITE}/b/${esc(b.slug)}" data-titulo="${esc(b.name)} · @rideblan33" aria-label="Compartilhar ${esc(b.name)}">${ICO.share}</button></div>` : ''}
 ${compra}
@@ -527,6 +529,7 @@ ${par.length ? BARRA : ''}
 ${RODAPE}
 <script>window.__PG=${jsonSeguro({ pagina: 'beat', atual: b.id, beats: lista.map(praTela) })}</script>
 <script>${JS}</script>
+${LEVA_DE}
 </body></html>`;
 
   return cabecalho({
@@ -587,7 +590,7 @@ export function paginaGenero(gslug, loja) {
 
   const p2 = pk.find((p) => p.n === 2), p3 = pk.find((p) => p.n === 3);
   const pacoteBloco = pk.length
-    ? `<div class="pacote"><div><div class="k">Pacotes</div><p>Leva mais de um? ${pk.map((p) => `<span>${p.n} beats por ${real(p.preco)}<span class="off">${p.off}% off</span></span>`).join(', ')}.</p></div><a href="/?de=${de}#packages">Ver pacotes ›</a></div>`
+    ? `<div class="pacote"><div><div class="k">Pacotes</div><p>Leva mais de um? ${pk.map((p) => `<span>${p.n} beats por ${real(p.preco)}<span class="off">${p.off}% off</span></span>`).join(', ')}.</p></div><a href="/#packages"${deAttr(de)}>Ver pacotes ›</a></div>`
     : '';
   const corpo = `<body class="pg-genero">
 ${topo(de, gslug, aVendaPorGenero(beats))}
@@ -608,6 +611,7 @@ ${BARRA}
 ${RODAPE}
 <script>window.__PG=${jsonSeguro({ pagina: 'genero', preco, beats: ordem.map(praTela) })}</script>
 <script>${JS}</script>
+${LEVA_DE}
 </body></html>`;
 
   return cabecalho({
@@ -637,7 +641,7 @@ const JS = `(function(){
   /* de onde veio: quem chegou pelo Google leva isso pra vitrine (?de=google-beat) */
   var veioGoogle=false;
   try{ if(/(^|\\.)google\\./.test(document.referrer?new URL(document.referrer).hostname:'')) sessionStorage.setItem('cr_pg_google','1'); veioGoogle=sessionStorage.getItem('cr_pg_google')==='1'; }catch(_){}
-  if(veioGoogle) $$('a[href*="de=pagina-"]').forEach(function(a){ a.setAttribute('href',a.getAttribute('href').replace('de=pagina-','de=google-')); });
+  if(veioGoogle) $$('a[data-de^="pagina-"]').forEach(function(a){ a.setAttribute('data-de',a.getAttribute('data-de').replace('pagina-','google-')); });
 
   /* funil (04/10/2026): a página conta a visita e o play, como a vitrine (/api/funil).
      A origem fica guardada na aba (cr_origem): quem chegou pelo link do story e foi

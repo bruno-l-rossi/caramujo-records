@@ -507,7 +507,7 @@ __META__
         <div class="mais-cab">
           <h2 id="maisTit">Mais de @rideblan33</h2>
           <span class="mais-setas">
-            <a class="mais-tudo" id="maisTudo" href="/rideblan33?de=tape">Ver tudo</a>
+            <a class="mais-tudo" id="maisTudo" href="/rideblan33" data-de="tape">Ver tudo</a>
             <button class="pl-btn" id="maisAnt" type="button" aria-label="Tapes anteriores"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
             <button class="pl-btn" id="maisProx" type="button" aria-label="Mais tapes"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
           </span>
@@ -910,7 +910,7 @@ __META__
   function pintarAcao(t){
     if(acaoDe===t) return; acaoDe=t;
     var lk=$('plLink'), ir=$('plIr');
-    if(t.pagina){ lk.setAttribute('href','/beat/'+encodeURIComponent(t.pagina)+'?de=tape'); lk.setAttribute('aria-label','Abrir a página de '+t.title); ir.hidden=false; }
+    if(t.pagina){ lk.setAttribute('href','/beat/'+encodeURIComponent(t.pagina)); lk.setAttribute('data-de','tape'); lk.setAttribute('aria-label','Abrir a página de '+t.title); ir.hidden=false; }
     else { lk.removeAttribute('href'); lk.removeAttribute('aria-label'); ir.hidden=true; }
     // na pasta de artista a barra não tem Baixar (pedido de 25/09): baixar fica no "..." e no BAIXAR do topo
     var b=$('plAcao'), qual = CAT.artist.tape && t.buy ? 'comprar' : '';
@@ -1011,7 +1011,8 @@ __META__
     if(!CAT.perfil || CAT.preview) return;
     var w=$('who'); w.textContent='';
     var a=document.createElement('a'); a.className='at-link';
-    a.href=CAT.perfil+'?de='+(CAT.artist.tape?'tape':'artista');
+    // href limpo pro Google; a origem vai no data-de e entra no clique (leva-de, 08/10/2026)
+    a.href=CAT.perfil; a.setAttribute('data-de',CAT.artist.tape?'tape':'artista');
     a.setAttribute('aria-label','Portfólio do '+(CAT.artist.who||'@rideblan33'));
     a.innerHTML='<span></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
     a.querySelector('span').textContent=CAT.artist.who||'@rideblan33';
@@ -1025,7 +1026,7 @@ __META__
     if(!CAT.artist.tape) $('maisTit').textContent='Explorar beats';
     var tr=$('maisTrilho'); tr.textContent='';
     lista.forEach(function(t){
-      var c=document.createElement('a'); c.className='mais-card'; c.href=t.url;
+      var c=document.createElement('a'); c.className='mais-card'; c.href=t.url; c.setAttribute('data-de','mais');
       var cap=document.createElement('span'); cap.className='m-capa';
       var img=document.createElement('img'); img.loading='lazy'; img.decoding='async'; img.alt='';
       // 480px no meio (03/10/2026): em tela 2x e 3x o celular puxava a de 1000px
@@ -1038,7 +1039,7 @@ __META__
     });
     // o último card é o portfólio inteiro, do tamanho das capas
     var tot=CAT.totalPerfil||lista.length+1;
-    var fim=document.createElement('a'); fim.className='mais-card todas'; fim.href=CAT.perfil+'?de='+deOnde;
+    var fim=document.createElement('a'); fim.className='mais-card todas'; fim.href=CAT.perfil; fim.setAttribute('data-de',deOnde);
     // grade com as 4 primeiras capas do perfil e o texto por cima (escolha de 26/09)
     var grade=lista.filter(function(t){ return t.capa }).slice(0,4);
     fim.innerHTML='<span class="m-capa"></span><b>PORTFÓLIO COMPLETO</b><small>@rideblan33</small>';
@@ -1046,7 +1047,7 @@ __META__
     grade.forEach(function(t){ var im=document.createElement('img'); im.loading='lazy'; im.alt=''; im.src=t.capa+'?p'; mc.appendChild(im); });
     var veu=document.createElement('span'); veu.className='m-veu'; veu.textContent=tot+(tot===1?' beat tape':' beat tapes'); mc.appendChild(veu);
     tr.appendChild(fim);
-    $('maisTudo').href=CAT.perfil+'?de='+deOnde;
+    $('maisTudo').href=CAT.perfil; $('maisTudo').setAttribute('data-de',deOnde);
     $('mais').hidden=false;
     // setas no computador (mouse não desliza de lado)
     var ant=$('maisAnt'), prox=$('maisProx');
@@ -1632,5 +1633,27 @@ __META__
   inicio();
 })();
 </script>
+<!-- leva-de -->
+<script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
+(function(){
+  function leva(e){
+    if(e.type==='keydown'&&e.key!=='Enter') return;
+    var t=e.target, a=t&&t.closest?t.closest('a[data-de]'):null;
+    if(!a) return;
+    var de=a.getAttribute('data-de'), h=a.getAttribute('href');
+    if(!de||!h) return;
+    try{
+      var u=new URL(h,location.href);
+      if(u.origin!==location.origin||u.searchParams.has('de')) return;
+      u.searchParams.set('de',de);
+      a.setAttribute('href',u.pathname+u.search+u.hash);
+    }catch(_){}
+  }
+  ['pointerdown','mousedown','touchstart','keydown','contextmenu','auxclick','click'].forEach(function(n){
+    document.addEventListener(n,leva,{capture:true,passive:true});
+  });
+})();
+</script>
+<!-- /leva-de -->
 </body>
 </html>

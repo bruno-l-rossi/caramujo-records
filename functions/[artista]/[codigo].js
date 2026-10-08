@@ -87,7 +87,8 @@ export async function onRequestGet({ params, request, env }) {
       totalPerfil = todas.length;
       // 5 tapes + o card do portfólio completo (26/09/2026)
       mais = todas.filter((t) => t.id !== artist.id).slice(0, 5)
-        .map((t) => ({ name: t.name, url: `/${t.slug}/${t.code}?de=mais`, capa: t.capa ? `/capa/${t.capa}` : null, n: t.n }));
+        // endereço limpo; o app.html põe data-de="mais" no card (_lib/origem.js, 08/10/2026)
+        .map((t) => ({ name: t.name, url: `/${t.slug}/${t.code}`, capa: t.capa ? `/capa/${t.capa}` : null, n: t.n }));
     } catch (_) { mais = null; }
   }
   const nBeats = tracks.filter((t) => t.kind === 'beat').length;

@@ -51,7 +51,7 @@ functions/
   audio/ capa/ dl/      áudio, capas e downloads
   painel/               painel
   api/                  pagamento, webhook, cupom, vitrine, funil, play, ingest, painel
-  _lib/                 banco, loja, perfil, músicas do perfil, e-mails, casamento de beats, sessão, erro
+  _lib/                 banco, loja, perfil, músicas do perfil, e-mails, casamento de beats, sessão, erro, origem dos cliques
 scripts/                conversor do Drive e cálculo da onda de cada faixa
 .github/                este README, docs/DESIGN*.md, prévia do e-mail de entrega, workflows
 ```
@@ -85,7 +85,7 @@ scripts/                conversor do Drive e cálculo da onda de cada faixa
 - **Analytics:** Vitrine (funil de venda), Beat tapes, Artistas e Portfólio, com período livre e comparação.
 - A home do painel mostra o consumo do banco no dia.
 
-Origem das visitas: `?de=<rótulo>` nos links divulgados (ex.: `/rideblan33?de=bio`, `/?de=story`).
+Origem das visitas: `?de=<rótulo>` nos links divulgados (ex.: `/rideblan33?de=bio`, `/?de=story`). Links internos do site saem com o endereço limpo e a origem em `data-de` (desde 08/10/2026): o script leva-de (`functions/_lib/origem.js`, colado igual no `index.html` e no `catalogo/app.html`) põe o `?de=` só no clique, pra o Google indexar o endereço limpo. Link novo entre páginas do site: `href` limpo + `data-de`, nunca `?de=` no `href` (o teste42 reprova).
 
 ---
 

@@ -1161,7 +1161,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
     <li><a href="#contact">Contato</a></li>
   </ul>
   <div class="nav-right">
-    <a class="nav-eu" href="/rideblan33?de=anel" aria-label="Portfólio do @rideblan33" title="@rideblan33"><span class="anel"><img src="assets/perfil/rideblan33-camisa.webp" alt="" width="256" height="256"></span></a>
+    <a class="nav-eu" href="/rideblan33" data-de="anel" aria-label="Portfólio do @rideblan33" title="@rideblan33"><span class="anel"><img src="assets/perfil/rideblan33-camisa.webp" alt="" width="256" height="256"></span></a>
     <a class="nav-ig" href="https://ig.me/m/rideblan33" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg></a>
     <button class="nav-cart" id="navCart" type="button" onclick="toggleCart()" aria-label="Abrir carrinho"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.4 11.5h11.2L21 7H6"/></svg><span class="cart-n" id="cartNTopo">0</span></button>
     <button class="nav-burger" id="navBurger" onclick="toggleMenu()" aria-label="Abrir menu"><span></span><span></span><span></span></button>
@@ -1191,7 +1191,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 
     <p class="hero-desc">
       Estúdio popular e independente.<br/>
-      Beats exclusivos, mixagem e masterização por <a class="hero-at" href="/rideblan33?de=hero" aria-label="Portfólio do @rideblan33">@rideblan33<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>.
+      Beats exclusivos, mixagem e masterização por <a class="hero-at" href="/rideblan33" data-de="hero" aria-label="Portfólio do @rideblan33">@rideblan33<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>.
     </p>
 
     <p class="hero-proof">
@@ -1442,7 +1442,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
   <div class="studio-carousel">
     <button class="studio-nav prev" type="button" onclick="studioScroll(-1)" aria-label="Anterior">‹</button>
   <div class="studio-strip">
-    <a class="studio-ph sp-0 studio-eu" href="/rideblan33?de=sobre" aria-label="Portfólio do @rideblan33">
+    <a class="studio-ph sp-0 studio-eu" href="/rideblan33" data-de="sobre" aria-label="Portfólio do @rideblan33">
       <span class="eu-box"><span class="eu-33" aria-hidden="true">33</span><img src="assets/perfil/rideblan33-480.webp" alt="@rideblan33 de costas, com a camisa 33" loading="lazy" width="480" height="800"><span class="eu-sel"><b>@rideblan33</b><i>Portfólio →</i></span></span>
       <span class="eu-cap">Quem faz o som</span>
     </a>
@@ -4527,5 +4527,27 @@ document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener
   new MutationObserver(confere).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','hidden']});
 })();
 </script>
+<!-- leva-de -->
+<script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
+(function(){
+  function leva(e){
+    if(e.type==='keydown'&&e.key!=='Enter') return;
+    var t=e.target, a=t&&t.closest?t.closest('a[data-de]'):null;
+    if(!a) return;
+    var de=a.getAttribute('data-de'), h=a.getAttribute('href');
+    if(!de||!h) return;
+    try{
+      var u=new URL(h,location.href);
+      if(u.origin!==location.origin||u.searchParams.has('de')) return;
+      u.searchParams.set('de',de);
+      a.setAttribute('href',u.pathname+u.search+u.hash);
+    }catch(_){}
+  }
+  ['pointerdown','mousedown','touchstart','keydown','contextmenu','auxclick','click'].forEach(function(n){
+    document.addEventListener(n,leva,{capture:true,passive:true});
+  });
+})();
+</script>
+<!-- /leva-de -->
 </body>
 </html>
