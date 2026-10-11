@@ -88,11 +88,23 @@ export async function lerNumeros(d) {
 
 export async function lerDestaque(d) {
   const r = await d.prepare("SELECT valor FROM meta WHERE chave = 'destaque'").first();
-  if (!r) return null;
+  return destaqueDeTexto(r ? r.valor : null);
+}
+function destaqueDeTexto(v) {
+  if (!v) return null;
   try {
-    const j = JSON.parse(r.valor);
+    const j = JSON.parse(v);
     return { id: Number(j.id) || null, ate: /^\d{4}-\d{2}-\d{2}$/.test(j.ate || '') ? j.ate : '' };
   } catch (_) { return null; }
+}
+
+// Destaque e números numa consulta só (10/10/2026). Falhou = sem destaque e os números de sempre.
+async function lerMetaLoja(d) {
+  try {
+    const { results } = await d.prepare("SELECT chave, valor FROM meta WHERE chave IN ('destaque', 'numeros')").all();
+    const v = Object.fromEntries((results || []).map((r) => [r.chave, r.valor]));
+    return { destaque: destaqueDeTexto(v.destaque), numeros: v.numeros ? deTexto(v.numeros) : { ...PADRAO } };
+  } catch (_) { return { destaque: null, numeros: { ...PADRAO } }; }
 }
 
 /* ---------- a lista que vai dentro da página ---------- */
@@ -125,12 +137,14 @@ export async function lojaParaPagina(request, env) {
   }
   try {
     const d = await db(env);
-    const beats = await lerBeats(d);
+    // beats, destaque e números saem juntos (10/10/2026): o banco fica longe do Brasil e
+    // eram três idas e voltas, uma atrás da outra, no servidor frio
+    const [beats, meta] = await Promise.all([lerBeats(d), lerMetaLoja(d)]);
     if (!beats.length) throw new Error('lista vazia no banco');
     const dados = {
       lista: beats.map((b) => ({ id: b.id, name: b.name, bpm: b.bpm, key: b.key || '', genre: b.genre, sold: !!b.sold })),
-      destaque: await lerDestaque(d),
-      numeros: await lerNumeros(d)
+      destaque: meta.destaque,
+      numeros: meta.numeros
     };
     pagina = { at: Date.now(), dados };
     await guardar(request, FRESCA, { ...dados, at: pagina.at }, 60);

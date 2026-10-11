@@ -1,7 +1,7 @@
 // Painel privado do rideblan33. Só abre com a senha guardada em PAINEL_SENHA.
 // Mostra os artistas, o link de cada um, a permissão de download e quem ouviu o quê.
 
-import { COOKIE, DIAS, assinar, igual, autenticado } from '../_lib/sessao.js';
+import { COOKIE, DIAS, assinar, igual, autenticado, cookieEu } from '../_lib/sessao.js';
 import { ICONES } from '../_lib/icones.js';
 
 /* ---------- entrada ---------- */
@@ -19,17 +19,18 @@ export async function onRequest(context) {
       return html(telaSenha('Senha errada.'), 401);
     }
     const t = await assinar(env, Date.now() + DIAS * 864e5);
-    return new Response(null, {
-      status: 303,
-      headers: {
-        location: url.pathname,
-        'set-cookie': `${COOKIE}=${t}; Path=/; Max-Age=${DIAS * 86400}; HttpOnly; Secure; SameSite=Lax`
-      }
-    });
+    const h = new Headers({ location: url.pathname });
+    h.append('set-cookie', `${COOKIE}=${t}; Path=/; Max-Age=${DIAS * 86400}; HttpOnly; Secure; SameSite=Lax`);
+    // este aparelho para de contar no analytics (10/10/2026, _lib/sessao.js)
+    h.append('set-cookie', await cookieEu(env));
+    return new Response(null, { status: 303, headers: h });
   }
 
   if (!(await autenticado(request, env))) return html(telaSenha(), 401);
-  return html(pagina());
+  // a marca do aparelho é renovada a cada abertura do painel (400 dias)
+  const r = html(pagina());
+  r.headers.append('set-cookie', await cookieEu(env));
+  return r;
 }
 
 function html(corpo, status = 200) {
@@ -73,7 +74,7 @@ ${ICONES}
   .sub{font-size:14px;color:var(--ink4)}
   .barra{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
   .barra .pill{flex:0 0 auto}
-  .barra[hidden],#resumo[hidden],#lista[hidden],#analytics[hidden],#vitrine[hidden],#musicas[hidden]{display:none}
+  .barra[hidden],#resumo[hidden],#lista[hidden],#analytics[hidden],#vitrine[hidden],#musicas[hidden],#comentarios[hidden]{display:none}
   @media (max-width:560px){
     .barra .pill{margin-left:auto}
     h1{font-size:30px}
@@ -300,10 +301,12 @@ function pagina() {
   <div id="analytics" hidden></div>
   <div id="vitrine" hidden></div>
   <div id="musicas" hidden></div>
+  <div id="comentarios" hidden></div>
 </div>
-<script src="/assets/painel/analytics.js?v=2026-10-06a" defer></script>
+<script src="/assets/painel/analytics.js?v=2026-10-10a" defer></script>
 <script src="/assets/painel/vitrine.js?v=2026-10-04a" defer></script>
 <script src="/assets/painel/musicas.js?v=2026-10-06a" defer></script>
+<script src="/assets/painel/comentarios.js?v=2026-10-10a" defer></script>
 
 <div class="veil" id="veil" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>
@@ -313,7 +316,7 @@ function pagina() {
   var $=function(i){return document.getElementById(i)};
   var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='home', filtro='', ordem='modificado', perfilVisto=null;
   var lojaResumo=null, lojaPedida=false, consumoHoje=null, consumoPedido=false, numerosSite=null, numerosPedido=false;
-  var musicasResumo=null, musicasPedido=false;
+  var musicasResumo=null, musicasPedido=false, comentResumo=null, comentPedido=false, entrega=null, entregaPedida=false;
   var ORDENS={modificado:'Modificação', atividade:'Atividade', az:'A a Z', faixas:'Mais faixas', perfil:'Ordem do perfil'};
   // Perfil do @rideblan33 (26/09/2026): a mesma conta da página (tape sem ordem = nova = topo)
   function chavePerfil(a){ return a.perfil_ordem!=null ? Number(a.perfil_ordem) : -1000000000 - a.id; }
@@ -398,9 +401,11 @@ function pagina() {
     });
   }
 
-  var TITULOS={home:'Painel',artistas:'Artistas',tapes:'Beat tapes',vitrine:'Vitrine',analytics:'Analytics',musicas:'Músicas do perfil'};
+  var TITULOS={home:'Painel',artistas:'Artistas',tapes:'Beat tapes',vitrine:'Vitrine',analytics:'Analytics',musicas:'Músicas do perfil',comentarios:'Comentários'};
   function irPara(v){
-    if(v==='home'){ lojaPedida=false; consumoPedido=false; numerosPedido=false; musicasPedido=false; }   // volta com os números novos
+    if(v==='home'){ lojaPedida=false; consumoPedido=false; numerosPedido=false; musicasPedido=false; comentPedido=false; entregaPedida=false; }   // volta com os números novos
+    // o e-mail de comentário abre direto em /painel#comentarios: fora de lá, o endereço volta a ser /painel
+    if(v!=='comentarios' && location.hash==='#comentarios'){ try{ history.replaceState(null,'',location.pathname); }catch(_){ } }
     vista=v; filtro=''; $('q').value='';
     if(v!=='tapes' && ordem==='perfil'){ ordem='modificado'; $('ordemLabel').textContent=ORDENS[ordem]; }
     $('q').placeholder = v==='tapes' ? 'Buscar beat tape' : 'Buscar artista';
@@ -445,9 +450,91 @@ function pagina() {
     mb.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></span>'+
       '<span><b>Músicas do perfil</b><small>'+textoMusicas()+'</small></span><span class="seta" aria-hidden="true">›</span>';
     mb.addEventListener('click',function(){ irPara('musicas'); });
+    // Comentários das pastas (10/10/2026): o que os artistas comentaram no tempo das faixas
+    var cb=document.createElement('button'); cb.type='button'; cb.className='num'; cb.id='comPastas';
+    cb.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg></span>'+
+      '<span><b>Comentários das pastas</b><small>'+textoComent()+'</small></span><span class="seta" aria-hidden="true">›</span>';
+    cb.addEventListener('click',function(){ irPara('comentarios'); });
+    box.appendChild(cb);
+    // Entrega na hora dos beats (10/10/2026): a chave, o pedido de teste e os últimos links
+    var eb=document.createElement('button'); eb.type='button'; eb.className='num'; eb.id='entregaHora';
+    eb.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg></span>'+
+      '<span><b>Entrega na hora</b><small>'+textoEntrega()+'</small></span><span class="seta" aria-hidden="true">›</span>';
+    eb.addEventListener('click',abrirEntrega);
+    box.appendChild(eb);
     box.appendChild(mb);
     box.appendChild(nb);
     return box;
+  }
+  function textoEntrega(){
+    if(!entrega) return 'o beat sai num link na hora em que o pagamento cai';
+    var n=(entrega.pedidos||[]).filter(function(p){ return p.status!=='teste'; }).length;
+    return (entrega.ligada?'ligada':'<em>desligada</em> · faça um pedido de teste e ligue')+(entrega.ligada&&n?' · '+n+(n===1?' pedido com link':' pedidos com link'):'');
+  }
+  function pedirEntrega(){
+    if(entregaPedida) return; entregaPedida=true;
+    fetch('/api/painel?op=entrega').then(function(r){return r.json()}).then(function(j){
+      if(!j||!j.ok||!Array.isArray(j.pedidos)) return; entrega=j;
+      var el=$('entregaHora'); if(el&&vista==='home') el.querySelector('small').innerHTML=textoEntrega();
+    }).catch(function(){});
+  }
+  function listaPedidos(){
+    var l=(entrega&&entrega.pedidos)||[];
+    if(!l.length) return '<p style="margin-top:6px">Nenhum pedido com link ainda.</p>';
+    return '<div style="margin-top:6px">'+l.slice(0,12).map(function(p){
+      var d=new Date(p.em), dd=isNaN(d)?'':('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2);
+      return '<div class="ev"><span>'+dd+(p.status==='teste'?' · teste':p.status==='pendente'?' · PIX':'')+'</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+
+        esc((p.quem?p.quem+' · ':'')+p.beats.join(', '))+' · '+(p.baixou?'baixou '+p.baixou+(p.baixou===1?' arquivo':' arquivos'):'ainda não baixou')+
+        ' · <a href="/pedido/'+esc(p.token)+'" target="_blank" rel="noopener">abrir</a></span></div>';
+    }).join('')+'</div>';
+  }
+  function abrirEntrega(){
+    var card=$('card');
+    var pinta=function(){
+      var lig=!!(entrega&&entrega.ligada);
+      card.innerHTML='<h2>Entrega na hora</h2><p>Pagou, o beat sai num link com o WAV, o MP3 e o contrato: o botão aparece no PEDIDO CONFIRMADO e o link vai no e-mail do comprador. Stems e serviços seguem com você, como hoje.</p>'+
+        '<div class="sw"><div><b>Entrega na hora dos beats</b><small>'+(lig?'Ligada: venda com beat já sai com o link.':'Desligada: o checkout fica como era.')+'</small></div>'+
+          '<button type="button" class="toggle" id="enLiga" aria-pressed="'+lig+'" aria-label="Entrega na hora dos beats"><i></i></button></div>'+
+        '<div class="bloco"><div class="rot">TESTAR ANTES</div><p>Cria um pedido de mentira com o primeiro beat à venda e abre a página que o comprador vê. Nada é vendido e o beat segue na vitrine.</p>'+
+          '<div class="acoes" style="margin-top:12px"><button type="button" class="pill solid" id="enTeste">Criar pedido de teste</button></div><div id="enTesteLink" style="margin-top:10px;font-size:13.5px"></div></div>'+
+        '<div class="bloco"><div class="rot">ÚLTIMOS PEDIDOS COM LINK</div>'+listaPedidos()+'</div>'+
+        '<div class="acoes"><button type="button" class="pill" data-close>Fechar</button></div>';
+      card.querySelector('[data-close]').addEventListener('click',fechar);
+      $('enLiga').addEventListener('click',function(){
+        var b=this, quer=b.getAttribute('aria-pressed')!=='true'; b.disabled=true;
+        acao('entrega',{ligada:quer}).then(function(j){
+          b.disabled=false;
+          if(!j||!j.ok){ flash((j&&j.erro)||'Não salvou. Tenta de novo.'); return; }
+          entrega=j; pinta(); flash(quer?'Entrega na hora ligada.':'Entrega na hora desligada.');
+        });
+      });
+      $('enTeste').addEventListener('click',function(){
+        var b=this; b.disabled=true; b.textContent='Criando…';
+        acao('pedido-teste',{}).then(function(j){
+          b.disabled=false; b.textContent='Criar pedido de teste';
+          if(!j||!j.ok){ flash((j&&j.erro)||'Não criou. Tenta de novo.'); return; }
+          entrega.pedidos=j.pedidos||entrega.pedidos;
+          var l=$('enTesteLink'); l.innerHTML='Pedido de teste com '+esc(j.beat)+': <a href="'+esc(j.caminho)+'" target="_blank" rel="noopener">abrir a página do pedido</a>';
+        });
+      });
+    };
+    $('veil').hidden=false;
+    if(entrega) pinta(); else { card.innerHTML='<h2>Entrega na hora</h2><p>carregando…</p>'; }
+    fetch('/api/painel?op=entrega').then(function(r){return r.json()}).then(function(j){ if(j&&j.ok){ entrega=j; if(!$('veil').hidden) pinta(); } }).catch(function(){});
+  }
+  function textoComent(){
+    var r=comentResumo;
+    if(!r) return 'o que os artistas comentaram no tempo das faixas';
+    if(!r.total) return 'nenhum comentário ainda';
+    return (r.abertos?'<em>'+r.abertos+(r.abertos===1?' aberto':' abertos')+'</em>':'nada aberto')+(r.ultimo?' · último '+tempo(r.ultimo).replace(/^aberto /,''):'');
+  }
+  function pedirComent(){
+    if(comentPedido) return; comentPedido=true;
+    fetch('/api/painel?op=comentarios-resumo').then(function(r){return r.json()}).then(function(j){
+      if(!j||!j.ok) return;
+      comentResumo=j;
+      var el=$('comPastas'); if(el&&vista==='home') el.querySelector('small').innerHTML=textoComent();
+    }).catch(function(){});
   }
   function textoMusicas(){
     var r=musicasResumo;
@@ -511,11 +598,20 @@ function pagina() {
     document.querySelector('.topo .marca').setAttribute('aria-label', vista==='home' ? 'Voltar pro site' : 'Voltar pro painel');
     $('barra').hidden = !(vista==='artistas'||vista==='tapes');
     $('resumo').hidden = vista==='analytics';
-    $('lista').hidden = vista==='analytics'||vista==='vitrine'||vista==='musicas';
+    $('lista').hidden = vista==='analytics'||vista==='vitrine'||vista==='musicas'||vista==='comentarios';
     $('analytics').hidden = vista!=='analytics';
     $('vitrine').hidden = vista!=='vitrine';
     $('musicas').hidden = vista!=='musicas';
-    if(vista==='home'){ pedirResumoFunil(); pedirResumoLoja(); pedirConsumo(); pedirNumeros(); pedirMusicas(); $('lista').innerHTML=''; $('lista').appendChild(home()); pintarConsumo(); return; }
+    $('comentarios').hidden = vista!=='comentarios';
+    if(vista==='home'){ pedirResumoFunil(); pedirResumoLoja(); pedirConsumo(); pedirNumeros(); pedirMusicas(); pedirComent(); pedirEntrega(); $('lista').innerHTML=''; $('lista').appendChild(home()); pintarConsumo(); return; }
+    if(vista==='comentarios'){
+      if(!$('comentarios').dataset.montado && window.CaramujoComentarios){
+        $('comentarios').dataset.montado='1';
+        window.CaramujoComentarios.abrir($('comentarios'));
+      } else if(window.CaramujoComentarios) window.CaramujoComentarios.carregar();
+      if(!window.CaramujoComentarios) $('comentarios').innerHTML='<div class="vazio">carregando…</div>';
+      return;
+    }
     if(vista==='musicas'){
       // monta uma vez só; depois só redesenha (a lista de artistas recarrega sozinha)
       if(!$('musicas').dataset.montado && window.CaramujoMusicas){
@@ -605,7 +701,7 @@ function pagina() {
     });
   }
   function pintarResumo(usado){
-    if(vista==='vitrine'||vista==='musicas') return;            // lá o resumo é da loja / das músicas
+    if(vista==='vitrine'||vista==='musicas'||vista==='comentarios') return;            // lá o resumo é da loja / das músicas / dos comentários
     var r=$('resumo');
     r.textContent = artistas.length+(artistas.length===1?' artista no ar':' artistas no ar')+
       (tapes.length?' · '+tapes.length+(tapes.length===1?' beat tape':' beat tapes'):'')+
@@ -1181,6 +1277,12 @@ function pagina() {
   }
 
   carregar();
+  // /painel#comentarios (link do e-mail de comentário): abre direto na lista, quando o
+  // arquivo da tela chegar (ele vem com defer)
+  if(location.hash==='#comentarios'){
+    var tenta=0;
+    (function vai(){ if(window.CaramujoComentarios||tenta++>40){ irPara('comentarios'); return; } setTimeout(vai,50); })();
+  }
 })();
 </script>
 </body></html>`;

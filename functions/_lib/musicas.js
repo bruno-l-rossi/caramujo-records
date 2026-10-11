@@ -182,7 +182,8 @@ export async function guardarCapa(env, it) {
   if (/ab67616d0000b273/.test(it.capaUrl)) {
     pequena = await fetch(it.capaUrl.replace('ab67616d0000b273', 'ab67616d00001e02')).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
   }
-  const meta = { httpMetadata: { contentType: 'image/jpeg' } };
+  // 1 semana de cache (10/10/2026): a capa sai direto do R2 pelo som.caramujorecords.com.br
+  const meta = { httpMetadata: { contentType: 'image/jpeg', cacheControl: 'public, max-age=604800' } };
   await env.AUDIO.put(`capa/${id}.jpg`, grande, meta);
   await env.AUDIO.put(`capa/${id}-m.jpg`, grande, meta);
   await env.AUDIO.put(`capa/${id}-p.jpg`, pequena || grande, meta);

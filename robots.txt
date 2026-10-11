@@ -13,6 +13,8 @@ Disallow: /catalogo/
 Disallow: /f/
 Disallow: /p/
 Disallow: /dl/
+Disallow: /pedido/
+Disallow: /painel
 Disallow: /audio/
 Disallow: /docs/
 Disallow: /previews/

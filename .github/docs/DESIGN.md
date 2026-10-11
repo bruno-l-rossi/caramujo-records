@@ -273,3 +273,23 @@ Dois botões de 48px: VER O PIX (creme `bone`, texto escuro) e DESCARTAR (fantas
 borda `wire`). No computador o miolo fica com 560px no centro. Mockup no artifact "PIX no
 celular". O layout da tela do PIX segue o de sempre (escolha de 03/10), com o COPIAR em
 creme e 44px de altura.
+
+## Onde mora o visual da vitrine (desde 10/10/2026)
+
+O CSS da vitrine saiu do `index.html` e mora em `assets/vitrine/vitrine.css` (o código, em
+`assets/vitrine/vitrine.js`). Os tokens desta página ficam no `:root` do topo desse arquivo.
+Regra nova de visual na vitrine entra lá, nunca num `<style>` dentro do `index.html` (o
+`teste46` reprova). Mexeu no arquivo: o `?v=` dele no `index.html` troca junto
+(`node testes/vitrine-versao.mjs`), senão quem já visitou vê o visual velho por até 1 dia.
+
+## Página do pedido (desde 10/10/2026)
+
+`/pedido/<código>`, a entrega na hora dos beats (desenho aprovado no mockup do item 6, só a
+parte dos beats). Marca terrosa, igual à vitrine: fundo `black`, topo com o logo padrão e fio
+`wire`, kicker em sans caixa alta `fire`, nomes em Cormorant `cream` caixa alta, fichas e
+avisos pequenos em IBM Plex Mono `read`/`dim`. Cada beat numa caixa `deep` com borda `wire`
+de 1px e cantos retos: capa de 64px, nome, ficha e dois botões de 46px lado a lado (WAV
+cheio em `bone` com texto `deep`; MP3 fantasma com borda `wire`). Contrato numa linha com
+borda `wire`. Avisos (stems/serviço, pedido de teste) com fio de 3px em `fire` à esquerda;
+`blood` nunca aparece (não é erro nem vendido). No PEDIDO CONFIRMADO da vitrine, o botão
+"↓ BAIXAR SEUS ARQUIVOS" é o botão principal do checkout (`fire`), acima do contrato.

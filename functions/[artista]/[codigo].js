@@ -2,15 +2,22 @@
 
 import { paginaErro } from '../_lib/erro.js';
 import { db } from '../_lib/db.js';
-import { pagina, faixa } from '../_lib/page.js';
+import { pagina, faixa, textoGoogleTape } from '../_lib/page.js';
+import { lerEstatico } from '../_lib/loja.js';
 import { vitrine, indexar, achar } from '../_lib/vitrine.js';
 import { tapesDoPerfil } from '../_lib/perfil.js';
 import { MIDIA } from '../_lib/midia.js';
 import { slug as slugDe } from '../_lib/casar.js';
+import { SQL_PASTA, praPagina } from '../_lib/comentarios.js';
 
 // caminhos do site que não são artista
 const RESERVADO = new Set(['api', 'audio', 'assets', 'docs', 'previews', 'functions',
-  'mockups-antigos', 'catalogo', 'painel', 'dl', 'f', 'p', 'b', 'beat', 'beats', 'capa', 'cdn-cgi', 'rideblan33']);
+  'mockups-antigos', 'catalogo', 'painel', 'dl', 'f', 'p', 'b', 'beat', 'beats', 'capa', 'cdn-cgi', 'rideblan33', 'pedido']);
+
+// preço do beat avulso, lido do index.html (o mesmo que a loja cobra); falhou = sem preço no texto
+async function precoDoBeat(request, env) {
+  try { return (await lerEstatico(request, env)).preco || null; } catch (_) { return null; }
+}
 
 export async function onRequestGet({ params, request, env }) {
   const slug = String(params.artista || '').toLowerCase();
@@ -28,12 +35,14 @@ export async function onRequestGet({ params, request, env }) {
   // banco depois das consultas da página.
   const pVitrine = vitrine(request, env).catch(() => []);
   const pPerfil = tapesDoPerfil(request, env).catch(() => null);
-  const [artist, faixasDoBanco] = await Promise.all([
+  // os comentários da pasta (10/10/2026) vêm na mesma leva: tape e código errado = lista vazia
+  const [artist, faixasDoBanco, doComentario] = await Promise.all([
     d.prepare('SELECT * FROM artists WHERE slug = ?').bind(slug).first(),
     d.prepare(
       `SELECT * FROM tracks WHERE ready = 1 AND artist_id =
          (SELECT id FROM artists WHERE slug = ? AND code = ? AND tipo != 'vitrine')`
-    ).bind(slug, codigo).all()
+    ).bind(slug, codigo).all(),
+    d.prepare(SQL_PASTA).bind(slug, codigo).all().catch(() => ({ results: [] }))
   ]);
 
   // a prateleira interna da vitrine não é catálogo de ninguém: não abre página
@@ -91,7 +100,6 @@ export async function onRequestGet({ params, request, env }) {
         .map((t) => ({ name: t.name, url: `/${t.slug}/${t.code}`, capa: t.capa ? `/capa/${t.capa}` : null, n: t.n }));
     } catch (_) { mais = null; }
   }
-  const nBeats = tracks.filter((t) => t.kind === 'beat').length;
 
   // Link de um beat da tape (?faixa=<nome>, 04/10/2026): a prévia no Direct/WhatsApp mostra
   // o beat no formato do /b/ ("NOME · @rideblan33" + ficha). O Google segue vendo a tape
@@ -103,8 +111,9 @@ export async function onRequestGet({ params, request, env }) {
   return pagina(request, env, {
     // Tape vai pro Google (pedido de 26/09/2026); pasta de artista segue privada
     indexar: tape,
+    // texto do Google montado dos dados da tape (gêneros da loja, BPM, à venda; 10/10/2026)
     descricaoGoogle: tape
-      ? `${artist.name}: beat tape do @rideblan33 com ${nBeats} ${nBeats === 1 ? 'beat' : 'beats'} de rap pra ouvir. Beats exclusivos e produção completa na Caramujo Records, São Carlos, SP.`
+      ? textoGoogleTape(artist.name, tracks, { preco: await precoDoBeat(request, env), gratis: !!artist.dl_beats })
       : null,
     // textos da prévia no Direct/WhatsApp (formato do Bruno, 25/09/2026)
     titulo: fx ? `${String(fx.title).toLocaleUpperCase('pt-BR')} · @rideblan33`
@@ -132,6 +141,8 @@ export async function onRequestGet({ params, request, env }) {
       // o @rideblan33 vira o chip do perfil nas tapes E nas pastas de artista (26/09/2026)
       perfil: '/rideblan33',
       mais, totalPerfil,
+      // comentários no tempo da faixa (10/10/2026): só pasta de artista
+      ...(tape ? {} : { coment: praPagina(doComentario && doComentario.results, tracks) }),
       ...(MIDIA ? { midia: MIDIA } : {})
     }
   });

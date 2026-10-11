@@ -162,7 +162,47 @@ const SCHEMA = [
   `ALTER TABLE events ADD COLUMN origem TEXT`,
   // visitas do perfil (kind = 'perfil', artist_id vazio): o painel pergunta a última e
   // as do mês/ano sem varrer a tabela
-  `CREATE INDEX IF NOT EXISTS events_kind_at ON events (kind, at)`
+  `CREATE INDEX IF NOT EXISTS events_kind_at ON events (kind, at)`,
+  // Comentários das pastas de artista (10/10/2026, _lib/comentarios.js): o artista comenta
+  // num segundo da faixa (seg; NULL = a faixa toda) ou aprova a versão de uma música
+  // (tipo 'aprovou'); o Bruno responde (autor 'bruno', resposta_de) e marca como feito.
+  // versao = tracks.src_modified na hora: arquivo novo deixa o comentário como de uma
+  // versão anterior e a aprovação vencida. quem = número do aparelho (só ele apaga).
+  `CREATE TABLE IF NOT EXISTS comentarios (
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     artist_id INTEGER NOT NULL,
+     track_id TEXT NOT NULL,
+     titulo TEXT,
+     versao TEXT,
+     seg INTEGER,
+     texto TEXT NOT NULL,
+     tipo TEXT NOT NULL DEFAULT 'nota',
+     autor TEXT NOT NULL DEFAULT 'artista',
+     nome TEXT,
+     quem TEXT,
+     resposta_de INTEGER,
+     feito_em TEXT,
+     at TEXT NOT NULL
+   )`,
+  `CREATE INDEX IF NOT EXISTS comentarios_artista ON comentarios (artist_id, at)`,
+  // Entrega na hora dos beats (10/10/2026, _lib/pedidos.js): o link /pedido/<token> com WAV,
+  // MP3 e contrato. pagamento = id do Mercado Pago (UNIQUE já indexa; pedido de teste = NULL).
+  // status 'pendente' | 'pago' | 'teste'. itens = JSON dos beats (com a faixa) e serviços.
+  // baixados = JSON { "wav-<beat>": n } (teto por arquivo). Nada de CPF aqui: o contrato é
+  // refeito com os dados que já estão no Mercado Pago.
+  `CREATE TABLE IF NOT EXISTS pedidos (
+     token TEXT PRIMARY KEY,
+     pagamento TEXT UNIQUE,
+     status TEXT NOT NULL,
+     nome TEXT,
+     artista TEXT,
+     email TEXT,
+     itens TEXT NOT NULL,
+     valor REAL,
+     baixados TEXT,
+     criado_em TEXT NOT NULL,
+     pago_em TEXT
+   )`
 ];
 
 // Versão do esquema: muda sozinha quando a lista acima muda. Com ela gravada na
@@ -371,8 +411,23 @@ function embrulhar(DB) {
 }
 let embrulhado = null, cruVisto = null;
 
+// Marca na cópia da região de que o banco já está no esquema e nos ajustes deste deploy
+// (10/10/2026). Servidor que acorda e acha a marca pula a consulta de acordar: o banco
+// fica fora do Brasil e cada ida e volta custa ~130 ms. Esquema ou UMA_VEZ novos mudam a
+// chave, então o primeiro servidor depois do deploy confere e aplica como sempre.
+let chavePronto = null;
+function marcaPronto() {
+  if (!chavePronto) chavePronto = 'https://caramujorecords.com.br/__cache/db-pronto-' + VERSAO + '-' + assinatura(UMA_VEZ.map((x) => x[0]).join('|'));
+  return chavePronto;
+}
+const cacheRegiao = () => (typeof caches !== 'undefined' && caches.default ? caches.default : null);
+
 export async function db(env) {
   if (!env.DB) throw new Error('D1 nao esta ligado (binding DB)');
+  if (!ready) {
+    const c = cacheRegiao();
+    try { if (c && await c.match(marcaPronto())) ready = true; } catch (_) { /* segue e confere no banco */ }
+  }
   if (!ready) {
     // Servidor que acabou de acordar: a versão do esquema e as marcas do UMA_VEZ saem
     // numa consulta só (eram duas, uma atrás da outra; 03/10/2026).
@@ -407,6 +462,8 @@ export async function db(env) {
         .bind(marca, new Date().toISOString()).run();
     }
     ready = true;
+    const c = cacheRegiao();
+    try { if (c) await c.put(marcaPronto(), new Response('1', { headers: { 'cache-control': 'public, max-age=3600' } })); } catch (_) { /* bônus */ }
   }
   if (cruVisto !== env.DB) { cruVisto = env.DB; embrulhado = embrulhar(env.DB); }
   return embrulhado;
@@ -431,6 +488,13 @@ export function code(len = 5) {
   for (const n of b) out += ALPHA[n % ALPHA.length];
   return out;
 }
+
+// "Pessoa" (10/10/2026): o navegador manda um número aleatório que ele mesmo guarda
+// (cr_pessoa). O mesmo celular conta uma vez só, mesmo trocando de rede; antes a conta
+// era rede + navegador e o 4G virava várias pessoas. Sem o número (navegador que não
+// guarda nada), fica a conta antiga. O número não carrega IP, nome nem nada da pessoa.
+// Também diz quem escreveu um comentário na pasta (só esse aparelho apaga).
+export const pessoaDe = (v) => (/^[a-z0-9]{12,32}$/.test(String(v || '')) ? 'p' + String(v).slice(0, 11) : null);
 
 // Identificador de quem abriu, sem guardar IP: hash do IP + navegador.
 export async function who(request) {

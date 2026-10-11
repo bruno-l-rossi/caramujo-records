@@ -12,7 +12,9 @@ import { esquecerApiVitrine } from './vitrine.js';
 import { esquecerPerfil } from '../_lib/perfil.js';
 import { PADRAO as NUM_PADRAO, deTexto as numDeTexto } from '../_lib/numeros.js';
 import { painelLer as musicasLer, painelAcao as musicasAcao } from '../_lib/musicas.js';
+import { painelLer as comentariosLer, painelResumo as comentariosResumo, painelAcao as comentarioAcao } from '../_lib/comentarios.js';
 import { somUrl } from '../_lib/midia.js';
+import { entregaLigada, ligarEntrega, pedidoDeTeste, ultimosPedidos } from '../_lib/pedidos.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
 
@@ -44,9 +46,27 @@ export async function onRequest({ request, env }) {
     if (r.mudou) await esquecerPerfil(request);
     return json(r.corpo);
   }
+  // Comentários das pastas (10/10/2026): a lista inteira e o resumo da home
+  if (op === 'comentarios' && request.method !== 'POST') return json(await comentariosLer(d));
+  if (op === 'comentarios-resumo') return json(await comentariosResumo(d));
+  // Entrega na hora dos beats (10/10/2026): a chave e os últimos pedidos com link
+  if (op === 'entrega' && request.method !== 'POST') return json({ ok: true, ligada: await entregaLigada(d), pedidos: await ultimosPedidos(d) });
   if (request.method !== 'POST') return json({ erro: 'op desconhecida' }, 400);
 
   const body = await request.json().catch(() => ({}));
+  if (op === 'entrega') {
+    await ligarEntrega(d, !!body.ligada);
+    return json({ ok: true, ligada: !!body.ligada, pedidos: await ultimosPedidos(d) });
+  }
+  if (op === 'pedido-teste') {
+    const t = await pedidoDeTeste(request, env);
+    if (!t) return json({ erro: 'Nenhum beat à venda com arquivo pra testar.' }, 400);
+    return json({ ok: true, ...t, pedidos: await ultimosPedidos(d) });
+  }
+  if (/^comentario-/.test(op)) {
+    const r = await comentarioAcao(op, d, body);
+    return json(r.corpo, r.status);
+  }
   if (op === 'perm') return perm(d, body);
   if (op === 'descricao') return descricao(d, body);
   if (op === 'perfil') { const r = await perfilMostrar(d, body); await esquecerPerfil(request); return r; }

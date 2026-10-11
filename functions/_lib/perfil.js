@@ -8,7 +8,7 @@
 // alguma coisa (esquecerPerfil).
 
 import { db } from './db.js';
-import { MIDIA } from './midia.js';
+import { MIDIA, capaUrl, CAPA_VOLTA } from './midia.js';
 import { ICONES as ICONES_ABA, SELO_GRANDE } from './icones.js';
 import { RODAPE_GENEROS, CSS_RODAPE_GENEROS } from './generos.js';
 import { PADRAO as NUM_PADRAO, deTexto as numDeTexto, limpar as numLimpar, curto, longo } from './numeros.js';
@@ -46,12 +46,20 @@ export function escolherEmAlta(ranking, nova) {
 
 // Uma consulta pra meta (ranking do em alta + números do site + músicas do perfil); a
 // conta dos plays só quando o ranking guardado passou de 6 h.
-async function lerMetaPerfil(d, nova) {
-  let ranking = null, numeros = { ...NUM_PADRAO }, musicas = { noAr: false, lista: [] };
+// a leitura crua da meta (sai junto com as outras consultas do lerPerfil)
+async function lerMetaBruta(d) {
   try {
     const { results } = await d.prepare(
       `SELECT chave, valor FROM meta WHERE chave IN ('${EM_ALTA_CHAVE}', 'numeros', '${MUS_CHAVE}')`
     ).all();
+    return results || [];
+  } catch (_) { return null; }
+}
+
+async function lerMetaPerfil(d, nova, linhas) {
+  let ranking = null, numeros = { ...NUM_PADRAO }, musicas = { noAr: false, lista: [] };
+  try {
+    const results = linhas === undefined ? await lerMetaBruta(d) : linhas;
     for (const r of results || []) {
       if (r.chave === 'numeros') numeros = numDeTexto(r.valor);
       else if (r.chave === MUS_CHAVE) musicas = musDeTexto(r.valor);
@@ -91,7 +99,10 @@ export async function lerPerfil(request, env) {
     } catch (_) { /* segue pro banco */ }
   }
   const d = await db(env);
-  const { results } = await d.prepare(
+  // As três leituras saem juntas (10/10/2026; eram uma atrás da outra, ~150 ms cada no
+  // servidor frio): a lista, os beats da 1ª tape (achada na própria consulta, mesma
+  // ordem da lista) e a meta. O ranking do EM ALTA só é refeito a cada 6 horas.
+  const pTapes = d.prepare(
     `SELECT a.id, a.name, a.slug, a.code, a.cover_key, COALESCE(c.n, 0) AS n
        FROM artists a
        LEFT JOIN (SELECT artist_id, COUNT(*) AS n FROM tracks
@@ -99,20 +110,28 @@ export async function lerPerfil(request, env) {
       WHERE a.tipo = 'tape' AND a.perfil = 1
       ORDER BY COALESCE(a.perfil_ordem, -1000000000 - a.id), a.id`
   ).all();
+  const pFaixas = d.prepare(
+    `SELECT id, title, dur, artist_id FROM tracks WHERE kind = 'beat' AND ready = 1 AND artist_id = (
+       SELECT a.id FROM artists a WHERE a.tipo = 'tape' AND a.perfil = 1
+          AND EXISTS (SELECT 1 FROM tracks t WHERE t.artist_id = a.id AND t.kind = 'beat' AND t.ready = 1)
+        ORDER BY COALESCE(a.perfil_ordem, -1000000000 - a.id), a.id LIMIT 1)
+      ORDER BY CASE grp WHEN 'res' THEN 0 ELSE 1 END, src_modified DESC LIMIT 40`
+  ).all();
+  const pMeta = lerMetaBruta(d);
+  [pTapes, pFaixas, pMeta].forEach((p) => p.catch(() => {}));
+  const { results } = await pTapes;
   const tapes = (results || []).filter((r) => r.n > 0).map((r) => ({
     id: r.id, name: r.name, slug: r.slug, code: r.code,
     capa: r.cover_key || null, n: r.n
   }));
   let faixas = [];
   if (tapes.length) {
-    const { results: f } = await d.prepare(
-      `SELECT id, title, dur FROM tracks WHERE artist_id = ? AND kind = 'beat' AND ready = 1
-        ORDER BY CASE grp WHEN 'res' THEN 0 ELSE 1 END, src_modified DESC LIMIT 40`
-    ).bind(tapes[0].id).all();
-    faixas = (f || []).map((x) => ({ id: x.id, t: x.title, d: x.dur || 0 }));
+    const { results: f } = await pFaixas;
+    // a consulta acha a 1ª tape sozinha; confere se é a mesma da lista
+    faixas = (f || []).filter((x) => x.artist_id === tapes[0].id).map((x) => ({ id: x.id, t: x.title, d: x.dur || 0 }));
   }
   const nova = tapes.length ? tapes[0].id : null;
-  const meta = await lerMetaPerfil(d, nova);
+  const meta = await lerMetaPerfil(d, nova, await pMeta);
   const emAlta = meta.emAlta;
   const dados = { tapes, faixas, nova, emAlta: tapes.some((t) => t.id === emAlta) ? emAlta : null, numeros: meta.numeros, musicas: meta.musicas };
   cache = { at: Date.now(), dados };
@@ -153,7 +172,7 @@ const ICONES = {
   compartilhar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 13.3l7.4 4.4"/><path d="M15.7 6.3l-7.4 4.4"/></svg>'
 };
 // o mesmo ?v das outras páginas: trocar junto com index.html e catalogo/app.html
-export const STORY_JS = '/assets/story.js?v=2026-10-04a';
+export const STORY_JS = '/assets/story.js?v=2026-10-10a';
 
 const ICONE_FOGO = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 4-3 5-3 9a3 3 0 006 0c0-1.5-.6-2.4-1-3 2.5 1 4 3.6 4 6.5A6 6 0 016 14.5C6 9 11 7 12 2z"/></svg>';
 function pastilha(t, nova, emAlta) {
@@ -167,7 +186,7 @@ function grade(tapes, nova = null, emAlta = null) {
     // endereço limpo pro Google; a origem vai no data-de (_lib/origem.js, 08/10/2026)
     const href = `/${t.slug}/${t.code}`;
     const img = t.capa
-      ? `<img src="/capa/${esc(t.capa)}" srcset="/capa/${esc(t.capa)}?p 200w, /capa/${esc(t.capa)}?m 480w, /capa/${esc(t.capa)} 1000w" sizes="(max-width:600px) 31vw, (max-width:820px) 24vw, 222px" alt="Capa da beat tape ${esc(t.name)}" width="1000" height="1000"${i < 6 ? '' : ' loading="lazy"'} decoding="async">`
+      ? `<img src="${esc(capaUrl(t.capa, 'm'))}" srcset="${esc(capaUrl(t.capa, 'p'))} 200w, ${esc(capaUrl(t.capa, 'm'))} 480w, ${esc(capaUrl(t.capa))} 1000w" sizes="(max-width:600px) 31vw, (max-width:820px) 24vw, 222px" alt="Capa da beat tape ${esc(t.name)}" width="1000" height="1000"${i < 6 ? '' : ' loading="lazy"'} decoding="async">`
       : `<img class="semcapa" src="/assets/brand/caramujo-v.webp" alt="Beat tape ${esc(t.name)}" width="300" height="300"${i < 6 ? '' : ' loading="lazy"'}>`;
     return `<a class="tape" href="${esc(href)}"${deAttr('perfil')} data-id="${t.id}"><span class="capa">${img}<span class="sobre" aria-hidden="true"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span>${pastilha(t, nova, emAlta)}</span><span class="leg"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span></a>`;
   }).join('\n');
@@ -187,7 +206,7 @@ export const mesAno = (d) => {
 const SP_PEQUENA = (u) => (/ab67616d0000b273/.test(u) ? u.replace('ab67616d0000b273', 'ab67616d00001e02') : u);
 // capa guardada na prateleira (/capa/mus-…); enquanto o painel não guardou, a do próprio Spotify/YouTube
 function capaMus(m) {
-  if (m.capa) return { src: `/capa/${m.capa}?p`, grande: `/capa/${m.capa}`, srcset: `/capa/${m.capa}?p 300w, /capa/${m.capa} 640w` };
+  if (m.capa) return { src: capaUrl(m.capa, 'p'), grande: capaUrl(m.capa), srcset: `${capaUrl(m.capa, 'p')} 300w, ${capaUrl(m.capa)} 640w` };
   if (m.capaUrl) return { src: SP_PEQUENA(m.capaUrl), grande: m.capaUrl, srcset: SP_PEQUENA(m.capaUrl) !== m.capaUrl ? `${SP_PEQUENA(m.capaUrl)} 300w, ${m.capaUrl} 640w` : '' };
   return { src: '/assets/brand/caramujo-v.webp', grande: SELO_GRANDE, srcset: '', sem: true };
 }
@@ -262,7 +281,8 @@ function jsonMusicas(mus) {
       };
       if (m.artistas) item.byArtist = m.artistas.split(/\s*,\s*/).filter(Boolean).map((a) => ({ '@type': 'MusicGroup', name: a }));
       if (m.data) item.datePublished = m.data;
-      if (!c.sem) item.image = c.grande.startsWith('/') ? SITE + c.grande : c.grande;
+      // capa guardada: pro Google vai o endereço do próprio site (/capa/<id>), não o do R2
+      if (!c.sem) item.image = m.capa ? SITE + '/capa/' + m.capa : c.grande.startsWith('/') ? SITE + c.grande : c.grande;
       const mesmo = [m.spotify, m.youtube].filter(Boolean);
       if (mesmo.length > 1) item.sameAs = mesmo;
       return { '@type': 'ListItem', position: i + 1, item };
@@ -286,9 +306,9 @@ export function paginaPerfil(dados, { url, barraFixa = true, aba = 'musicas', pr
   const idEmAlta = Array.isArray(dados) ? null : (dados.emAlta ?? null);
   const nova = tapes[0] || null;
   const tocador = nova && faixas.length ? {
-    tape: { id: nova.id, name: nova.name, url: `/${nova.slug}/${nova.code}`, capa: nova.capa ? `/capa/${nova.capa}?p` : '/assets/brand/caramujo-v.webp',
+    tape: { id: nova.id, name: nova.name, url: `/${nova.slug}/${nova.code}`, capa: nova.capa ? capaUrl(nova.capa, 'p') : '/assets/brand/caramujo-v.webp',
       // a tela de bloqueio usa a arte inteira, igual à página da tape
-      arte: nova.capa ? `/capa/${nova.capa}` : SELO_GRANDE },
+      arte: nova.capa ? capaUrl(nova.capa) : SELO_GRANDE },
     faixas
   } : null;
   // aba Músicas (05/10/2026): só com música na lista e com o "No ar" ligado (ou na prévia)
@@ -367,7 +387,8 @@ export function paginaPerfil(dados, { url, barraFixa = true, aba = 'musicas', pr
 <meta name="twitter:image" content="${og}">
 <meta name="theme-color" content="#14110d">
 ${FAVICON}
-<link rel="preload" as="image" href="/assets/perfil/rideblan33.webp" fetchpriority="high">
+<link rel="preload" as="image" href="/assets/perfil/rideblan33.webp" imagesrcset="/assets/perfil/rideblan33-432.webp 432w, /assets/perfil/rideblan33-480.webp 480w, /assets/perfil/rideblan33-648.webp 648w, /assets/perfil/rideblan33.webp 720w" imagesizes="(max-width:820px) 216px, 354px" fetchpriority="high">
+${CAPA_VOLTA}
 <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/cormorant-garamond-latin-600-normal.woff2" crossorigin>
 <script type="application/ld+json">${jsonSeguro(pessoa)}</script>
 <script type="application/ld+json">${jsonSeguro(lista)}</script>
@@ -587,7 +608,7 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
 <body>
 <header class="terra">
   <nav class="topo" aria-label="Caramujo Records">
-    <a class="logo" href="/"${deAttr('perfil')} aria-label="Caramujo Records, beats à venda"><img src="/assets/brand/caramujo-h.webp" alt="Caramujo Records" width="296" height="54"></a>
+    <a class="logo" href="/"${deAttr('perfil')} aria-label="Caramujo Records, beats à venda"><img src="/assets/brand/caramujo-h.webp" srcset="/assets/brand/caramujo-h-244.webp 244w, /assets/brand/caramujo-h-366.webp 366w, /assets/brand/caramujo-h.webp 504w" sizes="(max-width:380px) 104px, (max-width:820px) 118px, 168px" alt="Caramujo Records" width="296" height="54"></a>
     ${tocaAlgo ? `<button class="ouca" id="ouca" type="button" aria-pressed="false" aria-label="${rotOuca}">${ICONE_TOCA}${ICONE_PAUSA}<span>${rotOuca}</span></button>` : ''}
   </nav>
   <section class="palco">
@@ -606,7 +627,7 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
     </div>
     <div class="foto" aria-hidden="true">
       <span class="num33">33</span>
-      <img src="/assets/perfil/rideblan33.webp" srcset="/assets/perfil/rideblan33-480.webp 480w, /assets/perfil/rideblan33.webp 720w" sizes="(max-width:820px) 300px, 420px" alt="" width="720" height="1200" fetchpriority="high">
+      <img src="/assets/perfil/rideblan33.webp" srcset="/assets/perfil/rideblan33-432.webp 432w, /assets/perfil/rideblan33-480.webp 480w, /assets/perfil/rideblan33-648.webp 648w, /assets/perfil/rideblan33.webp 720w" sizes="(max-width:820px) 216px, 354px" alt="" width="720" height="1200" fetchpriority="high">
     </div>
   </section>
 </header>
@@ -649,9 +670,11 @@ ${comMusicas ? '  </div>\n' : ''}</main>
 </footer>
 <script>
 (function(){
-  // visitas e cliques do perfil pro analytics do painel (nada pessoal: o servidor
-  // guarda só um hash curto de IP + navegador, igual às tapes)
-  function manda(o){try{var s=JSON.stringify(o);if(navigator.sendBeacon)navigator.sendBeacon('/api/play',new Blob([s],{type:'application/json'}));else fetch('/api/play',{method:'POST',body:s,headers:{'content-type':'application/json'},keepalive:true});}catch(e){}}
+  // visitas e cliques do perfil pro analytics do painel. Desde 10/10/2026 vai junto um
+  // número aleatório guardado neste navegador (cr_pessoa, o mesmo das tapes): o mesmo
+  // aparelho conta uma pessoa só. Não carrega IP nem nome.
+  function pessoa(){try{var v=localStorage.getItem('cr_pessoa');if(!v||!/^[a-z0-9]{12,32}$/.test(v)){var a=new Uint8Array(12);if(window.crypto&&crypto.getRandomValues)crypto.getRandomValues(a);else for(var i=0;i<12;i++)a[i]=Math.random()*256|0;v='';for(var j=0;j<12;j++)v+=(a[j]%36).toString(36);localStorage.setItem('cr_pessoa',v);}return v;}catch(e){return '';}}
+  function manda(o){try{if(!o.pessoa){var pe=pessoa();if(pe)o.pessoa=pe;}var s=JSON.stringify(o);if(navigator.sendBeacon)navigator.sendBeacon('/api/play',new Blob([s],{type:'application/json'}));else fetch('/api/play',{method:'POST',body:s,headers:{'content-type':'application/json'},keepalive:true});}catch(e){}}
   var de='';try{de=(new URLSearchParams(location.search).get('de')||'').toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,24);}catch(e){}
   if(!de){var r='';try{r=new URL(document.referrer).hostname;}catch(e){}
     de=/instagram/.test(r)?'instagram':/google\\./.test(r)?'google':/youtube|youtu\\.be/.test(r)?'youtube':/facebook|fb\\./.test(r)?'facebook':/whatsapp/.test(r)?'whatsapp':/spotify/.test(r)?'spotify':/caramujorecords/.test(r)?'site':r?'outro-site':'direto';}

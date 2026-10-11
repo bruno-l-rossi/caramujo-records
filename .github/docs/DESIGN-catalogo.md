@@ -147,6 +147,28 @@ Um parágrafo curto embaixo da contagem de faixas, escrito só por mim no painel
 caracteres. Aceita quebra de linha — no máximo uma linha em branco entre parágrafos, o resto
 o painel aperta sozinho. Sem recado, nada aparece.
 
+## Comentários e NOVA (pasta de artista, 10/10/2026)
+
+Só na pasta do artista. Tape e link avulso (`/f/`, `/p/`) ficam como estão.
+
+- **NOVA** e **VERSÃO NOVA**: pastilha creme `#E4DAC7` com texto preto (a mesma do DISPONÍVEL
+  da tape), antes da linha cinza. NOVA = a faixa não estava na última visita deste aparelho;
+  VERSÃO NOVA = o arquivo mudou. Vale a visita inteira e some na próxima. Primeira visita no
+  aparelho: só o que subiu nos últimos 7 dias, e nada quando seria a pasta toda.
+- **APROVADA**: pastilha cinza translúcida com aro (a do VENDIDO), quando a versão atual da
+  música foi aprovada. Arquivo novo derruba a aprovação.
+- A linha cinza ganha `· N comentários` no fim, em texto, sem ícone.
+- Barra do player: na pasta, o lugar do Comprar da tape vira **Comentar** (ícone de balão +
+  texto). Toca, pausa a música e abre a folha já no segundo que tocava ("Em 1:23" ou "Na faixa
+  toda", chips brancos quando escolhidos), campo do comentário, "Seu nome" (lembrado no
+  aparelho), Cancelar e Enviar. Na linha do tempo, um ponto branco de 4px em cada segundo
+  comentado.
+- `...` da faixa: **Comentários (N)** em primeiro. A folha lista os comentários na ordem em que
+  foram escritos: o tempo num chip que toca a faixa ali, o texto, nome e data, "versão anterior"
+  quando o arquivo mudou depois, a resposta do @rideblan33 recuada com fio à esquerda, e
+  "Apagar" só no que este aparelho escreveu. Música ganha "Aprovar versão".
+- Sem divisória entre comentários, sem emoji, sem cor de acento: o branco segue sendo o acento.
+
 ## Beat tape
 
 Mesmo desenho do catálogo do artista, com quatro diferenças:

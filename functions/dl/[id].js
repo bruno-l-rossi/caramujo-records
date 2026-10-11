@@ -3,6 +3,7 @@
 
 import { db, now, who } from '../_lib/db.js';
 import { driveFile } from '../_lib/drive.js';
+import { ehOBruno } from '../_lib/sessao.js';
 
 export async function onRequestGet({ params, request, env }) {
   const id = String(params.id || '');
@@ -24,9 +25,12 @@ export async function onRequestGet({ params, request, env }) {
   const nome = nomeArquivo(t, fmt).replace(/[\\/:*?"<>|]/g, '-');
   const disp = `attachment; filename*=UTF-8''${encodeURIComponent(nome)}`;
 
-  await d.prepare(
-    'INSERT INTO events (artist_id, track_id, kind, link_code, who, at) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(t.aid, t.id, 'download-' + fmt, t.code, await who(request), now()).run();
+  // download do próprio Bruno (marca do painel, 10/10/2026) não entra na atividade
+  if (!(await ehOBruno(request, env))) {
+    await d.prepare(
+      'INSERT INTO events (artist_id, track_id, kind, link_code, who, at) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(t.aid, t.id, 'download-' + fmt, t.code, await who(request), now()).run();
+  }
 
   if (fmt === 'mp3') {
     const obj = await env.AUDIO.get(`mp3/${id}.mp3`);

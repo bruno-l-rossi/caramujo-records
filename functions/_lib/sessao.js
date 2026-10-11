@@ -21,6 +21,33 @@ export function igual(a, b) {
   return d === 0;
 }
 
+// "Este aparelho é do Bruno" (10/10/2026): o navegador que entrou no painel ganha uma
+// marca de 400 dias (o máximo que o navegador guarda), renovada a cada abertura do
+// painel. Com ela, visita, play e download desse aparelho não entram no analytics, mesmo
+// depois que a sessão do painel (30 dias) vencer. Assinada com a senha do painel:
+// trocar a senha apaga as marcas também.
+export const MARCA_EU = 'cr_eu';
+export const DIAS_EU = 400;
+async function assinarEu(env) {
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(env.PAINEL_SENHA),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode('eu:aparelho-do-bruno'));
+  return [...new Uint8Array(sig)].slice(0, 16).map((n) => n.toString(16).padStart(2, '0')).join('');
+}
+export async function cookieEu(env) {
+  return `${MARCA_EU}=${await assinarEu(env)}; Path=/; Max-Age=${DIAS_EU * 86400}; HttpOnly; Secure; SameSite=Lax`;
+}
+// true = é o Bruno (marca do aparelho ou sessão do painel): não conta no analytics
+export async function ehOBruno(request, env) {
+  if (!env || !env.PAINEL_SENHA) return false;
+  const raw = request.headers.get('cookie') || '';
+  const m = raw.match(new RegExp('(?:^|;\\s*)' + MARCA_EU + '=([0-9a-f]{32})'));
+  if (m && igual(m[1], await assinarEu(env))) return true;
+  return autenticado(request, env);
+}
+
 export async function autenticado(request, env) {
   if (!env.PAINEL_SENHA) return false;
   const raw = request.headers.get('cookie') || '';

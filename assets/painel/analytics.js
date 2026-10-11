@@ -627,6 +627,7 @@
       filtros.appendChild(abas); filtros.appendChild(per); filtros.appendChild(pop);
       raiz.appendChild(filtros);
       var legenda = el('div', 'an-periodo'); raiz.appendChild(legenda);
+      var LIMPO_DESDE = '2026-10-10';
       var corpo = el('div', 'an-corpo'); raiz.appendChild(corpo);
 
       var ICO_CAL = '<svg class="ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
@@ -662,6 +663,8 @@
             legenda.textContent = j.tudo
               ? 'Tudo que tem guardado: ' + brAno(j.de) + ' a ' + brAno(j.ate) + ' · ' + nd
               : brAno(j.de) + ' a ' + brAno(j.ate) + ' · ' + nd + ', comparado com os ' + nd + ' antes';
+            // 10/10/2026: os aparelhos do Bruno pararam de contar e "Pessoas" virou por aparelho
+            if (String(j.de || '') < LIMPO_DESDE) legenda.textContent += '. Antes de 10/10/2026 entram as suas visitas, e cada troca de rede do celular contava como outra pessoa';
             (j.aba === 'tapes' ? tapes : j.aba === 'artistas' ? artistas : j.aba === 'perfil' ? perfil : vitrine)(j, corpo);
           })
           .catch(function () {

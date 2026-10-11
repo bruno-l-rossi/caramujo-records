@@ -9,6 +9,8 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/selo-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/selo-180.png">
 <link rel="manifest" href="/site.webmanifest">
+<!-- capa-volta: capa do R2 que falhar volta pela função (functions/_lib/midia.js) -->
+<script>/* capa-volta */window.addEventListener("error",function(e){var t=e.target;if(!t||t.tagName!=="IMG"||t.__volta)return;var m=/^https:\/\/som\.caramujorecords\.com\.br\/capa\/([A-Za-z0-9_-]+?)(?:-(p|m))?\.jpg$/.exec(t.currentSrc||t.src||"");if(!m)return;t.__volta=1;t.removeAttribute("srcset");t.src="/capa/"+m[1]+(m[2]?"?"+m[2]:"")},true);</script>
 <title>__TITULO__</title>
 __META__
 <!-- fonte servida daqui (assets/fonts, licença OFL): sem Google no caminho -->
@@ -354,6 +356,39 @@ __META__
   .card-close{margin-top:14px;width:100%;padding:13px;border-radius:12px;border:1px solid #2a2a2a;
     background:transparent;color:var(--ink-2);font-size:14px;cursor:pointer}
 
+  /* Pasta de artista (10/10/2026): NOVA desde a última visita, versão aprovada, comentários
+     no tempo da faixa (botão Comentar na barra, marcas na linha do tempo) */
+  .selo.nova{background:#E4DAC7;color:#0a0a0a}
+  .selo.aprovada{background:rgba(255,255,255,.13);color:#d2d2d2;box-shadow:inset 0 0 0 1px rgba(255,255,255,.24)}
+  .sub .coms{white-space:nowrap}
+  .sk{position:relative;flex:1;min-width:0;display:flex;align-items:center}
+  .sk input[type=range]{flex:1}
+  .marcas{position:absolute;left:6px;right:6px;top:50%;height:0;pointer-events:none}
+  .marcas i{position:absolute;top:-8px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:#fff;opacity:.85}
+  .marcas[hidden]{display:none}
+  .card .cm-quando{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .cm-chip{padding:8px 13px;border-radius:999px;border:1px solid #2c2c2c;background:transparent;color:var(--ink-2);font-size:13px;cursor:pointer;font-variant-numeric:tabular-nums}
+  .cm-chip[aria-pressed="true"]{background:#fff;color:#000;border-color:#fff;font-weight:600}
+  .cm-rot{display:block;margin:16px 0 6px;font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-4)}
+  .cm-campo{width:100%;background:#0d0d0d;border:1px solid #232323;border-radius:12px;padding:12px 14px;font-size:16px;line-height:1.45;color:#fff;outline:none}
+  .cm-campo::placeholder{color:#5a5a5a}
+  .cm-campo:focus{border-color:#4a4a4a}
+  textarea.cm-campo{resize:vertical;min-height:92px;display:block}
+  .cm-acoes{display:flex;gap:10px;margin-top:16px}
+  .cm-acoes .pill{flex:1;justify-content:center}
+  .card .cm-nota{margin-top:12px;font-size:12px;color:var(--ink-4)}
+  .cm-lista{list-style:none;margin:10px 0 0;padding:0;max-height:44vh;overflow-y:auto}
+  .cm-item{display:flex;gap:12px;padding:10px 0}
+  .cm-seg{flex:none;min-width:50px;height:28px;padding:0 9px;border-radius:999px;border:1px solid #2c2c2c;background:#181818;color:#fff;font-size:12.5px;font-variant-numeric:tabular-nums;cursor:pointer}
+  .cm-seg.toda{display:inline-flex;align-items:center;justify-content:center;border-color:transparent;background:transparent;color:var(--ink-4);font-size:11.5px;cursor:default;padding:0}
+  .cm-corpo{flex:1;min-width:0}
+  .card .cm-corpo p{margin:4px 0 0;font-size:14.5px;line-height:1.45;color:#efefef;white-space:pre-line;overflow-wrap:anywhere}
+  .cm-corpo small{display:block;margin-top:4px;font-size:12px;color:var(--ink-4)}
+  .cm-item.feito .cm-corpo p,.cm-item.antiga .cm-corpo p{color:var(--ink-3)}
+  .cm-resp{margin-top:8px;padding-left:10px;border-left:2px solid #2c2c2c;font-size:13.5px;line-height:1.45;color:var(--ink-2);white-space:pre-line;overflow-wrap:anywhere}
+  .cm-resp b{color:#fff;font-weight:600}
+  .cm-apagar{margin-top:4px;padding:4px 0;background:transparent;border:0;color:var(--ink-3);font-size:12px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+  .card .cm-aprov{margin-top:14px;padding:11px 13px;border-radius:12px;background:#1b1b1b;font-size:13.5px;color:#d2d2d2}
   .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:120px;z-index:60;
     background:#1d1d1d;border:1px solid #2d2d2d;color:#e2e2e2;font-size:13px;
     padding:11px 15px;border-radius:12px;max-width:86%;text-align:center;
@@ -532,7 +567,7 @@ __META__
     <div class="scrub">
       <time id="tNow">0:00</time>
       <label for="seek" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Posição da faixa</label>
-      <input id="seek" type="range" min="0" max="100" value="0" step="1">
+      <span class="sk"><input id="seek" type="range" min="0" max="100" value="0" step="1"><span class="marcas" id="marcas" aria-hidden="true" hidden></span></span>
       <time id="tEnd" class="r">0:00</time>
     </div>
     <a class="pl-top" id="plLink">
@@ -629,6 +664,60 @@ __META__
 
   var VENDA = { disponivel:'DISPONÍVEL', vendido:'VENDIDO' };
 
+  /* ---------- pasta de artista: NOVA e comentários (10/10/2026) ---------- */
+  // Só na pasta do artista (não na tape, não nos links avulsos /f/ e /p/)
+  var PASTA = !CAT.artist.tape && !CAT.preview && !!CAT.code;
+  var COMS = PASTA && Array.isArray(CAT.coment) ? CAT.coment.slice() : [];
+  // NOVA desde a última visita neste aparelho: faixa que não estava = NOVA; arquivo trocado
+  // (mod mudou) = VERSÃO NOVA. A marca vale a visita inteira (recarregar não apaga) e some
+  // na próxima. Primeira visita no aparelho: o que subiu nos últimos 7 dias (se não for tudo).
+  var NOVAS = {};
+  (function(){
+    if(!PASTA) return;
+    var k='cr_visto_'+CAT.code, ks='cr_novas_'+CAT.code, antes=null, sessao=null, agora={};
+    try{ antes=JSON.parse(localStorage.getItem(k)||'null'); }catch(_){}
+    try{ sessao=JSON.parse(sessionStorage.getItem(ks)||'null'); }catch(_){}
+    var novas = sessao && typeof sessao==='object' ? sessao : {};
+    var recentes = [];
+    CAT.tracks.forEach(function(t){
+      var m=t.mod||''; agora[t.id]=m;
+      if(antes && antes.f){
+        if(!Object.prototype.hasOwnProperty.call(antes.f,t.id)) novas[t.id]='nova';
+        else if(antes.f[t.id]!==m) novas[t.id]='versao';
+      } else if(!sessao && m && Date.now()-Date.parse(m) < 7*864e5) recentes.push(t.id);
+    });
+    if(recentes.length && recentes.length < CAT.tracks.length) recentes.forEach(function(id){ novas[id]='nova'; });
+    Object.keys(novas).forEach(function(id){ if(!Object.prototype.hasOwnProperty.call(agora,id)) delete novas[id]; });
+    NOVAS=novas;
+    try{ sessionStorage.setItem(ks, JSON.stringify(novas)); }catch(_){}
+    try{ localStorage.setItem(k, JSON.stringify({ at:new Date().toISOString(), f:agora })); }catch(_){}
+  })();
+  // os comentários que este aparelho escreveu (pra mostrar "Apagar")
+  var MEUS = {};
+  try{ (JSON.parse(localStorage.getItem('cr_meus_coment')||'[]')||[]).forEach(function(id){ MEUS[id]=1; }); }catch(_){}
+  function guardaMeu(id){
+    MEUS[id]=1;
+    try{ var l=Object.keys(MEUS).map(Number).sort(function(a,b){return b-a}).slice(0,200); localStorage.setItem('cr_meus_coment',JSON.stringify(l)); }catch(_){}
+  }
+  function notasDe(t){ return COMS.filter(function(c){ return c.f===t.id && c.t==='nota' && !c.r; }); }
+  function aprovacaoDe(t){
+    var l=COMS.filter(function(c){ return c.f===t.id && c.t==='aprovou' && (c.v||'')===(t.mod||''); });
+    return l.length ? l[l.length-1] : null;
+  }
+  // pastilha da linha: APROVADA (essa versão) vence NOVA / VERSÃO NOVA
+  function seloPasta(t){
+    if(!PASTA) return '';
+    if(t.kind==='son' && aprovacaoDe(t)) return '<span class="selo aprovada">APROVADA</span>';
+    if(NOVAS[t.id]==='nova') return '<span class="selo nova">NOVA</span>';
+    if(NOVAS[t.id]==='versao') return '<span class="selo nova">VERSÃO NOVA</span>';
+    return '';
+  }
+  function textoComs(t){
+    if(!PASTA) return '';
+    var n=notasDe(t).length;
+    return n ? '<span class="coms">'+(n===1?'1 comentário':n+' comentários')+'</span>' : '';
+  }
+
   function selo(t){
     return VENDA[t.tag]
       ? '<span class="selo '+t.tag+'">'+VENDA[t.tag]+'</span>'
@@ -649,6 +738,12 @@ __META__
 
   // linha da lista: pastilha separada do texto cinza
   function subLinha(t, grouped){
+    // pasta de artista: NOVA/VERSÃO NOVA/APROVADA antes do texto, comentários no fim
+    var ps=seloPasta(t), cm=textoComs(t);
+    if (ps || cm){
+      var tx=esc(sub(t,grouped));
+      return ps + (tx?'<span class="subtxt">'+tx+'</span>':'') + (cm?(tx?' · ':'')+cm:'');
+    }
     if (t.kind !== 'beat' || !VENDA[t.tag]) return esc(sub(t,grouped));
     var bits=[];
     if (t.bpm) bits.push(t.bpm+' BPM');
@@ -767,15 +862,28 @@ __META__
   // ?faixa=<nome> (04/10/2026): o link de um beat compartilhado da tape abre já nele,
   // na barra e marcado na lista. Toca se o navegador deixar; se não (celular sem toque
   // ainda), fica pronto no play. O play só conta quando o som sai de verdade.
+  // Pasta de artista (10/10/2026): ?id=<faixa>&t=<segundo> (o link do comentário, no painel e
+  // no e-mail do Bruno) abre na faixa certa, mesmo na aba Músicas, já no ponto do comentário.
   function abrirNaFaixa(){
-    var alvo=''; try{ alvo=(new URLSearchParams(location.search).get('faixa')||'').toLowerCase(); }catch(_){}
-    if(!alvo || preview) return;
-    var i=-1; rows.forEach(function(t,k){ if(i<0 && slugFaixa(t.title)===alvo) i=k; });
+    var alvo='', idAlvo='', seg=0;
+    try{
+      var q=new URLSearchParams(location.search);
+      alvo=(q.get('faixa')||'').toLowerCase();
+      if(PASTA){ idAlvo=q.get('id')||''; seg=Math.max(0,parseInt(q.get('t'),10)||0); }
+    }catch(_){}
+    if((!alvo && !idAlvo) || preview) return;
+    if(idAlvo){
+      var achada=CAT.tracks.filter(function(t){ return t.id===idAlvo; })[0];
+      if(!achada) return;
+      if((achada.kind==='son')!==(tab==='sons')) setTab(achada.kind==='son'?'sons':'beats');
+    }
+    var i=-1; rows.forEach(function(t,k){ if(i<0 && (idAlvo ? t.id===idAlvo : slugFaixa(t.title)===alvo)) i=k; });
     if(i<0) return;
     var t=rows[i];
-    cur=i; pos=0;
+    cur=i; pos=seg;
     player.hidden=false; dlDock.hidden=true;
     audio.src=som(t.id);
+    if(seg){ var vai=function(){ try{ audio.currentTime=seg; }catch(_){} }; if(audio.readyState>=1) vai(); else audio.addEventListener('loadedmetadata',vai,{once:true}); }
     if(CAT.artist.tape || podeEnviar()) prepararStory();
     tarja(t);
     paint(); render();
@@ -904,8 +1012,10 @@ __META__
   $('plAcao').addEventListener('click',function(){
     var t = rows[cur]; if(!t) return;
     if(CAT.artist.tape && t.buy) comprar(t);
+    else if(PASTA) abrirComentar(t, audio.currentTime);
   });
   var ICO_CART='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="9.5" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M3 4h2.5l2.2 11h11l2-8H7"/></svg>';
+  var ICO_COM='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>';
   var acaoDe=null;
   function pintarAcao(t){
     if(acaoDe===t) return; acaoDe=t;
@@ -913,9 +1023,13 @@ __META__
     if(t.pagina){ lk.setAttribute('href','/beat/'+encodeURIComponent(t.pagina)); lk.setAttribute('data-de','tape'); lk.setAttribute('aria-label','Abrir a página de '+t.title); ir.hidden=false; }
     else { lk.removeAttribute('href'); lk.removeAttribute('aria-label'); ir.hidden=true; }
     // na pasta de artista a barra não tem Baixar (pedido de 25/09): baixar fica no "..." e no BAIXAR do topo
-    var b=$('plAcao'), qual = CAT.artist.tape && t.buy ? 'comprar' : '';
+    // pasta de artista (10/10/2026): no lugar do Comprar da tape, Comentar no tempo que está tocando
+    var b=$('plAcao'), qual = CAT.artist.tape && t.buy ? 'comprar' : PASTA ? 'comentar' : '';
     b.hidden = !qual;
     if(qual==='comprar') b.innerHTML=ICO_CART+'Comprar';
+    if(qual==='comentar'){ b.innerHTML=ICO_COM+'Comentar'; b.setAttribute('aria-label','Comentar '+t.title+' no ponto que está tocando'); }
+    else b.removeAttribute('aria-label');
+    pintarMarcas(t);
     $('plShare').hidden = !(CAT.artist.tape ? t.kind==='beat' : podeEnviar());
   }
   $('seek').addEventListener('input',function(e){
@@ -946,11 +1060,21 @@ __META__
     flash('Tocando em ordem aleatória.');
   }
 
+  /* ---------- capas pelo R2 (10/10/2026) ---------- */
+  // /capa/<id> vira som.caramujorecords.com.br/capa/<id>[-p|-m].jpg: a imagem sai da CDN
+  // sem gastar chamada de função. Capa trocada pelo artista (com ?v=) segue pela função.
+  // Miniatura que faltar no R2 volta pela função (capa-volta, no <head>).
+  function capaURL(c,t){
+    var m=/^\/capa\/([A-Za-z0-9_-]+)$/.exec(c||'');
+    if(m&&CAT.midia) return CAT.midia+'/capa/'+m[1]+(t?'-'+t:'')+'.jpg';
+    return c ? c+(t ? (c.indexOf('?')<0?'?':'&')+t : '') : c;
+  }
+
   /* ---------- a tarja do sistema (tela de bloqueio, notificação) ---------- */
   // Mesmo padrão da vitrine do site (26/09/2026): capa inteira, 1000x1000
   function arteDoSistema(){
-    var c = CAT.artist.cover;
-    if(c) return [{ src:location.origin + c, sizes:'1000x1000', type:'image/jpeg' }];
+    var c = capaURL(CAT.artist.cover,'');
+    if(c) return [{ src:/^https?:/.test(c) ? c : location.origin + c, sizes:'1000x1000', type:'image/jpeg' }];
     return [{ src:location.origin + '/assets/brand/selo-512.png', sizes:'512x512', type:'image/png' }];
   }
   // Autoria na tela bloqueada: tape e link avulso = "@rideblan33" (igual à vitrine);
@@ -1030,7 +1154,7 @@ __META__
       var cap=document.createElement('span'); cap.className='m-capa';
       var img=document.createElement('img'); img.loading='lazy'; img.decoding='async'; img.alt='';
       // 480px no meio (03/10/2026): em tela 2x e 3x o celular puxava a de 1000px
-      if(t.capa){ img.src=t.capa+'?p'; img.srcset=t.capa+'?p 200w, '+t.capa+'?m 480w, '+t.capa+' 1000w'; img.sizes='148px'; }
+      if(t.capa){ img.src=capaURL(t.capa,'p'); img.srcset=capaURL(t.capa,'p')+' 200w, '+capaURL(t.capa,'m')+' 480w, '+capaURL(t.capa,'')+' 1000w'; img.sizes='148px'; }
       else { img.src='/assets/brand/caramujo-v.webp'; img.className='m-sem'; }
       cap.appendChild(img); c.appendChild(cap);
       var b=document.createElement('b'); b.textContent=t.name; c.appendChild(b);
@@ -1044,7 +1168,7 @@ __META__
     var grade=lista.filter(function(t){ return t.capa }).slice(0,4);
     fim.innerHTML='<span class="m-capa"></span><b>PORTFÓLIO COMPLETO</b><small>@rideblan33</small>';
     var mc=fim.querySelector('.m-capa');
-    grade.forEach(function(t){ var im=document.createElement('img'); im.loading='lazy'; im.alt=''; im.src=t.capa+'?p'; mc.appendChild(im); });
+    grade.forEach(function(t){ var im=document.createElement('img'); im.loading='lazy'; im.alt=''; im.src=capaURL(t.capa,'p'); mc.appendChild(im); });
     var veu=document.createElement('span'); veu.className='m-veu'; veu.textContent=tot+(tot===1?' beat tape':' beat tapes'); mc.appendChild(veu);
     tr.appendChild(fim);
     $('maisTudo').href=CAT.perfil; $('maisTudo').setAttribute('data-de',deOnde);
@@ -1057,8 +1181,22 @@ __META__
     tr.addEventListener('scroll',setas,{passive:true});
     setas();
   }
+  // número aleatório guardado neste navegador (10/10/2026): o mesmo aparelho conta uma
+  // pessoa só no painel, mesmo trocando de rede. Não carrega IP nem nome.
+  function pessoa(){
+    try{
+      var v=localStorage.getItem('cr_pessoa');
+      if(!v||!/^[a-z0-9]{12,32}$/.test(v)){
+        var a=new Uint8Array(12); (window.crypto||{}).getRandomValues ? crypto.getRandomValues(a) : a.forEach(function(_,i){ a[i]=Math.random()*256|0; });
+        v=''; for(var i=0;i<a.length;i++) v+=(a[i]%36).toString(36);
+        localStorage.setItem('cr_pessoa',v);
+      }
+      return v;
+    }catch(e){ return ''; }
+  }
   function envia(body){
     try{
+      if(!body.pessoa){ var pe=pessoa(); if(pe) body.pessoa=pe; }
       var s=JSON.stringify(body);
       if(navigator.sendBeacon) navigator.sendBeacon('/api/play', new Blob([s],{type:'application/json'}));
       else fetch('/api/play',{method:'POST',body:s,headers:{'content-type':'application/json'},keepalive:true});
@@ -1091,6 +1229,7 @@ __META__
   var ICON_CART='<circle cx="9.5" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/>'+
     '<path d="M2.5 3.5h2.3l2.4 11.1a1.8 1.8 0 001.8 1.4h7.6a1.8 1.8 0 001.8-1.4L21.5 7.4H5.6"/>';
   var ICON_SEND='<path d="M7 17L17 7"/><path d="M9 7h8v8"/>';
+  var ICON_COM='<path d="M4 5h16v11H9l-5 4z" stroke-linejoin="round"/>';
   var ICON_SHARE='<circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 13.3l7.4 4.4"/><path d="M15.7 6.3l-7.4 4.4"/>';
 
   $('orderBtn').addEventListener('click',function(){
@@ -1153,7 +1292,7 @@ __META__
     if(window.CaramujoStory) return Promise.resolve();
     if(storyJs) return storyJs;
     storyJs=new Promise(function(ok,falha){
-      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-10-04a';
+      var s=document.createElement('script'); s.src='/assets/story.js?v=2026-10-10a';
       s.onload=ok; s.onerror=function(){ storyJs=null; falha(); };
       document.head.appendChild(s);
     });
@@ -1336,6 +1475,125 @@ __META__
   });
 
 
+  /* ---------- comentários no tempo da faixa (pasta de artista, 10/10/2026) ---------- */
+  function slugPasta(){ return (location.pathname.split('/')[1]||'').toLowerCase(); }
+  function dataCurta(iso){
+    var d=new Date(iso); if(isNaN(d)) return '';
+    return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2);
+  }
+  // marcas brancas na linha do tempo, nos segundos que têm comentário
+  function pintarMarcas(t){
+    var box=$('marcas'); if(!box) return;
+    var dur = t && (audio.duration && isFinite(audio.duration) ? audio.duration : t.dur);
+    var segs = PASTA && t && dur ? notasDe(t).filter(function(c){ return c.s!=null; }).map(function(c){ return c.s; }) : [];
+    box.innerHTML = segs.map(function(s){ return '<i style="left:'+Math.min(100,Math.max(0,s/dur*100)).toFixed(2)+'%"></i>'; }).join('');
+    box.hidden = !segs.length;
+  }
+  audio.addEventListener('loadedmetadata',function(){ if(cur>-1) pintarMarcas(rows[cur]); });
+  function api(metodo, corpo){
+    corpo.a=slugPasta(); corpo.c=CAT.code; var pe=pessoa(); if(pe) corpo.pessoa=pe;
+    return fetch('/api/comentario',{ method:metodo, headers:{'content-type':'application/json'}, body:JSON.stringify(corpo) })
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if(!r.ok||!j.ok) throw new Error(j.erro||'Não foi. Tenta de novo.'); return j; }); });
+  }
+  function depoisDeMudar(t){
+    render();
+    if(cur>-1 && rows[cur]===t){ acaoDe=null; paint(); }
+  }
+  // tocar a faixa num segundo (o tempo de um comentário, ou o ?t= do link)
+  function tocarEm(t, seg){
+    var i=rows.indexOf(t);
+    if(i<0) return;
+    var vai=function(){ try{ audio.currentTime=seg; }catch(_){} };
+    if(cur!==i){ pick(i); if(audio.readyState>=1) vai(); else audio.addEventListener('loadedmetadata',vai,{once:true}); }
+    else { vai(); if(audio.paused) audio.play().catch(function(){}); }
+  }
+  function abrirComentar(t, segundo){
+    if(!PASTA||!t) return;
+    var tocando = rows[cur]===t;
+    var tocava = tocando && !audio.paused;
+    if(tocava) audio.pause();
+    var seg = tocando && segundo!=null && isFinite(segundo) ? Math.max(0,Math.floor(segundo)) : null;
+    var usaTempo = seg!==null;
+    var nome=''; try{ nome=localStorage.getItem('cr_nome')||''; }catch(_){}
+    open('<h2 id="cardTitle">Comentar</h2><p>'+esc(t.title)+(NOVAS[t.id]==='versao'?' · versão nova':'')+'</p>'+
+      '<div class="cm-quando" role="group" aria-label="Onde">'+
+        (seg!==null?'<button type="button" class="cm-chip" id="cmTempo" aria-pressed="true">Em '+mmss(seg)+'</button>':'')+
+        '<button type="button" class="cm-chip" id="cmToda" aria-pressed="'+(seg===null)+'">Na faixa toda</button>'+
+      '</div>'+
+      '<label class="cm-rot" for="cmTexto">Comentário</label>'+
+      '<textarea class="cm-campo" id="cmTexto" maxlength="1000" rows="4" placeholder="'+(seg!==null?'O que mudar, tirar ou manter nesse ponto':'O que você achou da faixa')+'"></textarea>'+
+      '<label class="cm-rot" for="cmNome">Seu nome</label>'+
+      '<input class="cm-campo" id="cmNome" maxlength="40" autocomplete="name" placeholder="Pro @rideblan33 saber quem falou" value="'+esc(nome)+'">'+
+      '<div class="cm-acoes"><button type="button" class="pill" data-close>Cancelar</button><button type="button" class="pill solid" id="cmEnviar">Enviar</button></div>'+
+      '<p class="cm-nota">Só quem tem o link desta pasta vê os comentários.</p>');
+    var marca=function(com){ usaTempo=com; if($('cmTempo')) $('cmTempo').setAttribute('aria-pressed',String(com)); $('cmToda').setAttribute('aria-pressed',String(!com)); };
+    if($('cmTempo')) $('cmTempo').addEventListener('click',function(){ marca(true); });
+    $('cmToda').addEventListener('click',function(){ marca(false); });
+    // fechou sem enviar: a música volta de onde parou
+    card.querySelector('[data-close]').addEventListener('click',function(){ if(tocava) audio.play().catch(function(){}); });
+    setTimeout(function(){ try{ $('cmTexto').focus({preventScroll:true}); }catch(_){} },60);
+    $('cmEnviar').addEventListener('click',function(){
+      var x=$('cmTexto').value.trim(), n=$('cmNome').value.trim(), b=this;
+      if(!x){ $('cmTexto').focus(); return; }
+      try{ if(n) localStorage.setItem('cr_nome',n); }catch(_){}
+      b.disabled=true; b.textContent='Enviando…';
+      api('POST',{ f:t.id, s:usaTempo?seg:null, x:x, n:n, tipo:'nota' }).then(function(j){
+        COMS.push(j.c); guardaMeu(j.c.id);
+        close(); flash('Comentário enviado pro @rideblan33.');
+        depoisDeMudar(t);
+        if(tocava) audio.play().catch(function(){});
+      }).catch(function(e){ b.disabled=false; b.textContent='Enviar'; flash(e.message); });
+    });
+  }
+  function verComentarios(t){
+    var notas=notasDe(t), atual=t.mod||'', aprov=aprovacaoDe(t);
+    var velhas=COMS.filter(function(c){ return c.f===t.id && c.t==='aprovou' && (c.v||'')!==atual; });
+    var respostas=function(c){ return COMS.filter(function(r){ return r.r===c.id; }); };
+    var lista=notas.map(function(c){
+      var antiga=(c.v||'')!==atual;
+      return '<li class="cm-item'+(c.ok?' feito':'')+(antiga?' antiga':'')+'">'+
+        (c.s!=null?'<button type="button" class="cm-seg" data-seg="'+c.s+'" aria-label="Ouvir em '+mmss(c.s)+'">'+mmss(c.s)+'</button>':'<span class="cm-seg toda">faixa toda</span>')+
+        '<div class="cm-corpo"><p>'+esc(c.x)+'</p>'+
+          '<small>'+(c.a==='bruno'?'@rideblan33':esc(c.n||'Sem nome'))+' · '+dataCurta(c.at)+(antiga?' · versão anterior':'')+(c.ok?' · resolvido':'')+'</small>'+
+          respostas(c).map(function(r){ return '<div class="cm-resp"><b>@rideblan33</b> '+esc(r.x)+'</div>'; }).join('')+
+          (MEUS[c.id]?'<button type="button" class="cm-apagar" data-apagar="'+c.id+'">Apagar</button>':'')+
+        '</div></li>';
+    }).join('');
+    var aprovTxt = aprov ? 'Versão aprovada'+(aprov.n?' por '+esc(aprov.n):'')+' em '+dataCurta(aprov.at)+'.'
+      : velhas.length ? 'A versão anterior foi aprovada em '+dataCurta(velhas[velhas.length-1].at)+'. Essa é nova.' : '';
+    open('<h2 id="cardTitle">Comentários</h2><p>'+esc(t.title)+' · '+mmss(t.dur)+'</p>'+
+      (aprovTxt?'<div class="cm-aprov">'+aprovTxt+(aprov&&MEUS[aprov.id]?' <button type="button" class="cm-apagar" data-apagar="'+aprov.id+'" data-certeza="1">Desfazer</button>':'')+'</div>':'')+
+      (lista?'<ul class="cm-lista">'+lista+'</ul>':'<p class="cm-nota">Nenhum comentário nessa faixa ainda. Enquanto ela toca, o Comentar da barra marca o ponto exato.</p>')+
+      '<div class="cm-acoes">'+
+        (t.kind==='son'&&!aprov?'<button type="button" class="pill" id="cmAprovar">Aprovar versão</button>':'')+
+        '<button type="button" class="pill solid" id="cmNovo">Comentar</button></div>'+
+      '<button class="card-close" data-close>Fechar</button>');
+    card.querySelectorAll('[data-seg]').forEach(function(b){
+      b.addEventListener('click',function(){ close(); tocarEm(t, Number(b.getAttribute('data-seg'))); });
+    });
+    card.querySelectorAll('[data-apagar]').forEach(function(b){
+      b.addEventListener('click',function(){
+        if(b.getAttribute('data-certeza')!=='1'){ b.setAttribute('data-certeza','1'); b.textContent='Apagar mesmo?'; return; }
+        var id=Number(b.getAttribute('data-apagar'));
+        b.disabled=true;
+        api('DELETE',{ id:id }).then(function(){
+          COMS=COMS.filter(function(c){ return c.id!==id && c.r!==id; });
+          depoisDeMudar(t); verComentarios(t); flash('Apagado.');
+        }).catch(function(e){ b.disabled=false; flash(e.message); });
+      });
+    });
+    $('cmNovo').addEventListener('click',function(){ abrirComentar(t, rows[cur]===t ? audio.currentTime : null); });
+    var ap=$('cmAprovar');
+    if(ap) ap.addEventListener('click',function(){
+      var n=''; try{ n=localStorage.getItem('cr_nome')||''; }catch(_){}
+      ap.disabled=true; ap.textContent='Aprovando…';
+      api('POST',{ f:t.id, tipo:'aprovou', n:n }).then(function(j){
+        COMS.push(j.c); guardaMeu(j.c.id);
+        depoisDeMudar(t); verComentarios(t); flash('Versão aprovada. O @rideblan33 recebe na hora.');
+      }).catch(function(e){ ap.disabled=false; ap.textContent='Aprovar versão'; flash(e.message); });
+    });
+  }
+
   /* ---------- folhas ---------- */
   function open(html){
     card.innerHTML=html;veil.hidden=false;
@@ -1345,7 +1603,9 @@ __META__
   veil.addEventListener('click',function(e){if(e.target===veil)close()});
 
   function trackSheet(t){
+    var nc = PASTA ? notasDe(t).length : 0;
     var linhas =
+      (PASTA ? item('coment',ICON_COM,'Comentários'+(nc?' ('+nc+')':'')) : '') +
       (t.buy ? item('buy',ICON_CART,'Comprar esse beat') : '') +
       (CAT.artist.tape && t.kind==='beat' ? item('story',ICON_SHARE,'Compartilhar esse beat') : '') +
       (!CAT.artist.tape && podeEnviar() ? item('story',ICON_SHARE,'Postar prévia no story') : '') +
@@ -1354,6 +1614,8 @@ __META__
     if(!linhas){ flash('Essa faixa está só pra ouvir.'); return; }
     open('<h2 id="cardTitle">'+esc(t.title)+'</h2><p>'+esc(sub(t,false)||'faixa')+' · '+mmss(t.dur)+'</p>'+
       '<div class="card-list">'+linhas+'</div><button class="card-close" data-close>Fechar</button>');
+    var sC=card.querySelector('[data-act=coment]');
+    if(sC) sC.addEventListener('click',function(){ verComentarios(t); });
     var s0=card.querySelector('[data-act=buy]');
     if(s0) s0.addEventListener('click',function(){close();comprar(t)});
     var sS=card.querySelector('[data-act=story]');
@@ -1534,7 +1796,7 @@ __META__
       if(!c.querySelector('.logo')) c.insertAdjacentHTML('afterbegin','<span class="logo logo-v" role="img" aria-label="Caramujo Records"></span>');
       return;
     }
-    var arte="url('"+CAT.artist.cover+"')";
+    var arte="url('"+capaURL(CAT.artist.cover,'')+"')";
     var marca=c.querySelector('.logo');
     if(marca) marca.remove();
     c.style.backgroundImage=arte;

@@ -17,6 +17,7 @@ import { montarVitrine } from '../api/vitrine.js';
 import { lerEstatico } from './loja.js';
 import { tapesDoPerfil, SITE } from './perfil.js';
 import { ICONES } from './icones.js';
+import { capaUrl, CAPA_VOLTA } from './midia.js';
 import { GENEROS, RODAPE_GENEROS, menuGeneros, CSS_RODAPE_GENEROS } from './generos.js';
 import { slug } from './casar.js';
 import { CABECALHOS } from './cabecalhos.js';
@@ -342,7 +343,7 @@ function topo(de, genAtual = '', cont = null) {
   // no computador, o mouse em BEATS abre "Todos os beats" e os gêneros (04/10/2026)
   const lisTopo = lis.replace('<li><a href="/#beats" class="ativo">Beats</a></li>', `<li class="tem-sub"><a href="/#beats" class="ativo" aria-haspopup="true">Beats</a>${menuGeneros('/#beats', genAtual)}</li>`);
   return `<header class="topo">
-<a class="logo" href="/"${deAttr(de)} aria-label="Caramujo Records, página inicial"><img src="/assets/brand/caramujo-h.webp" alt="Caramujo Records" width="148" height="27"></a>
+<a class="logo" href="/"${deAttr(de)} aria-label="Caramujo Records, página inicial"><img src="/assets/brand/caramujo-h.webp" srcset="/assets/brand/caramujo-h-244.webp 244w, /assets/brand/caramujo-h-366.webp 366w, /assets/brand/caramujo-h.webp 504w" sizes="(max-width:899px) 122px, 148px" alt="Caramujo Records" width="148" height="27"></a>
 <nav aria-label="Seções do site"><ul>${lisTopo}</ul></nav>
 <div class="dir">
 <a class="anel" href="/rideblan33"${deAttr(de)} aria-label="Portfólio do @rideblan33"><img src="/assets/perfil/rideblan33-camisa.webp" alt="" width="128" height="128"></a>
@@ -356,7 +357,10 @@ function topo(de, genAtual = '', cont = null) {
 const RODAPE = `<footer class="rodape">${RODAPE_GENEROS}<img src="/assets/brand/selo-creme.svg" alt="" width="34" height="34" loading="lazy"><span>© 2026 Caramujo Records — São Carlos, SP</span><span><a href="/rideblan33">@rideblan33</a> · Todos os direitos reservados</span></footer>
 <div class="aviso" role="status" aria-live="polite"></div>`;
 
-const capaP = (b) => (b.capa ? b.capa + '?p' : null);
+// capaP/capaG vêm prontas do R2 na lista da loja (10/10/2026); sem elas, a função
+const capaP = (b) => b.capaP || (b.capa ? b.capa + '?p' : null);
+const capaGrande = (b) => b.capaG || b.capa || null;
+const chaveCapa = (c) => String(c || '').replace(/^\/capa\//, '');
 function capinha(b, cls = 'capinha') {
   return b.capa
     ? `<img class="${cls}" src="${esc(capaP(b))}" alt="" width="46" height="46" loading="lazy">`
@@ -413,6 +417,7 @@ function cabecalho({ titulo, descricao, url, img, imgAlt, ogTitulo, ogDescricao,
 <meta name="theme-color" content="#14110d">
 ${ICONES}
 ${preload ? `<link rel="preload" as="image" href="${esc(preload)}" fetchpriority="high">` : ''}
+${CAPA_VOLTA}
 <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/cormorant-garamond-latin-500-normal.woff2" crossorigin>
 <script type="application/ld+json">${jsonSeguro(ld)}</script>
 <style>${CSS}</style>
@@ -429,7 +434,8 @@ const BARRA = `<div class="barra" aria-label="Tocando agora">
 <span class="js-bacao"></span>
 </div>`;
 
-const praTela = (b) => ({ id: b.id, s: b.slug, n: b.name, mp3: b.mp3 || null, capa: b.capa || null, dur: b.dur || 0, sold: !!b.sold });
+// capa = miniatura pronta pra barra; arte = a inteira (tela de bloqueio)
+const praTela = (b) => ({ id: b.id, s: b.slug, n: b.name, mp3: b.mp3 || null, capa: capaP(b), arte: capaGrande(b), dur: b.dur || 0, sold: !!b.sold });
 
 // quantos à venda no total e por gênero (o acordeão do menu do celular)
 function aVendaPorGenero(beats) {
@@ -499,10 +505,10 @@ export function paginaBeat(b, loja) {
 <ul class="inclui"><li><b>Só seu:</b> depois da compra o beat sai da loja</li><li><b>Contrato no seu nome</b>, com uso comercial liberado</li><li><b>MP3 + WAV</b>, entrega em até 1 dia útil</li></ul></div>`;
 
   const capaG = b.capa
-    ? `<div class="capa-g"><img src="${esc(b.capa)}" alt="Capa da beat tape${tape ? ' ' + esc(tape.name) : ''}" width="1000" height="1000" fetchpriority="high">`
+    ? `<div class="capa-g"><img src="${esc(capaGrande(b))}" alt="Capa da beat tape${tape ? ' ' + esc(tape.name) : ''}" width="1000" height="1000" fetchpriority="high">`
     : '<div class="capa-g vazia"><img src="/assets/brand/selo-creme.svg" alt="" width="120" height="120">';
   const tapeCard = tape
-    ? `<a class="tape" href="/${esc(tape.slug)}/${esc(tape.code)}"${deAttr('beat')}><img src="/capa/${esc(tape.capa)}?p" alt="" width="62" height="62" loading="lazy"><div><div class="k">Da beat tape</div><div class="n">${esc(tape.name)}</div><div class="q">${tape.n ? tape.n + (tape.n === 1 ? ' beat' : ' beats') + ' · ' : ''}ouvir a tape</div></div><span class="seta" aria-hidden="true">›</span></a>`
+    ? `<a class="tape" href="/${esc(tape.slug)}/${esc(tape.code)}"${deAttr('beat')}><img src="${esc(capaUrl(tape.capa, 'p'))}" alt="" width="62" height="62" loading="lazy"><div><div class="k">Da beat tape</div><div class="n">${esc(tape.name)}</div><div class="q">${tape.n ? tape.n + (tape.n === 1 ? ' beat' : ' beats') + ' · ' : ''}ouvir a tape</div></div><span class="seta" aria-hidden="true">›</span></a>`
     : '';
 
   const lista = [b].concat(par);
@@ -535,7 +541,7 @@ ${LEVA_DE}
   return cabecalho({
     titulo: `${b.name} · Beat de ${gen} · @rideblan33`,
     ogTitulo: `${b.name} · @rideblan33`,
-    descricao, url, img, imgAlt: `Capa da beat tape de ${b.name}`, ld, preload: b.capa || null
+    descricao, url, img, imgAlt: `Capa da beat tape de ${b.name}`, ld, preload: capaGrande(b)
   }) + '\n' + corpo;
 }
 
@@ -601,7 +607,7 @@ ${topo(de, gslug, aVendaPorGenero(beats))}
 <h1>Beats de <em>${esc(gen)}</em></h1>
 <p>${intro}</p>
 <div class="acoes">${venda.some((b) => b.mp3) ? `<button class="btn js-todos" type="button">${PLAYPAUSE}<span>Tocar todos</span></button>` : ''}<ul class="pacs"><li>${real(preco)} cada</li>${p2 || p3 ? [p2, p3].filter(Boolean).map((p) => `<li>${p.n} por ${real(p.preco)}<span class="off">${p.off}% off</span></li>`).join('') : ''}</ul></div>
-</div>${capasTape.length ? `<div class="mosaico ${capasTape.length >= 4 ? 'n4' : capasTape.length === 1 ? 'n1' : 'pilha n' + capasTape.length}" aria-hidden="true">${capasTape.map((c) => `<img src="${esc(c)}?m" alt="" width="${capasTape.length >= 4 ? 147 : capasTape.length === 1 ? 300 : 220}" height="${capasTape.length >= 4 ? 147 : capasTape.length === 1 ? 300 : 220}" loading="lazy">`).join('')}</div>` : '<div></div>'}</div>
+</div>${capasTape.length ? `<div class="mosaico ${capasTape.length >= 4 ? 'n4' : capasTape.length === 1 ? 'n1' : 'pilha n' + capasTape.length}" aria-hidden="true">${capasTape.map((c) => `<img src="${esc(capaUrl(chaveCapa(c), 'm'))}" alt="" width="${capasTape.length >= 4 ? 147 : capasTape.length === 1 ? 300 : 220}" height="${capasTape.length >= 4 ? 147 : capasTape.length === 1 ? 300 : 220}" loading="lazy">`).join('')}</div>` : '<div></div>'}</div>
 <nav aria-label="Outros gêneros"><ul class="generos">${generos.map((g) => `<li><a href="/beats/${esc(g.slug)}"${g.slug === gslug ? ' aria-current="page"' : ''}>${esc(g.nome)}<i>${g.venda}</i></a></li>`).join('')}</ul></nav>
 <div class="ordem"><span>${venda.length} à venda${vendidos.length ? ` · ${vendidos.length} ${vendidos.length === 1 ? 'vendido' : 'vendidos'}` : ''}</span><label><span class="sr">Ordem da lista</span><select class="js-ordem"><option value="novos">Mais novos</option><option value="bpm-">BPM: do mais lento</option><option value="bpm+">BPM: do mais rápido</option></select></label></div>
 <ol class="lista js-lista">${ordem.map((b, i) => linha(b, i, de, preco)).join('')}</ol>
@@ -738,7 +744,7 @@ const JS = `(function(){
     document.body.classList.toggle('tocando',naBarra(atual)&&!!$('.barra'));
     var b=porId[atual];
     if(b&&naBarra(atual)){
-      var bc=$('.js-bcapa'); if(bc) bc.src=b.capa?b.capa+'?p':'/assets/brand/selo-creme.svg';
+      var bc=$('.js-bcapa'); if(bc) bc.src=b.capa||'/assets/brand/selo-creme.svg';
       var bn=$('.js-bnome'); if(bn) bn.textContent=b.n;
       var bl=$('.js-blink'); if(bl){ bl.href='/beat/'+b.s; bl.setAttribute('aria-label','Abrir a página de '+b.n); }
       var tt=$('.barra .js-total'); if(tt) tt.textContent=mmss(b.dur);
@@ -752,7 +758,7 @@ const JS = `(function(){
   function sessao(b){
     try{
       if(!('mediaSession' in navigator)) return;
-      var art=b.capa?[{src:location.origin+b.capa,sizes:'1000x1000',type:'image/jpeg'}]:[];
+      var art=b.arte?[{src:/^https?:/.test(b.arte)?b.arte:location.origin+b.arte,sizes:'1000x1000',type:'image/jpeg'}]:[];
       navigator.mediaSession.metadata=new MediaMetadata({title:b.n,artist:'@rideblan33',album:'Caramujo Records',artwork:art});
       var liga=function(a,fn){ try{ navigator.mediaSession.setActionHandler(a,fn); }catch(_){} };
       liga('play',function(){ som.play().catch(nada); }); liga('pause',function(){ som.pause(); });

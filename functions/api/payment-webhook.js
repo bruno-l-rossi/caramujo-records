@@ -20,6 +20,7 @@ import { db } from '../_lib/db.js';
 import { marcarVendidos, usarCupom, esquecerLoja } from '../_lib/loja.js';
 import { esquecerVitrine } from '../_lib/vitrine.js';
 import { contratoHtml, enviarEmailComprador } from '../_lib/emails.js';
+import { marcarPago, pedidoDoPagamento } from '../_lib/pedidos.js';
 
 
 
@@ -27,7 +28,7 @@ import { contratoHtml, enviarEmailComprador } from '../_lib/emails.js';
 // ── E-mail interno "COMPRA CONFIRMADA" (pro dono) ─────────────────────────────
 // Dispara quando o pagamento é APROVADO.
 
-async function sendApprovalEmail({ env, payment }) {
+async function sendApprovalEmail({ env, payment, pedido = null }) {
   const resendKey   = env.RESEND_API_KEY;
   const notifyEmail = env.NOTIFY_EMAIL || 'rideblan33@gmail.com';
   const fromEmail   = env.NOTIFY_FROM  || 'rideblan33@caramujorecords.com.br';
@@ -79,10 +80,13 @@ async function sendApprovalEmail({ env, payment }) {
   <div class="hd"><div class="kick">// Caramujo Records</div><h1>Pagamento aprovado</h1><p>${dataHora}</p></div>
   <div class="bdy">
     <div class="status">APROVADO — R$ ${amount}</div>
-    <div class="action"><strong>Ação necessária</strong>
-      Envie os arquivos para <strong style="color:#c3a074">${email}</strong><br/>
+    ${pedido && pedido.tudo ? `<div class="action"><strong>Entregue na hora</strong>
+      Os arquivos já estão no <a href="${pedido.url}" style="color:#c3a074">link do pedido</a>, que foi pro e-mail de <strong style="color:#c3a074">${email}</strong>.<br/>
       Itens: <strong style="color:#c3a074">${itemsDisplay}</strong>
-    </div>
+    </div>` : `<div class="action"><strong>Ação necessária</strong>
+      Envie os arquivos para <strong style="color:#c3a074">${email}</strong><br/>
+      Itens: <strong style="color:#c3a074">${itemsDisplay}</strong>${pedido ? `<br/>Os beats já foram no <a href="${pedido.url}" style="color:#c3a074">link do pedido</a>; stems e serviços ficam com você.` : ''}
+    </div>`}
     <table>
       <tr class="sect"><td colspan="2">PEDIDO</td></tr>
       <tr><td>ID Pagamento</td><td>${payment.id}</td></tr>
@@ -110,7 +114,7 @@ async function sendApprovalEmail({ env, payment }) {
     body: JSON.stringify({
       from: `Caramujo Records <${fromEmail}>`,
       to: [notifyEmail],
-      subject: `✅ PAGO R$${amount} — ${itemsDisplay} — ENVIAR ARQUIVOS`,
+      subject: pedido && pedido.tudo ? `✅ PAGO R$${amount} — ${itemsDisplay} — ENTREGUE NO LINK` : `✅ PAGO R$${amount} — ${itemsDisplay} — ENVIAR ARQUIVOS`,
       html,
     }),
   });
@@ -142,7 +146,7 @@ async function gravarVenda({ request, env, payment, beatNames, couponCode }) {
 // ── E-mail do COMPRADOR (detalhes da compra + prazos) ─────────────────────────
 // Vai pro cliente quando o pagamento (PIX) é aprovado.
 
-async function sendBuyerConfirmationEmail({ env, payment }) {
+async function sendBuyerConfirmationEmail({ env, payment, pedido = null }) {
   const payer     = payment.payer || {};
   const meta      = payment.metadata || {};
   const email     = meta.buyer_email || payer.email || '';
@@ -168,7 +172,7 @@ async function sendBuyerConfirmationEmail({ env, payment }) {
     }
   } catch (e) { console.error('[email-buyer] Erro ao gerar contrato:', e.message); }
 
-  await enviarEmailComprador(env, { name, artistName, email, itemsList, contractHtml });
+  await enviarEmailComprador(env, { name, artistName, email, itemsList, contractHtml, pedidoUrl: pedido ? pedido.url : null, pedidoTudo: !!(pedido && pedido.tudo) });
 }
 
 // ── Handler principal ────────────────────────────────────────────────────────
@@ -237,6 +241,15 @@ export async function onRequestPost({ request, env }) {
       }
 
 
+      // Entrega na hora (10/10/2026): o link do pedido vira "pago" (idempotente) e vai nos
+      // e-mails do PIX. Falhou = e-mails como antes, sem link.
+      let pedido = null;
+      try {
+        const d = await db(env);
+        await marcarPago(d, payment.id);
+        pedido = await pedidoDoPagamento(d, payment.id);
+      } catch (pedErr) { console.error('[webhook] Pedido com link:', pedErr.message); }
+
       // ── Idempotência: evita processar o mesmo pagamento duas vezes ──────────
       // O MP dispara o webhook múltiplas vezes para o mesmo evento de pagamento.
       // Solução: marcamos o pagamento com webhook_processed=true via PUT no MP
@@ -275,7 +288,7 @@ export async function onRequestPost({ request, env }) {
       // 1. Email de notificação ao dono (somente PIX — cartão já enviou no create-payment)
       if (isPix) {
         try {
-          await sendApprovalEmail({ env, payment });
+          await sendApprovalEmail({ env, payment, pedido });
         } catch (emailErr) {
           console.error('[webhook] Falha no email ao dono:', emailErr.message);
         }
@@ -284,7 +297,7 @@ export async function onRequestPost({ request, env }) {
       // 2. Email de confirmação ao comprador (somente PIX — cartão já enviou no create-payment)
       if (isPix) {
         try {
-          await sendBuyerConfirmationEmail({ env, payment });
+          await sendBuyerConfirmationEmail({ env, payment, pedido });
         } catch (emailErr) {
           console.error('[webhook] Falha no email ao comprador:', emailErr.message);
         }

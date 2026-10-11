@@ -100,7 +100,9 @@ export function contratoHtml({ name, cpf, email, items, category, amount, paymen
 }
 
 // Corpo do e-mail "Pedido confirmado" do comprador.
-export function htmlComprador({ greeting, itemsList, contractHtml }) {
+// pedidoUrl (10/10/2026, entrega na hora): o link com os arquivos do beat. Sem ele, o e-mail
+// sai exatamente como antes (teste16 confere com as cópias guardadas).
+export function htmlComprador({ greeting, itemsList, contractHtml, pedidoUrl = null, pedidoTudo = false }) {
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -146,8 +148,18 @@ export function htmlComprador({ greeting, itemsList, contractHtml }) {
           </p>
           <p style="font-family:Georgia,'Times New Roman',serif;font-size:15px;
             color:#b89e72;line-height:1.85;margin:0 0 28px;">
-            Recebemos seu pedido de <strong style="color:#f2ecdf;">${itemsList}</strong> e ele já está
-            em preparação. Em breve você receberá seus arquivos neste email.
+            ${pedidoUrl ? `Recebemos seu pedido de <strong style="color:#f2ecdf;">${itemsList}</strong>.
+            ${pedidoTudo ? 'Os arquivos já estão prontos' : 'Os arquivos do beat já estão prontos'}: WAV, MP3 e o contrato, no link abaixo.
+          </p>
+          <table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;"><tr>
+            <td style="background:#b98f5e;"><a href="${pedidoUrl}" style="display:inline-block;padding:14px 22px;
+              font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;font-weight:bold;letter-spacing:0.18em;
+              color:#14110d;text-decoration:none;text-transform:uppercase;">Baixar seus arquivos</a></td>
+          </tr></table>
+          <p style="font-family:'Courier New',Courier,monospace;font-size:11px;
+            color:#6f6757;line-height:1.7;margin:-16px 0 28px;">
+            O link é só seu. Guarda este e-mail pra baixar de novo quando precisar.` : `Recebemos seu pedido de <strong style="color:#f2ecdf;">${itemsList}</strong> e ele já está
+            em preparação. Em breve você receberá seus arquivos neste email.`}
           </p>
           <table width="100%" cellpadding="0" cellspacing="0" border="0"
             style="background:#1A1815;border-left:2px solid #b98f5e;margin-bottom:28px;">
@@ -158,13 +170,13 @@ export function htmlComprador({ greeting, itemsList, contractHtml }) {
               </div>
               <p style="font-family:Georgia,'Times New Roman',serif;font-size:13px;
                 color:#b89e72;line-height:1.8;margin:0 0 10px;">
-                Seus arquivos serão entregues via email conforme os prazos abaixo:
+                ${pedidoUrl ? 'Os prazos de cada parte do pedido:' : 'Seus arquivos serão entregues via email conforme os prazos abaixo:'}
               </p>
               <table cellpadding="0" cellspacing="0" border="0"
                 style="font-family:'Courier New',Courier,monospace;font-size:11px;color:#b89e72;">
                 <tr>
                   <td style="padding:3px 16px 3px 0;white-space:nowrap;">&mdash; Beat catálogo</td>
-                  <td style="padding:3px 0;white-space:nowrap;">até 1 dia útil</td>
+                  <td style="padding:3px 0;white-space:nowrap;">${pedidoUrl ? 'na hora, pelo link' : 'até 1 dia útil'}</td>
                 </tr>
                 <tr>
                   <td style="padding:3px 16px 3px 0;white-space:nowrap;">&mdash; Beat personalizado</td>
@@ -233,7 +245,7 @@ export function htmlComprador({ greeting, itemsList, contractHtml }) {
 
 // Manda o "Pedido confirmado" pro comprador, com a via do contrato em anexo.
 // Chamado pelo create-payment (cartão aprovado na hora) e pelo webhook (PIX).
-export async function enviarEmailComprador(env, { name, artistName, email, itemsList, contractHtml }) {
+export async function enviarEmailComprador(env, { name, artistName, email, itemsList, contractHtml, pedidoUrl = null, pedidoTudo = false }) {
   const resendKey = env.RESEND_API_KEY;
   const fromEmail = env.NOTIFY_FROM || 'rideblan33@caramujorecords.com.br';
   if (!resendKey) { console.warn('[email-buyer] RESEND_API_KEY não configurado — skip.'); return; }
@@ -246,7 +258,7 @@ export async function enviarEmailComprador(env, { name, artistName, email, items
     from: `Caramujo Records <${fromEmail}>`,
     to: [email],
     subject: `Caramujo Records — Pedido confirmado ✓`,
-    html: htmlComprador({ greeting, itemsList, contractHtml }),
+    html: htmlComprador({ greeting, itemsList, contractHtml, pedidoUrl, pedidoTudo }),
   };
   if (contractHtml) {
     const safeName = (name || 'comprador').replace(/[^a-zA-Z0-9À-ÿ\s-]/g, '').trim().replace(/\s+/g, '-').slice(0, 60);

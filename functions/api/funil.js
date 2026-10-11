@@ -6,6 +6,7 @@
 // Chega por navigator.sendBeacon, então a resposta não importa pra ninguém.
 
 import { db } from '../_lib/db.js';
+import { ehOBruno } from '../_lib/sessao.js';
 
 export const ETAPAS = ['visita', 'play', 'carrinho', 'checkout', 'pagamento', 'pago'];
 const RETENCAO_DIAS = 400;
@@ -31,6 +32,8 @@ export async function onRequestPost({ request, env }) {
   // robô declarado não conta
   const ua = request.headers.get('user-agent') || '';
   if (/bot|crawl|spider|headless|lighthouse|pagespeed/i.test(ua)) return vazio();
+  // aparelho do Bruno (marca do painel, 10/10/2026) também não
+  if (await ehOBruno(request, env)) return vazio();
 
   try {
     const d = await db(env);

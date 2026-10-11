@@ -58,6 +58,10 @@
   function imagem(url) {
     return new Promise(function (ok) {
       if (!url) return ok(null);
+      // capa do R2 (10/10/2026) volta pelo endereço do site: imagem de outro domínio
+      // desenhada no canvas sem CORS trava o toBlob e a arte não sai
+      var r2 = /^https:\/\/som\.caramujorecords\.com\.br\/capa\/([A-Za-z0-9_-]+?)(?:-(p|m))?\.jpg$/.exec(String(url));
+      if (r2) url = '/capa/' + r2[1] + (r2[2] ? '?' + r2[2] : '');
       var img = new Image();
       img.onload = function () { ok(img); };
       img.onerror = function () { ok(null); };

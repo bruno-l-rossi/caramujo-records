@@ -1,11 +1,19 @@
 // Registra que alguém abriu ou tocou algo. Uma linha por audição.
 // O cliente só chama uma vez por faixa, pra não gastar escrita à toa.
 
-import { db, now, who, json } from '../_lib/db.js';
+import { db, now, who, json, pessoaDe } from '../_lib/db.js';
+import { ehOBruno } from '../_lib/sessao.js';
+
+// "Pessoa" por aparelho (10/10/2026): a conta mora em _lib/db.js (os comentários das
+// pastas usam a mesma)
+export { pessoaDe };
 
 export async function onRequestPost({ request, env }) {
   let body;
   try { body = await request.json(); } catch { return json({ erro: 'json' }, 400); }
+
+  // aparelho do Bruno (marca do painel) não entra no analytics
+  if (await ehOBruno(request, env)) return json({ ok: true, eu: true });
 
   // open = abriu o catálogo, play = ouviu uma faixa, carrinho = clicou no carrinho de um beat da tape
   // perfil = abriu caramujorecords.com.br/rideblan33, perfil-tape = tocou numa capa do perfil,
@@ -23,7 +31,7 @@ export async function onRequestPost({ request, env }) {
     body.trackId ? String(body.trackId).slice(0, 80) : null,
     kind,
     body.code ? String(body.code).slice(0, 16) : null,
-    await who(request),
+    pessoaDe(body.pessoa) || await who(request),
     now(),
     origem
   ).run();

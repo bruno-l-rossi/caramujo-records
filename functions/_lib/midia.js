@@ -13,3 +13,19 @@ export const MIDIA = 'https://som.caramujorecords.com.br';
 export function somUrl(id) {
   return MIDIA ? `${MIDIA}/mp3/${id}.mp3` : `/audio/${id}`;
 }
+
+// Capas pelo mesmo caminho do áudio (10/10/2026): a imagem sai direto do R2 pela CDN e
+// não gasta chamada de função (o plano grátis tem 100 mil por dia e cada capa na tela
+// gastava uma). tam: '' = a arte inteira (1000px), 'm' = 480px, 'p' = miniatura.
+// Miniatura que ainda não existe no R2 dá erro no navegador e o CAPA_VOLTA (abaixo) troca
+// pela função /capa/<id>?p, que cai na arte inteira. og:image, dados do Google e painel
+// seguem pela função de propósito (endereço do próprio site).
+export function capaUrl(key, tam = '') {
+  if (!key) return null;
+  const k = String(key);
+  return MIDIA ? `${MIDIA}/capa/${k}${tam ? '-' + tam : ''}.jpg` : `/capa/${k}${tam ? '?' + tam : ''}`;
+}
+
+// Rede de segurança das capas no navegador: imagem do R2 que falhou (miniatura que o
+// conversor ainda não fez, por exemplo) volta pela função, uma vez só.
+export const CAPA_VOLTA = '<script>/* capa-volta */window.addEventListener("error",function(e){var t=e.target;if(!t||t.tagName!=="IMG"||t.__volta)return;var m=/^https:\\/\\/som\\.caramujorecords\\.com\\.br\\/capa\\/([A-Za-z0-9_-]+?)(?:-(p|m))?\\.jpg$/.exec(t.currentSrc||t.src||"");if(!m)return;t.__volta=1;t.removeAttribute("srcset");t.src="/capa/"+m[1]+(m[2]?"?"+m[2]:"")},true);</script>';

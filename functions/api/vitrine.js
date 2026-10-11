@@ -5,7 +5,7 @@
 import { db, json } from '../_lib/db.js';
 import { vitrine } from '../_lib/vitrine.js';
 import { mesma, limpo } from '../_lib/casar.js';
-import { somUrl } from '../_lib/midia.js';
+import { somUrl, capaUrl } from '../_lib/midia.js';
 
 const VALIDADE = 5 * 60 * 1000;
 let cache = { at: 0, dados: null };
@@ -85,16 +85,26 @@ async function lerReserva(request) {
   }
 }
 
-async function montar(request, env) {
-  const beats = (await vitrine(request, env)).filter((b) => !b.removido);
-  if (!beats.length) return null;
+// Beat em mais de uma tape (relançado numa tape nova, 10/10/2026): manda a tape que
+// aparece primeiro no perfil, a mesma ordem da grade (tape nova sem ordem entra em 1º,
+// a de id maior antes). Ela dá a capa, o áudio e o "Da beat tape" da página do beat.
+const posTape = (x) => (x.tipo !== 'tape' ? 2 : x.perfil ? 0 : 1);
+const posPerfil = (x) => (x.perfil_ordem == null ? -1000000000 - Number(x.aid || 0) : Number(x.perfil_ordem));
+export const tapeMaisNova = (a, b) => posTape(a) - posTape(b) || posPerfil(a) - posPerfil(b) || Number(b.aid || 0) - Number(a.aid || 0);
 
+async function montar(request, env) {
+  // as faixas e a lista da loja saem juntas (10/10/2026): no servidor frio eram duas
+  // idas ao banco, uma atrás da outra
   const d = await db(env);
-  const { results } = await d.prepare(
-    `SELECT t.id, t.title, t.bpm, t.mkey AS key, t.dur, a.tipo, a.cover_key
+  const pFaixas = d.prepare(
+    `SELECT t.id, t.title, t.bpm, t.mkey AS key, t.dur, a.tipo, a.cover_key, a.perfil, a.perfil_ordem, a.id AS aid
        FROM tracks t JOIN artists a ON a.id = t.artist_id
       WHERE t.kind = 'beat' AND t.ready = 1`
   ).all();
+  pFaixas.catch(() => {});
+  const beats = (await vitrine(request, env)).filter((b) => !b.removido);
+  if (!beats.length) return null;
+  const { results } = await pFaixas;
 
   const porTitulo = new Map();
   for (const f of results || []) {
@@ -104,16 +114,20 @@ async function montar(request, env) {
   }
 
   const dados = beats.map((b) => {
-    const candidatos = (porTitulo.get(limpo(b.name)) || []).filter((x) => mesma(b, x));
+    const candidatos = (porTitulo.get(limpo(b.name)) || []).filter((x) => mesma(b, x)).sort(tapeMaisNova);
     // A capa do beat é a arte da BEAT TAPE onde ele está, que é arte do Bruno.
     // Capa de pasta de artista é foto do artista, não do beat: essa não serve.
     const comCapa = candidatos.find((x) => x.tipo === 'tape' && x.cover_key) || null;
     const f = comCapa || candidatos[0] || null;
+    const key = comCapa ? comCapa.cover_key : null;
     return {
       id: b.id, name: b.name, slug: b.slug, bpm: b.bpm, key: b.key,
       genre: b.genre, genero: b.generoLabel || b.genre || '', sold: b.sold,
       mp3: f ? somUrl(f.id) : null,
-      capa: comCapa ? '/capa/' + comCapa.cover_key : null,
+      // capa = /capa/<id> (página do beat, painel, Google); capaP/capaM/capaG = os
+      // endereços prontos pro navegador (miniatura, média e inteira), pelo R2
+      capa: key ? '/capa/' + key : null,
+      ...(key ? { capaP: capaUrl(key, 'p'), capaM: capaUrl(key, 'm'), capaG: capaUrl(key) } : {}),
       dur: f ? (f.dur || 0) : 0
     };
   });

@@ -1,0 +1,1412 @@
+/* Vitrine (caramujorecords.com.br): o visual da página, fora do index.html desde 10/10/2026
+   pra ficar guardado no navegador (?v= no index.html = hash deste arquivo). Os dois blocos de
+   estilo de antes, na mesma ordem: o da página e o do checkout. Mexeu aqui: node testes/vitrine-versao.mjs */
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:400;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-400-italic.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-500-italic.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+:root {
+  --black:  #14110d;
+  --deep:   #1A1815;
+  --dark:   #1e1a15;
+  --mole:   #221e18;
+  --earth:  #2a241c;
+  --loam:   #3a3127;
+  --clay:   #A87B4A;
+  --amber:  #c3a074;
+  --bone:   #E8E0CF;
+  --cream:  #f2ecdf;
+  --blood:  #8C3B2E;
+  --ember:  #A87B4A;
+  --fire:   #b98f5e;
+  --dim:    #6f6757;
+  --wire:   #332c22;
+  --txt:    #E8E0CF;
+
+  /* ── Versão contraste: cores de leitura mais claras ── */
+  --read:   #b89e72;      /* subtextos corridos (era --dim #4a3e2a → +80% mais claro) */
+  --label:  #9e7c48;      /* labels/kickers (era --clay #7a5c30 → +30% mais claro) */
+  /* --rust era usada no PIX (bolinha do "aguardando", borda do aviso de erro) e
+     nunca foi definida: a bolinha e a borda saíam invisíveis (revisão de 03/10/2026) */
+  --rust:   var(--fire);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--black);
+  color:var(--txt);
+  font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
+}
+
+/* GRAIN */
+body::before{
+  content:'';position:fixed;inset:0;z-index:9000;pointer-events:none;
+  opacity:.7;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.07'/%3E%3C/svg%3E");
+  animation:gshift .12s steps(1) infinite;
+}
+@keyframes gshift{
+  0%{transform:translate(0,0);}
+  20%{transform:translate(-1px,1px);}
+  40%{transform:translate(2px,-1px);}
+  60%{transform:translate(-2px,2px);}
+  80%{transform:translate(1px,-2px);}
+  100%{transform:translate(0,0);}
+}
+
+/* CURSOR */
+.cur{position:fixed;width:8px;height:8px;background:var(--fire);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:exclusion;transition:width .15s,height .15s;}
+.cur-r{position:fixed;width:32px;height:32px;border:1px solid rgba(232,76,24,.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:transform .14s cubic-bezier(.4,0,.2,1);}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:6000;
+  height:54px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2.4rem;
+  background:rgba(5,4,3,.97);
+  border-bottom:1px solid var(--wire);
+  backdrop-filter:blur(10px);
+}
+.nav-logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;}
+.nav-links{display:flex;list-style:none;}
+.nav-links a{
+  font-size:.76rem;font-weight:700;
+  letter-spacing:.22em;text-transform:uppercase;
+  color:var(--read);text-decoration:none;
+  padding:0 1.1rem;
+  display:flex;align-items:center;height:54px; /* área de toque = barra inteira (não só o texto) */
+  transition:color .15s,background .15s;
+}
+.nav-links a:hover{color:var(--fire);background:rgba(232,76,24,.05);}
+
+/* ═══ HERO ═══════════════════════════════ */
+#hero{
+  min-height:100vh;position:relative;overflow:hidden;
+  background:var(--black);
+  display:flex;flex-direction:column;
+}
+
+/* GIANT LOGO as hero centerpiece */
+.hero-logo-wrap{
+  display:flex;align-items:center;
+}
+.hero-logo-wrap img{
+  animation:logoPulse 8s ease-in-out infinite;
+}
+@keyframes logoPulse{
+  0%,100%{opacity:.22;transform:scale(1);}
+  50%{opacity:.3;transform:scale(1.015);}
+}
+
+/* earth glow behind logo */
+.hero-glow{
+  position:absolute;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 55% 55% at 50% 50%, rgba(74,56,32,.35) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 40% at 50% 100%, rgba(5,4,3,1) 0%, transparent 60%);
+}
+
+/* left edge gradient to make text readable */
+.hero-edge{
+  position:absolute;inset:0;z-index:2;
+  background:linear-gradient(to right, rgba(5,4,3,.92) 0%, rgba(5,4,3,.5) 50%, rgba(5,4,3,.05) 100%);
+}
+
+.hero-content{
+  position:relative;z-index:3;
+  padding:8rem 2.4rem 4rem;
+}
+
+.hero-eyebrow{
+  display:flex;align-items:center;gap:.8rem;
+  font-size:.62rem;font-weight:700;
+  letter-spacing:.28em;text-transform:uppercase;color:var(--clay);
+  margin-bottom:1.5rem;
+}
+.rec{width:7px;height:7px;border-radius:50%;animation:recblink 1.1s ease-in-out infinite;}
+@keyframes recblink{0%,100%{opacity:1;}50%{opacity:.1;};}
+
+.hero-title{
+  color:var(--cream);
+  margin-bottom:1rem;
+  white-space:nowrap;
+}
+
+.hero-desc{
+  font-size:.72rem;color:var(--read);
+  max-width:380px;line-height:1.9;margin-bottom:2.5rem;
+  letter-spacing:.04em;
+}
+.hero-desc strong{color:var(--bone);}
+/* @rideblan33 do hero é o link do perfil (27/09/2026), igual ao das tapes: sublinhado e seta */
+.hero-desc a.hero-at{display:inline-flex;align-items:center;gap:2px;color:var(--bone);font-weight:700;text-decoration:underline;text-decoration-color:rgba(232,224,207,.35);text-decoration-thickness:1px;text-underline-offset:4px;transition:text-decoration-color .2s,color .2s;}
+.hero-desc a.hero-at svg{width:.95em;height:.95em;color:var(--read);flex:none;transition:transform .2s;}
+@media(hover:hover){.hero-desc a.hero-at:hover{color:var(--cream);text-decoration-color:var(--fire);}.hero-desc a.hero-at:hover svg{transform:translateX(2px);color:var(--fire);}}
+
+.hero-ctas{display:flex;gap:.8rem;flex-wrap:wrap;}
+
+.btn{
+  letter-spacing:.1em;text-transform:uppercase;
+  padding:.55rem 2rem;border:none;cursor:pointer;
+  text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;
+  transition:all .18s;
+}
+.btn-fire:hover{background:var(--fire);}
+.btn-ghost{background:transparent;border:1px solid var(--wire);}
+.btn-ghost:hover{border-color:var(--clay);color:var(--cream);}
+
+/* SECTION */
+.s{padding:5rem 2.4rem;position:relative;}
+.s-dark{background:var(--deep);}
+
+.s-earth{background:var(--dark);}
+
+.s-head{margin-bottom:2.8rem;}
+.s-kicker{
+  font-size:.58rem;font-weight:700;
+  text-transform:uppercase;
+  margin-bottom:.5rem;display:block;
+}
+.s-title{
+  font-size:clamp(2.2rem,5.5vw,5.5rem);
+  line-height:.9;
+  color:var(--cream);
+}
+.s-sub{font-size:.76rem;color:var(--read);max-width:520px;margin-top:.9rem;line-height:1.9;}
+.s-sub strong{color:var(--bone);}
+
+.hr{height:1px;background:var(--wire);}
+
+/* ═══ BEAT CARDS (merged SC + buy) ══════ */
+.beat-cards{flex-direction:column;gap:0;border:1px solid var(--wire);}
+.pagination{align-items:center;justify-content:space-between;border:1px solid var(--wire);border-top:none;padding:.6rem 1rem;gap:.5rem;}
+.pagination-top{align-items:center;justify-content:space-between;border:1px solid var(--wire);border-top:none;border-bottom:none;padding:.6rem 1rem;gap:.5rem;flex-wrap:wrap;}
+/* Paginação numerada: acesso direto a qualquer página */
+.pg-nums{display:flex;gap:.25rem;align-items:center;flex-wrap:wrap;}
+.pg-num{font-family:'IBM Plex Mono',monospace;font-size:.72rem;min-width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid var(--wire);background:transparent;color:var(--read);cursor:pointer;transition:background .14s,color .14s;}
+.pg-num:hover{border-color:var(--ember);color:var(--cream);}
+.pg-num.pg-cur{background:var(--ember);border-color:var(--ember);color:var(--cream);cursor:default;}
+.pg-dots{color:var(--dim);font-size:.72rem;padding:0 .15rem;}
+.pagination-info{font-size:.88rem;letter-spacing:.1em;color:var(--cream);font-weight:700;}
+.pagination-btns{display:flex;align-items:center;gap:.4rem;}
+.pg-btn{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.72rem;letter-spacing:.1em;font-weight:700;padding:.3rem .8rem;border:1px solid var(--wire);background:transparent;color:var(--cream);cursor:pointer;transition:background .14s,color .14s;}
+.pg-btn:hover:not(:disabled){background:var(--ember);border-color:var(--ember);color:var(--cream);}
+.pg-btn:disabled{opacity:.3;cursor:default;}
+
+.pg-search{display:flex;align-items:center;gap:.4rem;flex:1;min-width:210px;}
+.pg-search-input{background:var(--mole);border:1px solid var(--clay);color:var(--cream);font-family:'IBM Plex Mono',monospace;font-size:.8rem;padding:.55rem .9rem;outline:none;transition:border-color .14s,box-shadow .14s;width:100%;max-width:none;}
+.pg-search-input::placeholder{color:var(--read);}
+.pg-search-input:focus{border-color:var(--fire);box-shadow:0 0 0 1px var(--fire);}
+
+/* Chips de gênero: wrap em várias linhas — todos visíveis, sem scroll escondido */
+.ftabs{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--wire);border-bottom:none;}
+.ft{
+  font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
+  font-size:.65rem;font-weight:700;
+  letter-spacing:.2em;text-transform:uppercase;
+  padding:.55rem 1.3rem;
+  border:none;border-right:1px solid var(--wire);border-bottom:1px solid var(--wire);
+  color:var(--dim);cursor:pointer;transition:all .15s;
+  white-space:nowrap;flex-shrink:0;
+}
+.ft:last-child{border-right:none;}
+.ft.on,.ft:hover{background:var(--ember);color:var(--cream);}
+
+/* ═══ PACKAGES ═══════════════════════════ */
+.packs{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--wire);}
+.pack{
+  padding:2.4rem 1.7rem;border-right:1px solid var(--wire);
+  position:relative;overflow:hidden;transition:background .18s;
+  display:flex;flex-direction:column;
+}
+.pack:last-child{border-right:none;}
+.pack::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--wire);transition:background .18s;}
+.pack:hover::after{background:var(--ember);}
+.pack:hover{background:var(--earth);}
+.pack.hot{background:var(--earth);}
+.pack.hot::after{background:var(--fire);}
+.pack-tag{
+  font-size:.58rem;font-weight:700;
+  letter-spacing:.25em;text-transform:uppercase;color:var(--clay);margin-bottom:.7rem;
+}
+.pack.hot .pack-tag{color:var(--amber);}
+.pack-n{font-size:1.7rem;color:var(--cream);margin-bottom:.25rem;}
+
+.pack-eco{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.05em;}
+.pack-sep{height:1px;background:var(--wire);margin-bottom:1.4rem;}
+.pack.hot .pack-sep{background:rgba(255,255,255,.1);}
+.pack-ul{list-style:none;display:flex;flex-direction:column;gap:.42rem;margin-bottom:1.5rem;flex:1;}
+.pack-ul li{
+  font-size:.74rem;color:var(--read);
+  display:flex;align-items:flex-start;gap:.55rem;line-height:1.5;
+}
+.pack-ul li::before{content:'›';color:var(--fire);flex-shrink:0;}
+.pack.hot .pack-ul li{color:var(--amber);}
+
+/* ═══ SERVICES ═══════════════════════════ */
+.svcs{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border:1px solid var(--wire);}
+.svc{
+  padding:2.3rem 1.8rem;border-right:1px solid var(--wire);border-bottom:1px solid var(--wire);
+  transition:background .14s;
+  display:flex;flex-direction:column;
+}
+.svc:nth-child(2n){border-right:none;}
+.svc:nth-last-child(-n+2){border-bottom:none;}
+.svc:hover{background:var(--mole);}
+.svc-n{
+  font-family:'Cormorant Garamond',sans-serif;font-size:2.8rem;
+  color:var(--wire);line-height:1;margin-bottom:.9rem;transition:color .18s;
+}
+.svc:hover .svc-n{color:var(--ember);}
+.svc-name{font-size:1.15rem;color:var(--cream);margin-bottom:.45rem;}
+.svc-desc{font-size:.74rem;color:var(--read);line-height:1.75;margin-bottom:1.1rem;flex:1;}
+.svc-price{
+  font-size:.7rem;font-weight:700;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--fire);
+}
+
+/* SNAIL SVG DECORATIONS scattered in sections */
+.snail-svg{
+  position:absolute;pointer-events:none;opacity:.06;
+  fill:none;
+}
+.snail-svg.tl{top:3rem;left:3rem;}
+.snail-svg.br{bottom:3rem;right:3rem;transform:scaleX(-1);}
+.snail-svg.tr{top:3rem;right:3rem;}
+
+/* ═══ CONTACT ════════════════════════════ */
+.contact-wrap{display:grid;grid-template-columns:1fr 1.1fr;gap:4rem;align-items:start;}
+.c-desc{max-width:340px;margin-top:1.5rem;}
+.c-links{display:flex;flex-direction:column;gap:.55rem;margin-top:2rem;}
+.c-link{
+  display:flex;align-items:center;gap:.9rem;
+  text-decoration:none;font-size:.76rem;
+  padding:.7rem 1rem;border:1px solid var(--wire);
+  transition:all .14s;font-family:'IBM Plex Mono',monospace;
+}
+.c-link:hover{border-color:var(--ember);color:var(--bone);background:var(--mole);}
+.c-ico{
+  width:26px;height:26px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.65rem;flex-shrink:0;
+}
+
+.cf{border:1px solid var(--wire);display:flex;flex-direction:column;}
+.cf-f{border-bottom:1px solid var(--wire);display:flex;flex-direction:column;}
+.cf-f:last-child{border-bottom:none;}
+.cf-lbl{
+  font-size:.57rem;font-weight:700;
+  letter-spacing:.22em;text-transform:uppercase;
+  color:var(--clay);padding:.6rem 1.2rem 0;
+}
+.cf-f input,.cf-f textarea,.cf-f select{
+  background:transparent;border:none;outline:none;
+  color:var(--bone);font-family:'IBM Plex Mono',monospace;
+  font-size:.82rem;padding:.3rem 1.2rem .8rem;
+  resize:none;appearance:none;transition:background .12s;
+}
+.cf-f:focus-within{background:var(--mole);}
+/* Seta no select (appearance:none tinha removido; sem ela ninguém sabe que é dropdown) */
+.cf-f select{
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M1 1l4 4 4-4' stroke='%23a87b4a' stroke-width='1.5' fill='none'/></svg>");
+  background-repeat:no-repeat;background-position:right 1.2rem center;padding-right:2.6rem;cursor:pointer;
+}
+.cf-sub{
+  font-size:1rem;
+  letter-spacing:.15em;text-transform:uppercase;
+  padding:1rem;border:none;
+  cursor:pointer;transition:background .14s;
+}
+.cf-sub:hover{background:var(--fire);}
+
+/* FOOTER */
+footer{
+  padding:1.4rem 2.4rem;background:var(--black);
+  border-top:1px solid var(--wire);
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;
+}
+footer img{height:30px;width:auto;}
+/* perfil do @rideblan33 (26/09/2026): link discreto no rodapé, a porta pras beat tapes */
+footer a.foot-perfil{color:inherit;text-decoration:none;border-bottom:1px solid var(--wire);transition:color .2s,border-color .2s;}
+footer a.foot-perfil:hover{color:var(--fire);border-bottom-color:var(--fire);}
+footer p{
+  font-size:.57rem;font-weight:700;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--dim);
+}
+
+/* ═══ CART ═══════════════════════════════ */
+.cart-btn{
+  position:fixed;bottom:2rem;right:2rem;z-index:8000;
+  background:var(--ember);border:none;color:var(--cream);
+  padding:.7rem 1.4rem;cursor:pointer;
+  font-family:'Cormorant Garamond',sans-serif;font-size:.95rem;
+  letter-spacing:.12em;text-transform:uppercase;
+  display:none;align-items:center;gap:.6rem;
+  transition:background .14s;
+  box-shadow:0 6px 30px rgba(184,44,8,.4);
+}
+.cart-btn.has-items{display:flex;} /* só aparece quando tem item */
+.cart-ico{display:block;flex-shrink:0;}
+.cart-btn:hover{background:var(--fire);}
+.cart-n{
+  background:var(--cream);color:var(--ember);
+  font-family:'Cormorant Garamond',sans-serif;font-size:.75rem;
+  padding:.05rem .4rem;min-width:20px;
+}
+
+.cart-panel{
+  position:fixed;top:0;right:0;bottom:0;width:380px;
+  background:var(--deep);border-left:1px solid var(--wire);
+  z-index:8500;transform:translateX(100%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+}
+.cart-panel.open{transform:translateX(0);}
+.cp-head{
+  padding:1.2rem 1.8rem;border-bottom:1px solid var(--wire);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.cp-head h3{font-family:'Cormorant Garamond',sans-serif;font-size:1.2rem;letter-spacing:.12em;text-transform:uppercase;color:var(--cream);}
+.cp-x{background:none;border:none;color:var(--dim);font-size:1.1rem;cursor:pointer;transition:color .14s;}
+.cp-x:hover{color:var(--cream);}
+.cp-body{flex:1;overflow-y:auto;padding:1.2rem 1.8rem;}
+.cp-empty{text-align:center;color:var(--dim);font-size:.76rem;padding:3rem 0;}
+.ci{display:flex;align-items:center;justify-content:space-between;padding:.85rem 0;border-bottom:1px solid var(--wire);}
+.ci-n{font-family:'Cormorant Garamond',sans-serif;font-size:.95rem;text-transform:uppercase;color:var(--cream);}
+.ci-t{font-size:.58rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;}
+.ci-p{font-family:'Cormorant Garamond',sans-serif;color:var(--fire);margin-left:.8rem;}
+.ci-rm{background:none;border:none;color:var(--dim);cursor:pointer;font-size:.85rem;margin-left:.4rem;transition:color .14s;}
+.ci-rm:hover{color:var(--fire);}
+.ci-qty{display:flex;align-items:center;gap:0;margin-left:.8rem;}
+.ci-qty-btn{background:var(--mole);border:1px solid var(--wire);color:var(--bone);width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.9rem;line-height:1;transition:background .12s;}
+.ci-qty-btn:hover{background:var(--ember);border-color:var(--ember);}
+.ci-qty-n{font-family:'Cormorant Garamond',sans-serif;font-size:.9rem;color:var(--cream);min-width:22px;text-align:center;border-top:1px solid var(--wire);border-bottom:1px solid var(--wire);height:22px;display:flex;align-items:center;justify-content:center;}
+.cp-foot{padding:1.2rem 1.8rem;border-top:1px solid var(--wire);}
+
+.cp-coupon{margin-bottom:1rem;}
+.cp-coupon-row{display:flex;gap:.5rem;}
+.cp-coupon-input{
+  flex:1;background:var(--pit);border:1px solid var(--wire);
+  color:var(--cream);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
+  font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;
+  padding:.55rem .7rem;outline:none;
+}
+.cp-coupon-input:focus{border-color:var(--ember);}
+.cp-coupon-input::placeholder{color:var(--dim);}
+.cp-coupon-btn{
+  background:var(--loam);border:none;color:var(--bone);
+  font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.72rem;
+  font-weight:700;letter-spacing:.12em;padding:.55rem .9rem;
+  cursor:pointer;transition:background .14s;white-space:nowrap;
+}
+.cp-coupon-btn:hover{background:var(--clay);}
+.cp-coupon-msg{font-size:.65rem;margin-top:.35rem;letter-spacing:.05em;min-height:.9rem;}
+.cp-coupon-msg.ok{color:var(--amber);}
+.cp-coupon-msg.err{border-left:2px solid var(--blood);padding-left:.5rem;}
+.cp-tot{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1rem;}
+.cp-tot span:first-child{font-size:.6rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);}
+.cp-tv{font-family:'Cormorant Garamond',sans-serif;font-size:2.2rem;color:var(--cream);}
+.cp-add-more{
+  width:100%;padding:.7rem;background:transparent;
+  border:1px solid var(--amber);color:var(--amber);
+  font-family:'Cormorant Garamond',sans-serif;font-size:.85rem;
+  letter-spacing:.15em;text-transform:uppercase;
+  cursor:pointer;transition:border-color .14s,color .14s;
+  margin-bottom:.5rem;
+}
+.cp-add-more:hover{border-color:var(--amber);color:var(--amber);}
+.cp-ck{
+  width:100%;padding:1rem;background:var(--ember);border:none;
+  color:var(--cream);font-family:'Cormorant Garamond',sans-serif;
+  font-size:1rem;letter-spacing:.15em;text-transform:uppercase;
+  cursor:pointer;transition:background .14s;
+}
+.cp-ck:hover{background:var(--fire);}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:8200;display:none;}
+.overlay.on{display:block;}
+
+/* PKG BEAT SELECTOR MODAL */
+.pkg-modal{
+  position:fixed;inset:0;z-index:9000;
+  display:none;align-items:center;justify-content:center;padding:1rem;
+}
+.pkg-modal.open{display:flex;}
+.pkg-modal-inner{
+  background:var(--deep);border:1px solid var(--wire);
+  width:100%;max-width:540px;max-height:90dvh;
+  display:flex;flex-direction:column;
+}
+.pkg-modal-head{
+  padding:1.2rem 1.6rem;border-bottom:1px solid var(--wire);
+  display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;
+}
+.pkg-modal-title{
+  font-family:'Cormorant Garamond',sans-serif;font-size:1.1rem;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--cream);
+}
+.pkg-modal-sub{
+  font-size:.62rem;color:var(--read);letter-spacing:.08em;margin-top:.2rem;
+}
+.pkg-modal-x{
+  background:none;border:none;color:var(--dim);font-size:1.1rem;
+  cursor:pointer;transition:color .14s;flex-shrink:0;
+}
+.pkg-modal-x:hover{color:var(--cream);}
+.pkg-modal-body{
+  flex:1;overflow-y:auto;padding:0 1.6rem 1rem;
+}
+.pkg-search{
+  position:sticky;top:0;z-index:1;
+  background:var(--deep);padding:.8rem 0 .6rem;
+  border-bottom:1px solid var(--wire);margin-bottom:.2rem;
+}
+.pkg-search-input{
+  width:100%;background:var(--mole);border:1px solid var(--wire);
+  color:var(--cream);font-family:'IBM Plex Mono',monospace;
+  font-size:.72rem;padding:.55rem .8rem;outline:none;
+  transition:border-color .14s;
+}
+.pkg-search-input::placeholder{color:var(--dim);}
+.pkg-search-input:focus{border-color:var(--ember);}
+.pkg-no-results{
+  text-align:center;color:var(--dim);font-size:.72rem;
+  padding:2rem 0;
+}
+.pkg-beat-item{
+  display:flex;align-items:center;gap:.8rem;
+  padding:.75rem 0;border-bottom:1px solid var(--wire);cursor:pointer;
+  transition:background .12s;
+}
+.pkg-beat-item:last-child{border-bottom:none;}
+.pkg-beat-item:hover{background:rgba(255,255,255,.02);}
+.pkg-beat-item.selected{background:rgba(184,44,8,.07);}
+.pkg-beat-cb{
+  width:18px;height:18px;flex-shrink:0;
+  border:1px solid var(--wire);background:var(--mole);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;color:var(--fire);transition:border-color .14s,background .14s;
+}
+.pkg-beat-item.selected .pkg-beat-cb{
+  border-color:var(--ember);background:rgba(184,44,8,.2);
+}
+.pkg-beat-info{flex:1;min-width:0;}
+.pkg-beat-name{
+  font-family:'Cormorant Garamond',sans-serif;font-size:.95rem;
+  text-transform:uppercase;color:var(--cream);letter-spacing:.06em;
+}
+.pkg-beat-meta{font-size:.58rem;color:var(--dim);letter-spacing:.08em;margin-top:.1rem;}
+.pkg-modal-foot{
+  padding:1rem 1.6rem;border-top:1px solid var(--wire);
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+}
+.pkg-counter{
+  font-size:.72rem;
+  font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--read);
+}
+.pkg-counter span{color:var(--fire);}
+.pkg-confirm{
+  border:none;color:var(--cream);
+  font-family:'Cormorant Garamond',sans-serif;font-size:.95rem;
+  letter-spacing:.12em;padding:.65rem 1.8rem;
+  transition:background .14s;
+}
+.pkg-confirm:hover{background:var(--fire);}
+.pkg-confirm:disabled{background:var(--loam);cursor:not-allowed;opacity:.6;}
+
+/* REVEAL */
+.rv{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease;}
+.rv.in{opacity:1;transform:none;}
+
+/* RESPONSIVE */
+/* Prevent any element from causing horizontal scroll */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+/* Âncoras (#beats etc.) param abaixo da nav fixa de 54px */
+/* v28: âncora cai no começo exato da seção. Um recuo só, igual à altura real
+   do menu fixo (--nav-h, medida pelo JS no load e no resize). Antes somavam
+   70px aqui + 60px de scroll-margin em cada seção = 76px de vão. */
+html { scroll-padding-top: var(--nav-h,54px); }
+/* a última seção + rodapé ocupam no mínimo uma tela: senão, no computador, o
+   "Contato" não tinha página embaixo pra subir até o menu e parava 129px abaixo */
+#contact { min-height: calc(100vh - var(--nav-h,54px) - var(--rodape-h,0px)); }
+* { max-width: 100%; }
+
+/* Hero title: allow wrapping on small screens */
+.hero-title { overflow-wrap: break-word; word-break: break-word; }
+
+/* Custom cursor hidden on touch devices */
+@media (hover: none) {
+  .cur, .cur-r { display: none; }
+}
+
+@media(max-width:860px){
+  nav{
+    padding:0 .8rem;
+    gap:0;
+  }
+  .nav-logo{height:54px;flex-shrink:0;}
+  .nav-links{
+    flex:1;
+    justify-content:center;
+  }
+  .nav-links a{
+    line-height:54px;
+    font-size:.6rem;
+    padding:0 .8rem;
+    white-space:nowrap;
+  }
+  .s{padding:3.5rem 1.2rem;}
+  .hero-content{padding:7rem 1.2rem 3rem;}
+  .hero-title{white-space:normal;}
+
+  /* Packages */
+  .packs{grid-template-columns:1fr;}
+  .pack{border-right:none;border-bottom:1px solid var(--wire);}
+  .pack:last-child{border-bottom:none;}
+
+  /* Services */
+  .svcs{grid-template-columns:1fr;}
+  .svc{border-right:none;}
+
+  /* Contact */
+  .contact-wrap{grid-template-columns:1fr;gap:2.5rem;}
+  .c-desc{max-width:100%;}
+
+  /* Footer */
+  footer{flex-direction:column;align-items:flex-start;padding:1.2rem;}
+
+  /* Cart */
+  .cart-panel{width:100%;}
+  /* No mobile o botão vira círculo compacto: cobre menos conteúdo */
+  .cart-btn{bottom:1rem;right:1rem;width:58px;height:58px;border-radius:50%;padding:0;justify-content:center;}
+  .cart-btn .cart-label{display:none;}
+  .cart-btn .cart-n{position:absolute;top:-5px;right:-5px;border:1px solid var(--ember);}
+  /* Respiro no fim das seções pro círculo não cobrir CTA */
+  #contact{padding-bottom:8rem;}
+  #services{padding-bottom:6rem;}
+  /* Inputs com 16px: impede o zoom automático do iOS ao focar */
+  input,select,textarea{font-size:16px!important;}
+  /* Piso de legibilidade pra textos miúdos */
+  .pkg-beat-meta,.ci-t,.pack-tag,.cp-upsell-tag,.s-kicker{font-size:.66rem;}
+  footer p{font-size:.63rem;}
+  .mp-lbl,.cf-lbl{font-size:.66rem;}
+
+  /* MP checkout modal */
+  .mp-modal-inner{min-height:100dvh;}
+
+  /* Pagination */
+  .pagination, .pagination-top{flex-wrap:wrap;gap:.4rem;}
+  .pagination-info{font-size:.75rem;}
+}
+
+@media(max-width:480px){
+  .s{padding:2.5rem 1rem;}
+  nav{padding:0 .7rem;}
+
+  .hero-desc{font-size:.68rem;}
+  .s-title{font-size:clamp(2rem,10vw,4rem);}
+
+  footer{gap:.5rem;}
+  .cp-body{padding:.9rem 1rem;}
+  .cp-head{padding:.9rem 1rem;}
+  .cp-foot{padding:.9rem 1rem;}
+}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:var(--black);}
+::-webkit-scrollbar-thumb{background:var(--earth);}
+
+/* ════════════════════════════════════════════════
+   REDESIGN — estética Caramujo / rideblan (override)
+   ════════════════════════════════════════════════ */
+:root{ --serif:'Cormorant Garamond',Georgia,serif; --sans:'Helvetica Neue',Helvetica,Arial,sans-serif; }
+
+/* tropos techno fora */
+.cur,.cur-r{display:none!important;}
+.rec{animation:none!important;background:var(--clay)!important;}
+body{cursor:auto;}
+
+/* logo do topo = o mesmo das outras páginas (caramujo-h.webp: selo + CARAMUJO RECORDS),
+   148x27 no computador e 122x22 no celular, padrão de 26/09/2026 (DESIGN.md) */
+.nav-logo img{width:148px;height:27px;object-fit:contain;}
+@media(max-width:899px){.nav-logo img{width:122px!important;height:22px!important;}}
+
+/* HERO */
+#hero{justify-content:center;}
+.hero-title{font-family:var(--serif);font-weight:500;text-transform:none;letter-spacing:.01em;line-height:.94;font-size:clamp(3.4rem,9vw,7.4rem);text-shadow:none;}
+.hero-title .sub{display:block;font-family:var(--sans);font-weight:700;font-size:.14em;letter-spacing:.6em;color:var(--clay);margin-top:1.1rem;-webkit-text-fill-color:var(--clay)!important;}
+.hero-lede{font-family:var(--serif);font-style:italic;font-size:clamp(1.3rem,2.4vw,1.9rem);line-height:1.45;color:var(--amber);max-width:27ch;letter-spacing:.01em;margin:1.8rem 0 2.6rem;}
+
+/* caramujo grande à direita (baixa opacidade) */
+.hero-logo-wrap{position:absolute!important;left:auto;right:-3%;top:50%;bottom:auto;transform:translateY(-50%);z-index:0;}
+.hero-mark{width:min(48vw,560px)!important;height:auto!important;opacity:.5!important;filter:none!important;}
+@media(max-width:760px){ .hero-logo-wrap{right:-22%!important;opacity:.22!important;} .hero-mark{width:80vw!important;} }
+
+/* botões → primário creme */
+.btn{font-family:var(--sans);border-radius:0;}  /* botão no iPhone vem redondo sem isso (o Chromium não mostra; voltou em 04/10) */
+.btn-fire{background:var(--bone)!important;color:var(--deep);}
+.btn-fire:hover{background:var(--clay)!important;color:var(--deep)!important;}
+.btn-ghost{border-color:var(--wire)!important;color:var(--bone)!important;}
+.btn-ghost:hover{border-color:var(--clay)!important;color:var(--clay)!important;background:transparent!important;}
+
+/* títulos de seção serifados mixed-case */
+.s-title{font-family:var(--serif);text-transform:none;font-weight:500;letter-spacing:.01em;}
+.s-title .r{color:var(--clay);-webkit-text-fill-color:var(--clay)!important;}
+.s-kicker{color:var(--clay)!important;letter-spacing:.28em;}
+
+/* pacotes / serviços */
+.pack-n,.svc-name{font-family:var(--serif);font-weight:600;text-transform:none;}
+
+/* contato serif */
+.c-desc{font-family:var(--serif);font-style:italic;font-size:clamp(1.3rem,2.2vw,1.7rem);line-height:1.45;color:var(--amber);}
+.cf-sub{background:var(--bone)!important;color:var(--deep);font-family:var(--sans);}
+.cf-sub:hover{background:var(--clay)!important;}
+
+/* ═══ v2 — prova social, licença, vendidos, motion ═══ */
+.hero-proof{display:flex;flex-wrap:wrap;gap:.4rem 1.6rem;margin:0 0 2.4rem;font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--read);}
+.hero-proof b{color:var(--amber);font-weight:400;}
+.lic-toggle{background:none;border:none;color:var(--amber);font:inherit;cursor:pointer;text-decoration:underline dotted;padding:0;}
+.lic-wrap{position:relative;display:inline-block;}
+.lic-box{visibility:hidden;opacity:0;position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 12px);width:360px;max-width:84vw;padding:1rem 1.2rem;background:var(--mole);border:1px solid var(--clay);line-height:1.75;text-align:left;z-index:700;box-shadow:0 12px 34px rgba(0,0,0,.55);transition:opacity .15s;}
+.lic-box::before{content:'';position:absolute;top:-5.5px;left:50%;transform:translateX(-50%) rotate(45deg);width:10px;height:10px;background:var(--mole);border-left:1px solid var(--clay);border-top:1px solid var(--clay);}
+.lic-wrap:hover .lic-box,.lic-box.open{visibility:visible;opacity:1;}
+.lic-box strong{font-weight:400;}
+.pg-controls{display:flex;gap:.4rem;align-items:stretch;}
+.sort-select{background:var(--mole);border:1px solid var(--wire);color:var(--read);font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;padding:.45rem .6rem;cursor:pointer;transition:border-color .14s,color .14s;}
+.sort-select:hover{color:var(--amber);}
+button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(--black);} /* estado ativo preenchido: dá pra ver que tá ligado */
+.lucky-btn{color:var(--amber);border-color:var(--clay);}
+.lucky-btn:hover{background:var(--clay);color:var(--black);}
+
+/* Selo de desconto real (vs preço avulso) nos pacotes e no Mix + Master */
+
+.cp-upsell{margin-top:1rem;padding:.95rem 1rem;border:1px solid var(--clay);border-left:3px solid var(--fire);background:rgba(168,123,74,.09);font-size:.78rem;line-height:1.65;}
+.cp-upsell-tag{display:block;font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--fire);margin-bottom:.45rem;}
+.cp-save{background:var(--fire);color:var(--black);font-weight:700;padding:.1rem .45rem;white-space:nowrap;}
+.cp-upsell-link{display:block;margin-top:.55rem;color:var(--amber);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;}
+.cp-upsell-link:hover{color:var(--fire);}
+
+@media(max-width:860px){
+  body::before{animation:none;}
+  /* O balão da licença abre COLADO no link, igual ao computador. Ele era folha
+     fixa no rodapé e a barra do player passou a cobrir. Posição vem do JS
+     (posicionarLic), que mede o botão e encaixa o balão embaixo sem vazar. */
+  .lic-box{position:fixed;left:0;top:0;transform:none;max-width:none;}
+  .lic-box::before{display:none;}
+}
+@media (prefers-reduced-motion: reduce){
+  body::before{animation:none;}
+  html{scroll-behavior:auto;}
+}
+
+/* ═══ NOVO: BEAT DA SEMANA (hero) ═══ */
+.hw-head{display:flex;justify-content:space-between;align-items:center;}
+.hw-kick{font-size:.6rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--fire);}
+
+.hw-name{font-family:'Cormorant Garamond',serif;color:var(--cream);margin-top:.2rem;}
+
+.hw-add{width:100%;justify-content:center;font-size:.76rem;}
+
+/* ═══ NOVO: NO ESTÚDIO ═══ */
+.studio-strip{grid-template-columns:repeat(4,1fr);margin:0 auto;}
+.studio-ph{justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.08em;color:var(--dim);text-align:center;padding:.5rem;}
+.testi{margin:2rem auto 0;text-align:center;border-top:1px solid var(--wire);padding-top:1.6rem;}
+.testi-q{font-family:'Cormorant Garamond',serif;font-style:italic;}
+.testi-who{font-family:'IBM Plex Mono',monospace;letter-spacing:.12em;margin-top:.8rem;text-transform:uppercase;}
+@media(max-width:760px){.studio-strip{grid-template-columns:1fr 1fr;}}
+
+/* ═══ NOVO: BARRA TOCANDO AGORA ═══ */
+.np-bar{position:fixed;display:flex;flex-direction:column;align-items:stretch;padding:.6rem .9rem;transition:transform .3s cubic-bezier(.4,0,.2,1);}
+
+
+/* ═══ AJUSTES v2 ═══ */
+.hero-week{position:absolute;z-index:4;max-width:none;padding:1.4rem;background:rgba(20,17,13,.72);border:1px solid var(--clay);backdrop-filter:blur(6px);}
+.hero-week .hw-name{font-size:2.4rem;}
+.hw-chips{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem;}
+.hw-chip{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);border:1px solid var(--wire);padding:.28rem .5rem;}
+.hw-add{margin-top:.9rem;}
+@media(max-width:900px){.hero-week .hw-name{font-size:2rem;}}
+
+
+/* ═══ AJUSTES v3 ═══ */
+.hero-logo-wrap{justify-content:flex-start;padding-left:1vw;}
+.hero-week{right:auto;left:50%;top:46%;transform:translate(-50%,-50%);width:min(440px,46vw);}
+
+.disc-pill{display:inline-block;background:var(--fire);color:var(--black);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.1em;padding:.2rem .5rem;vertical-align:middle;margin-left:.4rem;box-shadow:0 2px 10px rgba(185,143,94,.4);}
+
+@media(max-width:900px){.hero-week{position:static;left:auto;top:auto;transform:none;width:100%;max-width:430px;margin:1.8rem 0 0;}.hero-logo-wrap{justify-content:center;padding-left:0;}}
+
+/* ═══ AJUSTES v4 (mobile + refinamentos) ═══ */
+
+.svc-flag{display:inline-block;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.58rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;padding:0;margin-left:.55rem;vertical-align:middle;}
+.svc-flag-fire{color:var(--fire);}
+.svc-flag-amber{color:var(--amber);}
+
+@media(max-width:600px){
+  .nav-links{scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .nav-links::-webkit-scrollbar{display:none;}
+}
+@media(max-width:860px){ body::before{display:none;} }
+@media(max-width:860px){ .ft{min-height:40px;} }
+
+/* ═══ MENU HAMBÚRGUER (variante) ═══ */
+.nav-right{display:flex;align-items:center;gap:.2rem;}
+/* anel de story do @rideblan33 (27/09/2026): leva pro portfólio, do lado do Instagram */
+.nav-eu{display:flex;align-items:center;justify-content:center;width:44px;height:44px;flex:none;text-decoration:none;}
+.nav-eu .anel{width:34px;height:34px;border-radius:50%;padding:2px;background:conic-gradient(from 200deg,var(--fire),var(--amber),var(--clay),var(--fire));transition:transform .15s;}
+.nav-eu img{display:block;width:100%;height:100%;border-radius:50%;border:2px solid #050403;object-fit:cover;}
+.nav-eu:hover .anel,.nav-eu:focus-visible .anel{transform:scale(1.06);}
+.nav-ig{display:flex;align-items:center;justify-content:center;width:44px;height:44px;color:var(--bone);text-decoration:none;transition:color .15s;}
+.nav-ig:hover{color:var(--fire);}
+.nav-ig svg{width:22px;height:22px;display:block;}
+
+/* v12: sem scroll lateral + filtros/controles/paginação compactos no mobile */
+@media(max-width:600px){
+  .pg-controls{flex-wrap:wrap;width:100%;}
+  .pg-controls>*{flex:1 1 auto;text-align:center;}
+  .pagination-info{white-space:nowrap;}
+  .pg-nums{flex-wrap:nowrap;}
+  .pagination-btns{flex-wrap:wrap;row-gap:.5rem;}
+  .ft{padding:.4rem .6rem;min-height:32px;letter-spacing:.08em;}
+
+  .hero-lede{margin-bottom:1.5rem;}
+}
+
+/* v13: filtros recolhíveis no mobile */
+.filters-toggle{display:none;}
+.filters-row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;border:1px solid var(--wire);border-top:none;padding:.6rem 1rem;}
+.filters-row .pg-search{min-width:200px;}
+@media(max-width:600px){
+  .filters-toggle{display:flex;align-items:center;justify-content:space-between;gap:.5rem;width:100%;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:700;font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--cream);background:var(--mole);border:1px solid var(--wire);padding:.8rem 1rem;cursor:pointer;margin-bottom:.5rem;}
+  .filters-toggle .ft-sub{font-size:.52rem;letter-spacing:.06em;color:var(--dim);text-transform:none;font-weight:400;margin-left:.55rem;margin-right:auto;}
+  .filters-toggle .ft-caret{transition:transform .25s;font-size:.7rem;}
+  .filters-toggle[aria-expanded="true"] .ft-caret{transform:rotate(180deg);}
+  .filters-panel{max-height:0;overflow:hidden;transition:max-height .35s ease;}
+  .filters-panel.open{max-height:1600px;}
+  .filters-row{flex-direction:column;align-items:stretch;}
+  .filters-row .pg-search{min-width:0;}
+  .pagination .pg-search{display:none;}
+}
+
+/* v13: setas do carrossel do estúdio (só mobile) */
+.studio-carousel{position:relative;}
+@media(max-width:760px){
+  .studio-nav{display:flex;align-items:center;justify-content:center;position:absolute;top:140px;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:rgba(20,17,13,.82);border:1px solid var(--clay);color:var(--cream);font-size:1.35rem;line-height:1;cursor:pointer;z-index:3;padding:0;}
+  .studio-nav.prev{left:2px;}
+  .studio-nav.next{right:2px;}
+}
+.nav-burger{display:none;background:none;border:none;cursor:pointer;width:44px;height:44px;flex-direction:column;justify-content:center;align-items:center;gap:5px;padding:0;flex-shrink:0;}
+.nav-burger span{display:block;width:22px;height:2px;background:var(--bone);transition:transform .22s,opacity .2s;}
+.nav-burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.nav-burger.open span:nth-child(2){opacity:0;}
+.nav-burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+@media(max-width:600px){
+  .nav-burger{display:flex;}
+  /* celular (27/09/2026): no topo fica só o anel do @rideblan33; o Instagram segue no Contato */
+  .nav-ig{display:none;}
+
+  .nav-links{position:fixed;top:54px;left:0;right:0;flex-direction:column;background:rgba(5,4,3,.98);border-bottom:1px solid var(--wire);overflow:hidden;max-height:0;transition:max-height .3s ease;justify-content:flex-start!important;}
+  .nav-links.open{max-height:82vh;border-bottom:1px solid var(--wire);}
+  .nav-links>li>a{width:100%;border-bottom:1px solid var(--wire);padding:0 1.4rem!important;font-size:.74rem!important;justify-content:flex-start;}
+}
+/* ── NOVO v5: mídia real do Sobre nós — altura igual, largura variável, sem bordas laterais + legenda ── */
+.studio-strip{display:flex;justify-content:center;align-items:flex-start;max-width:1120px;}
+.studio-ph{padding:0;border:none;background:none;display:flex;flex-direction:column;align-items:center;aspect-ratio:auto;}
+.studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb>img{border:1px solid var(--wire);border-radius:4px;background:var(--black);}
+.studio-ph figcaption{margin-top:.6rem;letter-spacing:.1em;text-transform:uppercase;}
+/* 1º card do carrossel (27/09/2026): o @rideblan33, abre o portfólio */
+.studio-eu{text-decoration:none;}
+.studio-eu .eu-box{position:relative;width:100%;aspect-ratio:4/5;overflow:hidden;border:1px solid var(--wire);border-radius:4px;background:radial-gradient(ellipse 80% 60% at 60% 40%,rgba(185,143,94,.12),transparent 70%),var(--black);container-type:inline-size;}
+.studio-eu .eu-33{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);font-family:var(--serif);font-weight:600;font-size:96cqw;line-height:1;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1.3px rgba(185,143,94,.5);pointer-events:none;user-select:none;}
+.studio-eu .eu-box img{position:absolute;bottom:0;left:50%;transform:translateX(-50%);height:100%;width:auto;max-width:none;filter:drop-shadow(0 12px 24px rgba(0,0,0,.55));transition:transform .3s ease;}
+.studio-eu .eu-sel{position:absolute;left:10px;right:10px;bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:rgba(20,17,13,.92);border:1px solid var(--wire);transition:border-color .2s;}
+.studio-eu .eu-sel b{font-family:var(--serif);font-weight:600;font-size:1.25rem;line-height:1;color:var(--cream);white-space:nowrap;}
+.studio-eu .eu-sel i{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-style:normal;font-weight:700;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--fire);white-space:nowrap;}
+.studio-eu .eu-cap{margin-top:.6rem;letter-spacing:.1em;color:var(--fire);text-transform:uppercase;}
+.studio-eu:hover .eu-sel,.studio-eu:focus-visible .eu-sel{border-color:var(--clay);}
+.studio-eu:hover .eu-box img{transform:translateX(-50%) scale(1.02);}
+/* destaque do depoimento @sxnxstro */
+.testi{max-width:1180px;padding-top:2.2rem;}
+.testi-q{font-size:clamp(1.4rem,2.5vw,1.85rem);line-height:1.3;}
+.testi-who{color:var(--amber);font-size:.72rem;}
+
+/* ── NOVO v6: quote em 1 linha, play badge, lightbox, carrossel mobile, FAB Instagram ── */
+@media(min-width:761px){.testi-q{white-space:nowrap;}}
+
+.studio-ph{cursor:zoom-in;outline-offset:3px;}
+.vid-thumb{position:relative;display:flex;line-height:0;}
+.play-badge{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:66px;height:66px;border-radius:50%;background:rgba(8,6,4,.55);border:2px solid var(--bone);color:var(--bone);display:flex;align-items:center;justify-content:center;font-size:1.4rem;padding-left:5px;pointer-events:none;transition:transform .16s,background .16s;box-shadow:0 4px 18px rgba(0,0,0,.5);}
+.studio-vid:hover .play-badge,.studio-vid:focus .play-badge{background:var(--ember);transform:translate(-50%,-50%) scale(1.08);}
+
+.lb{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(8,6,4,.94);padding:5vh 4vw;cursor:zoom-out;}
+.lb.on{display:flex;}
+.lb-inner{max-width:96vw;max-height:90vh;display:flex;align-items:center;justify-content:center;cursor:auto;}
+.lb-inner>img,.lb-inner>video{max-width:96vw;max-height:90vh;width:auto;height:auto;display:block;border:1px solid var(--wire);border-radius:4px;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.lb-x{position:absolute;top:16px;right:18px;width:46px;height:46px;border:1px solid var(--wire);background:rgba(0,0,0,.55);color:var(--bone);font-size:1.05rem;border-radius:50%;cursor:pointer;z-index:2;}
+.lb-x:hover{background:var(--ember);}
+
+/* desktop: 4 mídias na MESMA linha, altura igual, largura proporcional ao aspect-ratio */
+@media(min-width:761px){
+  .studio-strip{flex-wrap:nowrap;gap:1rem;max-width:1260px;}
+  .studio-ph{flex-basis:0;flex-grow:1;min-width:0;}
+  .studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb,.studio-ph .vid-thumb>img{height:auto;width:100%;}
+  .studio-eu .eu-sel{left:8px;right:8px;bottom:8px;padding:8px 10px;}
+  .studio-eu .eu-sel b{font-size:1.05rem;}
+  .studio-eu .eu-sel i{font-size:.52rem;letter-spacing:.16em;}
+  .sp-0{flex-grow:.8;} .sp-2{flex-grow:.6957;} .sp-3{flex-grow:.5322;} .sp-4{flex-grow:.7826;}
+}
+
+@media(max-width:760px){
+  .studio-strip{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:.9rem;padding:0 9vw .4rem;justify-content:flex-start;scrollbar-width:none;}
+  .studio-strip::-webkit-scrollbar{display:none;}
+  /* celular (27/09/2026): todos os cards com a MESMA altura e largura pela proporção de
+     cada mídia, igual ao computador. Nada corta nem estica (proporção = a do arquivo). */
+  .studio-strip{--sh:min(82vw,400px);}
+  .studio-ph{scroll-snap-align:center;flex:0 0 auto;width:min-content;max-width:none;}
+  .studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb,.studio-ph .vid-thumb>img{height:var(--sh);width:auto;max-width:none;max-height:none;object-fit:cover;}
+  .sp-1>img{aspect-ratio:1;}
+  .sp-2 .vid-thumb,.sp-2 .vid-thumb>img{aspect-ratio:.6957;}
+  .sp-3>img{aspect-ratio:.5322;}
+  .sp-4>video{aspect-ratio:.7826;}
+  .studio-eu .eu-box{height:var(--sh);width:auto;}
+}
+
+/* ══ NOVO v18 — player do Drive (sai o SoundCloud) ═══════════════════
+   Linha do beat: número/play, capa da beat tape, nome, ficha e preço.
+   Barra do pé: tempo, seek, capa, nome, transporte, volume e preço. */
+#beatCards{display:block}
+#beatCards .item{position:relative;display:flex;align-items:center;gap:14px;padding:11px 10px;
+  border-bottom:1px solid var(--wire);cursor:pointer;transition:background .14s}
+#beatCards .item:before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--fire);
+  transform:scaleY(0);transition:transform .16s ease}
+#beatCards .item:hover{background:var(--deep)}
+#beatCards .item:hover:before{transform:scaleY(1)}
+#beatCards .item.tocando{background:var(--deep)}
+#beatCards .item.tocando:before{transform:scaleY(1)}
+#beatCards .item.lucky-hit{background:var(--earth)}
+#beatCards .cel-num{width:30px;flex:none;display:flex;align-items:center;justify-content:center;
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--dim);font-variant-numeric:tabular-nums}
+#beatCards .cel-num b,#beatCards .cel-num .eq3{display:none}
+#beatCards .cel-num b{width:30px;height:30px;align-items:center;justify-content:center;
+  border:1px solid var(--wire);background:var(--mole);color:var(--bone)}
+#beatCards .item:hover .cel-num i{display:none}
+#beatCards .item:hover .cel-num b{display:flex}
+#beatCards .item.tocando .cel-num i{display:none}
+#beatCards .item.tocando .cel-num b{background:var(--fire);color:var(--black);border-color:var(--fire)}
+#beatCards .item.tocando.rodando:not(:hover) .cel-num b{display:none}
+#beatCards .item.tocando.rodando:not(:hover) .cel-num .eq3{display:flex}
+#beatCards .eq3{align-items:flex-end;gap:2px;height:14px}
+#beatCards .eq3 s{width:2px;background:var(--fire);height:4px;animation:pulaEq .9s ease-in-out infinite}
+#beatCards .eq3 s:nth-child(2){animation-delay:.18s}
+#beatCards .eq3 s:nth-child(3){animation-delay:.36s}
+@keyframes pulaEq{0%,100%{height:3px}50%{height:13px}}
+@media (prefers-reduced-motion:reduce){#beatCards .eq3 s{animation:none;height:8px}}
+.capa{width:46px;height:46px;flex:none;border:1px solid var(--wire);background:var(--mole);
+  object-fit:cover;}
+.capa.vazia{display:flex;align-items:center;justify-content:center}
+.capa.vazia img{opacity:.3;}
+#beatCards .info{flex:1;min-width:0}
+#beatCards .nome{font-family:var(--serif);font-size:1.28rem;font-weight:600;line-height:1.15;color:var(--cream);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#beatCards .ficha{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--read);margin-top:3px;
+  letter-spacing:.02em}
+#beatCards .ficha em{font-style:normal;color:var(--clay);text-transform:uppercase;font-size:.64rem;letter-spacing:.1em}
+#beatCards .dur{flex:none;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--dim);
+  font-variant-numeric:tabular-nums}
+.preco{flex:none;display:inline-flex;align-items:center;gap:7px;background:var(--bone);color:var(--black);
+  border:1px solid var(--bone);font-family:'IBM Plex Mono',monospace;font-size:.76rem;font-weight:500;
+  padding:.52rem .8rem;cursor:pointer;transition:background .14s,border-color .14s;white-space:nowrap}
+.preco:hover{background:var(--fire);border-color:var(--fire)}
+.preco.on{background:var(--fire);border-color:var(--fire)}
+#beatCards .vendido{flex:none;font-size:.58rem;font-weight:700;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--blood);border:1px solid var(--blood);padding:.52rem .8rem}
+#beatCards .item.fora .nome{color:var(--amber);text-decoration:line-through;
+  text-decoration-color:var(--blood);text-decoration-thickness:1.5px}
+#beatCards .corrida{position:absolute;left:0;bottom:-1px;height:2px;background:var(--fire);}
+
+/* barra do pé, agora de ponta a ponta */
+.np-bar{left:0;right:0;bottom:0;width:100%;max-width:none;
+  min-width:0;transform:translateY(110%);background:var(--deep)!important;
+  border:0!important;border-top:1px solid var(--wire)!important;padding:0!important;gap:0;
+  backdrop-filter:none;box-shadow:none;}
+.np-bar.on{transform:none!important}
+.pe-seek{display:flex;align-items:center;gap:12px;padding:9px 20px 0}
+.pe-t{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--read);flex:none;
+  font-variant-numeric:tabular-nums}
+.trilha{flex:1;height:5px;background:var(--loam);position:relative;cursor:pointer;
+  transition:height .16s ease,background .16s ease;}
+.trilha i{display:block;height:100%;background:var(--fire);position:relative}
+.trilha i:after{content:'';position:absolute;right:-7px;top:50%;width:14px;height:14px;
+  background:var(--fire);box-shadow:0 0 0 3px var(--deep);
+  transition:transform .16s ease}
+.trilha:hover,.trilha.perto{height:13px;background:var(--earth)}
+.trilha:hover i:after,.trilha.perto i:after{transform:translateY(-50%) scale(1)}
+.trilha:before{content:'';position:absolute;inset:-16px 0}
+.pe-baixo{display:flex;align-items:center;gap:14px;padding:8px 20px calc(12px + env(safe-area-inset-bottom,0px))}
+.pe-info{display:flex;align-items:center;gap:11px;flex:1;min-width:0}
+.pe-info .capa{width:40px;height:40px}
+.pe-nome{min-width:0}
+.pe-nome .t{font-family:var(--serif);font-size:1.05rem;font-weight:600;color:var(--cream);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pe-nome small{display:block;font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--read);margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.transporte{display:flex;align-items:center;gap:6px;flex:none}
+.tb{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:transparent;
+  border:1px solid transparent;color:var(--bone);cursor:pointer;padding:0;transition:color .14s,border-color .14s}
+.tb:hover{color:var(--cream);border-color:var(--wire)}
+.tb.principal{width:40px;height:40px;background:var(--fire);color:var(--black);border-color:var(--fire)}
+.tb.principal:hover{background:var(--clay);border-color:var(--clay)}
+.pe-dir{display:flex;align-items:center;gap:10px;flex:1;justify-content:flex-end}
+.vol-wrap{position:relative;display:flex;align-items:center}
+.vol-pop{position:absolute;left:50%;bottom:40px;transform:translateX(-50%) translateY(6px);
+  background:var(--mole);border:1px solid var(--wire);padding:12px 8px;
+  opacity:0;pointer-events:none;transition:opacity .16s ease,transform .16s ease}
+.vol-pop.on{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+@media(hover:hover){
+  .vol-wrap:hover .vol-pop{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+}
+/* ponte invisível pro mouse não perder o popup no caminho — só onde tem mouse.
+   No celular ela ficava POR CIMA do botão e engolia o toque. */
+@media(hover:hover){
+  .vol-wrap:before{content:'';position:absolute;left:-12px;right:-12px;top:-16px;bottom:0}
+}
+.vol-pop input{-webkit-appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;
+  width:22px;height:96px;accent-color:#b98f5e;background:transparent;cursor:pointer}
+/* beat em destaque no hero */
+.hw-play{display:flex;align-items:center;gap:12px;margin:.6rem 0 .9rem}
+.hw-play .tb.principal{width:44px;height:44px}
+@media(max-width:760px){
+  #beatCards .nome{font-size:1.05rem}
+  #beatCards .item{gap:10px;padding:9px 2px}
+  #beatCards .cel-num{width:26px}
+  .capa{width:40px;height:40px}
+  #beatCards .dur{display:none}
+  .preco{padding:.5rem .62rem;font-size:.72rem;gap:0}
+  .preco svg{display:none}
+  .pe-baixo{gap:8px;padding:8px 14px calc(10px + env(safe-area-inset-bottom,0px))}
+  .pe-info .capa{width:34px;height:34px}
+  .pe-nome .t{font-size:.95rem}
+  .pe-nome .quem{display:none}
+  .pe-dir{flex:none}
+}
+
+
+
+/* ══ NOVO v29 — parcelamento visível, carrinho do pé e barra simétrica ══════
+   Parcelar em até 12x aparece no total do carrinho e embaixo do botão de cada
+   pacote. Na linha de cada beat, não: a lista fica limpa. */
+.cp-parc{margin:-.6rem 0 1rem;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--read);letter-spacing:.04em}
+/* o botão de preço do pé aceso = já está no carrinho (igual à lista) */
+.pe-dir #npPreco.on{background:var(--fire);border-color:var(--fire)}
+
+/* ══ NOVO v30 — barra do pé em duas linhas no celular, play no modal do pacote ══
+   Celular: nome e ficha inteiros em cima (com o volume no canto), e os 5
+   controles centrados embaixo: aleatório, anterior, PLAY, próxima,
+   compartilhar. Computador: aleatório, anterior, PLAY, próxima, volume;
+   compartilhar à direita, do lado do preço (arrumaBarra move os dois). */
+.pe-dir #npShare{flex:none}
+@media(max-width:600px){
+  .pe-baixo{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"info dir" "ctl ctl";row-gap:6px;column-gap:10px}
+  .pe-info{grid-area:info}
+  .pe-dir{grid-area:dir}
+  .transporte{grid-area:ctl;}
+  .np-bar #npShuffle{display:flex}
+  html body.tocando{padding-bottom:140px}
+}
+/* modal do pacote: ouvir antes de escolher */
+.pkg-beat-item{position:relative}
+.pkg-play{flex:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  background:transparent;border:1px solid var(--wire);color:var(--bone);cursor:pointer;padding:0;
+  transition:background .14s,border-color .14s,color .14s;-webkit-tap-highlight-color:transparent}
+.pkg-play:hover{border-color:var(--fire);color:var(--cream)}
+.pkg-beat-item.tocando .pkg-play{background:var(--fire);border-color:var(--fire);color:var(--black)}
+.pkg-beat-item.tocando .pkg-beat-name{color:var(--amber)}
+.pkg-corrida{position:absolute;left:0;bottom:-1px;height:2px;background:var(--fire);pointer-events:none}
+
+/* ══ NOVO v31 — mensagens na paleta, caixinha do pacote à direita, carrinho na barra do celular ══ */
+.msg-ok{color:var(--amber)}
+.msg-err{color:var(--bone);border-left:2px solid var(--blood);padding-left:.5rem}
+.pkg-beat-item .pkg-beat-cb{margin-left:.4rem}
+/* celular: o botão de preço volta pra barra (R$119 -> No carrinho), ao lado do volume,
+   igual ao computador. A ficha continua inteira (conferido em 320-430px). */
+@media(max-width:600px){
+  .pe-dir{gap:6px}
+  .np-bar .pe-dir #npPreco,body.sem-volume .np-bar .pe-dir #npPreco{display:inline-flex}
+  .pe-dir #npPreco{min-height:38px;padding:.45rem .6rem;font-size:.7rem;gap:6px}
+  .pe-dir #npPreco svg{display:block;width:15px;height:15px}
+}
+@media(max-width:359px){
+  .pe-dir #npPreco .rotulo{display:none}          /* abaixo de 360px: só o ícone (aceso quando está no carrinho) */
+  .pe-dir #npPreco{padding:.45rem .55rem}
+}
+
+/* ══ NOVO v32 — aviso de fora do ar, carrinho com +, nome que rola ══════════
+   O "em até 12x" saiu da home (27/09): fica só no carrinho. */
+/* Nome do beat na barra do pé: se não cabe, desliza devagar pra um lado e
+   volta, com pausa nas pontas. Quem prefere sem movimento vê as reticências. */
+.pe-nome .t.rola{text-overflow:clip;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 6px,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 6px,#000 calc(100% - 16px),transparent)}
+.pe-nome .t.rola>span{display:inline-block;animation:np-rola var(--dur,8s) linear infinite;will-change:transform}
+@keyframes np-rola{0%,15%{transform:translateX(0)}45%,60%{transform:translateX(var(--d,0))}90%,100%{transform:translateX(0)}}
+@media(prefers-reduced-motion:reduce){.pe-nome .t.rola{text-overflow:ellipsis;-webkit-mask-image:none;mask-image:none}.pe-nome .t.rola>span{display:inline;animation:none}}
+/* botão do carrinho: ícone de + (ou ✓ quando já está no carrinho) também no celular */
+.preco svg{flex:none}
+@media(max-width:760px){#beatCards .preco{gap:6px;padding:.5rem .6rem}#beatCards .preco svg{display:block;width:14px;height:14px}}
+@media(max-width:400px){#beatCards .preco{gap:5px;padding:.5rem .5rem}#beatCards .preco svg{width:13px;height:13px}}
+/* abaixo de 360px, o beat que já está no carrinho mostra só o ✓ (igual à barra), pra ficha não quebrar */
+@media(max-width:359px){#beatCards .preco.on .rotulo{display:none}#beatCards .preco.on{min-width:44px}}
+/* Se o player não carregar e o navegador não tiver cópia guardada, aparece
+   este aviso em cima da lista, com a cara da 404 do site. */
+.fora-ar{border:1px solid var(--wire);background:rgba(20,17,13,.6);padding:1.6rem 1.4rem 1.5rem;margin:0 0 1rem;
+  display:flex;gap:1.4rem;align-items:center}
+.fora-ar img{height:auto;opacity:.85;flex:none}
+.fora-ar .codigo{font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.24em;text-transform:uppercase;color:var(--clay);}
+.fora-ar h3{font-family:var(--serif);font-weight:500;font-size:1.7rem;line-height:1.05;color:var(--cream);margin:.35rem 0 0}
+.fora-ar p.texto{font-size:.86rem;line-height:1.6;color:var(--read);margin:.6rem 0 0;max-width:52ch}
+.fora-ar .saidas{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.1rem}
+.fora-ar .saidas a,.fora-ar .saidas button{font-family:var(--serif);font-size:.95rem;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;
+  padding:.6rem 1.3rem;min-height:44px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background .18s,border-color .18s,color .18s}
+.fora-ar .fogo{background:var(--ember);color:var(--cream);border:1px solid var(--ember)}
+.fora-ar .fogo:hover{background:var(--fire);border-color:var(--fire)}
+.fora-ar .fantasma{color:var(--bone);border:1px solid var(--wire)}
+.fora-ar .fantasma:hover{border-color:var(--clay);color:var(--cream)}
+@media(max-width:600px){.fora-ar{flex-direction:column;align-items:flex-start;gap:.8rem;padding:1.2rem 1.1rem}.fora-ar img{width:38px}
+  .fora-ar h3{font-size:1.45rem}.fora-ar p.texto{font-size:.82rem}
+  .fora-ar .saidas a,.fora-ar .saidas button{font-size:.82rem;letter-spacing:.08em;padding:.55rem .9rem;flex:1 1 auto}}
+/* MP MODAL */
+.mp-modal{
+  position:fixed;inset:0;z-index:9500;
+  background:rgba(0,0,0,.85);
+  display:none;align-items:center;justify-content:center;
+  padding:1rem;
+}
+.mp-modal.open{display:flex;}
+.mp-modal-inner{
+  background:var(--deep);
+  border:1px solid var(--wire);
+  width:100%;max-width:520px;
+  max-height:90vh;overflow-y:auto;
+  position:relative;
+}
+.mp-modal-head{
+  padding:1.4rem 1.8rem;
+  border-bottom:1px solid var(--wire);
+  display:flex;align-items:flex-start;justify-content:space-between;
+  background:var(--mole);
+  position:sticky;top:0;z-index:2;
+}
+.mp-modal-title{
+  font-family:'Cormorant Garamond',sans-serif;font-size:1.2rem;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--cream);
+}
+.mp-modal-sub{
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+  margin-top:.3rem;
+}
+.mp-modal-x{
+  background:none;border:none;color:var(--dim);
+  font-size:1.1rem;cursor:pointer;transition:color .14s;flex-shrink:0;
+}
+.mp-modal-x:hover{color:var(--cream);}
+
+#mpStep1,#mpStep2,#mpStep3{padding:1.8rem;}
+.mp-field-group{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.2rem;position:relative;}
+.mp-lbl{
+  font-size:.6rem;
+  font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--clay);
+}
+.mp-input{
+  background:var(--mole);border:1px solid var(--wire);
+  color:var(--bone);font-family:'IBM Plex Mono',monospace;font-size:.85rem;
+  padding:.65rem 1rem;outline:none;transition:border-color .14s;
+}
+.mp-input:focus{border-color:var(--ember);}
+.mp-err{font-size:.62rem;color:var(--fire);font-family:'IBM Plex Mono',monospace;position:absolute;bottom:-1.1rem;left:0;}
+.mp-btn-primary{
+  width:100%;padding:1rem;
+  font-family:'Cormorant Garamond',sans-serif;font-size:1rem;
+  letter-spacing:.15em;text-transform:uppercase;
+  background:var(--ember);border:none;
+  color:var(--cream);cursor:pointer;transition:background .14s;
+  margin-top:.5rem;
+}
+.mp-btn-primary:hover{background:var(--fire);}
+.mp-btn-primary:disabled{background:var(--loam);color:var(--dim);cursor:not-allowed;}
+.mp-back{
+  font-size:.65rem;
+  font-weight:700;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--clay);cursor:pointer;margin-bottom:1.2rem;
+  display:inline-block;transition:color .14s;
+}
+.mp-back:hover{color:var(--bone);}
+/* Terms checkbox */
+.mp-terms-box{
+  border:1px solid var(--wire);
+  background:var(--mole);
+  padding:1rem 1.2rem;
+  margin-bottom:1.2rem;
+  transition:border-color .14s;
+}
+.mp-terms-box.error{border-color:var(--fire);}
+.mp-terms-label{
+  display:flex;align-items:flex-start;gap:.75rem;cursor:pointer;
+}
+.mp-terms-label input[type="checkbox"]{
+  position:absolute;opacity:0;width:0;height:0;
+}
+.mp-terms-custom-check{
+  width:18px;height:18px;flex-shrink:0;margin-top:.1rem;
+  border:1px solid var(--loam);background:var(--earth);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .14s;
+}
+.mp-terms-custom-check svg{
+  width:10px;height:8px;opacity:0;transition:opacity .14s;
+}
+.mp-terms-label input:checked ~ .mp-terms-custom-check{
+  background:var(--ember);border-color:var(--ember);
+}
+.mp-terms-label input:checked ~ .mp-terms-custom-check svg{opacity:1;}
+.mp-terms-text{
+  font-family:'IBM Plex Mono',monospace;font-size:.68rem;
+  color:var(--read, #b89e72);line-height:1.65;
+}
+.mp-terms-link{color:var(--fire);text-underline-offset:2px;}
+.mp-terms-link:hover{color:var(--cream);}
+
+/* MP SDK dark theme override — estilos aplicados acima */
+
+#mpBrickContainer .mp-checkout-bricks__container { background: transparent !important; }
+
+/* ══ NOVO v19 — passada de celular no player ═════════════════════════
+   O público chega pelo celular, então: alvo de toque grande, seek que dá
+   pra pegar sem hover, e nada de controle que não funciona no aparelho. */
+#beatCards .item,.preco,.tb,.trilha{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.np-bar.on ~ .cart-btn{bottom:7.2rem}
+body.tocando{padding-bottom:104px}
+@media(max-width:760px){
+  /* a ficha não desce de 11px: piso de leitura da casa */
+  #beatCards .item{padding:11px 2px}
+  /* sem hover no celular, a barra já nasce grossa e com o pino à mostra */
+  .trilha{height:9px}
+  .trilha i:after{width:16px;height:16px;right:-8px}
+  .trilha:before{inset:-20px 0}
+  .pe-seek{padding:10px 14px 0}
+  .tb{width:38px;height:38px}
+  .tb.principal{width:44px;height:44px}
+  .transporte{gap:4px}
+  #npShuffle{display:none}
+  /* no celular o volume ocupa o lugar do carrinho (o carrinho da página já
+     está ali do lado). Se o aparelho não deixa mexer no volume por software,
+     como o iPhone, o carrinho volta: controle morto não fica na tela.
+     (03/10/2026: as regras do volume saíram daqui. Até 600px o player A esconde
+     o volume e acima disso o arrumaBarra leva ele pros controles, então nenhuma
+     regra de .pe-dir .vol-wrap chegava a valer.) */
+  .pe-dir #npPreco{display:none}
+  body.sem-volume .pe-dir #npPreco{display:inline-flex}
+  body.tocando{padding-bottom:96px}
+}
+
+/* pino do seek: some quando não tem o que mostrar, pra não bater no relógio */
+.trilha.zerada i:after{display:none}
+/* barra de progresso do player do rodapé (25/09/2026): linha fina com a bolinha,
+   como a do catálogo. Mesmas cores (loam no fundo, fire no que já tocou). */
+.pe-seek .trilha,.pe-seek .trilha:hover,.pe-seek .trilha.perto{height:3px;border-radius:2px;background:var(--loam)}
+.pe-seek .trilha i{border-radius:2px}
+.pe-seek .trilha i:after{width:13px;height:13px;right:-6.5px;border-radius:50%;
+  transform:translateY(-50%) scale(1)}
+.pe-seek .trilha:hover i:after,.pe-seek .trilha.perto i:after{transform:translateY(-50%) scale(1.2)}
+.pe-seek .trilha.zerada i:after{display:block}
+@media(max-width:760px){
+  .pe-seek .trilha i:after{width:14px;height:14px;right:-7px}
+}
+/* player A (25/09/2026): no celular o volume sai da barra (o aparelho tem o botão dele)
+   e fica o preço; a barra fica igual à das tapes e pastas de artista */
+@media(max-width:600px){
+  .np-bar .pe-dir .vol-wrap{display:none}
+  .np-bar .transporte{justify-content:space-between;width:100%;max-width:360px;margin:0 auto;gap:0}
+}
+@media(max-width:760px){
+  .pe-seek{gap:13px}
+  .hw-play{gap:14px}
+}
+
+/* ══ NOVO v20 — carrinho no topo do celular ══════════════════════════
+   A bolha flutuante caía bem em cima da coluna de preço das faixas. No
+   celular ela sai e o carrinho vira ícone fixo na barra de cima, que já
+   está sempre à vista. No computador nada muda. */
+.nav-cart{display:none;position:relative;background:none;border:none;cursor:pointer;
+  width:44px;height:44px;align-items:center;justify-content:center;padding:0;
+  color:var(--bone);transition:color .15s}
+.nav-cart:hover{color:var(--fire)}
+.nav-cart svg{width:22px;height:22px;display:block}
+.nav-cart .cart-n{position:absolute;top:5px;right:-1px;font-size:.68rem;line-height:1.3;
+  padding:0 .28rem;min-width:16px;border:1px solid var(--ember)}
+@media(max-width:760px){
+  .nav-cart.has-items{display:flex}
+  .cart-btn.has-items{display:none}
+}
+
+/* ══ NOVO v21 — dedo no celular ══════════════════════════════════════
+   Tudo que faz parte do caminho de ouvir e comprar passa a ter 40px ou
+   mais de altura, que é o tamanho de um polegar. E a ficha do beat ganha
+   um ponto de corpo: é a linha que a pessoa lê de perto pra decidir. */
+html{-webkit-text-size-adjust:100%}
+@media(max-width:760px){
+  #beatCards .ficha{font-size:.72rem;letter-spacing:0}
+  #beatCards .ficha em{font-size:.66rem;letter-spacing:.04em}
+  #beatCards .preco{min-height:42px;justify-content:center}
+  #beatCards .vendido{font-size:.6rem;min-height:42px;padding:.5rem .7rem;
+    display:inline-flex;align-items:center;justify-content:center}
+  .btn{min-height:44px;justify-content:center}
+  .sort-select{min-height:40px;font-size:.66rem}
+  .pg-btn{min-height:36px;padding:.3rem 1rem}
+  .pg-num{min-width:36px;height:36px}
+  .ft{min-height:38px;font-size:.62rem;display:inline-flex;align-items:center}
+  .cp-x{min-width:34px;min-height:34px;display:inline-flex;align-items:center;justify-content:center}
+}
+
+/* celular estreito (iPhone SE e afins): tudo encolhe um ponto pra ficha do
+   beat caber numa linha só — gênero, BPM e tom lado a lado. */
+@media(max-width:400px){
+  #beatCards .item{gap:8px}
+  #beatCards .cel-num{width:22px}
+  #beatCards .cel-num b{width:26px;height:26px}
+  #beatCards .capa{width:36px;height:36px}
+  #beatCards .nome{font-size:1.02rem}
+  #beatCards .ficha{font-size:.6875rem}   /* 11px (04/10/2026) */
+  #beatCards .ficha em{font-size:.6rem;letter-spacing:.03em}
+  #beatCards .preco{font-size:.68rem;padding:.5rem .5rem}
+  #beatCards .vendido{font-size:.54rem;letter-spacing:.12em;padding:.5rem .5rem}
+  /* a barra do pé também: gênero, BPM e tom inteiros, sem reticência */
+  .pe-baixo{gap:6px;padding-left:10px;padding-right:10px}
+  .pe-nome small{font-size:.62rem}
+  .tb{width:34px;height:34px}
+  .pe-info{gap:9px}
+}
+
+/* ══ NOVO v22 — capa no destaque, piscada do carrinho e volume de dedo ══════ */
+.hw-topo{display:flex;align-items:center;gap:14px}
+.hw-txt{flex:1;min-width:0}
+.hw-capa{width:96px;height:96px;flex:none;border:1px solid var(--wire);background:var(--mole);
+  display:flex;align-items:center;justify-content:center;overflow:hidden}
+.hw-capa img{width:100%;height:100%;object-fit:cover;}
+.hw-capa.vazia img{width:34px;height:34px;object-fit:contain;opacity:.3}
+
+@keyframes piscada{0%{transform:scale(1)}22%{transform:scale(1.16)}60%{transform:scale(.98)}100%{transform:scale(1)}}
+@keyframes piscada-cor{0%,100%{background:var(--fire);border-color:var(--fire)}45%{background:var(--cream);border-color:var(--cream)}}
+#navCart.piscou{animation:piscada .55s ease;color:var(--fire)}
+.preco.piscou{animation:piscada .5s ease,piscada-cor .5s ease}
+
+@media(max-width:900px){
+  /* no celular o destaque sai de cena: a pessoa cai direto no catálogo */
+  .hero-week{display:none}
+}
+@media(max-width:760px){
+  /* slider de volume DEITADO no telefone: o de pé não obedece arrasto de dedo */
+  /* o popup é absoluto dentro de um wrap de 38px e o max-width:100% da casa
+     espremia tudo. Largura na mão resolve, e o slider fica EM PÉ como no
+     computador. touch-action:none pro arrasto do dedo não virar rolagem. */
+  .vol-pop{width:54px;max-width:none;padding:14px 12px}
+  .vol-pop input{width:26px;max-width:none;height:132px;touch-action:none}
+}
+
+/* ══ NOVO v24 — volume sem esbarrão, hero mais curto ═══════════════════════
+   A barra do pé cria contexto de empilhamento próprio (tem transform), então
+   nada dentro dela subia acima do carrinho flutuante (z 8000). Subo a barra
+   pra 8100 — ainda abaixo do véu (8200) e do painel do carrinho (8500) — e,
+   enquanto o slider está aberto, o carrinho desliza pra cima pra não brigar. */
+.np-bar{z-index:8100}
+.cart-btn{transition:background .14s,transform .22s ease,opacity .22s ease}
+body.vol-aberto .cart-btn{transform:translateY(-76px)}
+
+/* o hero encurta: sem a marca de scroll, aquele vão no fim virou sobra */
+#hero{min-height:94vh}
+@media(max-width:760px){
+  #hero{min-height:84vh}
+  .hero-content{padding-top:5.4rem;padding-bottom:2rem}
+}
+@media(max-width:480px){
+  .hero-content{padding:5rem 1rem 1.6rem}
+}
+
+/* ══ Revisão de 03/10/2026 — leveza e celular, sem mudar o desenho ══════════
+   1) Rolar dentro do carrinho, da escolha do pacote, do checkout ou da mídia
+      ampliada não arrasta mais a página que está atrás (no celular arrastava).
+   2) No celular o menu de cima perde o desfoque do fundo: com o fundo 97%
+      opaco ele não aparecia, e custava processamento a cada quadro da rolagem. */
+.cp-body,.pkg-modal-body,.mp-modal-inner,.lb{overscroll-behavior:contain}
+@media(max-width:860px){ nav{backdrop-filter:none;-webkit-backdrop-filter:none} }
+/* hero no notebook (03/10/2026, opção B do Bruno): entre 901 e 1500px de largura o card do
+   Beat em destaque cobria o fim do "Caramujo". Só nessa faixa o título encolhe um pouco e o
+   card vai um tico pra direita. Celular e telas maiores seguem como sempre. */
+@media(min-width:901px) and (max-width:1500px){
+  .hero-title{font-size:clamp(3.4rem,6.6vw,7.4rem)!important}
+  .hero-week{width:min(400px,36vw);left:56%}
+}
+/* faixa do PIX que ficou aberto (03/10/2026): embaixo, acima do player, abaixo do véu */
+.pix-volta{position:fixed;left:0;right:0;bottom:0;z-index:8150;background:var(--deep);border-top:1px solid var(--fire);
+  padding:16px 18px calc(18px + env(safe-area-inset-bottom,0px))}
+.pix-volta[hidden]{display:none}
+.pv-in{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.pv-linha{display:flex;align-items:center;gap:10px}
+.pv-ponto{width:8px;height:8px;border-radius:50%;background:var(--fire);flex:none}
+.pv-txt{display:flex;flex-direction:column;gap:3px;min-width:0}
+.pv-txt b{font-size:.88rem;color:var(--cream)}
+.pv-txt small{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--read);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv-botoes{display:flex;gap:8px}
+.pv-ver,.pv-descarta{min-height:48px;font-family:var(--sans);font-weight:700;font-size:.74rem;letter-spacing:.14em;cursor:pointer}
+.pv-ver{flex:1;background:var(--bone);border:0;color:var(--deep)}
+.pv-ver:hover{background:var(--clay)}
+.pv-descarta{padding:0 16px;background:transparent;border:1px solid var(--wire);color:var(--read)}
+.pv-descarta:hover{border-color:var(--clay);color:var(--bone)}
+/* ══ v33 (04/10/2026): capa e nome da barra levam pro /beat/; na lista, o nome é link só no mouse (no dedo a linha toca) */
+a.pe-info{color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
+.pe-ir{flex:none;font-family:var(--serif);font-size:1.4rem;line-height:1;color:var(--clay);margin-left:-3px;transform:translateY(-1px)}
+#beatCards a.nome{display:block;width:fit-content;text-decoration:none;pointer-events:none}
+.pe-dir #npPreco .ir{margin-left:-2px;font-size:1.05em;line-height:1}
+@media(hover:hover) and (pointer:fine){
+  a.pe-info:hover .pe-nome .t>span{text-decoration:underline;text-decoration-color:var(--fire);text-decoration-thickness:1px;text-underline-offset:4px}
+  a.pe-info:hover .pe-ir{color:var(--fire)}
+  #beatCards a.nome{pointer-events:auto;}
+  #beatCards a.nome:hover{text-decoration:underline;text-decoration-color:var(--fire);text-decoration-thickness:1px;text-underline-offset:4px}
+}
+/* v34 (04/10/2026): pílulas de gênero viram links, menu do BEATS no mouse, rodapé com gêneros */
+a.ft{text-decoration:none;display:inline-flex;align-items:center}
+.nav-links li.tem-sub{position:relative}
+.sub-gen{display:none;position:absolute;top:100%;left:0;min-width:340px;background:rgba(5,4,3,.98);border:1px solid var(--wire);border-top:0;padding:14px 20px 16px;z-index:6001}
+@media(min-width:601px) and (hover:hover) and (pointer:fine){.tem-sub:hover>.sub-gen,.tem-sub:focus-within>.sub-gen{display:block}}
+.nav-links .sub-gen a{display:block;height:auto;line-height:1.2;padding:7px 0;font:500 1.05rem var(--serif);letter-spacing:0;text-transform:none;}
+.nav-links .sub-gen a:hover{color:var(--fire);background:none}
+.nav-links .sub-gen a.sg-todos{font:700 .66rem var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--bone);padding:4px 0 12px;margin-bottom:8px;border-bottom:1px solid var(--wire)}
+.nav-links .sub-gen a.sg-todos:hover{color:var(--fire)}
+.sg-lista{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
+/* celular (04/10/2026, opção A do Bruno): BEATS no ☰ vira acordeão; "Todos os beats" em destaque
+   e os gêneros em duas colunas com quantos estão à venda (o número só aparece aqui) */
+.sub-gen a i{display:none}
+@media(max-width:600px){
+  .nav-links.open{overflow-y:auto;overscroll-behavior:contain}
+  .nav-links li.tem-sub{position:static}
+  .nav-links li.tem-sub>a{position:relative}
+  .nav-links li.tem-sub>a::after{content:'';position:absolute;right:1.5rem;top:50%;width:8px;height:8px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-70%) rotate(45deg)}
+  .nav-links li.tem-sub.abre>a{color:var(--fire)}
+  .nav-links li.tem-sub.abre>a::after{transform:translateY(-25%) rotate(-135deg)}
+  .nav-links li.tem-sub.abre>.sub-gen{display:block;position:static;min-width:0;border:0;border-bottom:1px solid var(--wire);background:rgba(20,17,13,.6);padding:4px 1.4rem 16px}
+  .nav-links .sub-gen a{border:0;height:auto;padding:9px 0;font-size:1.12rem;color:var(--read)}
+  .nav-links .sub-gen a i{display:inline;font:400 .68rem 'IBM Plex Mono',monospace;font-style:normal;color:var(--dim);margin-left:7px}
+  .nav-links .sub-gen a.sg-todos{display:flex;align-items:center;gap:10px;margin:6px 0 10px;padding:15px 16px;border:1px solid var(--clay);background:rgba(185,143,94,.1);color:var(--fire);font-size:.76rem;letter-spacing:.2em}
+  .nav-links .sub-gen a.sg-todos span{flex:1}
+  .nav-links .sub-gen a.sg-todos i{margin:0;letter-spacing:.02em;text-transform:none;color:var(--bone)}
+  .nav-links .sub-gen a.sg-todos::after{content:'›';font:500 1.5rem/1 var(--serif);color:var(--fire)}
+}
+.foot-generos{flex-basis:100%;align-self:stretch;display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem 1.15rem;padding:0 0 1.15rem;border-bottom:1px solid var(--wire)}
+.foot-generos .fg-k{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--clay,#A87B4A);margin-right:.5rem}
+.foot-generos a{font-family:var(--serif);font-size:1.05rem;font-weight:500;color:var(--read);text-decoration:none;transition:color .2s}
+.foot-generos a:hover,.foot-generos a[aria-current]{color:var(--fire)}
+@media(max-width:760px){.foot-generos{gap:.35rem .95rem}.foot-generos .fg-k{flex-basis:100%;margin:0 0 .2rem}}

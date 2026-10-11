@@ -16,6 +16,7 @@
 import { db } from '../_lib/db.js';
 import { lerCupom, situacaoCupom, vendidosEntre, lerEstatico } from '../_lib/loja.js';
 import { fmtCpf, contratoHtml, enviarEmailComprador } from '../_lib/emails.js';
+import { abrirPedido } from '../_lib/pedidos.js';
 
 async function conferirCupom(request, env, couponCode) {
   if (!couponCode) return { valid: false, reason: 'sem cupom' };
@@ -110,7 +111,7 @@ function sanitize(v, maxLen = 200) {
 // ── E-mail interno "COMPRA RECEBIDA" (pro dono) ───────────────────────────────
 // Dispara quando a compra é criada (pode ainda NÃO estar paga, ex.: PIX pendente).
 
-async function sendNotificationEmail({ env, payment, name, artistName, email, cpf, itemsList, categoryLabel, couponCode, amount, selectedPaymentMethod, termsAcceptance, contractHtml }) {
+async function sendNotificationEmail({ env, payment, name, artistName, email, cpf, itemsList, categoryLabel, couponCode, amount, selectedPaymentMethod, termsAcceptance, contractHtml, pedido = null }) {
   const resendKey   = env.RESEND_API_KEY;
   const notifyEmail = env.NOTIFY_EMAIL || 'rideblan33@gmail.com';
   const fromEmail   = env.NOTIFY_FROM  || 'rideblan33@caramujorecords.com.br';
@@ -149,6 +150,7 @@ async function sendNotificationEmail({ env, payment, name, artistName, email, cp
       <tr><td>Valor</td><td>R$ ${amount}</td></tr>
       <tr><td>Método</td><td>${selectedPaymentMethod === 'bank_transfer' ? 'PIX' : 'Cartão'}</td></tr>
       ${couponCode ? `<tr><td>Cupom</td><td>${couponCode}</td></tr>` : ''}
+      ${pedido ? `<tr><td>Entrega</td><td><a href="${pedido.url}" style="color:#c3a074">link do pedido</a>${pedido.tudo ? ' (tudo entregue na hora)' : ' (beats na hora; stems e serviços com você)'}</td></tr>` : ''}
       <tr class="sect"><td colspan="2">CLIENTE</td></tr>
       <tr><td>Nome artístico</td><td>${artistName || '—'}</td></tr>
       <tr><td>Nome</td><td>${name}</td></tr>
@@ -168,9 +170,12 @@ async function sendNotificationEmail({ env, payment, name, artistName, email, cp
   const emailPayload = {
     from: `Caramujo Records <${fromEmail}>`,
     to: [notifyEmail],
+    // entrega na hora (10/10/2026): beat que já saiu no link não pede envio
     subject: isPending
       ? `🐌 Novo pedido R$${amount} — ${itemsList} [${statusLabel}]`
-      : `🐌 PAGO R$${amount} — ${itemsList} — ENVIAR ARQUIVOS`,
+      : pedido && pedido.tudo
+        ? `🐌 PAGO R$${amount} — ${itemsList} — ENTREGUE NO LINK`
+        : `🐌 PAGO R$${amount} — ${itemsList} — ENVIAR ARQUIVOS`,
     html: notifHtml,
   };
 
@@ -349,6 +354,13 @@ export async function onRequestPost({ request, env }) {
 
     const pixInfo   = payment.point_of_interaction?.transaction_data;
 
+    // Entrega na hora dos beats (10/10/2026, _lib/pedidos.js): com a chave ligada no painel,
+    // o pedido com beat ganha o link com WAV, MP3 e contrato. Falhou = sem link, venda igual.
+    let pedido = null;
+    try {
+      pedido = await abrirPedido(request, env, { payment, items, name, artistName, email, amount });
+    } catch (e) { console.error('[pedido] Sem link de entrega:', e.message); }
+
     console.log(JSON.stringify({ event: 'NOVA_VENDA', paymentId: payment.id, status: payment.status, amount, name, email, cpf: cpf.slice(0,3)+'***', items: itemsList, coupon: couponCode || null }));
 
     // Gera contrato HTML
@@ -359,13 +371,13 @@ export async function onRequestPost({ request, env }) {
 
     // Envia email de notificação ao dono (com contrato em anexo)
     try {
-      await sendNotificationEmail({ env, payment, name, artistName, email, cpf, itemsList: itemsForEmail, categoryLabel, couponCode, amount, selectedPaymentMethod, termsAcceptance, contractHtml });
+      await sendNotificationEmail({ env, payment, name, artistName, email, cpf, itemsList: itemsForEmail, categoryLabel, couponCode, amount, selectedPaymentMethod, termsAcceptance, contractHtml, pedido });
     } catch (e) { console.error('[email] Erro notificação:', e.message); }
 
     // Envia email de confirmação de pedido ao comprador (apenas quando aprovado)
     if (payment.status === 'approved') {
       try {
-        await enviarEmailComprador(env, { name, artistName, email, itemsList: itemsForEmail, contractHtml });
+        await enviarEmailComprador(env, { name, artistName, email, itemsList: itemsForEmail, contractHtml, pedidoUrl: pedido ? pedido.url : null, pedidoTudo: !!(pedido && pedido.tudo) });
       } catch (e) { console.error('[email] Erro confirmação comprador:', e.message); }
     }
 
@@ -375,6 +387,7 @@ export async function onRequestPost({ request, env }) {
       status: payment.status,
       contractPdf: contractHtml ? btoa(unescape(encodeURIComponent(contractHtml))) : null,
       pix: pixInfo ? { qrCode: pixInfo.qr_code, qrCodeBase64: pixInfo.qr_code_base64, expiresAt: pixInfo.date_of_expiration } : null,
+      ...(pedido ? { pedido: pedido.caminho, pedidoTudo: pedido.tudo } : {}),
     }, { status: 200, headers: cors });
 
   } catch (err) {

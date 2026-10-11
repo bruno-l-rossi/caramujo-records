@@ -170,6 +170,20 @@ async function faixasDosArtistas(d) {
   return dosArtistas.lista;
 }
 
+// As respostas dadas na mão (painel) em todas as tapes, pro beat relançado numa tape nova
+// herdar a da cópia antiga. A rodada inteira passa pelas 25 tapes em sequência: 1 minuto
+// de memória, igual às faixas dos artistas.
+let manuaisDasTapes = { at: 0, lista: null };
+async function respostasDasTapes(d) {
+  if (manuaisDasTapes.lista && Date.now() - manuaisDasTapes.at < 60e3) return manuaisDasTapes.lista;
+  const { results } = await d.prepare(
+    `SELECT t.id, t.title, t.bpm, t.mkey AS key, t.venda_manual FROM tracks t JOIN artists a ON a.id = t.artist_id
+      WHERE a.tipo = 'tape' AND t.kind = 'beat' AND t.venda_manual IS NOT NULL`
+  ).all();
+  manuaisDasTapes = { at: Date.now(), lista: results || [] };
+  return manuaisDasTapes.lista;
+}
+
 // Escreve t.tag ('disponivel' | 'vendido' | null) e t.revisar nas faixas da tape.
 async function marcarVenda(d, tracks, request, env) {
   // O que eu marquei na mão no painel vence o cruzamento e não volta atrás.
@@ -182,12 +196,24 @@ async function marcarVenda(d, tracks, request, env) {
     ).bind(...ids).all();
     for (const r of results || []) manual.set(r.id, r.venda_manual);
   }
+  // Beat relançado numa tape nova (10/10/2026): a cópia nova herda a resposta que o Bruno
+  // deu na cópia antiga (mesmo nome, BPM e tom). Duas cópias discordando = vendido.
+  const outras = await respostasDasTapes(d).catch(() => []);
+  const herdada = (t) => {
+    const achadas = outras.filter((r) => r.id !== t.id && mesma(r, t)).map((r) => r.venda_manual);
+    return achadas.includes('vendido') ? 'vendido' : achadas.includes('disponivel') ? 'disponivel' : null;
+  };
 
   // O SITE manda no vendido. Se lá o beat já saiu, a tape acompanha, aconteça o que
   // acontecer no cruzamento: anunciar DISPONÍVEL um beat vendido é o pior erro daqui.
-  let vendidosNoSite = [];
-  try { vendidosNoSite = (await vitrine(request, env)).filter((b) => b.sold); }
-  catch { vendidosNoSite = []; }
+  // E no à venda (10/10/2026): beat que o site vende e que não aparece em pasta de artista
+  // nenhuma sai DISPONÍVEL na tape (é o caso do beat relançado numa tape nova).
+  let vendidosNoSite = [], aVendaNoSite = [];
+  try {
+    const doSite = await vitrine(request, env);
+    vendidosNoSite = doSite.filter((b) => b.sold);
+    aVendaNoSite = doSite.filter((b) => !b.sold && !b.removido);
+  } catch { vendidosNoSite = []; aVendaNoSite = []; }
 
   const guardado = await d.prepare("SELECT valor FROM meta WHERE chave = 'exclusivos'").first();
   let aVenda = [];
@@ -218,6 +244,12 @@ async function marcarVenda(d, tracks, request, env) {
       t.tag = 'vendido'; t.revisar = null; conta.vendido++;
       continue;
     }
+    const daCopia = herdada(t);
+    if (daCopia) {
+      t.tag = daCopia; t.revisar = null;
+      if (daCopia === 'disponivel') conta.disponivel++; else conta.vendido++;
+      continue;
+    }
     const emExclusivos = aVenda.some((b) => mesma(b, t));
     const comArtista = naMao.find((r) => mesma(r, t)) || null;
     const soMusica = comArtista ? null : (gravadas.find((r) => mesma(r, t)) || null);
@@ -226,6 +258,8 @@ async function marcarVenda(d, tracks, request, env) {
       t.tag = 'disponivel'; t.revisar = null; conta.disponivel++;
     } else if (comArtista && !emExclusivos) {
       t.tag = 'vendido'; t.revisar = null; conta.vendido++;
+    } else if (!comArtista && !soMusica && aVendaNoSite.some((b) => mesma(b, t))) {
+      t.tag = 'disponivel'; t.revisar = null; conta.disponivel++;
     } else {
       // nos dois ao mesmo tempo, só como música gravada, ou em lugar nenhum:
       // sai sem pastilha e entra na minha lista
@@ -438,6 +472,10 @@ async function fila(d, body) {
 // Faxina da prateleira: apaga do R2 o que nenhum catálogo usa mais (faixa que saiu
 // do Drive, capa trocada, miniatura órfã). Só olha arquivo com mais de 1 hora, pra
 // nunca apagar algo que o conversor acabou de subir e ainda não registrou.
+// Capas da aba Músicas do perfil (capa/mus-<id>): o dono delas é a lista da meta 'musicas',
+// não um artista. Até 10/10/2026 a faxina não sabia disso e apagava essas capas toda noite;
+// a capa que já sumiu perde a marca na lista (o perfil volta pra imagem do Spotify/YouTube
+// e o painel guarda de novo na próxima abertura de Músicas do perfil).
 async function faxina(d, env) {
   if (!env.AUDIO) return json({ erro: 'R2 nao esta ligado (binding AUDIO)' }, 500);
   const ids = ((await d.prepare('SELECT id FROM tracks').all()).results || []).map((r) => r.id);
@@ -449,8 +487,16 @@ async function faxina(d, env) {
     capas.add('capa/' + r.cover_key + '-p.jpg');
     capas.add('capa/' + r.cover_key + '-m.jpg');
   }
+  const mus = await d.prepare("SELECT valor FROM meta WHERE chave = 'musicas'").first();
+  let musDados = null;
+  try { musDados = mus ? JSON.parse(mus.valor) : null; } catch (_) { musDados = null; }
+  const musLista = musDados && Array.isArray(musDados.lista) ? musDados.lista : null;
+  for (const m of musLista || []) {
+    if (m && m.capa) for (const s of ['', '-p', '-m']) capas.add('capa/' + m.capa + s + '.jpg');
+  }
   const limite = Date.now() - 3600e3;
   const apagar = [];
+  const noR2 = new Set();
   let vistos = 0, bytes = 0;
   for (const prefixo of ['mp3/', 'capa/', 'onda/']) {
     let cursor;
@@ -458,7 +504,10 @@ async function faxina(d, env) {
       const pag = await env.AUDIO.list({ prefix: prefixo, cursor, limit: 1000 });
       for (const o of pag.objects) {
         vistos++;
-        const usado = prefixo === 'mp3/' ? faixas.has(o.key) : prefixo === 'onda/' ? ondas.has(o.key) : capas.has(o.key);
+        if (prefixo === 'capa/') noR2.add(o.key);
+        // lista de músicas ilegível: não apaga capa de música nenhuma
+        const usado = prefixo === 'mp3/' ? faixas.has(o.key) : prefixo === 'onda/' ? ondas.has(o.key)
+          : capas.has(o.key) || (!musLista && o.key.startsWith('capa/mus-'));
         const velho = !o.uploaded || new Date(o.uploaded).getTime() < limite;
         if (!usado && velho) { apagar.push(o.key); bytes += o.size || 0; }
       }
@@ -466,5 +515,10 @@ async function faxina(d, env) {
     } while (cursor);
   }
   for (let i = 0; i < apagar.length; i += 1000) await env.AUDIO.delete(apagar.slice(i, i + 1000));
-  return json({ ok: true, vistos, apagados: apagar.length, liberados: bytes });
+  const semCapa = (musLista || []).filter((m) => m && m.capa && !noR2.has('capa/' + m.capa + '.jpg'));
+  if (semCapa.length) {
+    for (const m of semCapa) m.capa = null;
+    await d.prepare("UPDATE meta SET valor = ? WHERE chave = 'musicas'").bind(JSON.stringify(musDados)).run();
+  }
+  return json({ ok: true, vistos, apagados: apagar.length, liberados: bytes, ...(semCapa.length ? { capasDeMusicaRefazer: semCapa.length } : {}) });
 }
