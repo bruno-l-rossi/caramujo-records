@@ -34,7 +34,7 @@
 <!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
      a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=6822623048">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=4ee7ac23e5">
 
 <!-- ═══ EMAILJS (formulário de contato) ══════════════
   Chaves em emailjs.com: Account > Public Key, Email Services > Service ID,
@@ -230,6 +230,19 @@
     </div>
   </div>
 
+  <!-- Lista com cupom de 25% (11/10/2026, item 9; texto do Bruno) -->
+  <div class="lista-box" id="listaBox">
+    <div class="lista-k">25% na primeira compra</div>
+    <h3 class="lista-t">Fique por dentro</h3>
+    <p class="lista-p">Cadastre-se para receber um cupom exclusivo de 25% em sua primeira compra e acompanhe lançamentos e promoções em primeira mão.</p>
+    <form class="lista-f" id="listaForm" novalidate>
+      <label class="lista-lbl" for="listaEmail">Seu e-mail</label>
+      <input class="lista-in" id="listaEmail" type="email" inputmode="email" autocomplete="email" placeholder="seu@email.com" enterkeyhint="send" maxlength="120" required>
+      <button class="lista-bt" id="listaBtn" type="submit">Quero o cupom</button>
+    </form>
+    <p class="lista-nota" id="listaNota">O cupom vale por 15 dias nos beats do catálogo. Dá pra sair da lista quando quiser.</p>
+  </div>
+
 </section>
 
 <div class="hr"></div>
@@ -248,7 +261,7 @@
   <div class="s-head">
     <span class="s-kicker">Pacotes promocionais</span>
     <h2 class="s-title">Desconto <span class="r">progressivo</span></h2>
-    <p class="s-sub">Todos os pacotes incluem MP3 + WAV + licença exclusiva + contrato digital.</p>
+    <p class="s-sub">Todos os pacotes incluem MP3 + WAV + licença exclusiva + contrato digital. Com 4 beats, cada um sai por R$90; com 5 ou mais, R$80 cada. Vale pra qualquer combinação do catálogo.</p>
   </div>
 
   <div class="packs rv">
@@ -529,6 +542,7 @@
       </div>
       <div class="cp-coupon-msg" id="cpCouponMsg"></div>
     </div>
+    <div class="cp-conta" id="cpConta" hidden></div>
     <div class="cp-tot">
       <span>Total</span>
       <span class="cp-tv" id="cpTot">R$ 0</span>
@@ -604,7 +618,7 @@
           </span>
           <span class="mp-terms-text">
             Li e concordo com os
-            <a href="/assets/termos-de-licenca.pdf?v=2026-10-04" target="_blank" class="mp-terms-link">Termos de Licença da Caramujo Records</a>.
+            <a href="/assets/termos-de-licenca.pdf?v=2026-10-11" target="_blank" class="mp-terms-link">Termos de Licença da Caramujo Records</a>.
             Estou ciente de que este aceite tem validade jurídica.
           </span>
         </label>
@@ -654,21 +668,18 @@
         </p>
       </div>
 
-      <!-- CONFIRMADO -->
-      <div id="mpPixConfirmed" style="display:none;">
-        <img src="assets/brand/selo-creme.svg" alt="" width="56" height="56" style="display:block;width:56px;height:56px;margin:0 auto 1rem;opacity:.9">
-        <div style="font-family:'Cormorant Garamond',sans-serif;font-size:1.6rem;color:var(--cream);letter-spacing:.1em;margin-bottom:.8rem;">PEDIDO CONFIRMADO!</div>
-        <p style="font-size:.78rem;color:var(--read);line-height:1.8;max-width:320px;margin:0 auto 1.2rem;">
-          Pagamento aprovado! Os arquivos serão entregues via email seguindo os prazos estipulados no contrato.<br/><br/>
-          <strong style="color:var(--bone)">@rideblan33 — Caramujo Records</strong>
-        </p>
-        <div id="mpContractDownload" style="display:none;margin-bottom:1.2rem;">
-          <button class="mp-btn-primary" id="mpContractBtn" style="background:var(--loam);border-color:var(--loam);" onclick="downloadContract()">
-            ↓ BAIXAR CONTRATO ASSINADO
-          </button>
-          <p style="font-size:.65rem;color:var(--dim);margin-top:.5rem;">Este contrato é a sua garantia e prova do aceite dos termos.<br>Ele também foi enviado em anexo no seu email de confirmação.</p>
+      <!-- CONFIRMADO (11/10/2026: tela nova; com o link do pedido, o contrato fica lá e some daqui) -->
+      <div id="mpPixConfirmed" class="mp-ok" style="display:none;">
+        <img src="assets/brand/selo-creme.svg" alt="" width="48" height="48" class="mp-ok-selo">
+        <div class="mp-ok-k">Pagamento aprovado</div>
+        <div class="mp-ok-t">Pedido confirmado</div>
+        <p class="mp-ok-p">Os arquivos chegam no seu e-mail, nos prazos do contrato.</p>
+        <div id="mpContractDownload" style="display:none;">
+          <button class="mp-btn-primary" id="mpContractBtn" onclick="downloadContract()">↓ BAIXAR CONTRATO ASSINADO</button>
+          <p class="mp-ok-nota">O contrato é a sua garantia e a prova do aceite dos termos. Ele também foi no anexo do e-mail de confirmação.</p>
         </div>
-        <button class="mp-btn-primary" onclick="closeCheckout();clearCart();">FECHAR</button>
+        <button class="mp-btn-ghost" id="mpOkFechar" onclick="closeCheckout();clearCart();">FECHAR</button>
+        <div class="mp-ok-assina">@rideblan33 · Caramujo Records</div>
       </div>
 
     </div>
@@ -694,11 +705,13 @@ const BEATS=[
 if(!BEATS.length) window.__LOJA_FORA=true;
 
 const PRICE_BEAT=119, PRICE_STEMS=144;
+/* Leve mais, pague menos (11/10/2026): total por quantidade de beats; 'N+' = preço de cada beat a partir de N */
+const LEVE_MAIS={'2':219,'3':299,'4':360,'5+':80};
 const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':'Hood Trap','experimental':'Experimental','detroit':'Detroit','drumless':'Drumless','hard':'Hard','funk':'Funk','pluggnb':'Pluggnb','drill':'Drill','nomelody':'No Melody','bounce':'Bounce'};
 const FEATURED_OVERRIDE_ID=null;
 const FEATURED_OVERRIDE_ATE='';
 </script>
-<script src="/assets/vitrine/vitrine.js?v=3106c51a1e"></script>
+<script src="/assets/vitrine/vitrine.js?v=d3282dd7a0"></script>
 <!-- leva-de -->
 <script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
 (function(){

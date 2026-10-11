@@ -667,7 +667,11 @@ __META__
   /* ---------- pasta de artista: NOVA e comentários (10/10/2026) ---------- */
   // Só na pasta do artista (não na tape, não nos links avulsos /f/ e /p/)
   var PASTA = !CAT.artist.tape && !CAT.preview && !!CAT.code;
-  var COMS = PASTA && Array.isArray(CAT.coment) ? CAT.coment.slice() : [];
+  // comentários desligados em 11/10/2026 (pedido do Bruno: revisitar depois). A chave mora no
+  // servidor (COMENTARIOS em functions/_lib/comentarios.js); ligada, a pasta vem com comentarios:true.
+  // A NOVA segue ligada.
+  var COMENTA = !!CAT.comentarios;
+  var COMS = COMENTA && PASTA && Array.isArray(CAT.coment) ? CAT.coment.slice() : [];
   // NOVA desde a última visita neste aparelho: faixa que não estava = NOVA; arquivo trocado
   // (mod mudou) = VERSÃO NOVA. A marca vale a visita inteira (recarregar não apaga) e some
   // na próxima. Primeira visita no aparelho: o que subiu nos últimos 7 dias (se não for tudo).
@@ -1012,7 +1016,7 @@ __META__
   $('plAcao').addEventListener('click',function(){
     var t = rows[cur]; if(!t) return;
     if(CAT.artist.tape && t.buy) comprar(t);
-    else if(PASTA) abrirComentar(t, audio.currentTime);
+    else if(PASTA && COMENTA) abrirComentar(t, audio.currentTime);
   });
   var ICO_CART='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="9.5" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M3 4h2.5l2.2 11h11l2-8H7"/></svg>';
   var ICO_COM='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>';
@@ -1024,7 +1028,7 @@ __META__
     else { lk.removeAttribute('href'); lk.removeAttribute('aria-label'); ir.hidden=true; }
     // na pasta de artista a barra não tem Baixar (pedido de 25/09): baixar fica no "..." e no BAIXAR do topo
     // pasta de artista (10/10/2026): no lugar do Comprar da tape, Comentar no tempo que está tocando
-    var b=$('plAcao'), qual = CAT.artist.tape && t.buy ? 'comprar' : PASTA ? 'comentar' : '';
+    var b=$('plAcao'), qual = CAT.artist.tape && t.buy ? 'comprar' : PASTA && COMENTA ? 'comentar' : '';
     b.hidden = !qual;
     if(qual==='comprar') b.innerHTML=ICO_CART+'Comprar';
     if(qual==='comentar'){ b.innerHTML=ICO_COM+'Comentar'; b.setAttribute('aria-label','Comentar '+t.title+' no ponto que está tocando'); }
@@ -1603,9 +1607,9 @@ __META__
   veil.addEventListener('click',function(e){if(e.target===veil)close()});
 
   function trackSheet(t){
-    var nc = PASTA ? notasDe(t).length : 0;
+    var nc = PASTA && COMENTA ? notasDe(t).length : 0;
     var linhas =
-      (PASTA ? item('coment',ICON_COM,'Comentários'+(nc?' ('+nc+')':'')) : '') +
+      (PASTA && COMENTA ? item('coment',ICON_COM,'Comentários'+(nc?' ('+nc+')':'')) : '') +
       (t.buy ? item('buy',ICON_CART,'Comprar esse beat') : '') +
       (CAT.artist.tape && t.kind==='beat' ? item('story',ICON_SHARE,'Compartilhar esse beat') : '') +
       (!CAT.artist.tape && podeEnviar() ? item('story',ICON_SHARE,'Postar prévia no story') : '') +

@@ -22,6 +22,7 @@ import { GENEROS, RODAPE_GENEROS, menuGeneros, CSS_RODAPE_GENEROS } from './gene
 import { slug } from './casar.js';
 import { CABECALHOS } from './cabecalhos.js';
 import { LEVA_DE, deAttr } from './origem.js';
+import { topo, TOPO_CSS, TOPO_CSS_899, TOPO_CSS_CEL } from './topo.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const jsonSeguro = (o) => JSON.stringify(o).replace(/[<>&\u2028\u2029]/g, (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
@@ -45,9 +46,21 @@ export function tomPt(k) {
 export const slugGenero = (rotulo) => slug(rotulo);
 
 // Pacotes da vitrine (addPkg('2 Beats',219)) com o desconto sobre o avulso
+// 11/10/2026: com a tabela do Leve mais (LEVE_MAIS no index.html) os degraus vêm dela: 2, 3, 4 e
+// "5 ou mais" (cada = preço de cada beat)
 export function pacotes(precos) {
   const unit = precos && precos.beat;
   const out = [];
+  const lm = (precos && precos.leveMais) || {};
+  if (unit && Object.keys(lm).length) {
+    for (const [k, v] of Object.entries(lm)) {
+      const m = k.match(/^(\d+)(\+?)$/); if (!m || !v) continue;
+      const n = Number(m[1]), cada = m[2] ? v : null, preco = cada ? v * n : v;
+      const off = Math.round((1 - preco / (n * unit)) * 100);
+      if (off > 0) out.push(cada ? { n, preco, off, cada } : { n, preco, off });
+    }
+    return out.sort((a, b) => a.n - b.n);
+  }
   for (const [nome, preco] of Object.entries((precos && precos.pacotes) || {})) {
     const n = Number((String(nome).match(/^(\d+)\s*beats?$/i) || [])[1]);
     if (!n || !preco || !unit) continue;
@@ -114,31 +127,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 img{display:block}
 :focus-visible{outline:2px solid var(--fire);outline-offset:2px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-/* topo igual ao da vitrine */
-.topo{position:sticky;top:0;z-index:50;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 2.4rem;background:rgba(5,4,3,.97);border-bottom:1px solid var(--wire)}
-.topo ul{display:flex;list-style:none}
-.topo ul a{display:block;font-size:.76rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:0 1rem;line-height:54px}
-.topo ul a:hover,.topo ul a.ativo{color:var(--fire)}
-.topo .dir{display:flex;align-items:center;gap:14px}
-.topo li.tem-sub{position:relative}
-.sub-gen{display:none;position:absolute;top:100%;left:0;min-width:340px;background:rgba(5,4,3,.98);border:1px solid var(--wire);border-top:0;padding:14px 20px 16px;z-index:51}
-@media(hover:hover) and (pointer:fine){.tem-sub:hover>.sub-gen,.tem-sub:focus-within>.sub-gen{display:block}}
-.topo .sub-gen a{line-height:1.2;padding:7px 0;font:500 1.05rem var(--serif);letter-spacing:0;text-transform:none;color:var(--read)}
-.topo .sub-gen a:hover,.topo .sub-gen a[aria-current]{color:var(--fire)}
-.topo .sub-gen a.sg-todos{font:700 .66rem var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--bone);padding:4px 0 12px;margin-bottom:8px;border-bottom:1px solid var(--wire)}
-.topo .sub-gen a.sg-todos:hover{color:var(--fire)}
-.sg-lista{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
-.anel{width:32px;height:32px;border-radius:50%;border:1px solid var(--clay);overflow:hidden}
-.anel img{width:100%;height:100%;object-fit:cover}
-.ico-btn{position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--bone)}
-.ico-btn svg{width:22px;height:22px}
-.ico-btn:hover{color:var(--fire)}
-.ico-btn b{position:absolute;top:5px;right:0;font:400 .66rem/1.3 var(--mono);color:var(--black);background:var(--bone);padding:0 .28rem;min-width:16px;text-align:center}
-.ico-btn b[hidden]{display:none}
-.burger{display:none}
-.burger i{display:block;width:22px;height:1.6px;background:var(--bone);margin:5px 0}
-.menu-cel{display:none}
-.wrap{max-width:1120px;margin:0 auto;padding:0 2.4rem}
+${TOPO_CSS}.wrap{max-width:1120px;margin:0 auto;padding:0 2.4rem}
 .migalha{font:400 .66rem var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--label);padding:22px 0 18px;display:flex;flex-wrap:wrap;gap:.6em}
 .migalha a{color:var(--read)}.migalha a:hover{color:var(--fire)}.migalha .bar{color:var(--dim)}
 .kicker{font-size:.62rem;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:var(--clay)}
@@ -229,6 +218,8 @@ body.tocando .aviso{bottom:96px}
 .dono{margin-top:22px;padding:20px;border:1px solid var(--wire);border-left:3px solid var(--blood);background:var(--mole)}
 .dono p{font:italic 500 1.5rem/1.3 var(--serif);color:var(--cream)}
 .dono span{display:block;margin-top:8px;font-size:.84rem;line-height:1.6;color:var(--read)}
+/* vendido (11/10/2026): o fim do quadro "Esse beat já tem dono" alinha com o fim do card da tape, como na página do beat à venda */
+@media(min-width:861px){.beat.fora .info{align-self:stretch;display:flex;flex-direction:column}.beat.fora .compra{margin-bottom:22px}.beat.fora .dono{margin-top:auto}}
 .tape{grid-area:tape;display:flex;align-items:center;gap:14px;padding:12px;border:1px solid var(--wire);background:var(--mole);transition:border-color .14s}
 .tape:hover{border-color:var(--clay)}
 .tape img{flex:none;object-fit:cover;border:1px solid var(--wire)}
@@ -287,30 +278,8 @@ body.tocando{padding-bottom:64px}
 .barra .ctl .pp{background:var(--fire);color:var(--black)}
 @media (prefers-reduced-motion:reduce){.barra,.item:before,.aviso{transition:none}}
 
-@media(max-width:899px){.topo .logo img{width:122px;height:22px}}
-@media(max-width:860px){
-  .topo{padding:0 .7rem 0 1rem}.topo ul{display:none}.burger{display:flex}
-  .menu-cel{position:fixed;top:54px;left:0;right:0;z-index:49;background:rgba(5,4,3,.98);border-bottom:1px solid var(--wire);list-style:none;padding:6px 0}
-  .menu-cel.on{display:block}
-  .menu-cel a{display:block;padding:14px 1rem;font-size:.8rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase}
-  .menu-cel a.ativo{color:var(--fire)}
-  /* acordeão do BEATS (04/10/2026): "Todos os beats" em destaque + gêneros com quantos à venda */
-  .menu-cel{max-height:calc(100vh - 54px);max-height:calc(100dvh - 54px);overflow-y:auto;overscroll-behavior:contain}
-  .mc-sub>a{position:relative}
-  .mc-sub>a::after{content:'';position:absolute;right:1.2rem;top:50%;width:8px;height:8px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-70%) rotate(45deg)}
-  .mc-sub.abre>a::after{transform:translateY(-25%) rotate(-135deg)}
-  .mc-gen{display:none;padding:2px 1rem 16px;border-bottom:1px solid var(--wire);background:rgba(20,17,13,.6)}
-  .mc-sub.abre>.mc-gen{display:block}
-  .menu-cel .mc-todos{display:flex;align-items:center;gap:10px;margin:6px 0 10px;padding:15px 16px;border:1px solid var(--clay);background:rgba(185,143,94,.1);color:var(--fire);font-size:.76rem}
-  .mc-todos span{flex:1}
-  .mc-todos i{font:400 .68rem var(--mono);letter-spacing:.02em;text-transform:none;font-style:normal;color:var(--bone)}
-  .mc-todos::after{content:'›';font:500 1.5rem/1 var(--serif);color:var(--fire)}
-  .mc-lista{display:grid;grid-template-columns:1fr 1fr;column-gap:24px}
-  .menu-cel .mc-lista a{padding:9px 0;font:500 1.12rem/1.2 var(--serif);letter-spacing:0;text-transform:none;color:var(--read)}
-  .menu-cel .mc-lista a[aria-current]{color:var(--cream);text-decoration:underline;text-decoration-color:var(--fire);text-decoration-thickness:1px;text-underline-offset:4px}
-  .mc-lista a i{font:400 .68rem var(--mono);font-style:normal;color:var(--dim);margin-left:7px}
-  .topo .dir{gap:2px}
-  .wrap{padding:0 16px}
+${TOPO_CSS_899}@media(max-width:860px){
+${TOPO_CSS_CEL}  .wrap{padding:0 16px}
   .rodape{flex-direction:column;align-items:flex-start;padding:1.4rem 16px}
   .beat{grid-template-columns:1fr;grid-template-areas:'capa' 'info' 'tape';row-gap:22px}
   .beat h1{font-size:2.9rem}
@@ -332,27 +301,6 @@ body.tocando{padding-bottom:64px}
 }
 `;
 
-function topo(de, genAtual = '', cont = null) {
-  const links = [['/#beats', 'Beats', true], ['/#packages', 'Pacotes'], ['/#services', 'Serviços'], ['/#estudio', 'Sobre nós'], ['/#contact', 'Contato']];
-  const lis = links.map(([h, t, a]) => `<li><a href="${h}"${a ? ' class="ativo"' : ''}>${t}</a></li>`).join('');
-  // celular (04/10/2026, opção A do Bruno): BEATS abre um acordeão com "Todos os beats" em
-  // destaque e os gêneros em duas colunas, com quantos estão à venda
-  const n = (x) => (x ? `<i>${x}</i>` : '');
-  const acordeao = `<li class="mc-sub"><a href="/#beats" class="ativo" aria-expanded="false" aria-controls="mcGen">Beats</a><div class="mc-gen" id="mcGen"><a class="mc-todos" href="/#beats"${deAttr(de)}><span>Todos os beats</span>${cont && cont.total ? `<i>${cont.total} à venda</i>` : ''}</a><div class="mc-lista">${GENEROS.map(([sl, nm]) => `<a href="/beats/${sl}"${sl === genAtual ? ' aria-current="page"' : ''}>${nm}${n(cont && cont.por.get(sl))}</a>`).join('')}</div></div></li>`;
-  const lisCel = lis.replace('<li><a href="/#beats" class="ativo">Beats</a></li>', acordeao);
-  // no computador, o mouse em BEATS abre "Todos os beats" e os gêneros (04/10/2026)
-  const lisTopo = lis.replace('<li><a href="/#beats" class="ativo">Beats</a></li>', `<li class="tem-sub"><a href="/#beats" class="ativo" aria-haspopup="true">Beats</a>${menuGeneros('/#beats', genAtual)}</li>`);
-  return `<header class="topo">
-<a class="logo" href="/"${deAttr(de)} aria-label="Caramujo Records, página inicial"><img src="/assets/brand/caramujo-h.webp" srcset="/assets/brand/caramujo-h-244.webp 244w, /assets/brand/caramujo-h-366.webp 366w, /assets/brand/caramujo-h.webp 504w" sizes="(max-width:899px) 122px, 148px" alt="Caramujo Records" width="148" height="27"></a>
-<nav aria-label="Seções do site"><ul>${lisTopo}</ul></nav>
-<div class="dir">
-<a class="anel" href="/rideblan33"${deAttr(de)} aria-label="Portfólio do @rideblan33"><img src="/assets/perfil/rideblan33-camisa.webp" alt="" width="128" height="128"></a>
-<a class="ico-btn js-carrinho" href="/#carrinho"${deAttr(de)} aria-label="Abrir o carrinho">${ICO.cart}<b class="js-n" hidden>0</b></a>
-<button class="ico-btn burger js-menu" type="button" aria-label="Abrir o menu" aria-expanded="false" aria-controls="menuCel"><span><i></i><i></i><i></i></span></button>
-</div>
-</header>
-<ul class="menu-cel" id="menuCel">${lisCel}</ul>`;
-}
 
 const RODAPE = `<footer class="rodape">${RODAPE_GENEROS}<img src="/assets/brand/selo-creme.svg" alt="" width="34" height="34" loading="lazy"><span>© 2026 Caramujo Records — São Carlos, SP</span><span><a href="/rideblan33">@rideblan33</a> · Todos os direitos reservados</span></footer>
 <div class="aviso" role="status" aria-live="polite"></div>`;
@@ -387,7 +335,7 @@ ${acao}
 
 function pacotesTexto(pk, { link = true } = {}) {
   if (!pk.length) return '';
-  const lis = pk.map((p) => `<li>${p.n} beats por ${real(p.preco)}<span class="off">${p.off}% off</span></li>`).join('');
+  const lis = pk.map((p) => `<li>${p.cada ? `${p.n} ou mais a ${real(p.cada)} cada` : `${p.n} beats por ${real(p.preco)}`}<span class="off">${p.off}% off</span></li>`).join('');
   return `<ul class="pacs">${lis}${link ? '<li><a href="/#packages">ver pacotes</a></li>' : ''}</ul>`;
 }
 
@@ -596,7 +544,7 @@ export function paginaGenero(gslug, loja) {
 
   const p2 = pk.find((p) => p.n === 2), p3 = pk.find((p) => p.n === 3);
   const pacoteBloco = pk.length
-    ? `<div class="pacote"><div><div class="k">Pacotes</div><p>Leva mais de um? ${pk.map((p) => `<span>${p.n} beats por ${real(p.preco)}<span class="off">${p.off}% off</span></span>`).join(', ')}.</p></div><a href="/#packages"${deAttr(de)}>Ver pacotes ›</a></div>`
+    ? `<div class="pacote"><div><div class="k">Pacotes</div><p>Leva mais de um? ${pk.map((p) => `<span>${p.cada ? `${p.n} ou mais a ${real(p.cada)} cada` : `${p.n} beats por ${real(p.preco)}`}<span class="off">${p.off}% off</span></span>`).join(', ')}.</p></div><a href="/#packages"${deAttr(de)}>Ver pacotes ›</a></div>`
     : '';
   const corpo = `<body class="pg-genero">
 ${topo(de, gslug, aVendaPorGenero(beats))}

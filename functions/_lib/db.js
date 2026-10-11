@@ -202,7 +202,11 @@ const SCHEMA = [
      baixados TEXT,
      criado_em TEXT NOT NULL,
      pago_em TEXT
-   )`
+   )`,
+  // Lista de e-mails com cupom de 25% (11/10/2026): quem se cadastra ganha um cupom só dele
+  // (na tabela cupons, uso único). O cupom da lista vale só pros beats do catálogo e até vale_ate:
+  // lerCupom junta as duas tabelas (sem ALTER nos cupons: o deploy segue abaixo de 50 consultas)
+  `CREATE TABLE IF NOT EXISTS lista ( email TEXT PRIMARY KEY, origem TEXT, cupom TEXT, vale_ate TEXT, token TEXT UNIQUE, ip TEXT, criado_em TEXT NOT NULL, saiu_em TEXT )`
 ];
 
 // Versão do esquema: muda sozinha quando a lista acima muda. Com ela gravada na

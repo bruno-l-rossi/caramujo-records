@@ -44,7 +44,7 @@ async function contrato(env, p) {
   const beats = (p.itens || []).filter((i) => i.t === 'beat').map((i) => i.nome).join(', ');
   if (p.status === 'teste') {
     return contratoHtml({ name: 'Pedido de teste', cpf: '00000000000', email: '-', items: beats, category: 'Catálogo de beats',
-      amount: 0, paymentId: 'TESTE', termsTimestamp: p.criado_em, artistName: '@rideblan33' });
+      amount: 0, paymentId: 'TESTE', termsTimestamp: p.criado_em, artistName: '@rideblan33', naHora: true });
   }
   if (!env.MP_ACCESS_TOKEN || !p.pagamento) return null;
   const r = await fetch(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(p.pagamento)}`, { headers: { Authorization: `Bearer ${env.MP_ACCESS_TOKEN}` } });
@@ -57,7 +57,7 @@ async function contrato(env, p) {
   const itens = meta.items_display || beats;
   return contratoHtml({ name, cpf, email: meta.buyer_email || p.email || payer.email || '', items: itens, category: meta.category_label || itens,
     amount: pay.transaction_amount, paymentId: pay.id, termsTimestamp: meta.terms_ts || pay.date_approved || pay.date_created,
-    artistName: meta.buyer_artist || p.artista || name });
+    artistName: meta.buyer_artist || p.artista || name, naHora: true });
 }
 
 export async function onRequestGet({ params, request, env }) {
@@ -93,7 +93,10 @@ export async function onRequestGet({ params, request, env }) {
     const c = await contrato(env, p).catch(() => null);
     if (!c) return html(paginaAviso('Contrato fora do ar agora', 'Não consegui montar o contrato neste minuto. A via dele também está no seu e-mail de confirmação; se precisar, chama no Direct.', base), 502);
     const nome = 'contrato-caramujo-' + String(p.nome || 'pedido').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) + '.html';
-    return new Response(c, { headers: { ...PRIVADO, 'content-type': 'text/html; charset=utf-8', 'content-disposition': anexo(nome) } });
+    // A Cloudflare troca e-mail em HTML por "[email protected]" + um script que desfaz na tela;
+    // no arquivo baixado o script não roda e o e-mail sumia (11/10/2026). email_off desliga isso.
+    const semTroca = c.replace('<body>', '<body><!--email_off-->').replace('</body>', '<!--/email_off--></body>');
+    return new Response(semTroca, { headers: { ...PRIVADO, 'content-type': 'text/html; charset=utf-8', 'content-disposition': anexo(nome) } });
   }
 
   if (acao !== 'wav' && acao !== 'mp3') return paginaErro(request, env, 404);

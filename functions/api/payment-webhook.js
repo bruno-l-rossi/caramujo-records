@@ -20,7 +20,7 @@ import { db } from '../_lib/db.js';
 import { marcarVendidos, usarCupom, esquecerLoja } from '../_lib/loja.js';
 import { esquecerVitrine } from '../_lib/vitrine.js';
 import { contratoHtml, enviarEmailComprador } from '../_lib/emails.js';
-import { marcarPago, pedidoDoPagamento } from '../_lib/pedidos.js';
+import { marcarPago, pedidoDoPagamento, entregaLigada } from '../_lib/pedidos.js';
 
 
 
@@ -85,7 +85,7 @@ async function sendApprovalEmail({ env, payment, pedido = null }) {
       Itens: <strong style="color:#c3a074">${itemsDisplay}</strong>
     </div>` : `<div class="action"><strong>Ação necessária</strong>
       Envie os arquivos para <strong style="color:#c3a074">${email}</strong><br/>
-      Itens: <strong style="color:#c3a074">${itemsDisplay}</strong>${pedido ? `<br/>Os beats já foram no <a href="${pedido.url}" style="color:#c3a074">link do pedido</a>; stems e serviços ficam com você.` : ''}
+      Itens: <strong style="color:#c3a074">${itemsDisplay}</strong>${pedido ? `<br/>Os beats já foram no <a href="${pedido.url}" style="color:#c3a074">link do pedido</a>; os serviços ficam com você.` : ''}
     </div>`}
     <table>
       <tr class="sect"><td colspan="2">PEDIDO</td></tr>
@@ -157,6 +157,9 @@ async function sendBuyerConfirmationEmail({ env, payment, pedido = null }) {
 
   // Reconstrói o contrato a partir do metadata salvo no create-payment
   // (o comprador precisa da via dele mesmo se o botão de download falhar)
+  // prazo "na hora" com a chave ligada (11/10/2026)
+  let naHora = !!pedido;
+  if (!naHora) { try { naHora = await entregaLigada(await db(env)); } catch (_) { naHora = false; } }
   let contractHtml = null;
   try {
     const cpfRaw = String(meta.buyer_cpf || payer.identification?.number || '').replace(/\D/g, '');
@@ -168,11 +171,12 @@ async function sendBuyerConfirmationEmail({ env, payment, pedido = null }) {
         paymentId: payment.id,
         termsTimestamp: meta.terms_ts || payment.date_approved || payment.date_created,
         artistName,
+        naHora,
       });
     }
   } catch (e) { console.error('[email-buyer] Erro ao gerar contrato:', e.message); }
 
-  await enviarEmailComprador(env, { name, artistName, email, itemsList, contractHtml, pedidoUrl: pedido ? pedido.url : null, pedidoTudo: !!(pedido && pedido.tudo) });
+  await enviarEmailComprador(env, { name, artistName, email, itemsList, contractHtml, pedidoUrl: pedido ? pedido.url : null, pedidoTudo: !!(pedido && pedido.tudo), naHora });
 }
 
 // ── Handler principal ────────────────────────────────────────────────────────

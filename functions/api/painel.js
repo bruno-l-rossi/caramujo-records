@@ -15,6 +15,7 @@ import { painelLer as musicasLer, painelAcao as musicasAcao } from '../_lib/musi
 import { painelLer as comentariosLer, painelResumo as comentariosResumo, painelAcao as comentarioAcao } from '../_lib/comentarios.js';
 import { somUrl } from '../_lib/midia.js';
 import { entregaLigada, ligarEntrega, pedidoDeTeste, ultimosPedidos } from '../_lib/pedidos.js';
+import { painelLista } from '../_lib/lista.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
 
@@ -51,6 +52,8 @@ export async function onRequest({ request, env }) {
   if (op === 'comentarios-resumo') return json(await comentariosResumo(d));
   // Entrega na hora dos beats (10/10/2026): a chave e os últimos pedidos com link
   if (op === 'entrega' && request.method !== 'POST') return json({ ok: true, ligada: await entregaLigada(d), pedidos: await ultimosPedidos(d) });
+  // lista de e-mails com cupom (11/10/2026): quantos, quantos usaram o cupom, os e-mails pra copiar
+  if (op === 'lista' && request.method !== 'POST') return json({ ok: true, ...(await painelLista(d)) });
   if (request.method !== 'POST') return json({ erro: 'op desconhecida' }, 400);
 
   const body = await request.json().catch(() => ({}));
@@ -840,7 +843,7 @@ async function loja(d, request, env) {
   const [beats, destaque, cupons] = await Promise.all([
     lerBeats(d),
     lerDestaque(d),
-    d.prepare('SELECT codigo, pct, preco_fixo, max_usos, usos, ativo, criado_em FROM cupons ORDER BY ativo DESC, criado_em DESC, codigo').all()
+    d.prepare("SELECT codigo, pct, preco_fixo, max_usos, usos, ativo, criado_em FROM cupons WHERE codigo NOT LIKE 'LISTA-%' ORDER BY ativo DESC, criado_em DESC, codigo").all()   // os cupons da lista (um por pessoa) ficam fora da tela de cupons (11/10/2026)
   ]);
   let generos = {}, preco = null;
   try { const est = await lerEstatico(request, env); generos = est.generos; preco = est.preco; } catch (_) { /* segue sem rótulo */ }

@@ -5,6 +5,12 @@
 // Cada comentário guarda a versão do arquivo (tracks.src_modified): subiu arquivo novo, o
 // comentário aparece como de uma versão anterior e a aprovação deixa de valer.
 
+// 11/10/2026: o Bruno pediu pra tirar os comentários por enquanto ("revisitamos depois").
+// Desligado: a pasta não lê nem mostra, a API recusa e o painel esconde a linha. O código
+// e a tabela ficam; religar = ligado: true aqui (a pasta, a API e o painel seguem essa chave;
+// o teste44 liga pra conferir o sistema parado).
+export const COMENTARIOS = { ligado: false };
+
 import { now, pessoaDe } from './db.js';
 
 export const MAX_TEXTO = 1000;

@@ -14,9 +14,9 @@
  */
 
 import { db } from '../_lib/db.js';
-import { lerCupom, situacaoCupom, vendidosEntre, lerEstatico } from '../_lib/loja.js';
+import { lerCupom, situacaoCupom, vendidosEntre, lerEstatico, totalDosBeats } from '../_lib/loja.js';
 import { fmtCpf, contratoHtml, enviarEmailComprador } from '../_lib/emails.js';
-import { abrirPedido } from '../_lib/pedidos.js';
+import { abrirPedido, entregaLigada } from '../_lib/pedidos.js';
 
 async function conferirCupom(request, env, couponCode) {
   if (!couponCode) return { valid: false, reason: 'sem cupom' };
@@ -37,17 +37,21 @@ async function conferirCupom(request, env, couponCode) {
 // A conta do carrinho refeita no servidor, com os preços que a página mostra.
 // Mesma regra do front: cupom % arredonda o desconto; cupom de preço fixo trava o total.
 // Devolve { total } ou { erro } (item que a página não vende, pacote torto).
+// 11/10/2026: os beats do catálogo (avulsos e os de pacote) somam pela tabela do Leve mais,
+// pague menos (totalDosBeats): 2 = 219, 3 = 299, 4 = 360, 5+ = 80 cada.
 export function contaDoCarrinho(itens, precos, cupom) {
-  let subtotal = 0;
+  let subtotal = 0, nBeats = 0;
   for (const it of Array.isArray(itens) ? itens : []) {
     const nome = String(it && it.name || '').trim();
     const mQtd = nome.match(/ x(\d+)$/);
     const qtd = mQtd ? Number(mQtd[1]) : 1;
     const base = nome.replace(/ x\d+$/, '');
     if (it.type === 'Beat') {
-      const preco = / \+ Stems$/.test(base) ? precos.stems : precos.beat;
-      if (!preco) return { erro: 'preço do beat não encontrado' };
-      subtotal += preco;
+      if (!precos.beat) return { erro: 'preço do beat não encontrado' };
+      if (/ \+ Stems$/.test(base)) {           // carrinho antigo (stems saíram do site)
+        if (!precos.stems) return { erro: 'preço do beat não encontrado' };
+        subtotal += precos.stems;
+      } else nBeats++;
     } else if (it.type === 'Pacote') {
       const preco = precos.pacotes[base];
       if (!preco) return { erro: 'pacote desconhecido: ' + base };
@@ -56,7 +60,7 @@ export function contaDoCarrinho(itens, precos, cupom) {
       if (!grupos.length || grupos.length !== qtd || grupos.some((g) => !Array.isArray(g) || g.length !== precisa)) {
         return { erro: 'pacote com beats faltando: ' + base };
       }
-      subtotal += preco * grupos.length;
+      nBeats += precisa * grupos.length;      // pacote de carrinho antigo: os beats dele entram na conta
     } else if (it.type === 'Servico') {
       const preco = precos.servicos[base];
       if (!preco) return { erro: 'serviço desconhecido: ' + base };
@@ -65,10 +69,14 @@ export function contaDoCarrinho(itens, precos, cupom) {
       return { erro: 'item desconhecido: ' + nome };
     }
   }
+  const dosBeats = totalDosBeats(nBeats, precos);
+  subtotal += dosBeats;
   if (!subtotal) return { erro: 'carrinho vazio' };
   let desconto = 0;
   if (cupom) {
     if (cupom.preco_fixo !== null && cupom.preco_fixo !== undefined) desconto = Math.max(0, subtotal - Number(cupom.preco_fixo));
+    // cupom só dos beats (o da lista, 11/10/2026): a % vale sobre os beats, já com o desconto por quantidade
+    else if (cupom.escopo === 'beats') desconto = Math.round(dosBeats * Number(cupom.pct || 0) / 100);
     else desconto = Math.round(subtotal * Number(cupom.pct || 0) / 100);
   }
   return { total: Math.round((subtotal - desconto) * 100) / 100, subtotal, desconto };
@@ -150,7 +158,7 @@ async function sendNotificationEmail({ env, payment, name, artistName, email, cp
       <tr><td>Valor</td><td>R$ ${amount}</td></tr>
       <tr><td>Método</td><td>${selectedPaymentMethod === 'bank_transfer' ? 'PIX' : 'Cartão'}</td></tr>
       ${couponCode ? `<tr><td>Cupom</td><td>${couponCode}</td></tr>` : ''}
-      ${pedido ? `<tr><td>Entrega</td><td><a href="${pedido.url}" style="color:#c3a074">link do pedido</a>${pedido.tudo ? ' (tudo entregue na hora)' : ' (beats na hora; stems e serviços com você)'}</td></tr>` : ''}
+      ${pedido ? `<tr><td>Entrega</td><td><a href="${pedido.url}" style="color:#c3a074">link do pedido</a>${pedido.tudo ? ' (tudo entregue na hora)' : ' (beats na hora; serviços com você)'}</td></tr>` : ''}
       <tr class="sect"><td colspan="2">CLIENTE</td></tr>
       <tr><td>Nome artístico</td><td>${artistName || '—'}</td></tr>
       <tr><td>Nome</td><td>${name}</td></tr>
@@ -360,13 +368,16 @@ export async function onRequestPost({ request, env }) {
     try {
       pedido = await abrirPedido(request, env, { payment, items, name, artistName, email, amount });
     } catch (e) { console.error('[pedido] Sem link de entrega:', e.message); }
+    // prazo do beat do catálogo no contrato e no e-mail: "na hora" com a chave ligada (11/10/2026)
+    let naHora = !!pedido;
+    if (!naHora) { try { naHora = await entregaLigada(await db(env)); } catch (_) { naHora = false; } }
 
     console.log(JSON.stringify({ event: 'NOVA_VENDA', paymentId: payment.id, status: payment.status, amount, name, email, cpf: cpf.slice(0,3)+'***', items: itemsList, coupon: couponCode || null }));
 
     // Gera contrato HTML
     let contractHtml = null;
     try {
-      contractHtml = contratoHtml({ name, cpf, email, items: itemsForEmail, category: categoryLabel, amount, paymentId: payment.id, termsTimestamp: termsAcceptance.timestamp, artistName });
+      contractHtml = contratoHtml({ name, cpf, email, items: itemsForEmail, category: categoryLabel, amount, paymentId: payment.id, termsTimestamp: termsAcceptance.timestamp, artistName, naHora });
     } catch (e) { console.error('[contrato] Erro:', e.message); }
 
     // Envia email de notificação ao dono (com contrato em anexo)
@@ -377,7 +388,7 @@ export async function onRequestPost({ request, env }) {
     // Envia email de confirmação de pedido ao comprador (apenas quando aprovado)
     if (payment.status === 'approved') {
       try {
-        await enviarEmailComprador(env, { name, artistName, email, itemsList: itemsForEmail, contractHtml, pedidoUrl: pedido ? pedido.url : null, pedidoTudo: !!(pedido && pedido.tudo) });
+        await enviarEmailComprador(env, { name, artistName, email, itemsList: itemsForEmail, contractHtml, pedidoUrl: pedido ? pedido.url : null, pedidoTudo: !!(pedido && pedido.tudo), naHora });
       } catch (e) { console.error('[email] Erro confirmação comprador:', e.message); }
     }
 

@@ -198,7 +198,7 @@ function renderCards(){
       <span class="dur">${f.dur?fmtDur(f.dur):''}</span>
       ${b.sold
         ? `<span class="vendido">Vendido</span>`
-        : `<button class="preco${inBeat?' on':''}" id="bb${b.id}" type="button" onclick="event.stopPropagation();toggleBeat(${b.id},false)">${inBeat?ICO_OK:ICO_CART}<span class="rotulo">${inBeat?'No carrinho':'R$'+PRICE_BEAT}</span></button>`}
+        : `<button class="preco${inBeat?' on':''}" id="bb${b.id}" type="button" onclick="event.stopPropagation();botaoBeat(${b.id})" aria-label="${inBeat?escA(b.name)+' está no carrinho: abrir o carrinho':'Pôr '+escA(b.name)+' no carrinho'}">${rotuloBotao(inBeat)}</button>`}
       <i class="corrida"></i>
     </div>`;
   }).join('');
@@ -258,13 +258,27 @@ function gotoPage(p){
 // não recria os iframes, então o beat que estiver tocando segue tocando.
 function syncBeatButtons(){
   if(typeof window.pintarPrecoPe==='function') window.pintarPrecoPe();
+  if(typeof window.pintarHeroAdd==='function') window.pintarHeroAdd();
   document.querySelectorAll('#beatCards .preco').forEach(btn=>{
     const m=(btn.id||'').match(/^bb(\d+)$/); if(!m) return;
     const id=Number(m[1]);
     const inBeat=cart.some(c=>c.beatId===id&&c.stems===false);
     btn.classList.toggle('on',inBeat);
-    btn.innerHTML=`${inBeat?ICO_OK:ICO_CART}<span class="rotulo">${inBeat?'No carrinho':'R$'+PRICE_BEAT}</span>`;
+    btn.innerHTML=rotuloBotao(inBeat);
+    const b=BEATS.find(x=>x.id===id);
+    if(b) btn.setAttribute('aria-label',inBeat?b.name+' está no carrinho: abrir o carrinho':'Pôr '+b.name+' no carrinho');
   });
+}
+
+// Botão do beat na lista (11/10/2026): igual ao do player do rodapé. 1º toque põe no
+// carrinho; já no carrinho, o toque abre o carrinho. Tirar fica só dentro do carrinho.
+const escA=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+function rotuloBotao(no){
+  return (no?ICO_OK:ICO_CART)+'<span class="rotulo">'+(no?'No carrinho':'R$'+PRICE_BEAT)+'</span>'+(no?'<span class="ir" aria-hidden="true">›</span>':'');
+}
+function botaoBeat(id){
+  if(cart.some(c=>c.beatId===id&&c.stems===false)){ openCart(); return; }
+  toggleBeat(id,false);
 }
 
 // Player contínuo: pausa os outros ao dar play; ao terminar, toca o próximo.
@@ -411,7 +425,7 @@ function toggleBeat(beatId,stems){
     }
     const otherIdx=cart.findIndex(c=>c.beatId===beatId&&c.stems!==stems);
     if(otherIdx!==-1) cart.splice(otherIdx,1);
-    cart.push({id:Date.now(),beatId:beat.id,name:stems?`${beat.name} + Stems`:beat.name,price:stems?PRICE_STEMS:PRICE_BEAT,type:'Beat',stems});
+    cart.push({id:Date.now(),beatId:beat.id,name:stems?`${beat.name} + Stems`:beat.name,price:stems?PRICE_STEMS:PRICE_BEAT,orig:stems?PRICE_STEMS:PRICE_BEAT,type:'Beat',stems});
     updateCart(); syncBeatButtons();
     piscar(document.getElementById('bb'+beat.id));
     piscar(document.getElementById('navCart'));
@@ -464,7 +478,7 @@ function openPkgModal() {
     `Escolha ${p.required} beat${p.required > 1 ? 's' : ''}`;
   const reservedCount = reservedIds.size;
   document.getElementById('pkgModalSub').textContent =
-    `Selecione exatamente ${p.required} beat${p.required > 1 ? 's' : ''} do catálogo.${p.stems ? ' Stems incluídos para todos.' : ''}`;
+    `Selecione exatamente ${p.required} beat${p.required > 1 ? 's' : ''} do catálogo.`;
   document.getElementById('pkgRequired').textContent = p.required;
   document.getElementById('pkgSelectedCount').textContent = '0';
   document.getElementById('pkgConfirmBtn').disabled = true;
@@ -544,27 +558,14 @@ function confirmPkgSelection() {
   const beatNames = p.selectedBeats.map(b => b.name).join(', ');
   const label = `${p.name} (${beatNames})`;
 
-  const existing = cart.find(c => c.name === p.name && c.type === 'Pacote');
-  if (existing) {
-    existing.qty++;
-    existing.price = existing.unitPrice * existing.qty;
-    // adiciona seleção desta instância
-    existing.pkgBeats = existing.pkgBeats || [];
-    existing.pkgBeats.push([...p.selectedBeats]);
-  } else {
-    cart.push({
-      id: Date.now(),
-      name: p.name,
-      label,
-      price: p.unitPrice,
-      unitPrice: p.unitPrice,
-      type: 'Pacote',
-      qty: 1,
-      stems: p.stems,
-      beatId: null,
-      pkgBeats: [[...p.selectedBeats]], // array de arrays (uma por instância)
-    });
-  }
+  // 11/10/2026: o desconto é por quantidade de beats no carrinho, então o pacote vira os beats
+  // escolhidos, um por um (tirar um deles do carrinho funciona como qualquer beat)
+  p.selectedBeats.forEach((sb,i)=>{
+    const b=BEATS.find(x=>Number(x.id)===Number(sb.id));
+    if(!b||cart.some(c=>c.beatId===b.id&&!c.stems)) return;
+    cart.push({id:Date.now()+i,beatId:b.id,name:b.name,price:PRICE_BEAT,orig:PRICE_BEAT,type:'Beat',stems:false});
+  });
+  if(typeof syncBeatButtons==='function') syncBeatButtons();
 
   document.getElementById('pkgModal').classList.remove('open');
   document.getElementById('overlay').classList.remove('on');
@@ -615,9 +616,42 @@ function clearCart(){
 // O front só envia o código digitado pra /api/validate-coupon.
 let activeCoupon = null; // { code, pct?, fixedPrice? }
 
+/* ── LEVE MAIS, PAGUE MENOS (11/10/2026) ─────────────────────────────────
+   Desconto por quantidade de beats, sozinho no carrinho: 1 = R$119, 2 = R$219, 3 = R$299,
+   4 = R$90 cada, 5 ou mais = R$80 cada (LEVE_MAIS no index.html; o servidor refaz a mesma conta
+   com a mesma tabela). No carrinho, cada beat mostra o preço cheio riscado e o novo ao lado:
+   até 3 beats, o 2º sai por R$100 e o 3º por R$80; com 4 ou mais, todos saem pelo preço do degrau. */
+function totalDosBeats(n){
+  if(n<=0) return 0;
+  if(n===1) return PRICE_BEAT;
+  const t=(typeof LEVE_MAIS==='object'&&LEVE_MAIS)||{};
+  if(t[String(n)]) return t[String(n)];
+  let cada=0, desde=0;
+  Object.keys(t).forEach(k=>{ const m=k.match(/^(\d+)\+$/); if(m&&n>=Number(m[1])&&Number(m[1])>desde){ desde=Number(m[1]); cada=t[k]; } });
+  return cada ? cada*n : PRICE_BEAT*n;
+}
+function precosDosBeats(n){
+  const out=[];
+  if(n<=3){ for(let i=1;i<=n;i++) out.push(totalDosBeats(i)-totalDosBeats(i-1)); return out; }
+  const tot=totalDosBeats(n), cada=Math.floor(tot/n);
+  for(let i=0;i<n;i++) out.push(i<n-1?cada:tot-cada*(n-1));
+  return out;
+}
+function aplicarLeveMais(){
+  const beats=cart.filter(c=>c.type==='Beat'&&!c.stems);
+  const p=precosDosBeats(beats.length);
+  beats.forEach((c,i)=>{ c.orig=PRICE_BEAT; c.price=p[i]; });
+}
+function descontoLeveMais(){
+  const beats=cart.filter(c=>c.type==='Beat'&&!c.stems);
+  return beats.length*PRICE_BEAT-totalDosBeats(beats.length);
+}
+
 function calcDiscount(subtotal) {
   if (!activeCoupon) return 0;
   if (activeCoupon.fixedPrice !== undefined && activeCoupon.fixedPrice !== null) return Math.max(0, subtotal - activeCoupon.fixedPrice);
+  // cupom só dos beats (o da lista, 11/10/2026): a % sobre os beats, já com o Leve mais
+  if (activeCoupon.escopo === 'beats') return Math.round(totalDosBeats(cart.filter(c=>c.type==='Beat'&&!c.stems).length) * activeCoupon.pct / 100);
   return Math.round(subtotal * activeCoupon.pct / 100);
 }
 
@@ -640,8 +674,8 @@ async function applyCoupon() {
       updateCart();
       return;
     }
-    activeCoupon = { code, pct: d.pct, fixedPrice: d.fixedPrice };
-    const label = (d.fixedPrice !== undefined && d.fixedPrice !== null) ? `preço fixo R$${d.fixedPrice}!` : `${d.pct}% de desconto!`;
+    activeCoupon = { code, pct: d.pct, fixedPrice: d.fixedPrice, escopo: d.escopo || null };
+    const label = (d.fixedPrice !== undefined && d.fixedPrice !== null) ? `preço fixo R$${d.fixedPrice}!` : d.escopo === 'beats' ? `${d.pct}% nos beats do catálogo!` : `${d.pct}% de desconto!`;
     showCouponMsg(`✓ ${code} aplicado — ${label}`, true);
     updateCart();
   } catch (e) {
@@ -684,15 +718,22 @@ function updateCart(){
   var nc=document.getElementById('navCart'), nn=document.getElementById('cartNTopo');
   if(nn) nn.textContent=units;
   if(nc) nc.classList.toggle('has-items',cart.length>0);
-  const subtotal=cart.reduce((s,c)=>s+c.price,0);
+  aplicarLeveMais(); const subtotal=cart.reduce((s,c)=>s+c.price,0);
   const discount=calcDiscount(subtotal);
   const total=subtotal - discount;
   const totEl=document.getElementById('cpTot');
-  if(discount>0){
-    totEl.innerHTML=`<span style="text-decoration:line-through;opacity:.45;font-size:1.3rem">R$${subtotal}</span> R$${total}`;
-  } else {
-    totEl.textContent=`R$ ${total}`;
+  // a conta embaixo (11/10/2026): preço cheio, desconto dos beats, cupom e o total
+  const qtdOff=descontoLeveMais(), nBeats=cart.filter(c=>c.type==='Beat'&&!c.stems).length;
+  const conta=document.getElementById('cpConta');
+  if(conta){
+    const linhas=[];
+    if(qtdOff>0||discount>0) linhas.push(`<div class="cp-l"><span>Total sem desconto</span><span>R$${subtotal+qtdOff}</span></div>`);
+    if(qtdOff>0) linhas.push(`<div class="cp-l off"><span>Desconto · ${nBeats} beats</span><span>−R$${qtdOff}</span></div>`);
+    if(discount>0) linhas.push(`<div class="cp-l off"><span>Cupom ${activeCoupon&&activeCoupon.code?activeCoupon.code:''}</span><span>−R$${discount}</span></div>`);
+    conta.innerHTML=linhas.join('');
+    conta.hidden=!linhas.length;
   }
+  totEl.textContent=`R$ ${total}`;
   const pb=document.getElementById('cpBody');
   if(cart.length===0){
     pb.innerHTML='<div class="cp-empty">Nenhum item adicionado.</div>';
@@ -712,7 +753,7 @@ function updateCart(){
             <button class="ci-qty-btn" onclick="changeQty(${c.id},1)">+</button>
           </div>`:''
         }
-        <span class="ci-p">R$${c.price}</span>
+        <span class="ci-p">${c.type==='Beat'&&c.orig&&c.orig>c.price?`<s>R$${c.orig}</s> `:''}R$${c.price}</span>
         <button class="ci-rm" onclick="removeItem(${c.id})">✕</button>
       </div>
     </div>`).join('');
@@ -720,17 +761,13 @@ function updateCart(){
   // Upsell: sempre mostrar o próximo degrau de custo-benefício
   const ups=[];
 
-  // — beats e pacotes —
-  const loose=cart.filter(c=>c.type==='Beat').length;
-  const pkg1=cart.some(c=>c.type==='Pacote'&&c.name==='1 Beat');
-  const pkg2=cart.some(c=>c.type==='Pacote'&&c.name==='2 Beats');
-  const pkg3=cart.some(c=>c.type==='Pacote'&&c.name==='3 Beats');
-  if(!pkg3){
-    if(pkg2)      ups.push({msg:`No pacote de 3, o terceiro beat sai por R$80 em vez de R$119 — <span class="cp-save">economize R$39</span>`,href:'#packages',cta:'Ver pacotes →'});
-    else if(pkg1) ups.push({msg:`No pacote de 2, o segundo beat sai por R$100 em vez de R$119 — <span class="cp-save">economize R$19</span>`,href:'#packages',cta:'Ver pacotes →'});
-    else if(loose===1) ups.push({msg:`Vai levar mais de um? No pacote, 2 beats saem por R$219 — <span class="cp-save">economize R$19</span>`,href:'#packages',cta:'Ver pacotes →'});
-    else if(loose===2) ups.push({msg:`Leve 3! No pacote, 3 beats saem por R$299 — <span class="cp-save">economize R$58</span>`,href:'#packages',cta:'Ver pacotes →'});
-    else if(loose>=3)  ups.push({msg:`3 beats no pacote saem por R$299 — <span class="cp-save">economize R$58</span>`,href:'#packages',cta:'Ver pacotes →'});
+  // — beats: o próximo degrau do Leve mais, pague menos (11/10/2026) —
+  const prox=nBeats+1;
+  if(nBeats>=1&&totalDosBeats(prox)<PRICE_BEAT*prox&&totalDosBeats(prox)/prox<totalDosBeats(nBeats)/nBeats){
+    const mais=totalDosBeats(prox)-totalDosBeats(nBeats);
+    ups.push({msg:prox>=4&&totalDosBeats(prox)%prox===0
+      ?`Com ${prox} beats, cada um sai por R$${totalDosBeats(prox)/prox}: ${prox} por R$${totalDosBeats(prox)}.`
+      :`Põe mais um e ele sai por R$${mais}: ${prox} beats por R$${totalDosBeats(prox)}.`,href:'#beats',cta:`Escolher o ${prox}º beat →`});
   }
 
   // — mix / master / combo —
@@ -773,7 +810,7 @@ function openCheckout(){
     showToast('Adicione pelo menos um item ao carrinho.');
     return;
   }
-  const subtotal=cart.reduce((s,c)=>s+c.price,0);
+  aplicarLeveMais(); const subtotal=cart.reduce((s,c)=>s+c.price,0);
   const discount=calcDiscount(subtotal);
   const total=subtotal - discount;
   const unitsCk=cart.reduce((s,c)=>s+(c.qty||1),0);
@@ -871,8 +908,10 @@ async function goToPayment(){
   if(!termsChecked){
     const box=document.querySelector('.mp-terms-box');
     box.classList.add('error');
-    document.getElementById('mpTermsErr').textContent='Você precisa aceitar os termos para continuar.';
+    // 11/10/2026: o aviso diz o que fazer (antes: "Você precisa aceitar os termos", pequeno e solto)
+    document.getElementById('mpTermsErr').textContent='Falta um passo: marque a caixa acima pra confirmar que você leu e aceita os Termos de Licença. Aí é só tocar em CONTINUAR de novo.';
     box.scrollIntoView({behavior:'smooth',block:'center'});
+    try{ document.getElementById('mpTermsCheck').focus({preventScroll:true}); }catch(_){}
     return;
   }
   const btn=document.getElementById('mpStep1Btn');
@@ -896,7 +935,7 @@ async function goToPayment(){
     // Aguardar container estar visível no DOM
     await new Promise(r=>setTimeout(r,300));
 
-    const subtotalPay=cart.reduce((s,c)=>s+c.price,0);
+    aplicarLeveMais(); const subtotalPay=cart.reduce((s,c)=>s+c.price,0);
     const discountPay=calcDiscount(subtotalPay);
     const total=subtotalPay - discountPay;
     const itemsDesc=cart.map(c=>c.qty&&c.qty>1?`${c.name} x${c.qty}`:c.name).join(' + ');
@@ -1060,7 +1099,7 @@ async function goToPayment(){
   } catch(err){
     console.error('MP init error:',err);
     btn.disabled=false;btn.textContent='CONTINUAR → PAGAMENTO';
-    const subtotalFallback=cart.reduce((s,c)=>s+c.price,0);
+    aplicarLeveMais(); const subtotalFallback=cart.reduce((s,c)=>s+c.price,0);
     const discountFallback=calcDiscount(subtotalFallback);
     const totalFallback=subtotalFallback - discountFallback;
     // Fallback: show manual payment instructions
@@ -1488,7 +1527,13 @@ try{
     pr.setAttribute('aria-label',no?b.name+' está no carrinho: abrir o carrinho':'Pôr '+b.name+' no carrinho');
     pr.innerHTML=(no?ICO_OK:ICO_MAIS)+'<span class="rotulo">'+(no?'No carrinho':'R$'+PRICE_BEAT)+'</span>'+(no?'<span class="ir" aria-hidden="true">›</span>':'');
   };
-  window.npAddFeatured=function(){ try{toggleBeat(FEATURED_BEAT_ID,false);}catch(_){} };
+  window.npAddFeatured=function(){ try{botaoBeat(FEATURED_BEAT_ID);}catch(_){} };
+  // o botão do destaque segue a mesma regra: no carrinho, vira "No carrinho ›" e abre o carrinho
+  window.pintarHeroAdd=function(){
+    var ad=$('hwAdd'); if(!ad) return;
+    var no=false; try{ no=cart.some(function(c){return c.beatId===FEATURED_BEAT_ID&&c.stems===false;}); }catch(_){}
+    ad.textContent=no?'No carrinho ›':'Adicionar ao carrinho · R$'+PRICE_BEAT;
+  };
 
   /* seek: clique e arrasto, no pé e no destaque */
   function ligarSeek(el){
@@ -1568,7 +1613,7 @@ try{
       var nm=$('hwName'); if(nm) nm.textContent=b.name;
       var ch=$('hwChips');
       if(ch) ch.innerHTML='<span class="hw-chip">'+gl+'</span><span class="hw-chip">'+b.bpm+' BPM</span><span class="hw-chip">'+b.key+'</span>';
-      var ad=$('hwAdd'); if(ad) ad.textContent='Adicionar ao carrinho · R$'+PRICE_BEAT;
+      if(window.pintarHeroAdd) window.pintarHeroAdd();
       var f=fonte(FEATURED_BEAT_ID);
       var cp=$('hwCapa');
       if(cp){
@@ -1840,7 +1885,7 @@ try{
         var b=beatVivo(it.beatId);
         if(!b){ caiu++; return; }                       // vendido ou sumiu do catálogo
         var hoje=it.stems ? PRICE_STEMS : PRICE_BEAT;
-        if(Number(it.price)!==hoje) mexidos++;
+        if(Number(it.orig!=null?it.orig:it.price)!==hoje) mexidos++;   // 11/10: price já vem com o desconto
         bons.push({ id:it.id||marca+i, beatId:b.id,
           name: it.stems ? b.name+' + Stems' : b.name,
           price: it.stems ? PRICE_STEMS : PRICE_BEAT,   // preço de hoje, não o guardado
@@ -1866,10 +1911,11 @@ try{
           return Array.isArray(g) && g.length && g.every(function(x){ return !!beatVivo(x && x.id); });
         });
         if(!inteiro){ caiu++; return; }                 // um beat do pacote foi vendido
-        if(Number(it.unitPrice)!==pp) mexidos++;
-        bons.push({ id:it.id||marca+i, name:it.name, label:it.label||it.name,
-          price:pp*grupos.length, unitPrice:pp, type:'Pacote', qty:grupos.length,
-          stems:!!it.stems, beatId:null, pkgBeats:grupos });
+        // 11/10/2026: pacote guardado volta como os beats dele (o desconto é por quantidade)
+        grupos.forEach(function(g){ g.forEach(function(x,k){
+          var bb=beatVivo(x.id); if(!bb||bons.some(function(o){return o.beatId===bb.id;})) return;
+          bons.push({ id:marca+i*100+k, beatId:bb.id, name:bb.name, price:PRICE_BEAT, orig:PRICE_BEAT, type:'Beat', stems:false });
+        }); });
         return;
       }
 
@@ -2251,7 +2297,7 @@ try{
     try{
       var ant=lerGuardado();
       if(ant&&ant.id===String(id)) return;          // reaberto pela faixa: vale o que foi guardado
-      var sub=cart.reduce(function(s,c){return s+c.price;},0), total=sub-calcDiscount(sub);
+      aplicarLeveMais(); var sub=cart.reduce(function(s,c){return s+c.price;},0), total=sub-calcDiscount(sub);
       var itens=cart.map(function(c){ return c.qty&&c.qty>1 ? c.name+' x'+c.qty : c.name; }).join(', ');
       var g={ id:String(id), at:Date.now(), total:total, itens:itens,
         un:cart.reduce(function(s,c){return s+(c.qty||1);},0),
@@ -2350,7 +2396,7 @@ try{
    (chave desligada, carrinho sem beat), a tela fica igual. O link fica guardado 2 horas, pra
    quem paga o PIX no app do banco e volta com a página recarregada. */
 (function(){
-  var CHAVE='caramujo_pedido_v1', VALE=2*3600e3, link=null, tudo=false;
+  var CHAVE='caramujo_pedido_v1', VALE=2*3600e3, link=null, tudo=false, nBeats=1;
   var $=function(i){ return document.getElementById(i); };
   var f=window.fetch;
   if(typeof f!=='function'||typeof window.showPixConfirmed!=='function') return;
@@ -2359,12 +2405,13 @@ try{
     try{
       if(String(u&&u.url||u).indexOf('/api/create-payment')>-1){
         link=null; tudo=false; tirar();
+        try{ var corpo=JSON.parse((arguments[1]&&arguments[1].body)||'{}'); nBeats=(corpo.items||[]).filter(function(i){ return i&&i.type==='Beat'; }).length||1; }catch(_){ nBeats=1; }
         try{ localStorage.removeItem(CHAVE); }catch(_){}
         p.then(function(r){
           return r.clone().json().then(function(d){
             if(d&&d.success&&typeof d.pedido==='string'&&/^\/pedido\/[A-Za-z0-9_-]{20,40}$/.test(d.pedido)){
               link=d.pedido; tudo=!!d.pedidoTudo;
-              try{ localStorage.setItem(CHAVE,JSON.stringify({ id:String(d.paymentId||''), link:link, tudo:tudo, at:Date.now() })); }catch(_){}
+              try{ localStorage.setItem(CHAVE,JSON.stringify({ id:String(d.paymentId||''), link:link, tudo:tudo, n:nBeats, at:Date.now() })); }catch(_){}
             }
           });
         }).catch(function(){});
@@ -2377,30 +2424,36 @@ try{
     return null;
   }
   function tirar(){
-    var a=$('mpPedidoBtn'); if(a&&a.parentNode) a.parentNode.removeChild(a);
+    ['mpPedidoBtn','mpPedidoNota'].forEach(function(i){ var a=$(i); if(a&&a.parentNode) a.parentNode.removeChild(a); });
     var box=$('mpPixConfirmed'), p=box&&box.querySelector('p');
     if(p&&p.__antes){ p.innerHTML=p.__antes; p.__antes=null; }
+    var c=$('mpContractDownload'); if(c&&c.__escondido){ c.__escondido=false; c.style.display=c.__antes||''; }
   }
   function mostrar(tenta){
-    var l=link, t=tudo;
-    if(!l){ var g=guardado(); if(g){ l=g.link; t=!!g.tudo; } }
+    var l=link, t=tudo, n=nBeats;
+    if(!l){ var g=guardado(); if(g){ l=g.link; t=!!g.tudo; n=g.n||1; } }
     // a resposta do pagamento pode chegar um instante depois da tela: espera um pouco
     if(!l){ if((tenta||0)<15) setTimeout(function(){ mostrar((tenta||0)+1); },120); return; }
     var box=$('mpPixConfirmed'); if(!box) return;
     var p=box.querySelector('p');
     if(p){
       if(!p.__antes) p.__antes=p.innerHTML;
-      p.innerHTML=(t?'Pagamento aprovado! Os arquivos já estão no link abaixo: WAV, MP3 e o contrato. O mesmo link foi pro seu e-mail.'
-        :'Pagamento aprovado! Os arquivos dos beats já estão no link abaixo. Stems e serviços seguem os prazos do contrato, pelo e-mail.')+
-        '<br/><br/><strong style="color:var(--bone)">@rideblan33 — Caramujo Records</strong>';
+      p.textContent=t?(n>1?'Os beats já são seus. Na página do pedido estão os WAV, os MP3 e o contrato no seu nome.':'O beat já é seu. Na página do pedido estão o WAV, o MP3 e o contrato no seu nome.')
+        :'Os beats já estão na página do pedido, com o WAV, o MP3 e o contrato. Os serviços seguem os prazos do contrato, e o @rideblan33 fala com você por e-mail.';
     }
+    // o contrato mora na página do pedido: o botão daqui some (11/10/2026)
+    var c=$('mpContractDownload');
+    if(c&&!c.__escondido){ c.__antes=c.style.display; c.__escondido=true; c.style.display='none'; }
     var a=$('mpPedidoBtn');
     if(!a){
       a=document.createElement('a'); a.id='mpPedidoBtn'; a.className='mp-btn-primary';
       a.target='_blank'; a.rel='noopener';
-      a.style.cssText='display:block;box-sizing:border-box;text-align:center;text-decoration:none;margin:0 0 1.2rem;';
+      a.style.cssText='display:block;box-sizing:border-box;text-align:center;text-decoration:none;';
       a.textContent='↓ BAIXAR SEUS ARQUIVOS';
-      box.insertBefore(a,$('mpContractDownload'));
+      box.insertBefore(a,c);
+      var n=document.createElement('p'); n.id='mpPedidoNota'; n.className='mp-ok-nota';
+      n.textContent='O mesmo link foi pro seu e-mail.';
+      box.insertBefore(n,c);
     }
     a.href=l;
   }
@@ -2522,5 +2575,44 @@ try{
     try{ f.fechar(); }catch(_){}
   });
   new MutationObserver(confere).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','hidden']});
+})();
+}catch(e){ setTimeout(function(){ throw e; }); }
+
+/* ─────────────────────────────────────────────────────────────── */
+try{
+/* ── FIQUE POR DENTRO (11/10/2026) ───────────────────────────────────
+   Cadastro na lista: o servidor (/api/lista) cria o cupom de 25% só dessa pessoa e manda pro
+   e-mail. Depois do cadastro, este navegador lembra e a caixa vira o recado de "pronto". */
+(function(){
+  var CHAVE='caramujo_lista_v1';
+  var box=document.getElementById('listaBox'), form=document.getElementById('listaForm');
+  if(!box||!form) return;
+  var nota=document.getElementById('listaNota'), btn=document.getElementById('listaBtn'), inp=document.getElementById('listaEmail');
+  function pronto(email,status){
+    box.classList.add('ok');
+    form.hidden=true;
+    var t=box.querySelector('.lista-t'), p=box.querySelector('.lista-p');
+    if(status==='sem-cupom'){ t.textContent='Você já está na lista'; p.textContent='O cupom desse e-mail já foi usado ou venceu, mas os lançamentos e promoções seguem chegando por lá.'; }
+    else { t.textContent='Pronto. O cupom chegou no seu e-mail.'; p.textContent='Não achou? Olha no spam e marca a Caramujo como contato, que os próximos e-mails caem na caixa certa.'; }
+    nota.textContent=email?'Cadastrado: '+email:'';
+  }
+  try{ var g=JSON.parse(localStorage.getItem(CHAVE)||'null'); if(g&&g.email) pronto(g.email,g.status); }catch(_){}
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var email=(inp.value||'').trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ nota.textContent='Esse e-mail não parece certo. Confere e tenta de novo.'; nota.classList.add('erro'); inp.focus(); return; }
+    nota.classList.remove('erro');
+    btn.disabled=true; btn.textContent='Enviando…';
+    var de='vitrine'; try{ de=sessionStorage.getItem('cr_origem')||'vitrine'; }catch(_){}
+    fetch('/api/lista',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:email,de:/^[a-z][a-z0-9-]{0,24}$/.test(de)?de:'vitrine'})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(x){
+        btn.disabled=false; btn.textContent='Quero o cupom';
+        if(!x.ok||!x.j||!x.j.ok){ nota.textContent=(x.j&&x.j.erro)||'Não deu pra cadastrar agora. Tenta de novo em instantes.'; nota.classList.add('erro'); return; }
+        try{ localStorage.setItem(CHAVE,JSON.stringify({email:email,status:x.j.status,at:Date.now()})); }catch(_){}
+        pronto(email,x.j.status);
+      })
+      .catch(function(){ btn.disabled=false; btn.textContent='Quero o cupom'; nota.textContent='Sem conexão agora. Tenta de novo em instantes.'; nota.classList.add('erro'); });
+  });
 })();
 }catch(e){ setTimeout(function(){ throw e; }); }

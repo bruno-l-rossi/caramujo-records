@@ -5,6 +5,8 @@
 
 import { ICONES } from './icones.js';
 import { capaUrl, CAPA_VOLTA } from './midia.js';
+import { topo as topoSite, TOPO_CSS, TOPO_CSS_899, TOPO_CSS_CEL } from './topo.js';
+import { LEVA_DE } from './origem.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
@@ -37,11 +39,16 @@ html{-webkit-text-size-adjust:100%}
 body{background:var(--black);color:var(--bone);font-family:var(--sans);-webkit-font-smoothing:antialiased;min-height:100vh}
 a{color:inherit}
 :focus-visible{outline:2px solid var(--fire);outline-offset:2px}
-.topo{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:rgba(20,17,13,.96);border-bottom:1px solid var(--wire)}
-.topo img{display:block;width:122px;height:22px}
-.topo a.aj{font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--read);text-decoration:none;padding:8px 0}
-@media (min-width:900px){.topo{padding:18px 32px}.topo img{width:148px;height:27px}}
-main{max-width:640px;margin:0 auto;padding:34px 18px 56px}
+/* topo igual ao da vitrine (11/10/2026: _lib/topo.js, o mesmo das páginas de beat) */
+.topo a,.menu-cel a{text-decoration:none}
+.topo button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.topo img{display:block}
+${TOPO_CSS}${TOPO_CSS_899}@media(max-width:860px){
+${TOPO_CSS_CEL}}
+/* rodapé no fim da tela mesmo com pouco conteúdo (11/10/2026) */
+body{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+main{flex:1 0 auto;width:100%;max-width:640px;margin:0 auto;padding:34px 18px 56px}
+footer{flex:none}
 .k{display:block;font-size:.62rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--fire)}
 h1{font-family:var(--serif);font-weight:500;font-size:2.7rem;line-height:1;color:var(--cream);margin:.7rem 0 .9rem;text-wrap:balance}
 .lede{font-size:.92rem;line-height:1.7;color:var(--read)}
@@ -96,8 +103,13 @@ ${CAPA_VOLTA}
 </head>`;
 }
 
-const topo = '<header class="topo"><a href="/" aria-label="Caramujo Records, página inicial"><img src="/assets/brand/caramujo-h.webp" srcset="/assets/brand/caramujo-h-244.webp 244w, /assets/brand/caramujo-h-366.webp 366w, /assets/brand/caramujo-h.webp 504w" sizes="(max-width:899px) 122px, 148px" alt="Caramujo Records" width="148" height="27"></a><a class="aj" href="https://ig.me/m/rideblan33" rel="noopener">Ajuda</a></header>';
-const rodape = '<footer>© 2026 Caramujo Records · São Carlos, SP</footer>';
+// menu do celular e número do carrinho, como nas páginas de beat
+const TOPO_JS = `<script>(function(){var $=function(s){return document.querySelector(s)};
+try{var c=JSON.parse(localStorage.getItem('caramujo_carrinho_v1')||'null');if(c&&c.itens&&c.itens.length&&Date.now()-(c.em||0)<7*864e5){var n=c.itens.reduce(function(s,x){return s+(x.qty||1)},0),b=$('.js-n');if(b){b.textContent=n;b.hidden=false}}}catch(_){}
+var mb=$('.js-menu'),mc=$('#menuCel');if(mb&&mc)mb.addEventListener('click',function(){var on=!mc.classList.contains('on');mc.classList.toggle('on',on);mb.setAttribute('aria-expanded',on?'true':'false')});
+var ms=$('.mc-sub>a');if(ms)ms.addEventListener('click',function(e){e.preventDefault();var li=ms.parentNode,on=!li.classList.contains('abre');li.classList.toggle('abre',on);ms.setAttribute('aria-expanded',on?'true':'false')});})();</script>`;
+const topo = topoSite('pedido');
+const rodape = '<footer>© 2026 Caramujo Records · São Carlos, SP</footer>' + TOPO_JS + LEVA_DE;
 const ajuda = `<a class="ajuda" href="https://ig.me/m/rideblan33" rel="noopener">${IG}Dúvida? Chama no Direct</a>`;
 
 // p = pedido (lerPedido), faixas = Map(id -> {wav_bytes, mp3_bytes}) das faixas que ainda existem
@@ -118,7 +130,8 @@ export function paginaPedido(p, faixas = new Map()) {
     return html;
   }
   const um = beats.length === 1;
-  html += `<h1>Pedido confirmado</h1><p class="lede">Valeu${quem ? ', <b>' + esc(quem) + '</b>' : ''}. O pagamento caiu e ${um ? 'o beat já é seu: os arquivos estão' : 'os beats já são seus: os arquivos estão'} aqui embaixo.</p>`;
+  // pedido só de serviço (11/10/2026): sem beat, o texto fala do próximo passo
+  html += `<h1>Pedido confirmado</h1><p class="lede">Valeu${quem ? ', <b>' + esc(quem) + '</b>' : ''}. O pagamento caiu ${!beats.length ? 'e o próximo passo do seu pedido está' : um ? 'e o beat já é seu: os arquivos estão' : 'e os beats já são seus: os arquivos estão'} aqui embaixo.</p>`;
   html += `<p class="guarda">Esse link é só seu${p.status === 'teste' ? '' : '. Também mandamos ele pro seu e-mail'}.</p>`;
   if (p.status === 'teste') {
     html += '<p class="teste"><b>Pedido de teste.</b> Só quem tem este link vê, e nenhum beat foi vendido. O comprador vê esta mesma página, com o nome dele.</p>';
@@ -139,7 +152,6 @@ export function paginaPedido(p, faixas = new Map()) {
       } else {
         html += '<p class="nota">O @rideblan33 manda os arquivos desse beat no seu e-mail em até 1 dia útil.</p>';
       }
-      if (b.stems) html += '<p class="nota">Stems: o @rideblan33 manda no seu e-mail em até 1 dia útil.</p>';
       html += '</div>';
     }
     html += `<div class="contrato"><div><b>Contrato de licença exclusiva</b><small>no nome de ${esc(p.nome || quem || 'quem comprou')} · ${esc(dataCurta(p.criado_em))}</small></div><a href="${base}/contrato" download>Baixar</a></div>`;
@@ -154,8 +166,8 @@ export function paginaPedido(p, faixas = new Map()) {
 }
 
 // Página curta pra quando um arquivo não sai (limite de downloads, arquivo fora do ar)
-export function paginaAviso(titulo, texto, voltar) {
+export function paginaAviso(titulo, texto, voltar, kicker = 'Pedido') {
   return cabecalho(`${titulo} · Caramujo Records`) + '\n<body>\n' + topo + '\n<main>' +
-    `<span class="k">Pedido</span><h1>${esc(titulo)}</h1><p class="lede">${esc(texto)}</p>` +
+    `<span class="k">${esc(kicker)}</span><h1>${esc(titulo)}</h1><p class="lede">${esc(texto)}</p>` +
     (voltar ? `<p class="guarda"><a href="${esc(voltar)}">Voltar pro pedido</a></p>` : '') + ajuda + '</main>' + rodape + '\n</body></html>';
 }

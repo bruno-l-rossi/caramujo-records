@@ -6,7 +6,7 @@
 
 import { db, json } from '../_lib/db.js';
 import { ehOBruno } from '../_lib/sessao.js';
-import { criar, apagar, avisarBruno } from '../_lib/comentarios.js';
+import { criar, apagar, avisarBruno, COMENTARIOS } from '../_lib/comentarios.js';
 
 async function corpo(request) {
   const txt = await request.text().catch(() => '');
@@ -16,6 +16,7 @@ async function corpo(request) {
 
 export async function onRequestPost(context) {
   const { request, env } = context;
+  if (!COMENTARIOS.ligado) return json({ erro: 'Os comentários estão desligados por enquanto.' }, 403);
   const b = await corpo(request);
   if (!b) return json({ erro: 'pedido torto' }, 400);
   const d = await db(env);

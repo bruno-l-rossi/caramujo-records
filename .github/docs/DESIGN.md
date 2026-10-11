@@ -195,7 +195,15 @@ O formulário do cartão (Mercado Pago) usa as cores da casa: botão e destaques
 hover em âmbar claro, campo `#221e18`, fundo `#1A1815`, texto `cream`/`read`. Caixa de
 erro do pagamento: fundo `mole`, borda `wire` e fio de 3px em `blood` à esquerda, texto
 `bone` (o `blood` sozinho não dá pra ler no escuro). Sem emoji em lugar nenhum do checkout:
-o PEDIDO CONFIRMADO leva o selo creme de 56px no lugar do 🐌, e os avisos não têm ⚠.
+o PEDIDO CONFIRMADO leva o selo creme de 48px no lugar do 🐌, e os avisos não têm ⚠.
+Desde 11/10/2026 o PEDIDO CONFIRMADO é centrado: selo, "Pagamento aprovado" em IBM Plex
+Mono `fire`, "Pedido confirmado" em Bebas `cream`, uma frase em `read`, o botão principal e
+FECHAR fantasma; assinatura "@rideblan33 · Caramujo Records" em `dim`. Termos não marcados:
+aviso dentro da caixa dos termos, com a mesma caixa de erro (fio `blood`).
+Carrinho: item com desconto mostra o preço cheio riscado em `dim` e o novo em `cream`; o
+rodapé lista Total sem desconto, Desconto e Cupom (em `fire`) antes do TOTAL.
+Fique por dentro (vitrine, depois da lista de beats): caixa `deep` com borda `wire`, kicker
+em `fire`, título em Bebas, campo de e-mail + botão `fire` lado a lado (empilhados no celular).
 
 ## Página de cada beat e de cada gênero (desde 03/10/2026)
 
@@ -290,6 +298,7 @@ parte dos beats). Marca terrosa, igual à vitrine: fundo `black`, topo com o log
 avisos pequenos em IBM Plex Mono `read`/`dim`. Cada beat numa caixa `deep` com borda `wire`
 de 1px e cantos retos: capa de 64px, nome, ficha e dois botões de 46px lado a lado (WAV
 cheio em `bone` com texto `deep`; MP3 fantasma com borda `wire`). Contrato numa linha com
-borda `wire`. Avisos (stems/serviço, pedido de teste) com fio de 3px em `fire` à esquerda;
+borda `wire`. Avisos (serviço, pedido de teste) com fio de 3px em `fire` à esquerda;
 `blood` nunca aparece (não é erro nem vendido). No PEDIDO CONFIRMADO da vitrine, o botão
-"↓ BAIXAR SEUS ARQUIVOS" é o botão principal do checkout (`fire`), acima do contrato.
+"↓ BAIXAR SEUS ARQUIVOS" é o botão principal do checkout (`fire`), e o contrato sai de lá (está na
+página do pedido). Cabeçalho igual ao da vitrine (`_lib/topo.js`) e rodapé no fim da tela.

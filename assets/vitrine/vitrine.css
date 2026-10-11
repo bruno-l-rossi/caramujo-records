@@ -1410,3 +1410,52 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .foot-generos a{font-family:var(--serif);font-size:1.05rem;font-weight:500;color:var(--read);text-decoration:none;transition:color .2s}
 .foot-generos a:hover,.foot-generos a[aria-current]{color:var(--fire)}
 @media(max-width:760px){.foot-generos{gap:.35rem .95rem}.foot-generos .fg-k{flex-basis:100%;margin:0 0 .2rem}}
+
+/* Aviso dos termos (11/10/2026): caixa visível embaixo do aceite, dizendo o que fazer */
+.mp-terms-box .mp-err:not(:empty){position:static;display:block;margin-top:.9rem;padding:.65rem .8rem;background:var(--deep);border:1px solid var(--wire);border-left:3px solid var(--fire);color:var(--bone);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.74rem;line-height:1.55}
+.mp-terms-box.error .mp-terms-custom-check{border-color:var(--fire);box-shadow:0 0 0 3px rgba(185,143,94,.3);animation:mpChama 1.2s ease-in-out 2}
+.mp-terms-label input:focus-visible ~ .mp-terms-custom-check{outline:2px solid var(--fire);outline-offset:2px}
+@keyframes mpChama{50%{box-shadow:0 0 0 6px rgba(185,143,94,.12)}}
+@media (prefers-reduced-motion:reduce){.mp-terms-box.error .mp-terms-custom-check{animation:none}}
+
+/* PEDIDO CONFIRMADO (11/10/2026) */
+.mp-ok{text-align:center;padding:.4rem 0 .2rem}
+.mp-ok-selo{display:block;width:48px;height:48px;margin:0 auto 1.1rem;opacity:.9}
+.mp-ok-k{font-size:.62rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--fire);margin-bottom:.45rem}
+.mp-ok-t{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-size:2.1rem;line-height:1.1;color:var(--cream);margin-bottom:.9rem}
+.mp-ok-p{font-size:.84rem;line-height:1.7;color:var(--read);max-width:340px;margin:0 auto 1.6rem}
+.mp-ok-nota{font-family:'IBM Plex Mono',monospace;font-size:.66rem;line-height:1.6;color:var(--dim);margin:.6rem auto 1.4rem;max-width:320px}
+.mp-btn-ghost{width:100%;padding:.9rem;background:transparent;border:1px solid var(--wire);color:var(--bone);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;min-height:48px;transition:border-color .14s,color .14s}
+.mp-btn-ghost:hover{border-color:var(--clay);color:var(--cream)}
+.mp-ok-assina{margin-top:1.4rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.06em;color:var(--dim)}
+
+/* Nome do beat vendido na lista (11/10/2026): no mouse, o mesmo sublinhado dos à venda (é link pra
+   página do beat, com os parecidos). O riscado do vendido fica; o sublinhado vem por baixo. */
+@media(hover:hover) and (pointer:fine){
+  #beatCards .item.fora a.nome:hover{background:linear-gradient(var(--fire),var(--fire)) 0 calc(100% - 1px)/100% 1px no-repeat;padding-bottom:3px;margin-bottom:-3px}
+}
+
+/* Carrinho: a conta do desconto embaixo, perto do total (11/10/2026) */
+.cp-conta{margin-bottom:.7rem;padding-bottom:.7rem;border-bottom:1px solid var(--wire)}
+.cp-conta[hidden]{display:none}
+.cp-l{display:flex;justify-content:space-between;align-items:baseline;font-family:'IBM Plex Mono',monospace;font-size:.72rem;line-height:1.9;color:var(--read)}
+.cp-l.off span:last-child{color:var(--fire)}
+.ci-p s{color:var(--dim);text-decoration-color:var(--dim);margin-right:.25rem;font-size:.9em}
+
+/* Fique por dentro (11/10/2026): cadastro na lista com cupom de 25%, no fim da lista de beats */
+.lista-box{margin:2.2rem auto 0;max-width:760px;padding:1.6rem 1.6rem 1.4rem;border:1px solid var(--wire);background:var(--mole)}
+.lista-k{font-size:.62rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--fire)}
+.lista-t{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-size:2rem;line-height:1.1;color:var(--cream);margin:.45rem 0 .55rem}
+.lista-p{font-size:.86rem;line-height:1.65;color:var(--read);max-width:58ch}
+.lista-f{display:flex;gap:.6rem;margin-top:1.1rem}
+.lista-f[hidden]{display:none}
+.lista-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.lista-in{flex:1;min-width:0;min-height:48px;padding:0 .9rem;background:var(--deep);border:1px solid var(--wire);color:var(--bone);font-family:'IBM Plex Mono',monospace;font-size:.86rem;border-radius:0}
+.lista-in:focus{outline:none;border-color:var(--clay)}
+.lista-bt{flex:none;min-height:48px;padding:0 1.3rem;background:var(--bone);border:1px solid var(--bone);color:var(--black);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;border-radius:0}
+.lista-bt:hover{background:var(--cream)}
+.lista-bt:disabled{opacity:.6;cursor:default}
+.lista-nota{margin-top:.8rem;font-family:'IBM Plex Mono',monospace;font-size:.66rem;line-height:1.6;color:var(--dim)}
+.lista-nota.erro{color:var(--fire)}
+.lista-box.ok .lista-t{font-size:1.6rem}
+@media(max-width:600px){.lista-box{padding:1.3rem 1.1rem 1.2rem}.lista-t{font-size:1.7rem}.lista-f{flex-direction:column}.lista-bt{width:100%}}

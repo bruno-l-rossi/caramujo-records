@@ -129,7 +129,9 @@
     anel: 'Anel do topo da vitrine', sobre: 'Card do Sobre nós', hero: '@ do topo da vitrine', '404': 'Link quebrado (página de erro)', 'story-catalogo': 'Story do catálogo', link: 'Link compartilhado do perfil',
     // 05/10/2026: as páginas de beat e de gênero, a pasta de artista e o painel
     'pagina-beat': 'Página de beat', 'pagina-genero': 'Página de gênero', artista: '@ da pasta de artista',
-    'artista-mais': 'Ver tudo da pasta de artista', painel: 'Painel (você)'
+    'artista-mais': 'Ver tudo da pasta de artista', painel: 'Painel (você)',
+    // 11/10/2026: caixa "Quer um som assim?" da aba Músicas, topo da página do pedido
+    'perfil-musicas': 'Quer um som assim? (aba Músicas)', pedido: 'Página do pedido'
   };
   var nomeOrigem = function (o) { return o.nome ? 'Tape: ' + o.nome : (ORIGEM[o.origem] || o.origem); };
 
@@ -518,7 +520,7 @@
     'aba-musicas': 'Abriu a aba Músicas', 'aba-tapes': 'Abriu a aba Beat tapes', trecho: 'Ouviu o trecho de uma música',
     // 06/10/2026: a música toca inteira no perfil
     'musica-play': 'Ouviu uma música no perfil',
-    'musica-spotify': 'Abriu uma música no Spotify', 'musica-youtube': 'Abriu uma música no YouTube', 'portfolio-spotify': 'Portfólio completo no Spotify' };
+    'musica-spotify': 'Abriu uma música no Spotify', 'musica-youtube': 'Abriu uma música no YouTube', 'portfolio-spotify': 'Portfólio completo no Spotify', 'servico-mix': 'Quer um som assim: Mix & Master', 'servico-beat': 'Quer um som assim: Beat personalizado' };
   function perfil(j, corpo) {
     var a = j.agora, an = j.antes;
     corpo.appendChild(tiles([

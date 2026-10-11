@@ -36,12 +36,31 @@ export function parsePrecos(html) {
     for (const [k, v] of Object.entries(achados)) mapa[k] = v.size === 1 ? [...v][0] : null;
     return mapa;
   };
+  // Leve mais, pague menos (11/10/2026): const LEVE_MAIS={'2':219,'3':299,'4':360,'5+':80}
+  const leveMais = {};
+  const lm = html.match(/const LEVE_MAIS\s*=\s*\{([^}]*)\}/);
+  if (lm) { const re = /'(\d+\+?)'\s*:\s*(\d+(?:\.\d+)?)/g; let m; while ((m = re.exec(lm[1]))) leveMais[m[1]] = Number(m[2]); }
   return {
+    leveMais,
     beat: num(/const PRICE_BEAT\s*=\s*(\d+(?:\.\d+)?)/),
     stems: num(/PRICE_STEMS\s*=\s*(\d+(?:\.\d+)?)/),
     pacotes: tabela('addPkg'),
     servicos: tabela('addSvc')
   };
+}
+
+// Quanto custam n beats do catálogo juntos (11/10/2026). A mesma conta do carrinho da vitrine
+// (totalDosBeats no vitrine.js): degrau exato ('4': 360) ou preço de cada a partir de N ('5+': 80).
+// Sem tabela na página: n × preço do beat.
+export function totalDosBeats(n, precos) {
+  const unit = precos && precos.beat;
+  if (!n || n <= 0) return 0;
+  if (n === 1) return unit;
+  const t = (precos && precos.leveMais) || {};
+  if (t[String(n)]) return t[String(n)];
+  let cada = 0, desde = 0;
+  for (const [k, v] of Object.entries(t)) { const m = k.match(/^(\d+)\+$/); if (m && n >= Number(m[1]) && Number(m[1]) > desde) { desde = Number(m[1]); cada = v; } }
+  return cada ? cada * n : unit * n;
 }
 
 const VALIDADE_ESTATICO = 10 * 60 * 1000;     // o index.html só muda quando o Bruno publica
@@ -241,13 +260,21 @@ export async function marcarVendidos(d, nomes, pagamento) {
 export async function lerCupom(d, codigo) {
   const c = String(codigo || '').trim().toUpperCase().slice(0, 30);
   if (!c) return null;
-  return d.prepare('SELECT * FROM cupons WHERE codigo = ?').bind(c).first();
+  // cupom da lista (11/10/2026): só beats do catálogo (escopo) e com prazo (vale_ate)
+  return d.prepare(
+    "SELECT c.*, l.vale_ate AS vale_ate, CASE WHEN l.email IS NOT NULL THEN 'beats' END AS escopo FROM cupons c LEFT JOIN lista l ON l.cupom = c.codigo WHERE c.codigo = ?"
+  ).bind(c).first();
 }
+
+// AAAA-MM-DD de hoje em São Paulo
+export const hojeSP = () => new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10);
 
 // 'ok' | 'not_found' | 'expired'. Cupom pausado no painel responde como esgotado.
 export function situacaoCupom(c) {
   if (!c) return 'not_found';
   if (!c.ativo) return 'expired';
+  // validade (11/10/2026, cupom da lista: 15 dias): vale até o fim do dia vale_ate, horário de SP
+  if (c.vale_ate && hojeSP() > String(c.vale_ate)) return 'expired';
   if (c.max_usos !== null && c.max_usos !== undefined && Number(c.usos || 0) >= Number(c.max_usos)) return 'expired';
   return 'ok';
 }

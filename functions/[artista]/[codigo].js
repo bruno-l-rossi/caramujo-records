@@ -8,7 +8,7 @@ import { vitrine, indexar, achar } from '../_lib/vitrine.js';
 import { tapesDoPerfil } from '../_lib/perfil.js';
 import { MIDIA } from '../_lib/midia.js';
 import { slug as slugDe } from '../_lib/casar.js';
-import { SQL_PASTA, praPagina } from '../_lib/comentarios.js';
+import { SQL_PASTA, praPagina, COMENTARIOS } from '../_lib/comentarios.js';
 
 // caminhos do site que não são artista
 const RESERVADO = new Set(['api', 'audio', 'assets', 'docs', 'previews', 'functions',
@@ -42,7 +42,8 @@ export async function onRequestGet({ params, request, env }) {
       `SELECT * FROM tracks WHERE ready = 1 AND artist_id =
          (SELECT id FROM artists WHERE slug = ? AND code = ? AND tipo != 'vitrine')`
     ).bind(slug, codigo).all(),
-    d.prepare(SQL_PASTA).bind(slug, codigo).all().catch(() => ({ results: [] }))
+    // desligados (11/10/2026): nem consulta o banco
+    COMENTARIOS.ligado ? d.prepare(SQL_PASTA).bind(slug, codigo).all().catch(() => ({ results: [] })) : null
   ]);
 
   // a prateleira interna da vitrine não é catálogo de ninguém: não abre página
@@ -142,7 +143,7 @@ export async function onRequestGet({ params, request, env }) {
       perfil: '/rideblan33',
       mais, totalPerfil,
       // comentários no tempo da faixa (10/10/2026): só pasta de artista
-      ...(tape ? {} : { coment: praPagina(doComentario && doComentario.results, tracks) }),
+      ...(tape || !COMENTARIOS.ligado ? {} : { comentarios: true, coment: praPagina(doComentario && doComentario.results, tracks) }),
       ...(MIDIA ? { midia: MIDIA } : {})
     }
   });

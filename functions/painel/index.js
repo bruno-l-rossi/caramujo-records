@@ -3,6 +3,7 @@
 
 import { COOKIE, DIAS, assinar, igual, autenticado, cookieEu } from '../_lib/sessao.js';
 import { ICONES } from '../_lib/icones.js';
+import { COMENTARIOS } from '../_lib/comentarios.js';
 
 /* ---------- entrada ---------- */
 
@@ -303,7 +304,7 @@ function pagina() {
   <div id="musicas" hidden></div>
   <div id="comentarios" hidden></div>
 </div>
-<script src="/assets/painel/analytics.js?v=2026-10-10a" defer></script>
+<script src="/assets/painel/analytics.js?v=2026-10-11a" defer></script>
 <script src="/assets/painel/vitrine.js?v=2026-10-04a" defer></script>
 <script src="/assets/painel/musicas.js?v=2026-10-06a" defer></script>
 <script src="/assets/painel/comentarios.js?v=2026-10-10a" defer></script>
@@ -314,6 +315,7 @@ function pagina() {
 <script>
 (function(){
   var $=function(i){return document.getElementById(i)};
+  var COMENTARIOS_LIGADOS=${COMENTARIOS.ligado ? 'true' : 'false'};   // 11/10/2026: desligados (_lib/comentarios.js)
   var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='home', filtro='', ordem='modificado', perfilVisto=null;
   var lojaResumo=null, lojaPedida=false, consumoHoje=null, consumoPedido=false, numerosSite=null, numerosPedido=false;
   var musicasResumo=null, musicasPedido=false, comentResumo=null, comentPedido=false, entrega=null, entregaPedida=false;
@@ -455,13 +457,19 @@ function pagina() {
     cb.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg></span>'+
       '<span><b>Comentários das pastas</b><small>'+textoComent()+'</small></span><span class="seta" aria-hidden="true">›</span>';
     cb.addEventListener('click',function(){ irPara('comentarios'); });
-    box.appendChild(cb);
+    if(COMENTARIOS_LIGADOS) box.appendChild(cb);
     // Entrega na hora dos beats (10/10/2026): a chave, o pedido de teste e os últimos links
     var eb=document.createElement('button'); eb.type='button'; eb.className='num'; eb.id='entregaHora';
     eb.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg></span>'+
       '<span><b>Entrega na hora</b><small>'+textoEntrega()+'</small></span><span class="seta" aria-hidden="true">›</span>';
     eb.addEventListener('click',abrirEntrega);
     box.appendChild(eb);
+    // Lista de e-mails com cupom de 25% (11/10/2026): o cadastro "Fique por dentro" da vitrine
+    var lb=document.createElement('button'); lb.type='button'; lb.className='num'; lb.id='listaEmails';
+    lb.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></svg></span>'+
+      '<span><b>Lista de e-mails</b><small>'+textoLista()+'</small></span><span class="seta" aria-hidden="true">›</span>';
+    lb.addEventListener('click',abrirLista);
+    box.appendChild(lb);
     box.appendChild(mb);
     box.appendChild(nb);
     return box;
@@ -492,7 +500,7 @@ function pagina() {
     var card=$('card');
     var pinta=function(){
       var lig=!!(entrega&&entrega.ligada);
-      card.innerHTML='<h2>Entrega na hora</h2><p>Pagou, o beat sai num link com o WAV, o MP3 e o contrato: o botão aparece no PEDIDO CONFIRMADO e o link vai no e-mail do comprador. Stems e serviços seguem com você, como hoje.</p>'+
+      card.innerHTML='<h2>Entrega na hora</h2><p>Pagou, o beat sai num link com o WAV, o MP3 e o contrato: o botão aparece no PEDIDO CONFIRMADO e o link vai no e-mail do comprador. Os serviços seguem com você, como hoje.</p>'+
         '<div class="sw"><div><b>Entrega na hora dos beats</b><small>'+(lig?'Ligada: venda com beat já sai com o link.':'Desligada: o checkout fica como era.')+'</small></div>'+
           '<button type="button" class="toggle" id="enLiga" aria-pressed="'+lig+'" aria-label="Entrega na hora dos beats"><i></i></button></div>'+
         '<div class="bloco"><div class="rot">TESTAR ANTES</div><p>Cria um pedido de mentira com o primeiro beat à venda e abre a página que o comprador vê. Nada é vendido e o beat segue na vitrine.</p>'+
@@ -521,6 +529,41 @@ function pagina() {
     $('veil').hidden=false;
     if(entrega) pinta(); else { card.innerHTML='<h2>Entrega na hora</h2><p>carregando…</p>'; }
     fetch('/api/painel?op=entrega').then(function(r){return r.json()}).then(function(j){ if(j&&j.ok){ entrega=j; if(!$('veil').hidden) pinta(); } }).catch(function(){});
+  }
+  var lista=null, listaPedida=false;
+  function textoLista(){
+    if(!lista) return 'quem se cadastrou pra receber o cupom de 25%';
+    if(!lista.total) return 'ninguém ainda';
+    return lista.total+(lista.total===1?' pessoa':' pessoas')+' · '+lista.usaram+(lista.usaram===1?' usou o cupom':' usaram o cupom');
+  }
+  function pedirLista(){
+    if(listaPedida) return; listaPedida=true;
+    fetch('/api/painel?op=lista').then(function(r){return r.json()}).then(function(j){
+      if(!j||!j.ok) return; lista=j;
+      var el=$('listaEmails'); if(el&&vista==='home') el.querySelector('small').innerHTML=textoLista();
+    }).catch(function(){});
+  }
+  function abrirLista(){
+    var card=$('card');
+    var pinta=function(){
+      var l=lista||{total:0,ultimos:[],emails:[]};
+      card.innerHTML='<h2>Lista de e-mails</h2><p>Quem se cadastrou no "Fique por dentro" da vitrine. Cada pessoa ganha um cupom só dela: 25% nos beats do catálogo, uso único, 15 dias. Os cupons da lista não aparecem na tela de Cupons.</p>'+
+        '<div class="bloco"><div class="rot">NA LISTA</div><p>'+esc(textoLista())+(l.sairam?' · '+l.sairam+(l.sairam===1?' saiu':' saíram'):'')+'</p>'+
+        (l.emails&&l.emails.length?'<div class="acoes" style="margin-top:12px"><button type="button" class="pill solid" id="liCopia">Copiar os e-mails</button></div>':'')+'</div>'+
+        '<div class="bloco"><div class="rot">ÚLTIMOS CADASTROS</div>'+((l.ultimos||[]).length?'<div style="margin-top:6px">'+l.ultimos.map(function(u){
+          var d=new Date(u.em), dd=isNaN(d)?'':('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2);
+          return '<div class="ev"><span>'+dd+'</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(u.email)+(u.usou?' · usou o cupom':'')+'</span></div>';
+        }).join('')+'</div>':'<p style="margin-top:6px">Ninguém ainda.</p>')+'</div>'+
+        '<div class="acoes"><button type="button" class="pill" data-close>Fechar</button></div>';
+      card.querySelector('[data-close]').addEventListener('click',fechar);
+      var cp=$('liCopia');
+      if(cp) cp.addEventListener('click',function(){
+        var txt=(l.emails||[]).join(', ');
+        (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){ flash(l.emails.length+' e-mails copiados.'); }).catch(function(){ prompt('Copie os e-mails:',txt); });
+      });
+    };
+    $('veil').hidden=false; pinta();
+    fetch('/api/painel?op=lista').then(function(r){return r.json()}).then(function(j){ if(j&&j.ok){ lista=j; if(!$('veil').hidden) pinta(); } }).catch(function(){});
   }
   function textoComent(){
     var r=comentResumo;
@@ -603,7 +646,7 @@ function pagina() {
     $('vitrine').hidden = vista!=='vitrine';
     $('musicas').hidden = vista!=='musicas';
     $('comentarios').hidden = vista!=='comentarios';
-    if(vista==='home'){ pedirResumoFunil(); pedirResumoLoja(); pedirConsumo(); pedirNumeros(); pedirMusicas(); pedirComent(); pedirEntrega(); $('lista').innerHTML=''; $('lista').appendChild(home()); pintarConsumo(); return; }
+    if(vista==='home'){ pedirResumoFunil(); pedirResumoLoja(); pedirConsumo(); pedirNumeros(); pedirMusicas(); if(COMENTARIOS_LIGADOS) pedirComent(); pedirEntrega(); pedirLista(); $('lista').innerHTML=''; $('lista').appendChild(home()); pintarConsumo(); return; }
     if(vista==='comentarios'){
       if(!$('comentarios').dataset.montado && window.CaramujoComentarios){
         $('comentarios').dataset.montado='1';

@@ -39,6 +39,8 @@ export async function onRequestPost({ request, env }) {
     const out = { valid: true };
     if (c.preco_fixo !== undefined && c.preco_fixo !== null) out.fixedPrice = c.preco_fixo;
     else out.pct = c.pct;
+    if (c.escopo) out.escopo = c.escopo;          // 'beats': vale só pros beats do catálogo (11/10/2026)
+    if (c.vale_ate) out.valeAte = c.vale_ate;
     return Response.json(out, { status: 200, headers: cors });
   } catch (e) {
     console.error('[validate-coupon] Erro:', e.message);
