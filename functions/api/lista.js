@@ -2,7 +2,7 @@
 //   POST /api/lista { email, de }   entra na lista; o cupom vai pro e-mail
 //   GET  /api/lista?sair=<token>     sai da lista (o link do rodapé do e-mail)
 import { db, json } from '../_lib/db.js';
-import { entrar, sair, enviarCupom, ipDe } from '../_lib/lista.js';
+import { entrar, sair, enviarCupom, ipDe, podeReenviar } from '../_lib/lista.js';
 import { paginaAviso } from '../_lib/pedidopagina.js';
 
 export async function onRequestPost(context) {
@@ -16,12 +16,14 @@ export async function onRequestPost(context) {
   const ip = await ipDe(request, env.PAINEL_SENHA || '');
   const r = await entrar(d, { email: b.email, origem: b.de, ip });
   if (r.erro) return json({ erro: r.erro }, r.http || 400);
-  // cupom novo, ou o mesmo de novo (pediu outra vez e o cupom ainda vale): manda o e-mail
+  // cupom novo, ou o mesmo de novo (pediu outra vez e o cupom ainda vale): manda o e-mail.
+  // Espera o Resend responder (12/10/2026) pra quem se cadastrou saber se o e-mail saiu.
+  let enviado = null;
   if (r.cupom) {
-    const envio = enviarCupom(env, r).catch((e) => console.error('[lista] e-mail', e && e.message));
-    if (context.waitUntil) context.waitUntil(envio); else await envio;
+    if (r.status === 'novo' || await podeReenviar(d, r.email)) enviado = (await enviarCupom(env, r, d)).ok;
+    else enviado = 'recente';
   }
-  return json({ ok: true, status: r.status });
+  return json({ ok: true, status: r.status, enviado });
 }
 
 export async function onRequestGet({ request, env }) {

@@ -53,8 +53,9 @@ export function contaDoCarrinho(itens, precos, cupom) {
         subtotal += precos.stems;
       } else nBeats++;
     } else if (it.type === 'Pacote') {
-      const preco = precos.pacotes[base];
-      if (!preco) return { erro: 'pacote desconhecido: ' + base };
+      // 12/10/2026: a seção Pacotes saiu da vitrine; carrinho antigo com pacote segue valendo
+      // pelos beats dele (o preço vem da tabela do Leve mais, não do pacote)
+      if (!precos.pacotes[base] && !/^\d+ Beats?$/.test(base)) return { erro: 'pacote desconhecido: ' + base };
       const grupos = Array.isArray(it.pkgBeats) ? it.pkgBeats : [];
       const precisa = Number((base.match(/^(\d+)/) || [])[1]) || 0;
       if (!grupos.length || grupos.length !== qtd || grupos.some((g) => !Array.isArray(g) || g.length !== precisa)) {
@@ -158,7 +159,7 @@ async function sendNotificationEmail({ env, payment, name, artistName, email, cp
       <tr><td>Valor</td><td>R$ ${amount}</td></tr>
       <tr><td>Método</td><td>${selectedPaymentMethod === 'bank_transfer' ? 'PIX' : 'Cartão'}</td></tr>
       ${couponCode ? `<tr><td>Cupom</td><td>${couponCode}</td></tr>` : ''}
-      ${pedido ? `<tr><td>Entrega</td><td><a href="${pedido.url}" style="color:#c3a074">link do pedido</a>${pedido.tudo ? ' (tudo entregue na hora)' : ' (beats na hora; serviços com você)'}</td></tr>` : ''}
+      ${pedido ? `<tr><td>Entrega</td><td><a href="${pedido.url}" style="color:#c3a074">link do pedido</a>${pedido.tudo ? ' (tudo entregue na hora)' : pedido.tipo === 'servico' ? ' (quem comprou manda o material por lá; você entrega pelo painel)' : ' (beats na hora; o material dos serviços chega por lá)'}</td></tr>` : ''}
       <tr class="sect"><td colspan="2">CLIENTE</td></tr>
       <tr><td>Nome artístico</td><td>${artistName || '—'}</td></tr>
       <tr><td>Nome</td><td>${name}</td></tr>
@@ -388,7 +389,7 @@ export async function onRequestPost({ request, env }) {
     // Envia email de confirmação de pedido ao comprador (apenas quando aprovado)
     if (payment.status === 'approved') {
       try {
-        await enviarEmailComprador(env, { name, artistName, email, itemsList: itemsForEmail, contractHtml, pedidoUrl: pedido ? pedido.url : null, pedidoTudo: !!(pedido && pedido.tudo), naHora });
+        await enviarEmailComprador(env, { name, artistName, email, itemsList: itemsForEmail, contractHtml, pedidoUrl: pedido ? pedido.url : null, pedidoTudo: !!(pedido && pedido.tudo), pedidoTipo: pedido ? pedido.tipo : null, naHora });
       } catch (e) { console.error('[email] Erro confirmação comprador:', e.message); }
     }
 
@@ -398,7 +399,7 @@ export async function onRequestPost({ request, env }) {
       status: payment.status,
       contractPdf: contractHtml ? btoa(unescape(encodeURIComponent(contractHtml))) : null,
       pix: pixInfo ? { qrCode: pixInfo.qr_code, qrCodeBase64: pixInfo.qr_code_base64, expiresAt: pixInfo.date_of_expiration } : null,
-      ...(pedido ? { pedido: pedido.caminho, pedidoTudo: pedido.tudo } : {}),
+      ...(pedido ? { pedido: pedido.caminho, pedidoTudo: pedido.tudo, pedidoTipo: pedido.tipo } : {}),
     }, { status: 200, headers: cors });
 
   } catch (err) {

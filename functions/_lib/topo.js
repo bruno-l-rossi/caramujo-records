@@ -58,7 +58,7 @@ export const TOPO_CSS_CEL = `  .topo{padding:0 .7rem 0 1rem}.topo ul{display:non
 `;
 
 export function topo(de, genAtual = '', cont = null) {
-  const links = [['/#beats', 'Beats', true], ['/#packages', 'Pacotes'], ['/#services', 'Serviços'], ['/#estudio', 'Sobre nós'], ['/#contact', 'Contato']];
+  const links = [['/#beats', 'Beats', true], ['/#services', 'Serviços'], ['/#estudio', 'Sobre nós'], ['/#contact', 'Contato']];
   const lis = links.map(([h, t, a]) => `<li><a href="${h}"${a ? ' class="ativo"' : ''}>${t}</a></li>`).join('');
   // celular (04/10/2026, opção A do Bruno): BEATS abre um acordeão com "Todos os beats" em
   // destaque e os gêneros em duas colunas, com quantos estão à venda

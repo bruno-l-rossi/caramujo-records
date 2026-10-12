@@ -46,7 +46,7 @@ export function contratoHtml({ name, cpf, email, items, category, amount, paymen
   <p><b>PRODUTOR (LICENCIANTE)</b></p>
   <div class="row"><b>Nome artístico:</b><span>@rideblan33</span></div>
   <div class="row"><b>Nome completo:</b><span>Bruno Lanzoni Rossi</span></div>
-  <div class="row"><b>Email:</b><span>contato@caramujorecords.com.br</span></div>
+  <div class="row"><b>Email:</b><span>rideblan33@caramujorecords.com.br</span></div>
   <br/>
   <p><b>COMPRADOR (LICENCIADO)</b></p>
   <div class="row"><b>Nome artístico:</b><span>${artistName || '—'}</span></div>
@@ -104,7 +104,9 @@ export function contratoHtml({ name, cpf, email, items, category, amount, paymen
 // Corpo do e-mail "Pedido confirmado" do comprador.
 // pedidoUrl (10/10/2026, entrega na hora): o link com os arquivos do beat. Sem ele, o e-mail
 // sai exatamente como antes (teste16 confere com as cópias guardadas).
-export function htmlComprador({ greeting, itemsList, contractHtml, pedidoUrl = null, pedidoTudo = false, naHora = false }) {
+export function htmlComprador({ greeting, itemsList, contractHtml, pedidoUrl = null, pedidoTudo = false, pedidoTipo = null, naHora = false }) {
+  // 12/10/2026: pedido com serviço também tem link (pra mandar as vozes ou a referência)
+  const soServico = pedidoTipo === 'servico', misto = pedidoTipo === 'misto';
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -133,7 +135,7 @@ export function htmlComprador({ greeting, itemsList, contractHtml, pedidoUrl = n
               </div>
             </td>
             <td align="right" valign="top" style="width:90px;">
-              <img src="https://caramujorecords.com.br/assets/brand/selo-180.png" width="72" height="72" alt="Caramujo Records" style="display:block;border:0;"/>
+              <img src="https://caramujorecords.com.br/assets/brand/selo-email.png" width="72" height="72" alt="Caramujo Records" style="display:block;border:0;"/>
             </td>
           </tr></table>
         </td>
@@ -151,12 +153,12 @@ export function htmlComprador({ greeting, itemsList, contractHtml, pedidoUrl = n
           <p style="font-family:Georgia,'Times New Roman',serif;font-size:15px;
             color:#b89e72;line-height:1.85;margin:0 0 28px;">
             ${pedidoUrl ? `Recebemos seu pedido de <strong style="color:#f2ecdf;">${itemsList}</strong>.
-            ${pedidoTudo ? 'Os arquivos já estão prontos' : 'Os arquivos do beat já estão prontos'}: WAV, MP3 e o contrato, no link abaixo.
+            ${soServico ? 'O próximo passo é seu: na página do pedido você manda o que o @rideblan33 precisa pra começar (as vozes, a faixa ou a referência).' : pedidoTudo ? 'Os arquivos já estão prontos: WAV, MP3 e o contrato, no link abaixo.' : misto ? 'Os arquivos do beat já estão prontos: WAV, MP3 e o contrato, no link abaixo. Na mesma página você manda o que o @rideblan33 precisa pros serviços.' : 'Os arquivos do beat já estão prontos: WAV, MP3 e o contrato, no link abaixo.'}
           </p>
           <table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;"><tr>
             <td style="background:#b98f5e;"><a href="${pedidoUrl}" style="display:inline-block;padding:14px 22px;
               font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;font-weight:bold;letter-spacing:0.18em;
-              color:#14110d;text-decoration:none;text-transform:uppercase;">Baixar seus arquivos</a></td>
+              color:#14110d;text-decoration:none;text-transform:uppercase;">${soServico ? 'Abrir seu pedido' : 'Baixar seus arquivos'}</a></td>
           </tr></table>
           <p style="font-family:'Courier New',Courier,monospace;font-size:11px;
             color:#6f6757;line-height:1.7;margin:-16px 0 28px;">
@@ -222,7 +224,7 @@ export function htmlComprador({ greeting, itemsList, contractHtml, pedidoUrl = n
           <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
             <td><div style="font-family:'Courier New',Courier,monospace;font-size:8px;
               letter-spacing:0.2em;color:#6f6757;text-transform:uppercase;">
-              contato@caramujorecords.com.br</div></td>
+              rideblan33@caramujorecords.com.br</div></td>
             <td align="right"><div style="font-family:'Courier New',Courier,monospace;font-size:8px;
               letter-spacing:0.2em;color:#6f6757;">&copy; 2026</div></td>
           </tr></table>
@@ -247,7 +249,7 @@ export function htmlComprador({ greeting, itemsList, contractHtml, pedidoUrl = n
 
 // Manda o "Pedido confirmado" pro comprador, com a via do contrato em anexo.
 // Chamado pelo create-payment (cartão aprovado na hora) e pelo webhook (PIX).
-export async function enviarEmailComprador(env, { name, artistName, email, itemsList, contractHtml, pedidoUrl = null, pedidoTudo = false, naHora = false }) {
+export async function enviarEmailComprador(env, { name, artistName, email, itemsList, contractHtml, pedidoUrl = null, pedidoTudo = false, pedidoTipo = null, naHora = false }) {
   const resendKey = env.RESEND_API_KEY;
   const fromEmail = env.NOTIFY_FROM || 'rideblan33@caramujorecords.com.br';
   if (!resendKey) { console.warn('[email-buyer] RESEND_API_KEY não configurado — skip.'); return; }
@@ -260,7 +262,7 @@ export async function enviarEmailComprador(env, { name, artistName, email, items
     from: `Caramujo Records <${fromEmail}>`,
     to: [email],
     subject: `Caramujo Records — Pedido confirmado ✓`,
-    html: htmlComprador({ greeting, itemsList, contractHtml, pedidoUrl, pedidoTudo, naHora }),
+    html: htmlComprador({ greeting, itemsList, contractHtml, pedidoUrl, pedidoTudo, pedidoTipo, naHora }),
   };
   if (contractHtml) {
     const safeName = (name || 'comprador').replace(/[^a-zA-Z0-9À-ÿ\s-]/g, '').trim().replace(/\s+/g, '-').slice(0, 60);

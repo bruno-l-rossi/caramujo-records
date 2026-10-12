@@ -4,6 +4,7 @@
 //   /pedido/<token>/mp3/<beat>    o MP3 da prateleira (R2)
 //   /pedido/<token>/contrato      o contrato, refeito com os dados do Mercado Pago
 //   /pedido/<token>/estado        { status } (a página do PIX pendente pergunta)
+//   POST /pedido/<token>/envio/<k> o material do serviço k (vozes, faixa ou referência; 12/10/2026)
 // O token (24 letras) é a chave: sem ele, 404. Pedido pendente não entrega arquivo.
 
 import { db, json } from '../_lib/db.js';
@@ -11,7 +12,8 @@ import { paginaErro } from '../_lib/erro.js';
 import { CABECALHOS } from '../_lib/cabecalhos.js';
 import { driveFile } from '../_lib/drive.js';
 import { contratoHtml } from '../_lib/emails.js';
-import { lerPedido, marcarPago, contarDownload, TETO_DOWNLOADS } from '../_lib/pedidos.js';
+import { lerPedido, marcarPago, contarDownload, TETO_DOWNLOADS, limparEnvio, salvarEnvio } from '../_lib/pedidos.js';
+import { avisarEnvio } from '../_lib/servicoemails.js';
 import { paginaPedido, paginaAviso } from '../_lib/pedidopagina.js';
 
 const PRIVADO = { 'cache-control': 'private, no-store', 'x-robots-tag': 'noindex, nofollow', 'referrer-policy': 'no-referrer' };
@@ -130,4 +132,34 @@ export async function onRequestGet({ params, request, env }) {
   if (len) h.set('content-length', len);
   if (cr) h.set('content-range', cr);
   return new Response(r.body, { status: r.status, headers: h });
+}
+
+// O material do serviço (12/10/2026): JSON pelo fetch da página, ou o formulário normal (sem JS)
+export async function onRequestPost({ params, request, env, waitUntil }) {
+  const partes = Array.isArray(params.caminho) ? params.caminho : params.caminho ? [params.caminho] : [];
+  const [token, acao, kTxt] = partes;
+  if (acao !== 'envio' || !/^\d{1,2}$/.test(String(kTxt || ''))) return paginaErro(request, env, 404);
+  const ehJson = /json/.test(request.headers.get('content-type') || '');
+  const responde = (ok, erro, status = 200) => ehJson
+    ? json(ok ? { ok: true } : { ok: false, erro }, status, { 'cache-control': 'no-store' })
+    : ok ? Response.redirect(new URL('/pedido/' + token + '#sv' + kTxt, request.url).toString(), 303)
+      : html(paginaAviso('Não deu pra mandar', erro, '/pedido/' + token), status);
+  const txt = await request.text().catch(() => '');
+  if (txt.length > 8000) return responde(false, 'Texto grande demais.', 413);
+  let corpo = {};
+  try { corpo = ehJson ? JSON.parse(txt || '{}') : Object.fromEntries(new URLSearchParams(txt)); } catch (_) { return responde(false, 'Pedido torto.', 400); }
+  const d = await db(env);
+  const p = await lerPedido(d, token);
+  if (!p) return paginaErro(request, env, 404);
+  if (!(p.status === 'pago' || p.status === 'teste')) return responde(false, 'O pagamento ainda não caiu.', 403);
+  const k = Number(kTxt), it = (p.itens || [])[k];
+  if (!it || it.t !== 'servico') return responde(false, 'Esse item não pede envio.', 404);
+  if (it.entrega) return responde(false, 'Esse serviço já foi entregue. Pra mudar algo, chama no Direct.', 409);
+  const lim = limparEnvio(it.nome, corpo);
+  if (lim.erro) return responde(false, lim.erro, 400);
+  const novo = await salvarEnvio(d, p, k, lim.envio);
+  if (!novo) return responde(false, 'Não salvou. Tenta de novo.', 500);
+  const aviso = avisarEnvio(env, novo, novo.itens[k]).catch(() => {});
+  if (waitUntil) waitUntil(aviso); else await aviso;
+  return responde(true);
 }

@@ -164,7 +164,7 @@ ${TOPO_CSS}.wrap{max-width:1120px;margin:0 auto;padding:0 2.4rem}
 .btn{display:flex;align-items:center;justify-content:center;gap:10px;height:52px;padding:0 26px;background:var(--bone);color:var(--black);font-size:.8rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;transition:background .14s}
 .btn svg{width:18px;height:18px}
 .btn:hover,.btn.no-carrinho{background:var(--fire)}
-.secao{margin-top:64px}
+.secao{margin-top:64px;scroll-margin-top:78px}
 .secao .cab{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:16px}
 .secao h2{font:500 2.2rem/1.1 var(--serif);color:var(--cream)}
 .secao .ver{font-size:.66rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--fire);white-space:nowrap}
@@ -336,7 +336,7 @@ ${acao}
 function pacotesTexto(pk, { link = true } = {}) {
   if (!pk.length) return '';
   const lis = pk.map((p) => `<li>${p.cada ? `${p.n} ou mais a ${real(p.cada)} cada` : `${p.n} beats por ${real(p.preco)}`}<span class="off">${p.off}% off</span></li>`).join('');
-  return `<ul class="pacs">${lis}${link ? '<li><a href="/#packages">ver pacotes</a></li>' : ''}</ul>`;
+  return `<ul class="pacs">${lis}</ul>`;
 }
 
 function cabecalho({ titulo, descricao, url, img, imgAlt, ogTitulo, ogDescricao, ld, preload, tipoOg = 'website' }) {
@@ -416,7 +416,7 @@ export function paginaBeat(b, loja) {
     : `${b.name}: beat de ${g} exclusivo produzido por @rideblan33${bpmTxt || tomTxt ? ', ' + [bpmTxt, tomTxt ? 'em ' + tomTxt : ''].filter(Boolean).join(' ') : ''}. Licença exclusiva com contrato, MP3 + WAV, por ${real(preco)}.`;
   const ficha = b.sold
     ? `${fichaCab} ${quem} Já foi vendido com licença exclusiva. Ouça e descubra beats parecidos à venda.`
-    : `${fichaCab} ${quem} Licença exclusiva: o beat é vendido uma vez só, com contrato no nome de quem compra e uso comercial liberado, em MP3 e WAV, com entrega em até 1 dia útil.`;
+    : `${fichaCab} ${quem} Licença exclusiva: o beat é vendido uma vez só, com contrato no nome de quem compra e uso comercial liberado, em MP3 e WAV, com entrega instantânea pelo link do pedido.`;
   const ld = [
     {
       '@context': 'https://schema.org', '@type': 'Product', name: b.name, url,
@@ -450,7 +450,7 @@ export function paginaBeat(b, loja) {
 <div class="dono"><p>Esse beat já tem dono.</p><span>A licença é exclusiva: quando alguém compra, o beat sai da loja. Os de baixo estão à venda.</span></div>`
     : `<div class="compra"><div class="linha"><div class="valor">${real(preco)}<small>Licença exclusiva</small></div>${pacotesTexto(pk)}</div>
 <a class="btn js-add" data-bid="${b.id}" href="${linkAdd(b)}"${deAttr(de)}>${ICO.cart}<span>Adicionar ao carrinho</span></a>
-<ul class="inclui"><li><b>Só seu:</b> depois da compra o beat sai da loja</li><li><b>Contrato no seu nome</b>, com uso comercial liberado</li><li><b>MP3 + WAV</b>, entrega em até 1 dia útil</li></ul></div>`;
+<ul class="inclui"><li><b>Só seu:</b> depois da compra o beat sai da loja</li><li><b>Contrato no seu nome</b>, com uso comercial liberado</li><li><b>MP3 + WAV</b>, entrega instantânea</li></ul></div>`;
 
   const capaG = b.capa
     ? `<div class="capa-g"><img src="${esc(capaGrande(b))}" alt="Capa da beat tape${tape ? ' ' + esc(tape.name) : ''}" width="1000" height="1000" fetchpriority="high">`
@@ -476,7 +476,7 @@ ${compra}
 </div>
 ${tapeCard}
 </article>
-${par.length ? `<section class="secao" aria-labelledby="tParecidos"><div class="cab"><h2 id="tParecidos">${b.sold ? 'Podem te interessar' : 'Beats parecidos'}</h2><a class="ver" href="${genUrl}">Todos de ${esc(gen)} ›</a></div>
+${par.length ? `<section class="secao" id="parecidos" aria-labelledby="tParecidos"><div class="cab"><h2 id="tParecidos">${b.sold ? 'Podem te interessar' : 'Beats parecidos'}</h2><a class="ver" href="${genUrl}">Todos de ${esc(gen)} ›</a></div>
 <ol class="lista js-lista">${par.map((x, i) => linha(x, i, de, preco)).join('')}</ol></section>` : ''}
 </main>
 ${par.length ? BARRA : ''}
@@ -544,7 +544,7 @@ export function paginaGenero(gslug, loja) {
 
   const p2 = pk.find((p) => p.n === 2), p3 = pk.find((p) => p.n === 3);
   const pacoteBloco = pk.length
-    ? `<div class="pacote"><div><div class="k">Pacotes</div><p>Leva mais de um? ${pk.map((p) => `<span>${p.cada ? `${p.n} ou mais a ${real(p.cada)} cada` : `${p.n} beats por ${real(p.preco)}`}<span class="off">${p.off}% off</span></span>`).join(', ')}.</p></div><a href="/#packages"${deAttr(de)}>Ver pacotes ›</a></div>`
+    ? `<div class="pacote"><div><div class="k">Leve mais, pague menos</div><p>Leva mais de um? ${pk.map((p) => `<span>${p.cada ? `${p.n} ou mais a ${real(p.cada)} cada` : `${p.n} beats por ${real(p.preco)}`}<span class="off">${p.off}% off</span></span>`).join(', ')}.</p></div><a href="/#beats"${deAttr(de)}>Escolher beats ›</a></div>`
     : '';
   const corpo = `<body class="pg-genero">
 ${topo(de, gslug, aVendaPorGenero(beats))}

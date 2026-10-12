@@ -14,7 +14,8 @@ import { PADRAO as NUM_PADRAO, deTexto as numDeTexto } from '../_lib/numeros.js'
 import { painelLer as musicasLer, painelAcao as musicasAcao } from '../_lib/musicas.js';
 import { painelLer as comentariosLer, painelResumo as comentariosResumo, painelAcao as comentarioAcao } from '../_lib/comentarios.js';
 import { somUrl } from '../_lib/midia.js';
-import { entregaLigada, ligarEntrega, pedidoDeTeste, ultimosPedidos } from '../_lib/pedidos.js';
+import { entregaLigada, ligarEntrega, pedidoDeTeste, pedidoDeTesteServico, ultimosPedidos, salvarEntrega } from '../_lib/pedidos.js';
+import { avisarEntrega } from '../_lib/servicoemails.js';
 import { painelLista } from '../_lib/lista.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
@@ -65,6 +66,20 @@ export async function onRequest({ request, env }) {
     const t = await pedidoDeTeste(request, env);
     if (!t) return json({ erro: 'Nenhum beat à venda com arquivo pra testar.' }, 400);
     return json({ ok: true, ...t, pedidos: await ultimosPedidos(d) });
+  }
+  // serviços do pedido (12/10/2026): pedido de teste com serviço e a entrega pelo link
+  if (op === 'pedido-teste-servico') {
+    const t = await pedidoDeTesteServico(d);
+    return json({ ok: true, ...t, pedidos: await ultimosPedidos(d) });
+  }
+  if (op === 'pedido-entregar') {
+    const k = Number(body.k);
+    if (!Number.isInteger(k) || k < 0) return json({ erro: 'item inválido' }, 400);
+    const r = await salvarEntrega(d, String(body.token || ''), k, body.link);
+    if (r.erro) return json({ erro: r.erro }, 400);
+    let avisou = false;
+    if (body.link && r.pedido.status !== 'teste') avisou = await avisarEntrega(env, r.pedido, r.pedido.itens[k], k).catch(() => false);
+    return json({ ok: true, avisou, pedidos: await ultimosPedidos(d) });
   }
   if (/^comentario-/.test(op)) {
     const r = await comentarioAcao(op, d, body);

@@ -131,7 +131,7 @@
     'pagina-beat': 'Página de beat', 'pagina-genero': 'Página de gênero', artista: '@ da pasta de artista',
     'artista-mais': 'Ver tudo da pasta de artista', painel: 'Painel (você)',
     // 11/10/2026: caixa "Quer um som assim?" da aba Músicas, topo da página do pedido
-    'perfil-musicas': 'Quer um som assim? (aba Músicas)', pedido: 'Página do pedido'
+    'perfil-musicas': 'Quer um som assim? (aba Músicas)', pedido: 'Página do pedido', vendido: 'Parecidos de um vendido (vitrine)', lista: 'E-mail da lista'
   };
   var nomeOrigem = function (o) { return o.nome ? 'Tape: ' + o.nome : (ORIGEM[o.origem] || o.origem); };
 

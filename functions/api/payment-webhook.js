@@ -176,7 +176,7 @@ async function sendBuyerConfirmationEmail({ env, payment, pedido = null }) {
     }
   } catch (e) { console.error('[email-buyer] Erro ao gerar contrato:', e.message); }
 
-  await enviarEmailComprador(env, { name, artistName, email, itemsList, contractHtml, pedidoUrl: pedido ? pedido.url : null, pedidoTudo: !!(pedido && pedido.tudo), naHora });
+  await enviarEmailComprador(env, { name, artistName, email, itemsList, contractHtml, pedidoUrl: pedido ? pedido.url : null, pedidoTudo: !!(pedido && pedido.tudo), pedidoTipo: pedido ? pedido.tipo : null, naHora });
 }
 
 // ── Handler principal ────────────────────────────────────────────────────────

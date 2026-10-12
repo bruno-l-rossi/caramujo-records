@@ -192,3 +192,14 @@ pra marcar a tape inteira. O que é marcado ali some do bloco e não volta.
 - Cor de acento competindo com a capa.
 - Divisória entre itens da lista, capa por linha, sombra em card.
 - Ícone decorativo ou emoji no lugar de tipografia.
+
+## Abas da pasta do artista e Fique por dentro da tape (12/10/2026)
+
+Pasta com músicas e beats: as abas viram um botão duplo de ponta a ponta (borda `#333`, cantos
+redondos), "MÚSICAS 4 | BEATS 3" em caixa alta com o número mais apagado; a aba aberta fica
+cheia de branco com texto preto. Músicas vem primeiro e abre por padrão. "Ordem" desce pra
+linha de baixo, à direita. Tape (só beats) segue com a aba simples sublinhada.
+
+Página da tape: caixa "Fique por dentro" antes do "Mais de @rideblan33", fundo `#0b0b0b`, borda
+`#2a2a2a`, cantos de 18px, kicker cinza, título 26px peso 800, campo e botão redondos (botão
+branco cheio). Nunca na pasta de artista.

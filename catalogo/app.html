@@ -144,6 +144,18 @@ __META__
   .order{display:flex;align-items:center;gap:7px;padding:0 0 10px;background:transparent;border:0;
     font-size:14px;color:var(--ink-2);cursor:pointer;white-space:nowrap}
   .tabsbar-line{height:1px;background:rgba(255,255,255,.07)}
+  /* Abas da pasta do artista, opção A (12/10/2026): botão duplo com o número, Músicas primeiro.
+     Só quando a pasta tem as duas; a tape (só beats) segue com a aba simples. */
+  .tab i{font-style:normal}
+  .tabsbar:not(.duas) .tab i{display:none}
+  .tabsbar.duas{flex-wrap:wrap;row-gap:0;padding-top:12px}
+  .tabsbar.duas .tabs{flex:1 1 100%;gap:0;border:1px solid #333;border-radius:999px;padding:3px}
+  .tabsbar.duas .tab{flex:1;border:0;border-radius:999px;padding:11px 0;font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#bdbdbd;transition:background .15s,color .15s}
+  .tabsbar.duas .tab:hover{color:#fff}
+  .tabsbar.duas .tab[aria-selected="true"]{background:#fff;color:#000}
+  .tabsbar.duas .tab i{font-weight:400;opacity:.6;margin-left:6px;letter-spacing:0}
+  .tabsbar.duas .order{margin-left:auto;padding:10px 0 2px}
+  .tabsbar.duas + .tabsbar-line{display:none}
 
   /* o espaço pro player do rodapé fica no fim do painel (depois do "Mais de" e do
      logo), não embaixo da lista: a última faixa encosta no bloco (26/09/2026) */
@@ -198,6 +210,20 @@ __META__
     transition:text-decoration-color .2s}
   .who .at-link svg{width:15px;height:15px;color:#b7b7b7;flex:none;transition:transform .2s}
   @media(hover:hover){.who .at-link:hover{text-decoration-color:#fff}.who .at-link:hover svg{transform:translateX(2px);color:#fff}}
+  /* Fique por dentro (12/10/2026): a lista com cupom de 25%, só na página da tape */
+  .fique{margin:26px 0 8px;padding:22px 20px;border:1px solid #2a2a2a;border-radius:18px;background:#0b0b0b}
+  .fq-k{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#9a9a9a}
+  .fique h3{margin:6px 0 8px;font-size:26px;font-weight:800;color:#fff;letter-spacing:-.01em}
+  .fique p{margin:0;font-size:15px;line-height:1.55;color:#b7b7b7}
+  .fq-f{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+  .fq-in{width:100%;box-sizing:border-box;padding:15px 18px;border:1px solid #333;border-radius:999px;background:transparent;color:#fff;font:inherit;font-size:15px}
+  .fq-in:focus{outline:none;border-color:#fff}
+  .fq-bt{width:100%;justify-content:center;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:13px;cursor:pointer}
+  .fq-bt:disabled{opacity:.6;cursor:default}
+  .fq-n{margin-top:12px;font-size:12px;color:#777;line-height:1.5}
+  .fq-n.erro{color:#e0a96d}
+  .fq-re{background:none;border:0;padding:0;font:inherit;color:#fff;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+  @media(min-width:861px){.fq-f{flex-direction:row}.fq-in{flex:1}.fq-bt{width:auto;flex:none;padding-left:26px;padding-right:26px}}
   .mais{padding:22px 0 20px;border-top:1px solid rgba(255,255,255,.06);margin-top:8px}
   .mais[hidden]{display:none}
   .mais-cab{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
@@ -416,6 +442,10 @@ __META__
     .tabsbar{padding-top:0}
     .tab{font-size:17px;padding-bottom:11px}
     .order{padding-bottom:11px}
+    .tabsbar.duas .tab{font-size:14px;padding:11px 0}
+    .tabsbar.duas .tabs{flex:0 1 420px}
+    .tabsbar.duas{flex-wrap:nowrap;padding-top:4px}
+    .tabsbar.duas .order{padding:0}
     .who{margin-top:14px;font-size:15px}
     .count{margin-top:6px;font-size:15px}
     .actions{gap:26px;margin-top:22px}
@@ -518,8 +548,8 @@ __META__
       <div class="navwrap">
       <div class="tabsbar">
         <div class="tabs" role="tablist">
-          <button class="tab" id="tabBeats" role="tab" aria-selected="true" type="button">Beats</button>
-          <button class="tab" id="tabSons" role="tab" aria-selected="false" type="button">Músicas</button>
+          <button class="tab" id="tabSons" role="tab" aria-selected="false" type="button">Músicas<i id="nSons"></i></button>
+          <button class="tab" id="tabBeats" role="tab" aria-selected="true" type="button">Beats<i id="nBeats"></i></button>
         </div>
         <button class="order" id="orderBtn" type="button">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#b7b7b7" stroke-width="1.9" aria-hidden="true"><path d="M8 4v16"/><path d="M5 7l3-3 3 3"/><path d="M16 20V4"/><path d="M13 17l3 3 3-3"/></svg>
@@ -535,6 +565,18 @@ __META__
       </div>
 
       <div class="list" id="list"></div>
+
+      <!-- Fique por dentro (12/10/2026): só na página de uma tape; o servidor (/api/lista) cria o cupom -->
+      <section class="fique" id="fique" hidden aria-labelledby="fqTit">
+        <div class="fq-k">25% na primeira compra</div>
+        <h3 id="fqTit">Fique por dentro</h3>
+        <p id="fqP">Cadastre-se para receber um cupom exclusivo de 25% em sua primeira compra e ouvir as próximas beat tapes antes de todo mundo.</p>
+        <form class="fq-f" id="fqForm" novalidate>
+          <input class="fq-in" id="fqEmail" type="email" inputmode="email" autocomplete="email" placeholder="seu@email.com" aria-label="Seu e-mail" required>
+          <button class="pill solid fq-bt" id="fqBt" type="submit">Quero o cupom</button>
+        </form>
+        <div class="fq-n" id="fqN">O cupom vale 15 dias nos beats do catálogo. Dá pra sair quando quiser.</div>
+      </section>
 
       <!-- Mais do @rideblan33 (26/09/2026, tapes e pastas de artista): as outras tapes do perfil pra
            deslizar, no jeito do "Mais de" do Spotify, e o caminho pro perfil inteiro -->
@@ -1401,8 +1443,8 @@ __META__
     if(aba==='sons'&&!SONS.length) aba='beats';
     var duas=BEATS.length&&SONS.length, lista=[];
     var abas=duas?'<div class="card-abas" role="tablist">'+
-      '<button class="tab" type="button" role="tab" data-aba="beats">Beats</button>'+
-      '<button class="tab" type="button" role="tab" data-aba="sons">Músicas</button></div>':'';
+      '<button class="tab" type="button" role="tab" data-aba="sons">Músicas</button>'+
+      '<button class="tab" type="button" role="tab" data-aba="beats">Beats</button></div>':'';
     open('<h2 id="cardTitle">Prévia</h2><p>Escolha a faixa para postar nas redes sociais</p>'+
       abas+'<div class="card-list card-rolo" id="prevLista"></div>'+
       '<button class="card-close" data-close>Fechar</button>');
@@ -1830,6 +1872,12 @@ __META__
     aplicarCapa();
 
     if(!SONS.length){ $('tabSons').hidden=true; }
+    // 12/10/2026 (opção A): pasta com beats e músicas abre em Músicas, o que o artista mais procura
+    if(BEATS.length && SONS.length){
+      document.querySelector('.tabsbar').classList.add('duas');
+      $('nSons').textContent=SONS.length; $('nBeats').textContent=BEATS.length;
+      tab='sons'; $('tabSons').setAttribute('aria-selected','true'); $('tabBeats').setAttribute('aria-selected','false');
+    }
     if(!BEATS.length && SONS.length){ tab='sons'; $('tabBeats').hidden=true;
       $('tabSons').setAttribute('aria-selected','true'); $('tabBeats').setAttribute('aria-selected','false'); }
 
@@ -1894,6 +1942,48 @@ __META__
       if(f){ try{ f.fechar(); }catch(e){} }
     });
     new MutationObserver(confere).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden']});
+  })();
+
+  /* Fique por dentro (12/10/2026): só na página de uma tape (nem pasta de artista, nem prévia).
+     Mesmo servidor da vitrine (/api/lista); este navegador lembra do cadastro (caramujo_lista_v1). */
+  (function(){
+    var box=$('fique'); if(!box || !CAT.artist.tape || CAT.preview) return;
+    var CH='caramujo_lista_v1', form=$('fqForm'), inp=$('fqEmail'), bt=$('fqBt'), nota=$('fqN'), p=$('fqP'), tit=$('fqTit');
+    box.hidden=false;
+    function pronto(email,status,enviado){
+      form.hidden=true;
+      if(status==='sem-cupom'){ tit.textContent='Você já está na lista'; p.textContent='O cupom desse e-mail já foi usado ou venceu, mas as próximas beat tapes seguem chegando por lá.'; }
+      else if(enviado===false){ tit.textContent='Você entrou na lista'; p.textContent='Só que o e-mail com o cupom não saiu agora. Toca em reenviar daqui a pouco.'; }
+      else { tit.textContent='Pronto. O cupom chegou no seu e-mail.'; p.textContent='Não achou? Olha no spam e na aba Promoções, e marca a Caramujo como contato.'; }
+      nota.textContent=''; nota.classList.remove('erro');
+      if(!email) return;
+      nota.appendChild(document.createTextNode('Cadastrado: '+email));
+      if(status!=='sem-cupom'){
+        var re=document.createElement('button'); re.type='button'; re.className='fq-re'; re.textContent='Reenviar o cupom';
+        re.addEventListener('click',function(){ enviar(email,re); });
+        nota.appendChild(document.createTextNode(' · ')); nota.appendChild(re);
+      }
+    }
+    function enviar(email,quem){
+      var b=quem||bt, rot=b.textContent; b.disabled=true; b.textContent='Enviando…'; nota.classList.remove('erro');
+      fetch('/api/lista',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:email,de:'tape'})})
+        .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+        .then(function(x){
+          b.disabled=false; b.textContent=rot;
+          if(!x.ok||!x.j||!x.j.ok){ nota.textContent=(x.j&&x.j.erro)||'Não deu pra cadastrar agora. Tenta de novo em instantes.'; nota.classList.add('erro'); return; }
+          try{ localStorage.setItem(CH,JSON.stringify({email:email,status:x.j.status,enviado:x.j.enviado,at:Date.now()})); }catch(_){}
+          pronto(email,x.j.status,x.j.enviado);
+          if(quem&&x.j.enviado==='recente') p.textContent='O cupom acabou de ser enviado. Dá uma olhada no spam e na aba Promoções antes de pedir de novo.';
+        })
+        .catch(function(){ b.disabled=false; b.textContent=rot; nota.textContent='Sem conexão agora. Tenta de novo em instantes.'; nota.classList.add('erro'); });
+    }
+    try{ var g=JSON.parse(localStorage.getItem(CH)||'null'); if(g&&g.email) pronto(g.email,g.status,g.enviado); }catch(_){}
+    form.addEventListener('submit',function(e){
+      e.preventDefault();
+      var email=(inp.value||'').trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ nota.textContent='Esse e-mail não parece certo. Confere e tenta de novo.'; nota.classList.add('erro'); inp.focus(); return; }
+      enviar(email,null);
+    });
   })();
 
   inicio();

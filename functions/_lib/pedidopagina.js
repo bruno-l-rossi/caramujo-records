@@ -7,6 +7,7 @@ import { ICONES } from './icones.js';
 import { capaUrl, CAPA_VOLTA } from './midia.js';
 import { topo as topoSite, TOPO_CSS, TOPO_CSS_899, TOPO_CSS_CEL } from './topo.js';
 import { LEVA_DE } from './origem.js';
+import { servicoDe } from './servicos.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
@@ -85,6 +86,42 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.7rem;line-height:1;color
 @media (prefers-reduced-motion:reduce){.espera i{animation:none}}
 .ajuda{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:2.6rem;min-height:50px;border:1px solid var(--wire);font-size:.66rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);text-decoration:none}
 .ajuda svg{width:16px;height:16px}
+/* serviços (12/10/2026): o passo a passo, o formulário do envio e a entrega */
+.st{padding:18px 16px;border:1px solid var(--wire);background:var(--deep)}
+.st+.st{margin-top:10px}
+.st h3{font-family:var(--serif);font-weight:500;font-size:1.7rem;color:var(--cream);line-height:1.1}
+.st .pz{margin-top:6px;font-family:var(--mono);font-size:.66rem;color:var(--read)}
+.passos{list-style:none;margin:18px 0 6px;position:relative}
+.passos li{position:relative;padding:0 0 16px 26px;font-size:.84rem;color:var(--dim)}
+.passos li:before{content:'';position:absolute;left:3px;top:4px;width:9px;height:9px;border-radius:50%;border:1px solid var(--loam);background:var(--black)}
+.passos li:after{content:'';position:absolute;left:7px;top:15px;bottom:0;width:1px;background:var(--wire)}
+.passos li:last-child:after{display:none}
+.passos li.ok{color:var(--bone)}.passos li.ok:before{background:var(--fire);border-color:var(--fire)}
+.passos li.ag{color:var(--cream);font-weight:600}.passos li.ag:before{background:var(--fire);border-color:var(--fire);box-shadow:0 0 0 4px rgba(185,143,94,.25)}
+.passos small{display:block;font-family:var(--mono);font-weight:400;font-size:.62rem;color:var(--dim);margin-top:2px}
+.fm{margin-top:14px;padding:16px;border:1px solid var(--wire);background:var(--black)}
+.fm[hidden]{display:none}
+.fm h4{font-family:var(--serif);font-weight:500;font-size:1.35rem;color:var(--cream)}
+.fm p{font-size:.8rem;line-height:1.6;color:var(--read);margin-top:6px}
+.fm label{display:block;margin-top:14px;font-size:.6rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--label)}
+.fm label i{font-style:normal;font-weight:400;letter-spacing:.06em;text-transform:none;color:var(--dim)}
+.fm input,.fm textarea{display:block;width:100%;margin-top:6px;min-height:46px;border:1px solid var(--wire);border-radius:0;background:var(--mole);padding:12px;font-family:var(--mono);font-size:.78rem;color:var(--cream);-webkit-appearance:none}
+.fm textarea{min-height:84px;resize:vertical}
+.fm input::placeholder,.fm textarea::placeholder{color:var(--dim)}
+.fm input:focus,.fm textarea:focus{outline:none;border-color:var(--fire)}
+.fm button{margin-top:16px;width:100%;display:flex;align-items:center;justify-content:center;min-height:50px;border:0;background:var(--bone);color:var(--deep);font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;cursor:pointer}
+.fm button:disabled{opacity:.6;cursor:default}
+.fm .er{margin-top:10px;font-family:var(--mono);font-size:.68rem;color:#d98a6c}
+.dicas{list-style:none;margin-top:14px}.dicas li{font-size:.76rem;line-height:1.6;color:var(--read);padding-left:14px;position:relative}.dicas li:before{content:'›';position:absolute;left:0;color:var(--clay)}
+.mandou{margin-top:14px;padding:14px 16px;border:1px solid var(--wire);background:var(--black)}
+.mandou .rot{font-size:.58rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--label)}
+.mandou dl{margin-top:8px;font-size:.78rem;line-height:1.6}
+.mandou dt{margin-top:8px;font-family:var(--mono);font-size:.6rem;color:var(--dim);text-transform:lowercase}
+.mandou dd{color:var(--bone);overflow-wrap:anywhere}
+.mandou dd a{color:var(--fire)}
+.troca{margin-top:12px;background:none;border:0;padding:0;font:inherit;font-family:var(--mono);font-size:.68rem;color:var(--fire);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.pronto{margin-top:14px}
+.pronto .b{min-height:52px}
 footer{padding:22px 18px 30px;border-top:1px solid var(--wire);text-align:center;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
 `;
 
@@ -157,13 +194,64 @@ export function paginaPedido(p, faixas = new Map()) {
     html += `<div class="contrato"><div><b>Contrato de licença exclusiva</b><small>no nome de ${esc(p.nome || quem || 'quem comprou')} · ${esc(dataCurta(p.criado_em))}</small></div><a href="${base}/contrato" download>Baixar</a></div>`;
     html += '</section>';
   }
-  if (servicos.length) {
-    html += `<section class="sec"><div class="sec-cab"><h2>${servicos.length === 1 ? esc(servicos[0].nome) : 'Serviços'}</h2><span>${servicos.length === 1 ? '1 serviço' : servicos.length + ' serviços'}</span></div>` +
-      `<p class="aviso"><b>O @rideblan33 te chama pra combinar.</b> ${servicos.length === 1 ? '' : esc(servicos.map((s) => s.nome).join(', ')) + '. '}Beat personalizado sai em até 2 semanas; mixagem e master, até 3 semanas depois que as vozes chegam.</p></section>`;
+  // serviços (12/10/2026): cada um com o passo a passo, o envio e, depois, a entrega
+  const comServico = (p.itens || []).map((it, k) => ({ it, k })).filter((x) => x.it.t === 'servico');
+  if (comServico.length) {
+    for (const { it, k } of comServico) html += blocoServico(it, k, p, base);
+    if (!beats.length) html += `<div class="contrato"><div><b>Contrato do pedido</b><small>no nome de ${esc(p.nome || quem || 'quem comprou')} · ${esc(dataCurta(p.criado_em))}</small></div><a href="${base}/contrato" download>Baixar</a></div>`;
+    html += FORM_JS;
   }
   html += ajuda + '</main>' + rodape + '\n</body></html>';
   return html;
 }
+
+// Um serviço do pedido: passo a passo, formulário (até o envio), o que foi mandado e a entrega
+function blocoServico(it, k, p, base) {
+  const sv = servicoDe(it.nome);
+  if (!sv) return `<section class="sec"><div class="sec-cab"><h2>${esc(it.nome)}</h2><span>serviço</span></div><p class="aviso"><b>O @rideblan33 te chama pra combinar.</b></p></section>`;
+  const env = it.envio, ent = it.entrega;
+  const recebido = sv.tipo === 'encomenda' ? 'Referência recebida' : sv.tipo === 'faixa' ? 'Faixa recebida' : 'Vozes recebidas';
+  const passos = [
+    ['Pagamento confirmado', 'ok', dataCurta(p.pago_em || p.criado_em)],
+    env ? [recebido, 'ok', dataCurta(env.em)] : [sv.aguardando, 'ag', 'manda pelo campo abaixo'],
+    [sv.trabalho, ent ? 'ok' : env ? 'ag' : '', env && !ent ? 'o @rideblan33 está trabalhando nele' : ''],
+    [sv.fim, ent ? 'ok' : '', ent ? dataCurta(ent.em) : sv.fimSub]
+  ];
+  const titulo = ent ? 'Pronto pra baixar' : env ? 'Tá no estúdio' : 'Agora é com você';
+  let h = `<section class="sec" id="sv${k}"><div class="sec-cab"><h2>${esc(sv.curto)}</h2><span>${esc(sv.unidade)}</span></div><div class="st"><h3>${titulo}</h3>`;
+  if (!ent) h += `<div class="pz">prazo: ${esc(sv.prazo)}</div>`;
+  h += '<ol class="passos">' + passos.map(([t, c, sub]) => `<li${c ? ` class="${c}"` : ''}>${esc(t)}${sub ? `<small>${esc(sub)}</small>` : ''}</li>`).join('') + '</ol>';
+  if (ent) h += `<div class="pronto"><a class="b cheio" href="${esc(ent.link)}" target="_blank" rel="noopener">${DESCE}Baixar ${sv.tipo === 'encomenda' ? 'o beat' : 'a faixa'}</a></div>`;
+  if (env) {
+    const linhas = sv.campos.filter((c) => env[c.k]).map((c) => `<dt>${esc(c.rot)}</dt><dd>${c.link ? `<a href="${esc(env[c.k])}" target="_blank" rel="noopener nofollow">${esc(env[c.k])}</a>` : esc(env[c.k])}</dd>`).join('');
+    h += `<div class="mandou"><div class="rot">O que você mandou · ${esc(dataCurta(env.em))}</div><dl>${linhas}</dl>${ent ? '' : `<button type="button" class="troca" data-troca="${k}">Trocar o que mandei</button>`}</div>`;
+  }
+  if (!ent) {
+    h += `<form class="fm" data-envio="${k}" action="${base}/envio/${k}" method="post"${env ? ' hidden' : ''} novalidate><h4>${esc(sv.titulo)}</h4><p>${esc(sv.texto)}</p>` +
+      sv.campos.map((c) => {
+        const id = `f${k}${c.k}`, v = env && env[c.k] ? esc(env[c.k]) : '';
+        const rot = `<label for="${id}">${esc(c.rot)}${c.obrig ? '' : ' <i>(opcional)</i>'}</label>`;
+        return rot + (c.alto
+          ? `<textarea id="${id}" name="${c.k}" placeholder="${esc(c.ph)}" maxlength="1500">${v}</textarea>`
+          : `<input id="${id}" name="${c.k}" type="${c.link ? 'url' : 'text'}" inputmode="${c.link ? 'url' : 'text'}" placeholder="${esc(c.ph)}" value="${v}" maxlength="400"${c.obrig ? ' required' : ''}${c.link ? ' autocapitalize="off" autocorrect="off" spellcheck="false"' : ''}>`);
+      }).join('') +
+      `<button type="submit">${env ? 'Mandar de novo' : 'Enviar pro estúdio'}</button><p class="er" role="alert" hidden></p></form>`;
+    if (!env && sv.dicas) h += '<ul class="dicas">' + sv.dicas.map((d) => `<li>${esc(d)}</li>`).join('') + '</ul>';
+  }
+  return h + '</div></section>';
+}
+
+// o formulário do serviço manda por fetch e recarrega a página (sem fetch: o POST normal)
+const FORM_JS = `<script>(function(){
+document.querySelectorAll('[data-troca]').forEach(function(b){b.addEventListener('click',function(){var f=document.querySelector('form[data-envio="'+b.getAttribute('data-troca')+'"]');if(f){f.hidden=false;b.hidden=true;var i=f.querySelector('input,textarea');if(i)i.focus();}});});
+document.querySelectorAll('form[data-envio]').forEach(function(f){f.addEventListener('submit',function(e){
+  if(!window.fetch)return;e.preventDefault();var bt=f.querySelector('button[type=submit]'),er=f.querySelector('.er'),d={};
+  f.querySelectorAll('input,textarea').forEach(function(i){d[i.name]=i.value;});
+  bt.disabled=true;var rot=bt.textContent;bt.textContent='Enviando…';er.hidden=true;
+  fetch(f.getAttribute('action'),{method:'POST',headers:{'content-type':'application/json','accept':'application/json'},body:JSON.stringify(d)})
+    .then(function(r){return r.json();}).then(function(j){if(j&&j.ok){location.reload();return;}bt.disabled=false;bt.textContent=rot;er.textContent=(j&&j.erro)||'Não foi agora. Tenta de novo.';er.hidden=false;})
+    .catch(function(){bt.disabled=false;bt.textContent=rot;er.textContent='Sem conexão agora. Tenta de novo.';er.hidden=false;});
+});});})();</script>`;
 
 // Página curta pra quando um arquivo não sai (limite de downloads, arquivo fora do ar)
 export function paginaAviso(titulo, texto, voltar, kicker = 'Pedido') {

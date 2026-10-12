@@ -197,7 +197,7 @@ function renderCards(){
       </div>
       <span class="dur">${f.dur?fmtDur(f.dur):''}</span>
       ${b.sold
-        ? `<span class="vendido">Vendido</span>`
+        ? `<a class="vendido" href="${paginaDoBeat(b.name)}#parecidos" data-de="vendido" onclick="event.stopPropagation()" aria-label="${escA(b.name)} já foi vendido: ver beats parecidos"><i>Vendido</i><span>Parecidos<b>›</b></span></a>`
         : `<button class="preco${inBeat?' on':''}" id="bb${b.id}" type="button" onclick="event.stopPropagation();botaoBeat(${b.id})" aria-label="${inBeat?escA(b.name)+' está no carrinho: abrir o carrinho':'Pôr '+escA(b.name)+' no carrinho'}">${rotuloBotao(inBeat)}</button>`}
       <i class="corrida"></i>
     </div>`;
@@ -438,143 +438,9 @@ function toggleBeat(beatId,stems){
   cb.style.transform='scale(1.07)';setTimeout(()=>{cb.style.transform='';},200);
 }
 
-// ── PKG BEAT SELECTOR ────────────────────────────────
-let _pkgPending = null; // { name, price, unitPrice, stems, qty, required }
-
-function addPkg(name, price) {
-  const stems = name.includes('Stems');
-  const qty = name.startsWith('1') ? 1 : name.startsWith('2') ? 2 : 3;
-  _pkgPending = { name, price, unitPrice: price, stems, qty, required: qty, selectedBeats: [] };
-  openPkgModal();
-}
-
-let _pkgAvailable = []; // beats disponíveis para o modal atual
-
-function openPkgModal() {
-  // IDs e nomes já ocupados: beats em pacotes + beats avulsos no carrinho
-  const cartBeatIds = cart
-    .filter(c => c.type === 'Beat' && c.beatId != null)
-    .map(c => Number(c.beatId));
-  const pkgBeatIds = cart
-    .filter(c => c.type === 'Pacote' && c.pkgBeats)
-    .flatMap(c => c.pkgBeats.flat().map(b => Number(b.id)));
-  const reservedIds = new Set([...cartBeatIds, ...pkgBeatIds]);
-
-  // Fallback por nome: nomes de beats avulsos no carrinho
-  const cartBeatNames = new Set(
-    cart
-      .filter(c => c.type === 'Beat')
-      .map(c => c.name.replace(' + Stems', '').trim().toUpperCase())
-  );
-
-  _pkgAvailable = BEATS.filter(b =>
-    !b.sold &&
-    !reservedIds.has(Number(b.id)) &&
-    !cartBeatNames.has(b.name.toUpperCase())
-  );
-  const p = _pkgPending;
-
-  document.getElementById('pkgModalTitle').textContent =
-    `Escolha ${p.required} beat${p.required > 1 ? 's' : ''}`;
-  const reservedCount = reservedIds.size;
-  document.getElementById('pkgModalSub').textContent =
-    `Selecione exatamente ${p.required} beat${p.required > 1 ? 's' : ''} do catálogo.`;
-  document.getElementById('pkgRequired').textContent = p.required;
-  document.getElementById('pkgSelectedCount').textContent = '0';
-  document.getElementById('pkgConfirmBtn').disabled = true;
-  document.getElementById('pkgSearchInput').value = '';
-  p.selectedBeats = [];
-
-  renderPkgBeatList(_pkgAvailable);
-
-  document.getElementById('pkgModal').classList.add('open');
-  document.getElementById('overlay').classList.add('on');
-  // foco na busca após abertura
-  setTimeout(() => document.getElementById('pkgSearchInput').focus(), 80);
-}
-
-function renderPkgBeatList(beats) {
-  const list = document.getElementById('pkgBeatList');
-  if (beats.length === 0) {
-    list.innerHTML = '<div class="pkg-no-results">Nenhum beat encontrado.</div>';
-    return;
-  }
-  const p = _pkgPending;
-  list.innerHTML = beats.map(b => {
-    const sel = p.selectedBeats.some(s => s.id === b.id);
-    return `
-    <div class="pkg-beat-item${sel ? ' selected' : ''}" id="pbi-${b.id}" onclick="togglePkgBeat(${b.id}, '${b.name.replace(/'/g, "\\'")}')">
-      ${(window.__VIT&&(window.__VIT[String(b.id)]||{}).mp3) ? `<button class="pkg-play" type="button" data-bid="${b.id}" aria-label="Ouvir ${b.name.replace(/"/g,'&quot;')}" onclick="event.stopPropagation();window.tocarBeat(${b.id})"></button>` : ''}
-      <div class="pkg-beat-info">
-        <div class="pkg-beat-name">${b.name}</div>
-        <div class="pkg-beat-meta">${b.bpm} BPM · ${b.key} · ${GENRE_LABELS[b.genre] || b.genre}</div>
-      </div>
-      <div class="pkg-beat-cb" id="pbc-${b.id}">${sel ? '✓' : ''}</div>
-      <i class="pkg-corrida"></i>
-    </div>`;
-  }).join('');
-  if (typeof window.repintarPlayer === 'function') window.repintarPlayer();
-}
-
-function filterPkgBeats(query) {
-  const q = normalizeStr(query.trim());
-  const filtered = q
-    ? _pkgAvailable.filter(b => normalizeStr(b.name).includes(q) || normalizeStr(GENRE_LABELS[b.genre]||b.genre).includes(q))
-    : _pkgAvailable;
-  renderPkgBeatList(filtered);
-}
-
-function togglePkgBeat(id, name) {
-  const p = _pkgPending;
-  const idx = p.selectedBeats.findIndex(b => b.id === id);
-  if (idx >= 0) {
-    p.selectedBeats.splice(idx, 1);
-    const el = document.getElementById(`pbi-${id}`);
-    if (el) { el.classList.remove('selected'); document.getElementById(`pbc-${id}`).textContent = ''; }
-  } else {
-    if (p.selectedBeats.length >= p.required) {
-      showToast(`Selecione apenas ${p.required} beat${p.required > 1 ? 's' : ''}.`);
-      return;
-    }
-    p.selectedBeats.push({ id, name });
-    const el = document.getElementById(`pbi-${id}`);
-    if (el) { el.classList.add('selected'); document.getElementById(`pbc-${id}`).textContent = '✓'; }
-  }
-  const count = p.selectedBeats.length;
-  document.getElementById('pkgSelectedCount').textContent = count;
-  document.getElementById('pkgConfirmBtn').disabled = count !== p.required;
-}
-
-function closePkgModal() {
-  document.getElementById('pkgModal').classList.remove('open');
-  document.getElementById('overlay').classList.remove('on');
-  _pkgPending = null;
-}
-
-function confirmPkgSelection() {
-  const p = _pkgPending;
-  if (!p || p.selectedBeats.length !== p.required) return;
-
-  const beatNames = p.selectedBeats.map(b => b.name).join(', ');
-  const label = `${p.name} (${beatNames})`;
-
-  // 11/10/2026: o desconto é por quantidade de beats no carrinho, então o pacote vira os beats
-  // escolhidos, um por um (tirar um deles do carrinho funciona como qualquer beat)
-  p.selectedBeats.forEach((sb,i)=>{
-    const b=BEATS.find(x=>Number(x.id)===Number(sb.id));
-    if(!b||cart.some(c=>c.beatId===b.id&&!c.stems)) return;
-    cart.push({id:Date.now()+i,beatId:b.id,name:b.name,price:PRICE_BEAT,orig:PRICE_BEAT,type:'Beat',stems:false});
-  });
-  if(typeof syncBeatButtons==='function') syncBeatButtons();
-
-  document.getElementById('pkgModal').classList.remove('open');
-  document.getElementById('overlay').classList.remove('on');
-  const pkgLabel=p.name;
-  _pkgPending = null;
-  updateCart();
-  cartOpenedOnce=true;
-  openCart(); // pacote: fluxo terminou num modal, mostrar o carrinho é o passo natural
-}
+// 12/10/2026: a seção Pacotes e o seletor de beats do pacote saíram (o desconto é por quantidade,
+// faixa "Leve mais, pague menos" em cima da lista e régua no carrinho). Carrinho guardado com
+// pacote volta como os beats dele (restaurar).
 
 function addSvc(name,unitPrice){
   const existing=cart.find(c=>c.name===name&&c.type==='Servico');
@@ -637,6 +503,20 @@ function precosDosBeats(n){
   for(let i=0;i<n;i++) out.push(i<n-1?cada:tot-cada*(n-1));
   return out;
 }
+// Faixa "Leve mais, pague menos" em cima da lista (12/10/2026): 1 a 5 com o % off, da tabela LEVE_MAIS
+function pintarLeveMais(){
+  const el=document.getElementById('leveMais'); if(!el||el.dataset.ok) return;
+  const T=n=>totalDosBeats(n);
+  const chips=[1,2,3,4,5].map(n=>{
+    const off=Math.round((1-T(n)/(PRICE_BEAT*n))*100);
+    const cada=n>=4&&T(n)%n===0;
+    const rot=n===5?'5+':String(n);
+    const preco=cada?`R$${T(n)/n} cada`:`R$${T(n)}`;
+    return `<span class="lm-l"><b>${rot}</b> ${preco}${off>0?` <i>${off}% off</i>`:''}</span>`;
+  }).join('');
+  el.insertAdjacentHTML('beforeend',chips); el.dataset.ok='1';
+}
+try{ pintarLeveMais(); }catch(e){ setTimeout(function(){ throw e; }); }
 function aplicarLeveMais(){
   const beats=cart.filter(c=>c.type==='Beat'&&!c.stems);
   const p=precosDosBeats(beats.length);
@@ -761,13 +641,18 @@ function updateCart(){
   // Upsell: sempre mostrar o próximo degrau de custo-benefício
   const ups=[];
 
-  // — beats: o próximo degrau do Leve mais, pague menos (11/10/2026) —
-  const prox=nBeats+1;
-  if(nBeats>=1&&totalDosBeats(prox)<PRICE_BEAT*prox&&totalDosBeats(prox)/prox<totalDosBeats(nBeats)/nBeats){
-    const mais=totalDosBeats(prox)-totalDosBeats(nBeats);
-    ups.push({msg:prox>=4&&totalDosBeats(prox)%prox===0
-      ?`Com ${prox} beats, cada um sai por R$${totalDosBeats(prox)/prox}: ${prox} por R$${totalDosBeats(prox)}.`
-      :`Põe mais um e ele sai por R$${mais}: ${prox} beats por R$${totalDosBeats(prox)}.`,href:'#beats',cta:`Escolher o ${prox}º beat →`});
+  // — beats: régua do Leve mais, pague menos (12/10/2026, opção C) —
+  let regua='';
+  if(nBeats>=1){
+    const T=n=>totalDosBeats(n), prox=nBeats+1, cada=n=>T(n)/n;
+    let msg;
+    if(nBeats>=5||!(cada(prox)<cada(nBeats))) msg=`Você chegou no menor preço: <b>R$${Math.round(cada(nBeats))}</b> cada beat.`;
+    else if(prox>=4&&T(prox)%prox===0) msg=`Põe mais 1 e os ${prox} saem por <b>R$${T(prox)/prox}</b> cada (R$${T(prox)}).`;
+    else msg=`Põe mais 1 beat e o ${prox}º sai por <b>R$${T(prox)-T(nBeats)}</b>.`;
+    if(nBeats<=2&&T(4)%4===0) msg+=` Com 4, cada um sai por R$${T(4)/4}; com 5 ou mais, R$${Math.round(cada(5))}.`;
+    const seg=[1,2,3,4,5].map(k=>`<i${k<=nBeats?' class="on"':''}></i>`).join('');
+    const num=[1,2,3,4,5].map(k=>`<span${k<=nBeats?' class="on"':''}>${k===5?'5+':k} · ${T(k)}</span>`).join('');
+    regua=`<div class="lm-reg" id="lmRegua"><p>${msg}</p><div class="lm-bar" aria-hidden="true">${seg}</div><div class="lm-num" aria-hidden="true">${num}</div></div>`;
   }
 
   // — mix / master / combo —
@@ -780,6 +665,7 @@ function updateCart(){
     else if(hasMaster)    ups.push({msg:`Leve o Mix + Master por R$199: a mix sai por R$120 em vez de R$149 — <span class="cp-save">economize R$29</span>`,href:'#services',cta:'Ver Mix + Master →'});
   }
 
+  if(regua) pb.innerHTML+=regua;
   ups.forEach(u=>{
     pb.innerHTML+=`<div class="cp-upsell"><span class="cp-upsell-tag">melhor custo-benefício</span>${u.msg}<a class="cp-upsell-link" href="${u.href}" onclick="closeAll()">${u.cta}</a></div>`;
   });
@@ -798,9 +684,6 @@ function toggleCart(){
 function closeAll(){
   document.getElementById('cartPanel').classList.remove('open');
   document.getElementById('overlay').classList.remove('on');
-  if(document.getElementById('pkgModal').classList.contains('open')){
-    closePkgModal();
-  }
 }
 
 /* ── CHECKOUT FLOW ───────────────────────────────── */
@@ -1875,7 +1758,7 @@ try{
       return;
     }
 
-    var svc=tabela('addSvc'), pkg=tabela('addPkg'), caiu=0, mexidos=0, bons=[];
+    var svc=tabela('addSvc'), caiu=0, mexidos=0, bons=[];
     var marca=Date.now();
 
     dados.itens.forEach(function(it,i){
@@ -1904,9 +1787,8 @@ try{
       }
 
       if(it.type==='Pacote'){
-        var pp=pkg[it.name];
         var grupos=Array.isArray(it.pkgBeats)?it.pkgBeats:[];
-        if(pp==null || !grupos.length){ caiu++; return; }
+        if(!grupos.length){ caiu++; return; }
         var inteiro=grupos.every(function(g){
           return Array.isArray(g) && g.length && g.every(function(x){ return !!beatVivo(x && x.id); });
         });
@@ -2249,7 +2131,7 @@ try{
   var confere=function(id){ [700,2500].forEach(function(t){ setTimeout(function(){ if(tocandoMesmo()){ marca('play',id); porBeat('toque',id); } },t); }); };
   envolve('tocarBeat',null,function(_,a){ confere(a[0]); });
   envolve('npToggle',null,function(){ var b=beatAtual(); confere(b&&b.id); });
-  ['toggleBeat','addPkg','addSvc'].forEach(function(nome){
+  ['toggleBeat','addSvc'].forEach(function(nome){
     envolve(nome,function(){ return qtd(); },function(antes,a){
       if(qtd()>antes){ marca('carrinho',nome==='toggleBeat'?a[0]:null); if(nome==='toggleBeat') porBeat('adicao',a[0]); }
     });
@@ -2396,7 +2278,7 @@ try{
    (chave desligada, carrinho sem beat), a tela fica igual. O link fica guardado 2 horas, pra
    quem paga o PIX no app do banco e volta com a página recarregada. */
 (function(){
-  var CHAVE='caramujo_pedido_v1', VALE=2*3600e3, link=null, tudo=false, nBeats=1;
+  var CHAVE='caramujo_pedido_v1', VALE=2*3600e3, link=null, tudo=false, nBeats=1, tipo=null;
   var $=function(i){ return document.getElementById(i); };
   var f=window.fetch;
   if(typeof f!=='function'||typeof window.showPixConfirmed!=='function') return;
@@ -2404,14 +2286,14 @@ try{
     var p=f.apply(this,arguments);
     try{
       if(String(u&&u.url||u).indexOf('/api/create-payment')>-1){
-        link=null; tudo=false; tirar();
+        link=null; tudo=false; tipo=null; tirar();
         try{ var corpo=JSON.parse((arguments[1]&&arguments[1].body)||'{}'); nBeats=(corpo.items||[]).filter(function(i){ return i&&i.type==='Beat'; }).length||1; }catch(_){ nBeats=1; }
         try{ localStorage.removeItem(CHAVE); }catch(_){}
         p.then(function(r){
           return r.clone().json().then(function(d){
             if(d&&d.success&&typeof d.pedido==='string'&&/^\/pedido\/[A-Za-z0-9_-]{20,40}$/.test(d.pedido)){
-              link=d.pedido; tudo=!!d.pedidoTudo;
-              try{ localStorage.setItem(CHAVE,JSON.stringify({ id:String(d.paymentId||''), link:link, tudo:tudo, n:nBeats, at:Date.now() })); }catch(_){}
+              link=d.pedido; tudo=!!d.pedidoTudo; tipo=d.pedidoTipo||null;
+              try{ localStorage.setItem(CHAVE,JSON.stringify({ id:String(d.paymentId||''), link:link, tudo:tudo, n:nBeats, tipo:tipo, at:Date.now() })); }catch(_){}
             }
           });
         }).catch(function(){});
@@ -2430,8 +2312,8 @@ try{
     var c=$('mpContractDownload'); if(c&&c.__escondido){ c.__escondido=false; c.style.display=c.__antes||''; }
   }
   function mostrar(tenta){
-    var l=link, t=tudo, n=nBeats;
-    if(!l){ var g=guardado(); if(g){ l=g.link; t=!!g.tudo; n=g.n||1; } }
+    var l=link, t=tudo, n=nBeats, tp=tipo;
+    if(!l){ var g=guardado(); if(g){ l=g.link; t=!!g.tudo; n=g.n||1; tp=g.tipo||null; } }
     // a resposta do pagamento pode chegar um instante depois da tela: espera um pouco
     if(!l){ if((tenta||0)<15) setTimeout(function(){ mostrar((tenta||0)+1); },120); return; }
     var box=$('mpPixConfirmed'); if(!box) return;
@@ -2439,7 +2321,8 @@ try{
     if(p){
       if(!p.__antes) p.__antes=p.innerHTML;
       p.textContent=t?(n>1?'Os beats já são seus. Na página do pedido estão os WAV, os MP3 e o contrato no seu nome.':'O beat já é seu. Na página do pedido estão o WAV, o MP3 e o contrato no seu nome.')
-        :'Os beats já estão na página do pedido, com o WAV, o MP3 e o contrato. Os serviços seguem os prazos do contrato, e o @rideblan33 fala com você por e-mail.';
+        :tp==='servico'?'O próximo passo é seu: na página do pedido você manda o que o @rideblan33 precisa pra começar (as vozes, a faixa ou a referência).'
+        :'Os beats já estão na página do pedido, com o WAV, o MP3 e o contrato. Lá também você manda o que o @rideblan33 precisa pros serviços.';
     }
     // o contrato mora na página do pedido: o botão daqui some (11/10/2026)
     var c=$('mpContractDownload');
@@ -2449,7 +2332,7 @@ try{
       a=document.createElement('a'); a.id='mpPedidoBtn'; a.className='mp-btn-primary';
       a.target='_blank'; a.rel='noopener';
       a.style.cssText='display:block;box-sizing:border-box;text-align:center;text-decoration:none;';
-      a.textContent='↓ BAIXAR SEUS ARQUIVOS';
+      a.textContent=tp==='servico'?'ABRIR MEU PEDIDO →':'↓ BAIXAR SEUS ARQUIVOS';
       box.insertBefore(a,c);
       var n=document.createElement('p'); n.id='mpPedidoNota'; n.className='mp-ok-nota';
       n.textContent='O mesmo link foi pro seu e-mail.';
@@ -2521,7 +2404,6 @@ try{
     { aberta:function(){ return tem('mediaLB','on'); }, fechar:function(){ closeLB(); } },
     { aberta:function(){ return tem('mpModal','open'); }, fechar:function(){ closeCheckout(); },
       segura:function(){ var p=$('mpPixPending'); return !!(p&&p.style.display==='block'); } },
-    { aberta:function(){ return tem('pkgModal','open'); }, fechar:function(){ closePkgModal(); } },
     { aberta:function(){ return tem('cartPanel','open'); }, fechar:function(){ closeAll(); } },
     { aberta:function(){ var l=document.querySelector('.nav-links'); return !!(l&&l.classList.contains('open')); },
       fechar:function(){ toggleMenu(); } }
@@ -2588,31 +2470,44 @@ try{
   var box=document.getElementById('listaBox'), form=document.getElementById('listaForm');
   if(!box||!form) return;
   var nota=document.getElementById('listaNota'), btn=document.getElementById('listaBtn'), inp=document.getElementById('listaEmail');
-  function pronto(email,status){
+  function pronto(email,status,enviado){
     box.classList.add('ok');
     form.hidden=true;
     var t=box.querySelector('.lista-t'), p=box.querySelector('.lista-p');
     if(status==='sem-cupom'){ t.textContent='Você já está na lista'; p.textContent='O cupom desse e-mail já foi usado ou venceu, mas os lançamentos e promoções seguem chegando por lá.'; }
-    else { t.textContent='Pronto. O cupom chegou no seu e-mail.'; p.textContent='Não achou? Olha no spam e marca a Caramujo como contato, que os próximos e-mails caem na caixa certa.'; }
-    nota.textContent=email?'Cadastrado: '+email:'';
+    else if(enviado===false){ t.textContent='Você entrou na lista'; p.textContent='Só que o e-mail com o cupom não saiu agora. Toca em reenviar daqui a pouco.'; }
+    else { t.textContent='Pronto. O cupom chegou no seu e-mail.'; p.textContent='Não achou? Olha no spam e na aba Promoções, e marca a Caramujo como contato, que os próximos e-mails caem na caixa certa.'; }
+    nota.textContent='';
+    if(email){
+      nota.appendChild(document.createTextNode('Cadastrado: '+email));
+      if(status!=='sem-cupom'){
+        var re=document.createElement('button'); re.type='button'; re.className='lista-re'; re.textContent='Reenviar o cupom';
+        re.addEventListener('click',function(){ enviar(email,re); });
+        nota.appendChild(document.createTextNode(' · ')); nota.appendChild(re);
+      }
+    }
   }
-  try{ var g=JSON.parse(localStorage.getItem(CHAVE)||'null'); if(g&&g.email) pronto(g.email,g.status); }catch(_){}
-  form.addEventListener('submit',function(e){
-    e.preventDefault();
-    var email=(inp.value||'').trim();
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ nota.textContent='Esse e-mail não parece certo. Confere e tenta de novo.'; nota.classList.add('erro'); inp.focus(); return; }
+  function enviar(email,quem){
     nota.classList.remove('erro');
-    btn.disabled=true; btn.textContent='Enviando…';
+    var b=quem||btn, rot=b.textContent; b.disabled=true; b.textContent='Enviando…';
     var de='vitrine'; try{ de=sessionStorage.getItem('cr_origem')||'vitrine'; }catch(_){}
     fetch('/api/lista',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:email,de:/^[a-z][a-z0-9-]{0,24}$/.test(de)?de:'vitrine'})})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
       .then(function(x){
-        btn.disabled=false; btn.textContent='Quero o cupom';
+        b.disabled=false; b.textContent=rot;
         if(!x.ok||!x.j||!x.j.ok){ nota.textContent=(x.j&&x.j.erro)||'Não deu pra cadastrar agora. Tenta de novo em instantes.'; nota.classList.add('erro'); return; }
-        try{ localStorage.setItem(CHAVE,JSON.stringify({email:email,status:x.j.status,at:Date.now()})); }catch(_){}
-        pronto(email,x.j.status);
+        try{ localStorage.setItem(CHAVE,JSON.stringify({email:email,status:x.j.status,enviado:x.j.enviado,at:Date.now()})); }catch(_){}
+        pronto(email,x.j.status,x.j.enviado);
+        if(quem&&x.j.enviado==='recente'){ box.querySelector('.lista-p').textContent='O cupom acabou de ser enviado. Dá uma olhada no spam e na aba Promoções antes de pedir de novo.'; }
       })
-      .catch(function(){ btn.disabled=false; btn.textContent='Quero o cupom'; nota.textContent='Sem conexão agora. Tenta de novo em instantes.'; nota.classList.add('erro'); });
+      .catch(function(){ b.disabled=false; b.textContent=rot; nota.textContent='Sem conexão agora. Tenta de novo em instantes.'; nota.classList.add('erro'); });
+  }
+  try{ var g=JSON.parse(localStorage.getItem(CHAVE)||'null'); if(g&&g.email) pronto(g.email,g.status,g.enviado); }catch(_){}
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var email=(inp.value||'').trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ nota.textContent='Esse e-mail não parece certo. Confere e tenta de novo.'; nota.classList.add('erro'); inp.focus(); return; }
+    enviar(email,null);
   });
 })();
 }catch(e){ setTimeout(function(){ throw e; }); }

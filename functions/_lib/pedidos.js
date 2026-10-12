@@ -9,6 +9,7 @@
 import { db, now } from './db.js';
 import { limpo } from './casar.js';
 import { montarVitrine } from '../api/vitrine.js';
+import { RE_LINK } from './servicos.js';
 
 export const SITE = 'https://caramujorecords.com.br';
 export const CHAVE = 'entrega-na-hora';
@@ -67,6 +68,46 @@ export function itensDoPedido(items, vit) {
 }
 
 export const temBeat = (itens) => (itens || []).some((i) => i.t === 'beat' && i.faixa);
+export const temServico = (itens) => (itens || []).some((i) => i.t === 'servico');
+// 'beats' (só beats), 'servico' (só serviço) ou 'misto': muda o texto do PEDIDO CONFIRMADO e do e-mail
+export function tipoPedido(itens) {
+  const b = (itens || []).some((i) => i.t === 'beat'), sv = temServico(itens);
+  return b && sv ? 'misto' : sv ? 'servico' : 'beats';
+}
+
+export { SERVICOS, servicoDe, limparEnvio, RE_LINK } from './servicos.js';
+
+// grava o envio do item k (índice no JSON de itens); devolve o pedido atualizado
+export async function salvarEnvio(d, p, k, envio) {
+  const itens = (p.itens || []).slice();
+  const it = itens[k];
+  if (!it || it.t !== 'servico') return null;
+  itens[k] = { ...it, envio: { ...envio, em: now() } };
+  await d.prepare('UPDATE pedidos SET itens = ? WHERE token = ?').bind(JSON.stringify(itens), p.token).run();
+  return { ...p, itens };
+}
+
+// o Bruno entrega pelo painel: o link do arquivo final (Drive, WeTransfer...)
+export async function salvarEntrega(d, token, k, link) {
+  const p = await lerPedido(d, token);
+  if (!p) return { erro: 'pedido não encontrado' };
+  const itens = (p.itens || []).slice();
+  const it = itens[k];
+  if (!it || it.t !== 'servico') return { erro: 'item não é serviço' };
+  let l = String(link || '').trim();
+  if (l && !/^https?:\/\//i.test(l)) l = 'https://' + l;
+  if (l && !RE_LINK.test(l)) return { erro: 'Esse link não parece certo.' };
+  itens[k] = l ? { ...it, entrega: { link: l, em: now() } } : { ...it, entrega: undefined };
+  await d.prepare('UPDATE pedidos SET itens = ? WHERE token = ?').bind(JSON.stringify(itens), p.token).run();
+  return { ok: true, pedido: { ...p, itens } };
+}
+
+// pedido de teste com serviços (painel): Mix + Master e Beat personalizado, sem pagamento
+export async function pedidoDeTesteServico(d) {
+  const itens = [{ t: 'servico', nome: 'Mix + Master' }, { t: 'servico', nome: 'Beat Personalizado' }];
+  const token = await criarPedido(d, { status: 'teste', nome: 'Pedido de teste', artista: '@rideblan33', itens, valor: 0 });
+  return { token, caminho: '/pedido/' + token, url: SITE + '/pedido/' + token };
+}
 // tudo entregue na hora: só beats com arquivo e sem stems (stems e serviços o Bruno manda)
 export const tudoNaHora = (itens) => (itens || []).length > 0 && itens.every((i) => i.t === 'beat' && i.faixa && !i.stems);
 
@@ -88,10 +129,11 @@ export async function abrirPedido(request, env, { payment, items, name, artistNa
   if (!(await entregaLigada(d))) return null;
   const vit = await montarVitrine(request, env);
   const itens = itensDoPedido(items, vit);
-  if (!temBeat(itens)) return null;
+  // 12/10/2026: pedido só de serviço também ganha a página (pra mandar as vozes ou a referência)
+  if (!temBeat(itens) && !temServico(itens)) return null;
   const status = payment.status === 'approved' ? 'pago' : 'pendente';
   const token = await criarPedido(d, { pagamento: payment.id, status, nome: name, artista: artistName, email, itens, valor: amount });
-  return { token, caminho: '/pedido/' + token, url: SITE + '/pedido/' + token, tudo: tudoNaHora(itens) };
+  return { token, caminho: '/pedido/' + token, url: SITE + '/pedido/' + token, tudo: tudoNaHora(itens), tipo: tipoPedido(itens) };
 }
 
 export async function lerPedido(d, token) {
@@ -108,7 +150,7 @@ export async function pedidoDoPagamento(d, pagamento) {
   if (!r) return null;
   let itens = [];
   try { itens = JSON.parse(r.itens); } catch (_) { itens = []; }
-  return { token: r.token, status: r.status, itens, url: SITE + '/pedido/' + r.token, tudo: tudoNaHora(itens) };
+  return { token: r.token, status: r.status, itens, url: SITE + '/pedido/' + r.token, tudo: tudoNaHora(itens), tipo: tipoPedido(itens) };
 }
 
 // pendente -> pago (o webhook do PIX e a própria página, quando confere o Mercado Pago)
@@ -148,7 +190,8 @@ export async function ultimosPedidos(d, n = 20) {
     try { baixados = JSON.parse(r.baixados || '{}') || {}; } catch (_) { baixados = {}; }
     return {
       token: r.token, status: r.status, quem: r.artista || r.nome || '', valor: r.valor, em: r.pago_em || r.criado_em,
-      beats: itens.filter((i) => i.t === 'beat').map((i) => i.nome), baixou: Object.values(baixados).reduce((a, v) => a + Number(v || 0), 0)
+      beats: itens.filter((i) => i.t === 'beat').map((i) => i.nome), baixou: Object.values(baixados).reduce((a, v) => a + Number(v || 0), 0),
+      servicos: itens.map((i, k) => (i.t === 'servico' ? { k, nome: i.nome, envio: i.envio || null, entrega: i.entrega || null } : null)).filter(Boolean)
     };
   });
 }

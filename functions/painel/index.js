@@ -304,7 +304,7 @@ function pagina() {
   <div id="musicas" hidden></div>
   <div id="comentarios" hidden></div>
 </div>
-<script src="/assets/painel/analytics.js?v=2026-10-11a" defer></script>
+<script src="/assets/painel/analytics.js?v=2026-10-12a" defer></script>
 <script src="/assets/painel/vitrine.js?v=2026-10-04a" defer></script>
 <script src="/assets/painel/musicas.js?v=2026-10-06a" defer></script>
 <script src="/assets/painel/comentarios.js?v=2026-10-10a" defer></script>
@@ -477,7 +477,8 @@ function pagina() {
   function textoEntrega(){
     if(!entrega) return 'o beat sai num link na hora em que o pagamento cai';
     var n=(entrega.pedidos||[]).filter(function(p){ return p.status!=='teste'; }).length;
-    return (entrega.ligada?'ligada':'<em>desligada</em> · faça um pedido de teste e ligue')+(entrega.ligada&&n?' · '+n+(n===1?' pedido com link':' pedidos com link'):'');
+    var fila=servicosAbertos().filter(function(x){ return x.s.envio; }).length;
+    return (entrega.ligada?'ligada':'<em>desligada</em> · faça um pedido de teste e ligue')+(entrega.ligada&&n?' · '+n+(n===1?' pedido com link':' pedidos com link'):'')+(fila?' · <em>'+fila+(fila===1?' serviço esperando a entrega':' serviços esperando a entrega')+'</em>':'');
   }
   function pedirEntrega(){
     if(entregaPedida) return; entregaPedida=true;
@@ -492,19 +493,48 @@ function pagina() {
     return '<div style="margin-top:6px">'+l.slice(0,12).map(function(p){
       var d=new Date(p.em), dd=isNaN(d)?'':('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2);
       return '<div class="ev"><span>'+dd+(p.status==='teste'?' · teste':p.status==='pendente'?' · PIX':'')+'</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+
-        esc((p.quem?p.quem+' · ':'')+p.beats.join(', '))+' · '+(p.baixou?'baixou '+p.baixou+(p.baixou===1?' arquivo':' arquivos'):'ainda não baixou')+
+        esc((p.quem?p.quem+' · ':'')+p.beats.concat((p.servicos||[]).map(function(x){return x.nome})).join(', '))+' · '+(p.baixou?'baixou '+p.baixou+(p.baixou===1?' arquivo':' arquivos'):'ainda não baixou')+
         ' · <a href="/pedido/'+esc(p.token)+'" target="_blank" rel="noopener">abrir</a></span></div>';
     }).join('')+'</div>';
+  }
+  // serviços dos pedidos (12/10/2026): quem comprou manda o material pela página do pedido; você
+  // entrega colando o link aqui (quem comprou recebe um e-mail e o botão aparece na página)
+  function servicosAbertos(){
+    var out=[];
+    ((entrega&&entrega.pedidos)||[]).forEach(function(p){ (p.servicos||[]).forEach(function(sv){ if(!sv.entrega) out.push({p:p,s:sv}); }); });
+    return out;
+  }
+  function dm(iso){ var d=new Date(iso); return isNaN(d)?'':('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2); }
+  function listaServicos(){
+    var todos=[];
+    ((entrega&&entrega.pedidos)||[]).forEach(function(p){ (p.servicos||[]).forEach(function(sv){ todos.push({p:p,s:sv}); }); });
+    if(!todos.length) return '<p style="margin-top:6px">Nenhum pedido de serviço ainda.</p>';
+    var ROT={ref:'referência',guia:'guia das vozes',link:'link',musica:'música',recado:'recado'};
+    return todos.slice(0,12).map(function(x,i){
+      var p=x.p, sv=x.s, e=sv.envio, en=sv.entrega;
+      var estado=en?'entregue '+dm(en.em):e?'material chegou '+dm(e.em):'esperando o material';
+      var mat=e?Object.keys(ROT).filter(function(k){ return e[k]; }).map(function(k){
+        var v=String(e[k]); return '<div style="margin-top:4px;font-size:13px;overflow-wrap:anywhere"><span style="opacity:.6">'+ROT[k]+':</span> '+(/^https?:/.test(v)?'<a href="'+esc(v)+'" target="_blank" rel="noopener">'+esc(v)+'</a>':esc(v))+'</div>';
+      }).join(''):'';
+      return '<div class="bloco" style="margin-top:10px;padding:12px 14px">'+
+        '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>'+esc(sv.nome)+'</b><span style="font-size:13px;opacity:.75">'+esc((p.quem||'')+(p.status==='teste'?' · teste':''))+' · '+estado+'</span></div>'+mat+
+        '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><input type="url" class="sv-link" data-i="'+i+'" placeholder="Link da entrega (Drive, WeTransfer…)" value="'+(en?esc(en.link):'')+'" style="flex:1 1 220px;min-width:0;padding:10px 12px;border:1px solid #333;border-radius:10px;background:transparent;color:inherit;font:inherit;font-size:14px">'+
+        '<button type="button" class="pill solid sv-ent" data-i="'+i+'">'+(en?'Trocar o link':'Entregar')+'</button>'+
+        '<a class="pill" href="/pedido/'+esc(p.token)+'#sv'+sv.k+'" target="_blank" rel="noopener">Abrir o pedido</a></div></div>';
+    }).join('');
   }
   function abrirEntrega(){
     var card=$('card');
     var pinta=function(){
       var lig=!!(entrega&&entrega.ligada);
-      card.innerHTML='<h2>Entrega na hora</h2><p>Pagou, o beat sai num link com o WAV, o MP3 e o contrato: o botão aparece no PEDIDO CONFIRMADO e o link vai no e-mail do comprador. Os serviços seguem com você, como hoje.</p>'+
+      card.innerHTML='<h2>Entrega na hora</h2><p>Pagou, o beat sai num link com o WAV, o MP3 e o contrato: o botão aparece no PEDIDO CONFIRMADO e o link vai no e-mail do comprador. Nos serviços, quem comprou manda o material pela página do pedido e você entrega por aqui.</p>'+
         '<div class="sw"><div><b>Entrega na hora dos beats</b><small>'+(lig?'Ligada: venda com beat já sai com o link.':'Desligada: o checkout fica como era.')+'</small></div>'+
           '<button type="button" class="toggle" id="enLiga" aria-pressed="'+lig+'" aria-label="Entrega na hora dos beats"><i></i></button></div>'+
         '<div class="bloco"><div class="rot">TESTAR ANTES</div><p>Cria um pedido de mentira com o primeiro beat à venda e abre a página que o comprador vê. Nada é vendido e o beat segue na vitrine.</p>'+
           '<div class="acoes" style="margin-top:12px"><button type="button" class="pill solid" id="enTeste">Criar pedido de teste</button></div><div id="enTesteLink" style="margin-top:10px;font-size:13.5px"></div></div>'+
+        '<div class="bloco"><div class="rot">SERVIÇOS DOS PEDIDOS</div><p>Quem comprou mix, master ou beat personalizado manda o material pela página do pedido (chega um e-mail pra você). Terminou, cola o link do arquivo final e toca em Entregar: quem comprou recebe um e-mail e o botão de baixar aparece no pedido.</p>'+
+          '<div id="svLista">'+listaServicos()+'</div>'+
+          '<div class="acoes" style="margin-top:12px"><button type="button" class="pill" id="enTesteSv">Criar pedido de teste de serviço</button></div><div id="enTesteSvLink" style="margin-top:10px;font-size:13.5px"></div></div>'+
         '<div class="bloco"><div class="rot">ÚLTIMOS PEDIDOS COM LINK</div>'+listaPedidos()+'</div>'+
         '<div class="acoes"><button type="button" class="pill" data-close>Fechar</button></div>';
       card.querySelector('[data-close]').addEventListener('click',fechar);
@@ -514,6 +544,28 @@ function pagina() {
           b.disabled=false;
           if(!j||!j.ok){ flash((j&&j.erro)||'Não salvou. Tenta de novo.'); return; }
           entrega=j; pinta(); flash(quer?'Entrega na hora ligada.':'Entrega na hora desligada.');
+        });
+      });
+      card.querySelectorAll('.sv-ent').forEach(function(b){ b.addEventListener('click',function(){
+        var todos=[]; ((entrega&&entrega.pedidos)||[]).forEach(function(p){ (p.servicos||[]).forEach(function(sv){ todos.push({p:p,s:sv}); }); });
+        var x=todos[Number(b.getAttribute('data-i'))]; if(!x) return;
+        var inp=card.querySelector('.sv-link[data-i="'+b.getAttribute('data-i')+'"]'), link=(inp&&inp.value||'').trim();
+        if(!link){ flash('Cola o link do arquivo final primeiro.'); if(inp) inp.focus(); return; }
+        b.disabled=true; b.textContent='Entregando…';
+        acao('pedido-entregar',{token:x.p.token,k:x.s.k,link:link}).then(function(j){
+          b.disabled=false;
+          if(!j||!j.ok){ b.textContent='Entregar'; flash((j&&j.erro)||'Não salvou. Tenta de novo.'); return; }
+          entrega.pedidos=j.pedidos||entrega.pedidos; pinta();
+          flash(j.avisou?'Entregue. Quem comprou recebeu o e-mail.':'Entregue. O botão já aparece na página do pedido.');
+        });
+      }); });
+      $('enTesteSv').addEventListener('click',function(){
+        var b=this; b.disabled=true; b.textContent='Criando…';
+        acao('pedido-teste-servico',{}).then(function(j){
+          b.disabled=false; b.textContent='Criar pedido de teste de serviço';
+          if(!j||!j.ok){ flash((j&&j.erro)||'Não criou. Tenta de novo.'); return; }
+          entrega.pedidos=j.pedidos||entrega.pedidos; pinta();
+          var l=$('enTesteSvLink'); if(l) l.innerHTML='Pedido de teste com Mix + Master e Beat personalizado: <a href="'+esc(j.caminho)+'" target="_blank" rel="noopener">abrir a página do pedido</a>';
         });
       });
       $('enTeste').addEventListener('click',function(){
@@ -534,7 +586,8 @@ function pagina() {
   function textoLista(){
     if(!lista) return 'quem se cadastrou pra receber o cupom de 25%';
     if(!lista.total) return 'ninguém ainda';
-    return lista.total+(lista.total===1?' pessoa':' pessoas')+' · '+lista.usaram+(lista.usaram===1?' usou o cupom':' usaram o cupom');
+    var falhou=(lista.envios||[])[0]&&!lista.envios[0].ok;
+    return lista.total+(lista.total===1?' pessoa':' pessoas')+' · '+lista.usaram+(lista.usaram===1?' usou o cupom':' usaram o cupom')+(falhou?' · <em>o último e-mail não saiu</em>':'');
   }
   function pedirLista(){
     if(listaPedida) return; listaPedida=true;
@@ -554,6 +607,10 @@ function pagina() {
           var d=new Date(u.em), dd=isNaN(d)?'':('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2);
           return '<div class="ev"><span>'+dd+'</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(u.email)+(u.usou?' · usou o cupom':'')+'</span></div>';
         }).join('')+'</div>':'<p style="margin-top:6px">Ninguém ainda.</p>')+'</div>'+
+        '<div class="bloco"><div class="rot">E-MAILS DO CUPOM</div>'+((l.envios||[]).length?'<div style="margin-top:6px">'+l.envios.map(function(u){
+          var d=new Date(u.em), dd=isNaN(d)?'':('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+          return '<div class="ev"><span>'+dd+'</span><span style="min-width:0">'+esc(u.email)+' · '+(u.ok?'saiu':'<em>não saiu</em> ('+esc(u.erro||'erro')+')')+'</span></div>';
+        }).join('')+'</div>':'<p style="margin-top:6px">Nenhum envio registrado ainda (o registro começou em 12/10).</p>')+'</div>'+
         '<div class="acoes"><button type="button" class="pill" data-close>Fechar</button></div>';
       card.querySelector('[data-close]').addEventListener('click',fechar);
       var cp=$('liCopia');

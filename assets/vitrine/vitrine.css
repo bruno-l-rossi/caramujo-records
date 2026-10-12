@@ -216,35 +216,25 @@ nav{
 .ft.on,.ft:hover{background:var(--ember);color:var(--cream);}
 
 /* ═══ PACKAGES ═══════════════════════════ */
-.packs{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--wire);}
-.pack{
-  padding:2.4rem 1.7rem;border-right:1px solid var(--wire);
-  position:relative;overflow:hidden;transition:background .18s;
-  display:flex;flex-direction:column;
-}
-.pack:last-child{border-right:none;}
-.pack::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--wire);transition:background .18s;}
-.pack:hover::after{background:var(--ember);}
-.pack:hover{background:var(--earth);}
-.pack.hot{background:var(--earth);}
-.pack.hot::after{background:var(--fire);}
-.pack-tag{
-  font-size:.58rem;font-weight:700;
-  letter-spacing:.25em;text-transform:uppercase;color:var(--clay);margin-bottom:.7rem;
-}
-.pack.hot .pack-tag{color:var(--amber);}
-.pack-n{font-size:1.7rem;color:var(--cream);margin-bottom:.25rem;}
 
-.pack-eco{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.05em;}
-.pack-sep{height:1px;background:var(--wire);margin-bottom:1.4rem;}
-.pack.hot .pack-sep{background:rgba(255,255,255,.1);}
-.pack-ul{list-style:none;display:flex;flex-direction:column;gap:.42rem;margin-bottom:1.5rem;flex:1;}
-.pack-ul li{
-  font-size:.74rem;color:var(--read);
-  display:flex;align-items:flex-start;gap:.55rem;line-height:1.5;
-}
-.pack-ul li::before{content:'›';color:var(--fire);flex-shrink:0;}
-.pack.hot .pack-ul li{color:var(--amber);}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* ═══ SERVICES ═══════════════════════════ */
 .svcs{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border:1px solid var(--wire);}
@@ -430,93 +420,35 @@ footer p{
 .overlay.on{display:block;}
 
 /* PKG BEAT SELECTOR MODAL */
-.pkg-modal{
-  position:fixed;inset:0;z-index:9000;
-  display:none;align-items:center;justify-content:center;padding:1rem;
-}
-.pkg-modal.open{display:flex;}
-.pkg-modal-inner{
-  background:var(--deep);border:1px solid var(--wire);
-  width:100%;max-width:540px;max-height:90dvh;
-  display:flex;flex-direction:column;
-}
-.pkg-modal-head{
-  padding:1.2rem 1.6rem;border-bottom:1px solid var(--wire);
-  display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;
-}
-.pkg-modal-title{
-  font-family:'Cormorant Garamond',sans-serif;font-size:1.1rem;
-  letter-spacing:.12em;text-transform:uppercase;color:var(--cream);
-}
-.pkg-modal-sub{
-  font-size:.62rem;color:var(--read);letter-spacing:.08em;margin-top:.2rem;
-}
-.pkg-modal-x{
-  background:none;border:none;color:var(--dim);font-size:1.1rem;
-  cursor:pointer;transition:color .14s;flex-shrink:0;
-}
-.pkg-modal-x:hover{color:var(--cream);}
-.pkg-modal-body{
-  flex:1;overflow-y:auto;padding:0 1.6rem 1rem;
-}
-.pkg-search{
-  position:sticky;top:0;z-index:1;
-  background:var(--deep);padding:.8rem 0 .6rem;
-  border-bottom:1px solid var(--wire);margin-bottom:.2rem;
-}
-.pkg-search-input{
-  width:100%;background:var(--mole);border:1px solid var(--wire);
-  color:var(--cream);font-family:'IBM Plex Mono',monospace;
-  font-size:.72rem;padding:.55rem .8rem;outline:none;
-  transition:border-color .14s;
-}
-.pkg-search-input::placeholder{color:var(--dim);}
-.pkg-search-input:focus{border-color:var(--ember);}
-.pkg-no-results{
-  text-align:center;color:var(--dim);font-size:.72rem;
-  padding:2rem 0;
-}
-.pkg-beat-item{
-  display:flex;align-items:center;gap:.8rem;
-  padding:.75rem 0;border-bottom:1px solid var(--wire);cursor:pointer;
-  transition:background .12s;
-}
-.pkg-beat-item:last-child{border-bottom:none;}
-.pkg-beat-item:hover{background:rgba(255,255,255,.02);}
-.pkg-beat-item.selected{background:rgba(184,44,8,.07);}
-.pkg-beat-cb{
-  width:18px;height:18px;flex-shrink:0;
-  border:1px solid var(--wire);background:var(--mole);
-  display:flex;align-items:center;justify-content:center;
-  font-size:.7rem;color:var(--fire);transition:border-color .14s,background .14s;
-}
-.pkg-beat-item.selected .pkg-beat-cb{
-  border-color:var(--ember);background:rgba(184,44,8,.2);
-}
-.pkg-beat-info{flex:1;min-width:0;}
-.pkg-beat-name{
-  font-family:'Cormorant Garamond',sans-serif;font-size:.95rem;
-  text-transform:uppercase;color:var(--cream);letter-spacing:.06em;
-}
-.pkg-beat-meta{font-size:.58rem;color:var(--dim);letter-spacing:.08em;margin-top:.1rem;}
-.pkg-modal-foot{
-  padding:1rem 1.6rem;border-top:1px solid var(--wire);
-  display:flex;align-items:center;justify-content:space-between;gap:1rem;
-}
-.pkg-counter{
-  font-size:.72rem;
-  font-weight:700;letter-spacing:.12em;text-transform:uppercase;
-  color:var(--read);
-}
-.pkg-counter span{color:var(--fire);}
-.pkg-confirm{
-  border:none;color:var(--cream);
-  font-family:'Cormorant Garamond',sans-serif;font-size:.95rem;
-  letter-spacing:.12em;padding:.65rem 1.8rem;
-  transition:background .14s;
-}
-.pkg-confirm:hover{background:var(--fire);}
-.pkg-confirm:disabled{background:var(--loam);cursor:not-allowed;opacity:.6;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* REVEAL */
 .rv{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease;}
@@ -567,9 +499,9 @@ html { scroll-padding-top: var(--nav-h,54px); }
   .hero-title{white-space:normal;}
 
   /* Packages */
-  .packs{grid-template-columns:1fr;}
-  .pack{border-right:none;border-bottom:1px solid var(--wire);}
-  .pack:last-child{border-bottom:none;}
+  
+  
+  
 
   /* Services */
   .svcs{grid-template-columns:1fr;}
@@ -594,7 +526,7 @@ html { scroll-padding-top: var(--nav-h,54px); }
   /* Inputs com 16px: impede o zoom automático do iOS ao focar */
   input,select,textarea{font-size:16px!important;}
   /* Piso de legibilidade pra textos miúdos */
-  .pkg-beat-meta,.ci-t,.pack-tag,.cp-upsell-tag,.s-kicker{font-size:.66rem;}
+  .ci-t,.cp-upsell-tag,.s-kicker{font-size:.66rem;}
   footer p{font-size:.63rem;}
   .mp-lbl,.cf-lbl{font-size:.66rem;}
 
@@ -661,7 +593,7 @@ body{cursor:auto;}
 .s-kicker{color:var(--clay)!important;letter-spacing:.28em;}
 
 /* pacotes / serviços */
-.pack-n,.svc-name{font-family:var(--serif);font-weight:600;text-transform:none;}
+.svc-name{font-family:var(--serif);font-weight:600;text-transform:none;}
 
 /* contato serif */
 .c-desc{font-family:var(--serif);font-style:italic;font-size:clamp(1.3rem,2.2vw,1.7rem);line-height:1.45;color:var(--amber);}
@@ -738,7 +670,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .hero-logo-wrap{justify-content:flex-start;padding-left:1vw;}
 .hero-week{right:auto;left:50%;top:46%;transform:translate(-50%,-50%);width:min(440px,46vw);}
 
-.disc-pill{display:inline-block;background:var(--fire);color:var(--black);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.1em;padding:.2rem .5rem;vertical-align:middle;margin-left:.4rem;box-shadow:0 2px 10px rgba(185,143,94,.4);}
+
 
 @media(max-width:900px){.hero-week{position:static;left:auto;top:auto;transform:none;width:100%;max-width:430px;margin:1.8rem 0 0;}.hero-logo-wrap{justify-content:center;padding-left:0;}}
 
@@ -924,8 +856,16 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
   padding:.52rem .8rem;cursor:pointer;transition:background .14s,border-color .14s;white-space:nowrap}
 .preco:hover{background:var(--fire);border-color:var(--fire)}
 .preco.on{background:var(--fire);border-color:var(--fire)}
-#beatCards .vendido{flex:none;font-size:.58rem;font-weight:700;letter-spacing:.2em;
-  text-transform:uppercase;color:var(--blood);border:1px solid var(--blood);padding:.52rem .8rem}
+/* vendido (12/10/2026, misto das opções A e B): segue claro que foi vendido e vira o caminho
+   pros parecidos, na página do beat (#parecidos) */
+#beatCards .vendido{flex:none;display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;
+  min-width:96px;min-height:42px;padding:.4rem .7rem;border:1px solid var(--wire);text-decoration:none;
+  transition:border-color .14s,background .14s}
+#beatCards .vendido i{font-style:normal;font-size:.5rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--blood);line-height:1}
+#beatCards .vendido span{display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--bone);line-height:1}
+#beatCards .vendido span b{font:500 1.05rem/.6 'Cormorant Garamond',serif;color:var(--clay);transition:transform .14s,color .14s}
+#beatCards .vendido:hover,#beatCards .vendido:focus-visible{border-color:var(--fire);background:rgba(185,143,94,.08)}
+#beatCards .vendido:hover span b{color:var(--fire);transform:translateX(2px)}
 #beatCards .item.fora .nome{color:var(--amber);text-decoration:line-through;
   text-decoration-color:var(--blood);text-decoration-thickness:1.5px}
 #beatCards .corrida{position:absolute;left:0;bottom:-1px;height:2px;background:var(--fire);}
@@ -1020,19 +960,17 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
   html body.tocando{padding-bottom:140px}
 }
 /* modal do pacote: ouvir antes de escolher */
-.pkg-beat-item{position:relative}
-.pkg-play{flex:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;
-  background:transparent;border:1px solid var(--wire);color:var(--bone);cursor:pointer;padding:0;
-  transition:background .14s,border-color .14s,color .14s;-webkit-tap-highlight-color:transparent}
-.pkg-play:hover{border-color:var(--fire);color:var(--cream)}
-.pkg-beat-item.tocando .pkg-play{background:var(--fire);border-color:var(--fire);color:var(--black)}
-.pkg-beat-item.tocando .pkg-beat-name{color:var(--amber)}
-.pkg-corrida{position:absolute;left:0;bottom:-1px;height:2px;background:var(--fire);pointer-events:none}
+
+
+
+
+
+
 
 /* ══ NOVO v31 — mensagens na paleta, caixinha do pacote à direita, carrinho na barra do celular ══ */
 .msg-ok{color:var(--amber)}
 .msg-err{color:var(--bone);border-left:2px solid var(--blood);padding-left:.5rem}
-.pkg-beat-item .pkg-beat-cb{margin-left:.4rem}
+
 /* celular: o botão de preço volta pra barra (R$119 -> No carrinho), ao lado do volume,
    igual ao computador. A ficha continua inteira (conferido em 320-430px). */
 @media(max-width:600px){
@@ -1262,8 +1200,7 @@ html{-webkit-text-size-adjust:100%}
   #beatCards .ficha{font-size:.72rem;letter-spacing:0}
   #beatCards .ficha em{font-size:.66rem;letter-spacing:.04em}
   #beatCards .preco{min-height:42px;justify-content:center}
-  #beatCards .vendido{font-size:.6rem;min-height:42px;padding:.5rem .7rem;
-    display:inline-flex;align-items:center;justify-content:center}
+  #beatCards .vendido{min-height:42px}
   .btn{min-height:44px;justify-content:center}
   .sort-select{min-height:40px;font-size:.66rem}
   .pg-btn{min-height:36px;padding:.3rem 1rem}
@@ -1283,7 +1220,8 @@ html{-webkit-text-size-adjust:100%}
   #beatCards .ficha{font-size:.6875rem}   /* 11px (04/10/2026) */
   #beatCards .ficha em{font-size:.6rem;letter-spacing:.03em}
   #beatCards .preco{font-size:.68rem;padding:.5rem .5rem}
-  #beatCards .vendido{font-size:.54rem;letter-spacing:.12em;padding:.5rem .5rem}
+  #beatCards .vendido{min-width:84px;padding:.4rem .5rem}
+  #beatCards .vendido span{font-size:.64rem}
   /* a barra do pé também: gênero, BPM e tom inteiros, sem reticência */
   .pe-baixo{gap:6px;padding-left:10px;padding-right:10px}
   .pe-nome small{font-size:.62rem}
@@ -1341,7 +1279,7 @@ body.vol-aberto .cart-btn{transform:translateY(-76px)}
       ampliada não arrasta mais a página que está atrás (no celular arrastava).
    2) No celular o menu de cima perde o desfoque do fundo: com o fundo 97%
       opaco ele não aparecia, e custava processamento a cada quadro da rolagem. */
-.cp-body,.pkg-modal-body,.mp-modal-inner,.lb{overscroll-behavior:contain}
+.cp-body,.mp-modal-inner,.lb{overscroll-behavior:contain}
 @media(max-width:860px){ nav{backdrop-filter:none;-webkit-backdrop-filter:none} }
 /* hero no notebook (03/10/2026, opção B do Bruno): entre 901 e 1500px de largura o card do
    Beat em destaque cobria o fim do "Caramujo". Só nessa faixa o título encolhe um pouco e o
@@ -1425,8 +1363,6 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .mp-ok-t{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-size:2.1rem;line-height:1.1;color:var(--cream);margin-bottom:.9rem}
 .mp-ok-p{font-size:.84rem;line-height:1.7;color:var(--read);max-width:340px;margin:0 auto 1.6rem}
 .mp-ok-nota{font-family:'IBM Plex Mono',monospace;font-size:.66rem;line-height:1.6;color:var(--dim);margin:.6rem auto 1.4rem;max-width:320px}
-.mp-btn-ghost{width:100%;padding:.9rem;background:transparent;border:1px solid var(--wire);color:var(--bone);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;min-height:48px;transition:border-color .14s,color .14s}
-.mp-btn-ghost:hover{border-color:var(--clay);color:var(--cream)}
 .mp-ok-assina{margin-top:1.4rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.06em;color:var(--dim)}
 
 /* Nome do beat vendido na lista (11/10/2026): no mouse, o mesmo sublinhado dos à venda (é link pra
@@ -1439,7 +1375,11 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .cp-conta{margin-bottom:.7rem;padding-bottom:.7rem;border-bottom:1px solid var(--wire)}
 .cp-conta[hidden]{display:none}
 .cp-l{display:flex;justify-content:space-between;align-items:baseline;font-family:'IBM Plex Mono',monospace;font-size:.72rem;line-height:1.9;color:var(--read)}
-.cp-l.off span:last-child{color:var(--fire)}
+/* 12/10/2026: o desconto com mais destaque (faixa em fire) */
+.cp-conta .cp-l{padding:0 .5rem}
+.cp-l.off{color:var(--fire);background:rgba(185,143,94,.12);margin:2px 0}
+.cp-l.off span:first-child{font-weight:600}
+.cp-l.off span:last-child{color:var(--cream);font-weight:600}
 .ci-p s{color:var(--dim);text-decoration-color:var(--dim);margin-right:.25rem;font-size:.9em}
 
 /* Fique por dentro (11/10/2026): cadastro na lista com cupom de 25%, no fim da lista de beats */
@@ -1457,5 +1397,23 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .lista-bt:disabled{opacity:.6;cursor:default}
 .lista-nota{margin-top:.8rem;font-family:'IBM Plex Mono',monospace;font-size:.66rem;line-height:1.6;color:var(--dim)}
 .lista-nota.erro{color:var(--fire)}
+.lista-re{background:none;border:0;padding:0;font:inherit;color:var(--fire);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.lista-re:disabled{opacity:.6;cursor:default}
 .lista-box.ok .lista-t{font-size:1.6rem}
 @media(max-width:600px){.lista-box{padding:1.3rem 1.1rem 1.2rem}.lista-t{font-size:1.7rem}.lista-f{flex-direction:column}.lista-bt{width:100%}}
+
+/* Leve mais, pague menos (12/10/2026): faixa em cima da lista (opção A) e régua no carrinho (opção C) */
+.lm-faixa{display:flex;flex-wrap:wrap;align-items:center;gap:.45rem;margin:0 0 1rem;padding:.75rem .9rem;border:1px solid var(--clay);background:rgba(185,143,94,.08)}
+.lm-k{flex:0 0 auto;font-size:.58rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--fire);margin-right:.4rem}
+@media(max-width:600px){.lm-k{flex-basis:100%;margin-bottom:.1rem}}
+.lm-l{flex:none;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--bone);border:1px solid var(--wire);padding:.32rem .55rem;white-space:nowrap}
+.lm-l b{font-weight:400;color:var(--fire)}
+.lm-l i{font-style:normal;color:var(--read);font-size:.64rem;margin-left:.15rem}
+.lm-reg{margin:1rem 0 0;padding:.9rem 1rem;border:1px solid var(--wire);background:var(--deep)}
+.lm-reg p{font-size:.78rem;line-height:1.6;color:var(--bone);margin:0 0 .6rem}
+.lm-reg p b{color:var(--fire);font-weight:600}
+.lm-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.lm-bar i{height:5px;background:var(--loam)}
+.lm-bar i.on{background:var(--fire)}
+.lm-num{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:.56rem;color:var(--dim);text-align:center;white-space:nowrap}
+.lm-num span.on{color:var(--bone)}

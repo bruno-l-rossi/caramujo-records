@@ -85,6 +85,7 @@ export async function sair(d, token) {
 
 // painel: quantos, quantos usaram o cupom e os e-mails (pra copiar)
 export async function painelLista(d) {
+  const envios = await lerEnvios(d);
   const { results } = await d.prepare(
     'SELECT l.email, l.origem, l.criado_em, l.saiu_em, c.usos FROM lista l LEFT JOIN cupons c ON c.codigo = l.cupom ORDER BY l.criado_em DESC LIMIT 2000'
   ).all();
@@ -95,7 +96,8 @@ export async function painelLista(d) {
     sairam: todos.length - ativos.length,
     usaram: todos.filter((r) => Number(r.usos || 0) > 0).length,
     emails: ativos.map((r) => r.email),
-    ultimos: ativos.slice(0, 10).map((r) => ({ email: r.email, em: r.criado_em, origem: r.origem, usou: Number(r.usos || 0) > 0 }))
+    ultimos: ativos.slice(0, 10).map((r) => ({ email: r.email, em: r.criado_em, origem: r.origem, usou: Number(r.usos || 0) > 0 })),
+    envios
   };
 }
 
@@ -113,7 +115,7 @@ export function htmlCupom({ cupom, valeAte: ate, token }) {
   <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td valign="top">
     <div style="font-family:'Courier New',Courier,monospace;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:#b98f5e;margin-bottom:10px;">// CARAMUJO RECORDS</div>
     <div style="font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:bold;color:#f2ecdf;letter-spacing:0.05em;text-transform:uppercase;line-height:1.1;">Seu cupom<br/><span style="color:#b98f5e;">de ${PCT}%.</span></div>
-  </td><td align="right" valign="top" style="width:72px;"><img src="${SITE}/assets/brand/selo-180.png" width="60" height="60" alt="Caramujo Records" style="display:block;border:0;"/></td></tr></table>
+  </td><td align="right" valign="top" style="width:72px;"><img src="${SITE}/assets/brand/selo-email.png" width="60" height="60" alt="Caramujo Records" style="display:block;border:0;"/></td></tr></table>
 </td></tr>
 <tr><td style="padding:30px 36px 8px;">
   <p style="font-family:Georgia,'Times New Roman',serif;font-size:15px;color:#b89e72;line-height:1.8;margin:0 0 22px;">Valeu por entrar na lista da Caramujo. Esse é o cupom da sua primeira compra:</p>
@@ -135,20 +137,86 @@ export function htmlCupom({ cupom, valeAte: ate, token }) {
 </table></td></tr></table></body></html>`;
 }
 
-export async function enviarCupom(env, { email, cupom, valeAte: ate, token }) {
+// Texto puro junto do HTML: e-mail só com HTML tem mais chance de cair no spam
+export function textoCupom({ cupom, valeAte: ate, token }) {
+  return [
+    `Seu cupom de ${PCT}% chegou.`,
+    '',
+    'Valeu por entrar na lista da Caramujo. Esse é o cupom da sua primeira compra:',
+    '',
+    `   ${cupom}`,
+    `   ${PCT}% nos beats do catálogo · vale até ${dataBR(ate)}`,
+    '',
+    `Escolher meu beat: ${SITE}/?de=lista#beats`,
+    'É só colar o código no carrinho, no campo de cupom.',
+    '',
+    'O que chega por aqui: lançamentos e promoções do @rideblan33 em primeira mão, e cupom que só a lista recebe.',
+    '',
+    `Sair da lista: ${SITE}/api/lista?sair=${token}`
+  ].join('\n');
+}
+
+// 12/10/2026: o 1º cadastro do Bruno não recebeu o e-mail e não havia como saber por quê.
+// Agora o envio espera a resposta do Resend e guarda o resultado (meta 'lista-envio', os
+// últimos 10) pro painel mostrar: saiu, ou o erro que o Resend devolveu.
+export const REENVIO_MIN = 10;   // o mesmo e-mail recebe o cupom de novo no máximo a cada 10 min
+
+export async function podeReenviar(d, email) {
+  const r = await d.prepare("SELECT valor FROM meta WHERE chave = 'lista-envio'").first().catch(() => null);
+  let l = []; try { l = JSON.parse((r && r.valor) || '[]'); } catch (_) { l = []; }
+  const ult = l.find((x) => x.email === email && x.ok);
+  return !ult || (Date.now() - Date.parse(ult.em)) > REENVIO_MIN * 60e3;
+}
+
+async function guardarEnvio(d, item) {
+  if (!d) return;
+  try {
+    const r = await d.prepare("SELECT valor FROM meta WHERE chave = 'lista-envio'").first();
+    let l = []; try { l = JSON.parse((r && r.valor) || '[]'); } catch (_) { l = []; }
+    l.unshift(item);
+    await d.prepare("INSERT OR REPLACE INTO meta (chave, valor) VALUES ('lista-envio', ?)").bind(JSON.stringify(l.slice(0, 10))).run();
+  } catch (e) { console.error('[lista] não guardou o envio', e && e.message); }
+}
+
+export async function lerEnvios(d) {
+  const r = await d.prepare("SELECT valor FROM meta WHERE chave = 'lista-envio'").first().catch(() => null);
+  try { return JSON.parse((r && r.valor) || '[]'); } catch (_) { return []; }
+}
+
+// { ok, erro } — erro em português pro painel
+export async function enviarCupom(env, { email, cupom, valeAte: ate, token }, d = null) {
+  const em = new Date().toISOString();
   const chave = env.RESEND_API_KEY;
-  if (!chave) { console.warn('[lista] RESEND_API_KEY ausente: e-mail do cupom não saiu'); return false; }
+  if (!chave) {
+    console.warn('[lista] RESEND_API_KEY ausente: e-mail do cupom não saiu');
+    await guardarEnvio(d, { email, em, ok: false, erro: 'RESEND_API_KEY não está configurada no Cloudflare' });
+    return { ok: false };
+  }
   const de = env.NOTIFY_FROM || 'rideblan33@caramujorecords.com.br';
-  const r = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${chave}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: `Caramujo Records <${de}>`, to: [email],
-      subject: `Seu cupom de ${PCT}% chegou · Caramujo Records`,
-      html: htmlCupom({ cupom, valeAte: ate, token }),
-      headers: { 'List-Unsubscribe': `<${SITE}/api/lista?sair=${token}>` }
-    })
-  });
-  if (!r.ok) console.error('[lista] Resend respondeu', r.status);
-  return r.ok;
+  let ok = false, erro = '';
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${chave}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: `Caramujo Records <${de}>`, to: [email], reply_to: de,
+        subject: `Seu cupom de ${PCT}% chegou · Caramujo Records`,
+        html: htmlCupom({ cupom, valeAte: ate, token }),
+        text: textoCupom({ cupom, valeAte: ate, token }),
+        headers: { 'List-Unsubscribe': `<${SITE}/api/lista?sair=${token}>` }
+      })
+    });
+    ok = r.ok;
+    if (!ok) {
+      const corpo = await r.text().catch(() => '');
+      let msg = corpo; try { const j = JSON.parse(corpo); msg = j.message || j.error || corpo; } catch (_) { /* texto mesmo */ }
+      erro = `Resend respondeu ${r.status}: ${String(msg).slice(0, 200)}`;
+      console.error('[lista]', erro);
+    }
+  } catch (e) {
+    erro = 'sem resposta do Resend: ' + String((e && e.message) || e).slice(0, 120);
+    console.error('[lista]', erro);
+  }
+  await guardarEnvio(d, ok ? { email, em, ok: true } : { email, em, ok: false, erro });
+  return { ok, erro };
 }
