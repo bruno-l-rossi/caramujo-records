@@ -203,3 +203,17 @@ linha de baixo, à direita. Tape (só beats) segue com a aba simples sublinhada.
 Página da tape: caixa "Fique por dentro" antes do "Mais de @rideblan33", fundo `#0b0b0b`, borda
 `#2a2a2a`, cantos de 18px, kicker cinza, título 26px peso 800, campo e botão redondos (botão
 branco cheio). Nunca na pasta de artista.
+
+## Painel novo e "Quer um som assim?" (12-14/10/2026)
+
+Painel: barra de 5 seções fixa embaixo no celular (ícone + nome, bolinha branca com número) e
+menu de 236px do lado no computador (logo em cima, Ajustes e Ver o site embaixo de um fio). Partes
+de cada seção em pílulas redondas (a aberta cheia de branco). Pendências do Hoje em cartões
+`#121212` com borda `#252525` e cantos de 16px; a mais urgente com o ícone em fundo branco.
+
+Fim da aba Músicas do perfil: cartão com a foto do estúdio (gradiente pro preto embaixo), kicker
+"Caramujo Records" cinza, "Quer um som assim?" em 28px peso 800 e dois botões redondos (Mix &
+Master branco cheio, Beat personalizado com borda branca a 50%).
+
+Fique por dentro da tape: 42px entre o fim dos beats e a caixa e 42px entre a caixa e o "Mais de"
+(a medida conta o respiro da lista e do título).

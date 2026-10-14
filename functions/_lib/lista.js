@@ -124,11 +124,7 @@ export function htmlCupom({ cupom, valeAte: ate, token }) {
     <div style="font-family:'Courier New',Courier,monospace;font-size:11px;color:#b89e72;margin-top:10px;">${PCT}% nos beats do catálogo · vale até ${dataBR(ate)}</div>
   </td></tr></table>
   <table cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 26px;"><tr><td style="background:#E8E0CF;"><a href="${SITE}/?de=lista#beats" style="display:inline-block;padding:14px 22px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;font-weight:bold;letter-spacing:0.2em;color:#14110d;text-decoration:none;text-transform:uppercase;">Escolher meu beat &rarr;</a></td></tr></table>
-  <p style="font-family:Georgia,'Times New Roman',serif;font-size:13px;color:#b89e72;line-height:1.8;margin:0 0 6px;">É só colar o código no carrinho, no campo de cupom.</p>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#221e18;border-left:2px solid #b98f5e;margin:18px 0 30px;"><tr><td style="padding:14px 18px;">
-    <div style="font-family:'Courier New',Courier,monospace;font-size:8px;letter-spacing:0.3em;color:#b98f5e;text-transform:uppercase;margin-bottom:8px;">// O QUE CHEGA POR AQUI</div>
-    <p style="font-family:Georgia,'Times New Roman',serif;font-size:13px;color:#b89e72;line-height:1.8;margin:0;">Lançamentos e promoções do @rideblan33 em primeira mão, e cupom que só a lista recebe. Nada além disso.</p>
-  </td></tr></table>
+  <p style="font-family:Georgia,'Times New Roman',serif;font-size:13px;color:#b89e72;line-height:1.8;margin:0 0 30px;">É só colar o código no carrinho, no campo de cupom.</p>
 </td></tr>
 <tr><td style="padding:18px 36px;border-top:1px solid #332c22;">
   <div style="font-family:'Courier New',Courier,monospace;font-size:10px;line-height:1.7;color:#6f6757;">Você recebeu esse e-mail porque entrou na lista em caramujorecords.com.br. <a href="${sairUrl}" style="color:#9e7c48;">Sair da lista</a></div>
@@ -149,8 +145,6 @@ export function textoCupom({ cupom, valeAte: ate, token }) {
     '',
     `Escolher meu beat: ${SITE}/?de=lista#beats`,
     'É só colar o código no carrinho, no campo de cupom.',
-    '',
-    'O que chega por aqui: lançamentos e promoções do @rideblan33 em primeira mão, e cupom que só a lista recebe.',
     '',
     `Sair da lista: ${SITE}/api/lista?sair=${token}`
   ].join('\n');

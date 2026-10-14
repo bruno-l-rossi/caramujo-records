@@ -65,11 +65,11 @@ export function htmlEntrega(p, it, k = null) {
     P('Quer mexer em alguma coisa? Responde este e-mail ou chama no Direct do @rideblan33.'));
 }
 
-export async function avisarEnvio(env, p, it) {
+export async function avisarEnvio(env, p, it, editou = false) {
   const sv = servicoDe(it.nome);
   return mandar(env, {
     to: env.NOTIFY_EMAIL || 'rideblan33@gmail.com',
-    subject: `${sv && sv.tipo === 'encomenda' ? 'Referência' : 'Material'} chegou · ${sv ? sv.curto : it.nome} · ${p.artista || p.nome || 'pedido'}`,
+    subject: `${editou ? 'Material atualizado' : sv && sv.tipo === 'encomenda' ? 'Referência chegou' : 'Material chegou'} · ${sv ? sv.curto : it.nome} · ${p.artista || p.nome || 'pedido'}`,
     html: htmlEnvio(p, it), replyTo: p.email || undefined,
     text: `${p.artista || p.nome || 'Quem comprou'} mandou o material do ${sv ? sv.curto : it.nome}. Pedido: ${SITE}/pedido/${p.token}`
   });

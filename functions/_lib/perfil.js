@@ -249,7 +249,8 @@ export function abaMusicas(mus, { previa = false } = {}) {
   const todas = `<a class="mx-todas" href="${REDES.spotify}" target="_blank" rel="noopener" data-rede="portfolio-spotify" aria-label="Ouvir o portfólio completo no Spotify">${ICONES.spotify}<span>Ouvir o portfólio completo</span>${ICONE_SETA}</a>`;
   // 4b (11/10/2026, opção A do Bruno, sem o texto): quem ouviu as músicas e quer um som assim vai
   // direto pros serviços da vitrine
-  const som = `<div class="mx-som"><p>Quer um som assim?</p><div><a class="cheio" href="/#services"${deAttr('perfil-musicas')} data-rede="servico-mix">Mix &amp; Master</a><a href="/#services"${deAttr('perfil-musicas')} data-rede="servico-beat">Beat personalizado</a></div></div>`;
+  // 12/10/2026: opção D (cartão com a foto do estúdio), kicker "Caramujo Records"
+  const som = `<div class="mx-som"><span class="mx-som-k">Caramujo Records</span><p>Quer um som assim?</p><div><a class="cheio" href="/#services"${deAttr('perfil-musicas')} data-rede="servico-mix">Mix &amp; Master</a><a href="/#services"${deAttr('perfil-musicas')} data-rede="servico-beat">Beat personalizado</a></div></div>`;
   h += recentes.length
     ? `<section class="mx-sec" aria-labelledby="mxRec"><div class="cab"><h3 id="mxRec">${destaques.length ? 'Recentes' : 'Músicas'}</h3><span>mais novas primeiro</span></div>` +
       `<ul class="mx-lista">${recentes.map((m, k) => linhaRecente(m, destaques.length + k, vaga)).join('')}</ul>${todas}${som}</section>`
@@ -546,12 +547,14 @@ a.mx-c .mx-img{transition:transform .35s ease}
 .mx-data{margin-right:6px;font:400 12px/1 var(--mono);color:#6a6a6a;white-space:nowrap}
 .mx-row .mx-play,.mx-vaga{width:38px;height:38px;flex:none}
 /* a chamada pro portfólio inteiro no Spotify, no fim das recentes */
-.mx-som{margin-top:14px;padding:20px 18px;border:1px solid #2a2a2a}
-.mx-som p{font:700 13px/1.3 var(--grot);letter-spacing:.16em;text-transform:uppercase;color:var(--branco);margin:0 0 14px}
+.mx-som{margin-top:26px;overflow:hidden;border-radius:16px;padding:120px 18px 18px;background:linear-gradient(180deg,rgba(0,0,0,.05) 0%,rgba(0,0,0,.85) 62%,#000 100%),url(/assets/studio-hero.jpg) center 30%/cover}
+.mx-som-k{display:block;font:600 11px/1 var(--grot);letter-spacing:.2em;text-transform:uppercase;color:#cfcfcf}
+.mx-som p{font:800 28px/1.1 var(--grot);color:var(--branco);margin:8px 0 16px;letter-spacing:-.01em}
 .mx-som div{display:flex;flex-wrap:wrap;gap:10px}
-.mx-som a{flex:1 1 170px;display:flex;align-items:center;justify-content:center;min-height:48px;padding:0 18px;border:1px solid #3a3a3a;border-radius:999px;font:700 12px/1.2 var(--grot);letter-spacing:.16em;text-transform:uppercase;color:var(--branco);text-align:center;transition:border-color .2s,background .2s}
+.mx-som a{flex:1 1 150px;display:flex;align-items:center;justify-content:center;min-height:48px;padding:0 18px;border:1px solid rgba(255,255,255,.5);border-radius:999px;background:rgba(0,0,0,.35);font:700 12px/1.2 var(--grot);letter-spacing:.16em;text-transform:uppercase;color:var(--branco);text-align:center;transition:border-color .2s,background .2s}
 .mx-som a.cheio{background:var(--branco);border-color:var(--branco);color:#000}
 @media (hover:hover){.mx-som a:hover{border-color:var(--branco)}.mx-som a.cheio:hover{background:#d9d9d9;border-color:#d9d9d9}}
+@media (min-width:900px){.mx-som{padding-top:150px}}
 .mx-todas{display:flex;align-items:center;gap:14px;margin-top:14px;padding:16px 18px;border:1px solid #2a2a2a;color:var(--branco);transition:border-color .2s,background .2s}
 .mx-todas>svg{width:22px;height:22px;flex:none}
 .mx-todas>svg:last-child{width:18px;height:18px;color:var(--meta);transition:color .2s}

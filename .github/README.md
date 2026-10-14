@@ -19,7 +19,7 @@ Site do estúdio Caramujo Records (São Carlos, SP): vitrine de beats exclusivos
 | **Link de faixa e de seleção** | `/f/<código>` e `/p/<código>` | Saem do ENVIAR da pasta de artista: marcou uma faixa, `/f/`; duas ou mais, `/p/`. Só aquelas faixas, ouvir sem conta (baixar segue a permissão da pasta). Prévia de uma faixa (04/10/2026): "faixa · artista" + "Produzido por @rideblan33 © Caramujo Records"; de várias: "artista · Caramujo Records" + "N faixas de artista com @rideblan33.". Fora do Google. |
 | **Portfólio** | `/rideblan33` | Foto, apresentação, redes e duas abas: Músicas (destaques e recentes que o Bruno produziu, tocando inteiras, e a chamada pro portfólio no Spotify; o botão do topo vira "Ouça o último lançamento") e Beat tapes (a grade na ordem escolhida no painel, com as pastilhas NOVA e EM ALTA). A aba que abre depende de onde a pessoa veio. Toca a última tape direto do topo e tem o botão de compartilhar (story do perfil ou do catálogo, e o link). A vitrine leva pra cá pelo anel com a camisa 33 no topo e pelo 1º card do Sobre nós. |
 | **Pedido** | `/pedido/<código>` | Desde 10/10/2026, a entrega na hora (chave no painel): pagou beat do catálogo, o WAV, o MP3 e o contrato saem neste link, no PEDIDO CONFIRMADO e no e-mail. Desde 12/10/2026 também os serviços: quem comprou manda o material por aqui e baixa a entrega quando o @rideblan33 cola o link no painel. Cabeçalho igual ao da vitrine. Privado, fora do Google. |
-| **Painel** | `/painel` | Com senha. Artistas, Beat tapes (ordem do portfólio incluída), Vitrine (beats, fila, cupons), Analytics, Comentários das pastas e Entrega na hora. |
+| **Painel** | `/painel` | Com senha. Desde 12/10/2026 em 5 seções (Hoje, Vendas, Catálogo, Perfil, Números) e Ajustes: barra embaixo no celular, menu do lado no computador. |
 
 ---
 
@@ -93,13 +93,14 @@ scripts/                conversor do Drive e cálculo da onda de cada faixa
 
 ## Painel
 
-- **Artistas:** conversão, download, capa e atividade de cada pasta.
-- **Beat tapes:** a linha fixa do @rideblan33 abre a atividade do portfólio e a ordem das tapes (arrastar e soltar). Cada tape tem a chave "Mostrar no perfil".
-- **Vitrine:** beats (editar, vender, destaque, tirar), fila de publicação e cupons.
-- **Músicas do perfil:** colar o link do Spotify ou do YouTube já lê (nome, artistas, data e capa vêm sozinhos; vários links de uma vez entram nas recentes), Destaque ou Recente, arrastar pra ordenar (destaques sempre; recentes pela data ou "Na minha ordem"), o áudio que toca inteiro no perfil (arquivo da pasta do artista, achado pelo nome), tirar e a chave "No ar" (desligada = só quem está logado vê a prévia).
-- **Analytics:** Vitrine (funil de venda), Beat tapes, Artistas e Portfólio, com período livre e comparação. Desde 10/10/2026 não conta as visitas do Bruno (o aparelho fica marcado ao entrar no painel) e conta pessoa por aparelho (trocar de rede não vira outra pessoa).
-- **Entrega na hora** e **Lista de e-mails:** linhas largas na home (ver Fluxos). **Comentários das pastas** aparece quando a chave do código está ligada.
-- A home do painel mostra o consumo do banco no dia.
+Desde 12/10/2026 o painel abre no **Hoje** e se divide em 5 seções (barra embaixo no celular, menu do lado no computador). O endereço guarda a seção (`/painel#pedidos`, `#fila`…).
+
+- **Hoje:** o que precisa do Bruno (serviço com material pra entregar, beats na Fila, beats pra revisar nas tapes, e-mail do cupom que não saiu, comentário aberto, banco passando da metade), os números dos últimos 7 dias e atalhos.
+- **Vendas:** Pedidos (filtro Pra fazer / Todos / Testes; cada pedido abre com o material de cada serviço e o campo pra entregar pelo link; pedido de teste de beat e de serviço), Cupons e Lista (quem se cadastrou, copiar os e-mails, resultado de cada e-mail do cupom).
+- **Catálogo:** Vitrine (beats: editar, vender, destaque, tirar), Fila (publicar beats das tapes), Beat tapes (revisão, linha do @rideblan33 e chave "Mostrar no perfil") e Pastas (dos artistas; abre pela última atividade, desde 14/10/2026).
+- **Perfil:** Músicas (colar o link do Spotify ou do YouTube, Destaque ou Recente, arrastar, o áudio que toca inteiro), Ordem das beat tapes, Números do site e Ver o perfil.
+- **Números:** o Analytics (Vitrine, Beat tapes, Artistas e Portfólio, com período livre e comparação; não conta as visitas do Bruno nem troca de rede como outra pessoa).
+- **Ajustes** (engrenagem): chaves Entrega na hora e Músicas no perfil, a situação dos Comentários das pastas (chave no código), o consumo do banco e da prateleira de arquivos.
 
 Origem das visitas: `?de=<rótulo>` nos links divulgados (ex.: `/rideblan33?de=bio`, `/?de=story`). Links internos do site saem com o endereço limpo e a origem em `data-de` (desde 08/10/2026): o script leva-de (`functions/_lib/origem.js`, colado igual no `index.html` e no `catalogo/app.html`) põe o `?de=` só no clique, pra o Google indexar o endereço limpo. Link novo entre páginas do site: `href` limpo + `data-de`, nunca `?de=` no `href` (o teste42 reprova).
 

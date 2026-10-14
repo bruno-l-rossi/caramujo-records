@@ -111,7 +111,7 @@
   }
   function reais(n) { return 'R$' + Number(n).toLocaleString('pt-BR', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }); }
 
-  var raiz = null, aba = 'beats', busca = '', filtro = 'todos', mostrar = 30, buscaCupom = '';
+  var raiz = null, aba = 'beats', busca = '', filtro = 'todos', mostrar = 30, buscaCupom = '', semAbas = false;   // semAbas (12/10/2026): o painel novo mostra as partes em cima
   var loja = null, lojaErro = false, rel = null, relErro = false;
 
   try { aba = sessionStorage.getItem('vt-aba') || 'beats'; } catch (_) {}
@@ -141,7 +141,7 @@
   function desenhar() {
     if (!raiz) return;
     var fila = rel && rel.semBotao ? rel.semBotao.length : 0;
-    var h = '<div class="vt-seg" role="group" aria-label="Seção da vitrine">' +
+    var h = semAbas ? '<div id="vtCorpo"></div>' : '<div class="vt-seg" role="group" aria-label="Seção da vitrine">' +
       '<button type="button" data-aba="beats" aria-pressed="' + (aba === 'beats') + '">Beats</button>' +
       '<button type="button" data-aba="fila" aria-pressed="' + (aba === 'fila') + '">Fila' + (fila ? '<em>' + fila + '</em>' : '') + '</button>' +
       '<button type="button" data-aba="cupons" aria-pressed="' + (aba === 'cupons') + '">Cupons</button></div>' +
@@ -722,8 +722,10 @@
   }
 
   window.CaramujoVitrine = {
-    abrir: function (el) {
+    abrir: function (el, op) {
       raiz = el;
+      if (op && op.semAbas) semAbas = true;
+      if (op && op.aba && ['beats', 'fila', 'cupons'].indexOf(op.aba) > -1) aba = op.aba;
       if (!$('vt-css')) {
         var st = document.createElement('style'); st.id = 'vt-css'; st.textContent = CSS;
         document.head.appendChild(st);
@@ -732,6 +734,12 @@
       carregar(true);
     },
     // a home do painel volta pra cá: o resumo muda conforme a aba
-    pintar: function () { desenhar(); }
+    pintar: function () { desenhar(); },
+    // o painel novo escolhe a parte (Vitrine, Fila ou Cupons) pelas partes em cima
+    aba: function (nome) {
+      if (['beats', 'fila', 'cupons'].indexOf(nome) < 0) return;
+      if (aba !== nome) { aba = nome; busca = ''; mostrar = 30; }
+      desenhar();
+    }
   };
 })();

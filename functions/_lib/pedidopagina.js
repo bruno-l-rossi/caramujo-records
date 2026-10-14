@@ -111,15 +111,20 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.7rem;line-height:1;color
 .fm input:focus,.fm textarea:focus{outline:none;border-color:var(--fire)}
 .fm button{margin-top:16px;width:100%;display:flex;align-items:center;justify-content:center;min-height:50px;border:0;background:var(--bone);color:var(--deep);font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;cursor:pointer}
 .fm button:disabled{opacity:.6;cursor:default}
+.fm button.cancela{margin-top:8px;min-height:44px;background:transparent;border:1px solid var(--wire);color:var(--bone)}
 .fm .er{margin-top:10px;font-family:var(--mono);font-size:.68rem;color:#d98a6c}
 .dicas{list-style:none;margin-top:14px}.dicas li{font-size:.76rem;line-height:1.6;color:var(--read);padding-left:14px;position:relative}.dicas li:before{content:'›';position:absolute;left:0;color:var(--clay)}
+.mandou[hidden]{display:none}
 .mandou{margin-top:14px;padding:14px 16px;border:1px solid var(--wire);background:var(--black)}
 .mandou .rot{font-size:.58rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--label)}
 .mandou dl{margin-top:8px;font-size:.78rem;line-height:1.6}
 .mandou dt{margin-top:8px;font-family:var(--mono);font-size:.6rem;color:var(--dim);text-transform:lowercase}
 .mandou dd{color:var(--bone);overflow-wrap:anywhere}
 .mandou dd a{color:var(--fire)}
-.troca{margin-top:12px;background:none;border:0;padding:0;font:inherit;font-family:var(--mono);font-size:.68rem;color:var(--fire);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.mandou .cab-m{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.troca{flex:none;display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border:1px solid var(--clay);background:transparent;font:700 .6rem var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--bone);cursor:pointer}
+.troca:hover{border-color:var(--fire);color:var(--cream)}
+.mandou .pode{margin-top:10px;font-family:var(--mono);font-size:.62rem;color:var(--dim)}
 .pronto{margin-top:14px}
 .pronto .b{min-height:52px}
 footer{padding:22px 18px 30px;border-top:1px solid var(--wire);text-align:center;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
@@ -222,9 +227,10 @@ function blocoServico(it, k, p, base) {
   if (!ent) h += `<div class="pz">prazo: ${esc(sv.prazo)}</div>`;
   h += '<ol class="passos">' + passos.map(([t, c, sub]) => `<li${c ? ` class="${c}"` : ''}>${esc(t)}${sub ? `<small>${esc(sub)}</small>` : ''}</li>`).join('') + '</ol>';
   if (ent) h += `<div class="pronto"><a class="b cheio" href="${esc(ent.link)}" target="_blank" rel="noopener">${DESCE}Baixar ${sv.tipo === 'encomenda' ? 'o beat' : 'a faixa'}</a></div>`;
-  if (env) {
+  // 12/10/2026: depois de entregue, só o botão de baixar; antes, o que foi mandado com "Editar"
+  if (env && !ent) {
     const linhas = sv.campos.filter((c) => env[c.k]).map((c) => `<dt>${esc(c.rot)}</dt><dd>${c.link ? `<a href="${esc(env[c.k])}" target="_blank" rel="noopener nofollow">${esc(env[c.k])}</a>` : esc(env[c.k])}</dd>`).join('');
-    h += `<div class="mandou"><div class="rot">O que você mandou · ${esc(dataCurta(env.em))}</div><dl>${linhas}</dl>${ent ? '' : `<button type="button" class="troca" data-troca="${k}">Trocar o que mandei</button>`}</div>`;
+    h += `<div class="mandou"><div class="cab-m"><div class="rot">O que você mandou · ${esc(dataCurta(env.em))}</div><button type="button" class="troca" data-troca="${k}">Editar</button></div><dl>${linhas}</dl><p class="pode">Dá pra editar até a entrega.</p></div>`;
   }
   if (!ent) {
     h += `<form class="fm" data-envio="${k}" action="${base}/envio/${k}" method="post"${env ? ' hidden' : ''} novalidate><h4>${esc(sv.titulo)}</h4><p>${esc(sv.texto)}</p>` +
@@ -235,7 +241,7 @@ function blocoServico(it, k, p, base) {
           ? `<textarea id="${id}" name="${c.k}" placeholder="${esc(c.ph)}" maxlength="1500">${v}</textarea>`
           : `<input id="${id}" name="${c.k}" type="${c.link ? 'url' : 'text'}" inputmode="${c.link ? 'url' : 'text'}" placeholder="${esc(c.ph)}" value="${v}" maxlength="400"${c.obrig ? ' required' : ''}${c.link ? ' autocapitalize="off" autocorrect="off" spellcheck="false"' : ''}>`);
       }).join('') +
-      `<button type="submit">${env ? 'Mandar de novo' : 'Enviar pro estúdio'}</button><p class="er" role="alert" hidden></p></form>`;
+      `<button type="submit">${env ? 'Salvar as mudanças' : 'Enviar pro estúdio'}</button>${env ? `<button type="button" class="cancela" data-cancela="${k}">Cancelar</button>` : ''}<p class="er" role="alert" hidden></p></form>`;
     if (!env && sv.dicas) h += '<ul class="dicas">' + sv.dicas.map((d) => `<li>${esc(d)}</li>`).join('') + '</ul>';
   }
   return h + '</div></section>';
@@ -243,7 +249,8 @@ function blocoServico(it, k, p, base) {
 
 // o formulário do serviço manda por fetch e recarrega a página (sem fetch: o POST normal)
 const FORM_JS = `<script>(function(){
-document.querySelectorAll('[data-troca]').forEach(function(b){b.addEventListener('click',function(){var f=document.querySelector('form[data-envio="'+b.getAttribute('data-troca')+'"]');if(f){f.hidden=false;b.hidden=true;var i=f.querySelector('input,textarea');if(i)i.focus();}});});
+document.querySelectorAll('[data-troca]').forEach(function(b){b.addEventListener('click',function(){var f=document.querySelector('form[data-envio="'+b.getAttribute('data-troca')+'"]');if(f){f.hidden=false;var m=b.closest('.mandou');if(m)m.hidden=true;var i=f.querySelector('input,textarea');if(i)i.focus();}});});
+document.querySelectorAll('[data-cancela]').forEach(function(b){b.addEventListener('click',function(){var k=b.getAttribute('data-cancela'),f=document.querySelector('form[data-envio="'+k+'"]'),t=document.querySelector('[data-troca="'+k+'"]');if(f)f.hidden=true;if(t){var m=t.closest('.mandou');if(m)m.hidden=false;}});});
 document.querySelectorAll('form[data-envio]').forEach(function(f){f.addEventListener('submit',function(e){
   if(!window.fetch)return;e.preventDefault();var bt=f.querySelector('button[type=submit]'),er=f.querySelector('.er'),d={};
   f.querySelectorAll('input,textarea').forEach(function(i){d[i.name]=i.value;});

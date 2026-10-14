@@ -594,6 +594,8 @@ body{cursor:auto;}
 
 /* pacotes / serviços */
 .svc-name{font-family:var(--serif);font-weight:600;text-transform:none;}
+/* selo de desconto do Mix + Master (12/10/2026: tinha saído junto com o CSS dos pacotes) */
+.disc-pill{display:inline-block;background:var(--fire);color:var(--black);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.1em;padding:.2rem .5rem;vertical-align:middle;margin-left:.4rem;box-shadow:0 2px 10px rgba(185,143,94,.4);}
 
 /* contato serif */
 .c-desc{font-family:var(--serif);font-style:italic;font-size:clamp(1.3rem,2.2vw,1.7rem);line-height:1.45;color:var(--amber);}
@@ -861,7 +863,8 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 #beatCards .vendido{flex:none;display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;
   min-width:96px;min-height:42px;padding:.4rem .7rem;border:1px solid var(--wire);text-decoration:none;
   transition:border-color .14s,background .14s}
-#beatCards .vendido i{font-style:normal;font-size:.5rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--blood);line-height:1}
+/* 12/10/2026: o blood puro some no fundo escuro; texto pequeno usa o blood clareado com bone */
+#beatCards .vendido i{font-style:normal;font-size:.52rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:color-mix(in srgb,var(--blood) 68%,var(--bone));line-height:1}
 #beatCards .vendido span{display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--bone);line-height:1}
 #beatCards .vendido span b{font:500 1.05rem/.6 'Cormorant Garamond',serif;color:var(--clay);transition:transform .14s,color .14s}
 #beatCards .vendido:hover,#beatCards .vendido:focus-visible{border-color:var(--fire);background:rgba(185,143,94,.08)}

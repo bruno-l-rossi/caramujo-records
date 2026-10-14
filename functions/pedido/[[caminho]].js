@@ -157,9 +157,10 @@ export async function onRequestPost({ params, request, env, waitUntil }) {
   if (it.entrega) return responde(false, 'Esse serviço já foi entregue. Pra mudar algo, chama no Direct.', 409);
   const lim = limparEnvio(it.nome, corpo);
   if (lim.erro) return responde(false, lim.erro, 400);
+  const editou = !!it.envio;
   const novo = await salvarEnvio(d, p, k, lim.envio);
   if (!novo) return responde(false, 'Não salvou. Tenta de novo.', 500);
-  const aviso = avisarEnvio(env, novo, novo.itens[k]).catch(() => {});
+  const aviso = avisarEnvio(env, novo, novo.itens[k], editou).catch(() => {});
   if (waitUntil) waitUntil(aviso); else await aviso;
   return responde(true);
 }

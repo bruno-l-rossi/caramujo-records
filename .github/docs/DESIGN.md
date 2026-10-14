@@ -203,7 +203,7 @@ aviso dentro da caixa dos termos, com a mesma caixa de erro (fio `blood`).
 Carrinho: item com desconto mostra o preço cheio riscado em `dim` e o novo em `cream`; o
 rodapé lista Total sem desconto, Desconto e Cupom (em `fire`) antes do TOTAL.
 Leve mais, pague menos (12/10/2026): faixa em cima da lista com borda `clay` e fundo fire a 8%, kicker em `fire`, pílulas em IBM Plex Mono com o número em `fire` e o % em `read`. No carrinho, régua em `deep` com 5 barras (`fire` cheias, `loam` vazias) e os totais embaixo; a linha do desconto ganha faixa fire a 12% com o valor em `cream`.
-Beat vendido na lista (12/10/2026): no lugar do preço, um link com borda `wire`, "VENDIDO" pequeno em `blood` em cima e "Parecidos ›" em `bone` embaixo; hover com borda `fire`. Leva pros parecidos na página do beat (#parecidos).
+Beat vendido na lista (12/10/2026): no lugar do preço, um link com borda `wire`, "VENDIDO" pequeno em `blood` clareado (`color-mix` de 68% `blood` com `bone`, desde 14/10/2026: o `blood` puro some em texto pequeno no fundo escuro) em cima e "Parecidos ›" em `bone` embaixo; hover com borda `fire`. Leva pros parecidos na página do beat (#parecidos).
 Pedido de serviço (12/10/2026): passo a passo com bolinhas (`fire` feito, anel no atual, `loam` o que falta), formulário em `black` com campos `mole` e o botão `bone`; o que foi mandado num quadro com os links em `fire`.
 Fique por dentro (vitrine, depois da lista de beats): caixa `deep` com borda `wire`, kicker
 em `fire`, título em Bebas, campo de e-mail + botão `fire` lado a lado (empilhados no celular).
@@ -305,3 +305,9 @@ borda `wire`. Avisos (serviço, pedido de teste) com fio de 3px em `fire` à esq
 `blood` nunca aparece (não é erro nem vendido). No PEDIDO CONFIRMADO da vitrine, o botão
 "↓ BAIXAR SEUS ARQUIVOS" é o botão principal do checkout (`fire`), e o contrato sai de lá (está na
 página do pedido). Cabeçalho igual ao da vitrine (`_lib/topo.js`) e rodapé no fim da tela.
+
+## Página do beat no computador (14/10/2026)
+
+A partir de 861px as duas colunas terminam na mesma altura, à venda e vendido. O card "Da beat
+tape" desce pro fim da coluna da esquerda; se a esquerda for mais alta, a compra (à venda) ou o
+quadro "Esse beat já tem dono" (vendido) desce na direita. No celular nada muda.

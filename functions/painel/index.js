@@ -260,6 +260,70 @@ ${ICONES}
   .dias i{flex:1;background:#2c2c2c;border-radius:2px 2px 0 0;min-height:2px;position:relative}
   .dias i.venda{background:#fff}
   .dias-leg{display:flex;justify-content:space-between;font-size:11px;color:var(--ink4);margin-top:5px}
+  /* painel novo (12/10/2026): barra das seções (embaixo no celular, do lado no computador) */
+  .nav-p{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(5,1fr);padding:6px 4px calc(8px + env(safe-area-inset-bottom,0px));background:rgba(10,10,10,.96);border-top:1px solid var(--linha);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  .nav-p button,.nav-p a{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px;border:0;background:transparent;color:var(--ink4);font-size:10.5px;font-weight:600;text-decoration:none;cursor:pointer}
+  .nav-p [aria-current="page"]{color:#fff}
+  .nav-p em{position:absolute;top:0;left:calc(50% + 5px);min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#fff;color:#000;font-style:normal;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .nav-p .np-marca,.nav-p .np-sep,.nav-p .np-lado{display:none}
+  .topo .eng{width:40px;height:40px;border-radius:12px;border:1px solid var(--borda);background:#141414;color:#d9d9d9;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .topo .eng[aria-current="page"]{background:#fff;color:#000;border-color:#fff}
+  @media (min-width:900px){
+    .nav-p{top:0;right:auto;bottom:0;width:236px;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:22px 14px;border-top:0;border-right:1px solid var(--linha);background:#0a0a0a}
+    .nav-p .np-marca{display:block;width:148px;height:27px;margin:0 8px 26px;background:url('/assets/brand/caramujo-h.webp') left center/contain no-repeat;opacity:.9}
+    .nav-p button,.nav-p a{flex-direction:row;gap:12px;padding:10px;border-radius:10px;font-size:14.5px;font-weight:500;color:var(--ink2)}
+    .nav-p [aria-current="page"]{background:#1a1a1a;color:#fff;font-weight:600}
+    .nav-p button:hover,.nav-p a:hover{background:#151515;color:#fff}
+    .nav-p em{position:static;margin-left:auto}
+    .nav-p .np-sep{display:block;height:1px;background:var(--linha);margin:14px 6px}
+    .nav-p .np-lado{display:flex}
+    .wrap{margin-left:236px;max-width:900px;padding:0 44px 80px}
+    .topo .marca,.topo .eng{display:none}
+    .topo{min-height:10px}
+  }
+  .secoes{display:flex;gap:6px;margin:16px 0 4px;overflow-x:auto;scrollbar-width:none}
+  .secoes::-webkit-scrollbar{display:none}
+  .secoes[hidden]{display:none}
+  .secoes button,.filtros button{flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--borda);background:transparent;color:var(--ink2);font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap}
+  .secoes button[aria-pressed="true"]{background:#fff;color:#000;border-color:#fff;font-weight:600}
+  .secoes i{font-style:normal;margin-left:6px;opacity:.6}
+  .filtros{display:flex;gap:6px;margin:14px 0 6px;flex-wrap:wrap}
+  .filtros button[aria-pressed="true"]{background:#1d1d1d;color:#fff;border-color:#3a3a3a;font-weight:600}
+  .hoje .rot{margin:24px 0 8px}
+  .ac{display:flex;align-items:center;gap:12px;width:100%;padding:14px;margin-bottom:8px;border:1px solid var(--borda);border-radius:16px;background:#121212;color:var(--ink);text-align:left;cursor:pointer}
+  .ac:hover{background:#161616;border-color:#343434}
+  .ac.quente{border-color:#3a3a3a;background:#161616}
+  .ac .ico{flex:none;width:40px;height:40px;border-radius:11px;background:#1c1c1c;display:flex;align-items:center;justify-content:center;color:#d9d9d9}
+  .ac.quente .ico{background:#fff;color:#000}
+  .ac .t{flex:1;min-width:0}
+  .ac b{display:block;font-size:15px;font-weight:600}
+  .ac small{display:block;margin-top:3px;font-size:12.5px;color:var(--ink3);line-height:1.35}
+  .ac small em{font-style:normal;color:#e0b155}
+  .ac .seta{color:var(--ink3);font-size:20px}
+  .nada{margin:4px 0 8px;font-size:14px;color:var(--ink4)}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .tile{padding:12px;border:1px solid var(--borda);border-radius:14px;background:#121212;color:var(--ink);text-align:left;cursor:pointer}
+  .tile small{display:block;font-size:11.5px;color:var(--ink3)}
+  .tile b{display:block;margin-top:4px;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  .tile i{display:block;margin-top:2px;font-style:normal;font-size:11px;color:var(--ink4)}
+  .atalhos{display:flex;gap:8px;flex-wrap:wrap}
+  .ped{display:flex;align-items:center;gap:12px;width:100%;padding:13px 0;border:0;border-bottom:1px solid var(--linha);background:transparent;color:var(--ink);text-align:left;cursor:pointer}
+  .ped .av{flex:none;width:40px;height:40px;border-radius:10px;background:#1c1c1c;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#bdbdbd}
+  .ped .t{flex:1;min-width:0}
+  .ped b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ped small{display:block;margin-top:3px;font-size:12.5px;color:var(--ink3)}
+  .chip{flex:none;font-size:11px;font-weight:700;padding:5px 9px;border-radius:999px;border:1px solid var(--borda);color:var(--ink2)}
+  .chip.faz{background:#fff;color:#000;border-color:#fff}
+  .card .mat{margin-top:6px;font-size:13.5px;color:var(--ink2);overflow-wrap:anywhere}
+  .card .mat span{color:var(--ink4)}
+  .card .entrega{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .card .entrega input{flex:1 1 220px;min-width:0;padding:11px 12px;border:1px solid var(--borda);border-radius:10px;background:#0f0f0f;color:inherit;font:inherit;font-size:14px;outline:none}
+  .card .sub,.wrap .sub{font-size:13px;color:var(--ink3)}
+  .acoes a.pill{text-decoration:none;justify-content:center}
+  .sw-b{width:100%;border:0;border-bottom:1px solid var(--linha);background:transparent;color:inherit;text-align:left;cursor:pointer}
+  .sw-b .seta{color:var(--ink3);font-size:20px}
+  .barra-c{height:6px;border-radius:3px;background:#242424;margin-top:8px;overflow:hidden}
+  .barra-c i{display:block;height:6px;background:#fff;min-width:2px}
 </style>`;
 
 function telaSenha(erro) {
@@ -281,9 +345,10 @@ function pagina() {
   return `<!doctype html><html lang="pt-BR"><head><title>Painel · Caramujo</title>${BASE}</head>
 <body>
 <div class="wrap">
-  <div class="topo"><a class="marca" href="/" aria-label="Voltar pro site"></a></div>
-  <h1 id="titulo">Painel</h1>
+  <div class="topo"><a class="marca" href="/" aria-label="Voltar pro site"></a><button type="button" class="eng" id="engBtn" aria-label="Ajustes"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></button></div>
+  <h1 id="titulo">Hoje</h1>
   <div class="sub" id="resumo">carregando…</div>
+  <div class="secoes" id="secoes" role="group" aria-label="Partes da seção" hidden></div>
 
   <div class="barra" id="barra" hidden>
     <div class="campo">
@@ -293,7 +358,7 @@ function pagina() {
     </div>
     <button class="pill" id="ordemBtn" type="button">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M8 4v16"/><path d="M5 7l3-3 3 3"/><path d="M16 20V4"/><path d="M13 17l3 3 3-3"/></svg>
-      <span id="ordemLabel">Modificação</span>
+      <span id="ordemLabel">Atividade</span>
     </button>
     <button class="pill" id="syncTudo" type="button">Converter tudo</button>
   </div>
@@ -305,10 +370,11 @@ function pagina() {
   <div id="comentarios" hidden></div>
 </div>
 <script src="/assets/painel/analytics.js?v=2026-10-12a" defer></script>
-<script src="/assets/painel/vitrine.js?v=2026-10-04a" defer></script>
+<script src="/assets/painel/vitrine.js?v=2026-10-14a" defer></script>
 <script src="/assets/painel/musicas.js?v=2026-10-06a" defer></script>
 <script src="/assets/painel/comentarios.js?v=2026-10-10a" defer></script>
 
+<nav class="nav-p" id="navP" aria-label="Seções do painel"></nav>
 <div class="veil" id="veil" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>
 
@@ -316,9 +382,10 @@ function pagina() {
 (function(){
   var $=function(i){return document.getElementById(i)};
   var COMENTARIOS_LIGADOS=${COMENTARIOS.ligado ? 'true' : 'false'};   // 11/10/2026: desligados (_lib/comentarios.js)
-  var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='home', filtro='', ordem='modificado', perfilVisto=null;
+  var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='hoje', filtro='', ordem='atividade', perfilVisto=null;
   var lojaResumo=null, lojaPedida=false, consumoHoje=null, consumoPedido=false, numerosSite=null, numerosPedido=false;
   var musicasResumo=null, musicasPedido=false, comentResumo=null, comentPedido=false, entrega=null, entregaPedida=false;
+  var ordemDe={artistas:'atividade',tapes:'modificado'};
   var ORDENS={modificado:'Modificação', atividade:'Atividade', az:'A a Z', faixas:'Mais faixas', perfil:'Ordem do perfil'};
   // Perfil do @rideblan33 (26/09/2026): a mesma conta da página (tape sem ordem = nova = topo)
   function chavePerfil(a){ return a.perfil_ordem!=null ? Number(a.perfil_ordem) : -1000000000 - a.id; }
@@ -403,77 +470,255 @@ function pagina() {
     });
   }
 
-  var TITULOS={home:'Painel',artistas:'Artistas',tapes:'Beat tapes',vitrine:'Vitrine',analytics:'Analytics',musicas:'Músicas do perfil',comentarios:'Comentários'};
+  var TITULOS={hoje:'Hoje',pedidos:'Vendas',cupons:'Vendas',lista:'Vendas',vitrine:'Catálogo',fila:'Catálogo',tapes:'Catálogo',artistas:'Catálogo',perfil:'Perfil',musicas:'Músicas do perfil',analytics:'Números',ajustes:'Ajustes',comentarios:'Comentários'};
+  var VITRINE_ABA={vitrine:'beats',fila:'fila',cupons:'cupons'};
   function irPara(v){
-    if(v==='home'){ lojaPedida=false; consumoPedido=false; numerosPedido=false; musicasPedido=false; comentPedido=false; entregaPedida=false; }   // volta com os números novos
-    // o e-mail de comentário abre direto em /painel#comentarios: fora de lá, o endereço volta a ser /painel
-    if(v!=='comentarios' && location.hash==='#comentarios'){ try{ history.replaceState(null,'',location.pathname); }catch(_){ } }
+    if(v==='home') v='hoje';
+    if(!TITULOS[v]) v='hoje';
+    if(v==='hoje'){ lojaPedida=false; consumoPedido=false; numerosPedido=false; musicasPedido=false; comentPedido=false; entregaPedida=false; listaPedida=false; filaPedida=false; }   // volta com os números novos
+    // o endereço guarda a seção (recarregar volta pra ela); Hoje = /painel
+    try{ history.replaceState(null,'',location.pathname+(v==='hoje'?'':'#'+v)); }catch(_){ }
     vista=v; filtro=''; $('q').value='';
-    if(v!=='tapes' && ordem==='perfil'){ ordem='modificado'; $('ordemLabel').textContent=ORDENS[ordem]; }
+    if(ordemDe[v]){ ordem=ordemDe[v]; $('ordemLabel').textContent=ORDENS[ordem]; }
     $('q').placeholder = v==='tapes' ? 'Buscar beat tape' : 'Buscar artista';
     desenhar(); window.scrollTo(0,0);
   }
   window.__painelIr=irPara;
 
-  function home(){
-    var box=document.createElement('div'); box.className='home';
-    var r=funilResumo;
-    var itens=[
-      ['artistas','Artistas',
-        artistas.length+(artistas.length===1?' artista no ar':' artistas no ar')+' · links, downloads e capas',
-        '<path d="M16 20v-1.5a4 4 0 00-4-4H7a4 4 0 00-4 4V20"/><circle cx="9.5" cy="7.5" r="3.5"/><path d="M21 20v-1.5a4 4 0 00-3-3.87"/><path d="M15.5 4.1a3.5 3.5 0 010 6.8"/>'],
-      ['tapes','Beat tapes',
-        tapes.length+(tapes.length===1?' beat tape':' beat tapes')+
-          (revisarErro?'':(revisar.length?' · <em>'+revisar.length+' pra revisar</em>':' · nada pra revisar')),
-        '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M8.5 14h7"/>'],
-      ['vitrine','Vitrine',
-        (!lojaResumo?'beats do site, fila de postagem e cupons':lojaResumo.erro?'beats do site, fila de postagem e cupons':
-          lojaResumo.aVenda+' à venda no site · '+lojaResumo.cupons+(lojaResumo.cupons===1?' cupom valendo':' cupons valendo')),
-        '<path d="M4 9l1.5-4.5h13L20 9"/><path d="M4 9h16v10a1 1 0 01-1 1H5a1 1 0 01-1-1z"/><path d="M9 20v-6h6v6"/>'],
-      ['analytics','Analytics',
-        (!r?'carregando…':r.erro?'vitrine, beat tapes e artistas':
-          'últimos 7 dias · '+nEtapa(r,'visita')+' visitas · '+nEtapa(r,'pago')+(nEtapa(r,'pago')===1?' venda':' vendas')),
-        '<path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l4-4 3 3 5-6"/>']
-    ];
-    itens.forEach(function(it){
-      var b=document.createElement('button'); b.type='button'; b.dataset.ir=it[0];
-      b.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+it[3]+'</svg></span>'+
-        '<span><b>'+it[1]+'</b><small>'+it[2]+'</small></span>';
-      b.addEventListener('click',function(){ irPara(it[0]); });
-      box.appendChild(b);
+  /* ---------- painel novo (12/10/2026): Hoje, Vendas, Catálogo, Perfil, Números e Ajustes ----------
+     As telas de antes viraram partes das seções: Vitrine e Fila (vitrine.js), Beat tapes e Pastas
+     (listas daqui), Cupons (vitrine.js), Pedidos (entrega na hora + serviços), Lista, Músicas
+     (musicas.js), Analytics. Barra embaixo no celular, menu do lado no computador. */
+  var IC={
+    hoje:'<path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/>',
+    vendas:'<path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/>',
+    catalogo:'<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M8.5 14h7"/>',
+    perfil:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>',
+    numeros:'<path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l4-4 3 3 5-6"/>',
+    ajustes:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',
+    site:'<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v6H4V6h6"/>'
+  };
+  function svg(k,t){ return '<svg width="'+(t||20)+'" height="'+(t||20)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+IC[k]+'</svg>'; }
+  var GRUPO={hoje:'hoje',pedidos:'vendas',cupons:'vendas',lista:'vendas',vitrine:'catalogo',fila:'catalogo',tapes:'catalogo',artistas:'catalogo',perfil:'perfil',musicas:'perfil',analytics:'numeros',ajustes:'ajustes',comentarios:'hoje'};
+  var ENTRADA={hoje:'hoje',vendas:'pedidos',catalogo:'vitrine',perfil:'perfil',numeros:'analytics',ajustes:'ajustes'};
+  var SUB={vendas:[['pedidos','Pedidos'],['cupons','Cupons'],['lista','Lista']],catalogo:[['vitrine','Vitrine'],['fila','Fila'],['tapes','Beat tapes'],['artistas','Pastas']]};
+  var NAV=[['hoje','Hoje'],['vendas','Vendas'],['catalogo','Catálogo'],['perfil','Perfil'],['numeros','Números']];
+  var filaN=null, filaPedida=false, prateleira=null;
+  // a Fila vem do relatório da vitrine (lê as faixas todas): o Hoje guarda a conta por 30 min
+  function pedirFila(){
+    if(filaPedida) return; filaPedida=true;
+    try{ var g=JSON.parse(localStorage.getItem('painel-fila')||'null'); if(g&&Date.now()-g.at<30*60e3){ filaN=g.n; return; } }catch(_){ }
+    fetch('/api/painel?op=vitrine').then(function(r){return r.json()}).then(function(j){
+      filaN=(j&&j.semBotao)?j.semBotao.length:null;
+      try{ if(filaN!=null) localStorage.setItem('painel-fila',JSON.stringify({n:filaN,at:Date.now()})); }catch(_){ }
+      pintarNav(); refazer(['hoje']);
+    }).catch(function(){});
+  }
+  function refazer(vs){ if((vs||['hoje','pedidos','lista','perfil','ajustes']).indexOf(vista)>-1 && $('veil').hidden) desenhar(); }
+  function pendServicos(){ return servicosAbertos().filter(function(x){ return x.s.envio && x.p.status!=='teste'; }); }
+  function contaVendas(){ return pendServicos().length; }
+  function pintarNav(){
+    var g=GRUPO[vista]||'hoje', n=$('navP'); if(!n) return;
+    var bolha={vendas:contaVendas(), catalogo:(filaN||0)+(revisar.length||0)};
+    n.innerHTML='<a class="np-marca" href="/" aria-label="Voltar pro site"></a>'+NAV.map(function(it){
+      var b=bolha[it[0]];
+      return '<button type="button" data-sec="'+it[0]+'"'+(g===it[0]?' aria-current="page"':'')+'>'+svg(it[0])+'<span>'+it[1]+'</span>'+(b?'<em>'+b+'</em>':'')+'</button>';
+    }).join('')+'<i class="np-sep"></i><button type="button" class="np-lado" data-sec="ajustes"'+(g==='ajustes'?' aria-current="page"':'')+'>'+svg('ajustes')+'<span>Ajustes</span></button>'+
+      '<a class="np-lado" href="/" target="_blank" rel="noopener">'+svg('site')+'<span>Ver o site</span></a>';
+    n.querySelectorAll('[data-sec]').forEach(function(b){ b.addEventListener('click',function(){ irPara(ENTRADA[b.dataset.sec]); }); });
+  }
+  function pintarSecoes(){
+    var g=GRUPO[vista], s=$('secoes'), l=SUB[g];
+    if(!l){ s.hidden=true; s.innerHTML=''; return; }
+    s.hidden=false;
+    s.innerHTML=l.map(function(it){
+      var n=it[0]==='fila'?filaN:it[0]==='pedidos'?contaVendas():null;
+      return '<button type="button" data-v="'+it[0]+'" aria-pressed="'+(vista===it[0])+'">'+it[1]+(n?'<i>'+n+'</i>':'')+'</button>';
+    }).join('');
+    s.querySelectorAll('[data-v]').forEach(function(b){ b.addEventListener('click',function(){ irPara(b.dataset.v); }); });
+  }
+  function hojeData(){ var d=new Date(); return d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}); }
+  function linhaAcao(ic,t,sub,fn,quente){
+    var b=document.createElement('button'); b.type='button'; b.className='ac'+(quente?' quente':'');
+    b.innerHTML='<span class="ico">'+ic+'</span><span class="t"><b>'+t+'</b><small>'+sub+'</small></span><span class="seta" aria-hidden="true">›</span>';
+    b.addEventListener('click',fn); return b;
+  }
+  function hoje(){
+    var box=document.createElement('div'); box.className='hoje';
+    var rot=function(t){ var r=document.createElement('div'); r.className='rot'; r.textContent=t; box.appendChild(r); };
+    rot('PRECISA DE VOCÊ');
+    var n=0, add=function(el){ box.appendChild(el); n++; };
+    var IC_DESCE='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>';
+    pendServicos().forEach(function(x){
+      add(linhaAcao(IC_DESCE,'Entregar '+esc(x.s.nome),esc(x.p.quem||'Quem comprou')+' mandou o material em '+dm(x.s.envio.em),function(){ abrirPedido(x.p); },true));
     });
-    // números do site: aparecem na vitrine, no perfil e na prévia do perfil nas redes
-    var nb=document.createElement('button'); nb.type='button'; nb.className='num'; nb.id='numSite';
-    nb.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/></svg></span>'+
-      '<span><b>Números do site</b><small>'+(numerosSite?esc(textoNumeros(numerosSite,'curto')):'artistas, faixas e streams')+'</small></span><span class="seta" aria-hidden="true">›</span>';
-    nb.addEventListener('click',abrirNumeros);
-    // Músicas do perfil (05/10/2026): a aba Músicas do /rideblan33 (linha larga, acima dos números)
-    var mb=document.createElement('button'); mb.type='button'; mb.className='num'; mb.id='musPerfil';
-    mb.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></span>'+
-      '<span><b>Músicas do perfil</b><small>'+textoMusicas()+'</small></span><span class="seta" aria-hidden="true">›</span>';
-    mb.addEventListener('click',function(){ irPara('musicas'); });
-    // Comentários das pastas (10/10/2026): o que os artistas comentaram no tempo das faixas
-    var cb=document.createElement('button'); cb.type='button'; cb.className='num'; cb.id='comPastas';
-    cb.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg></span>'+
-      '<span><b>Comentários das pastas</b><small>'+textoComent()+'</small></span><span class="seta" aria-hidden="true">›</span>';
-    cb.addEventListener('click',function(){ irPara('comentarios'); });
-    if(COMENTARIOS_LIGADOS) box.appendChild(cb);
-    // Entrega na hora dos beats (10/10/2026): a chave, o pedido de teste e os últimos links
-    var eb=document.createElement('button'); eb.type='button'; eb.className='num'; eb.id='entregaHora';
-    eb.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg></span>'+
-      '<span><b>Entrega na hora</b><small>'+textoEntrega()+'</small></span><span class="seta" aria-hidden="true">›</span>';
-    eb.addEventListener('click',abrirEntrega);
-    box.appendChild(eb);
-    // Lista de e-mails com cupom de 25% (11/10/2026): o cadastro "Fique por dentro" da vitrine
-    var lb=document.createElement('button'); lb.type='button'; lb.className='num'; lb.id='listaEmails';
-    lb.innerHTML='<span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9d9d9" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></svg></span>'+
-      '<span><b>Lista de e-mails</b><small>'+textoLista()+'</small></span><span class="seta" aria-hidden="true">›</span>';
-    lb.addEventListener('click',abrirLista);
-    box.appendChild(lb);
-    box.appendChild(mb);
-    box.appendChild(nb);
+    if(filaN) add(linhaAcao(svg('catalogo'),filaN+(filaN===1?' beat na Fila':' beats na Fila'),'escolher o gênero e publicar na vitrine',function(){ irPara('fila'); }));
+    if(revisarErro) add(linhaAcao(svg('catalogo'),'Não consegui conferir os pendentes','a lista de revisão das beat tapes não respondeu · toca pra tentar de novo',function(){ carregar(true); }));
+    if(revisar.length) add(linhaAcao(svg('catalogo'),revisar.length+(revisar.length===1?' beat pra revisar':' beats pra revisar'),'nas beat tapes: marcar disponível ou vendido',function(){ irPara('tapes'); }));
+    var env=lista&&lista.envios&&lista.envios[0];
+    if(env&&!env.ok) add(linhaAcao('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></svg>','E-mail do cupom não saiu','pra '+esc(env.email)+' · ver o motivo',function(){ irPara('lista'); }));
+    if(COMENTARIOS_LIGADOS&&comentResumo&&comentResumo.abertos) add(linhaAcao('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H9l-5 4z"/></svg>',comentResumo.abertos+(comentResumo.abertos===1?' comentário aberto':' comentários abertos'),'nas pastas dos artistas',function(){ irPara('comentarios'); }));
+    if(consumoHoje&&consumoHoje.hoje/consumoHoje.teto>=0.5) add(linhaAcao(svg('ajustes'),'Banco passou da metade hoje',milhar(consumoHoje.hoje)+' de '+milhar(consumoHoje.teto)+' leituras · zera às 21h',abrirConsumo));
+    if(!n){ var v=document.createElement('p'); v.className='nada'; v.textContent=(entrega&&funilResumo)?'Nada pendente agora.':'conferindo…'; box.appendChild(v); }
+    rot('ÚLTIMOS 7 DIAS');
+    var r=funilResumo, t=document.createElement('div'); t.className='tiles';
+    var tile=function(rotulo,valor,sub,ir){ var b=document.createElement('button'); b.type='button'; b.className='tile'; b.innerHTML='<small>'+rotulo+'</small><b>'+valor+'</b><i>'+sub+'</i>'; b.addEventListener('click',ir); t.appendChild(b); };
+    tile('Visitas',r&&!r.erro?nEtapa(r,'visita'):'–','na vitrine',function(){ irPara('analytics'); });
+    tile('Vendas',r&&!r.erro?nEtapa(r,'pago'):'–','pagas',function(){ irPara('pedidos'); });
+    tile('Lista',lista&&lista.total!=null?lista.total:'–',lista&&lista.usaram?lista.usaram+' usaram o cupom':'pessoas',function(){ irPara('lista'); });
+    box.appendChild(t);
+    rot('ATALHOS');
+    var at=document.createElement('div'); at.className='atalhos';
+    [['+ Cupom',function(){ irPara('cupons'); }],['+ Música no perfil',function(){ irPara('musicas'); }],['Pedido de teste',function(){ irPara('pedidos'); }]].forEach(function(a){
+      var b=document.createElement('button'); b.type='button'; b.className='pill'; b.textContent=a[0]; b.addEventListener('click',a[1]); at.appendChild(b);
+    });
+    box.appendChild(at);
     return box;
   }
+  // Vendas > Pedidos: a lista com filtro, e cada pedido abre numa folha
+  var filtroPed='fazer';
+  function estadoPedido(p){
+    var sv=p.servicos||[];
+    if(p.status==='teste') return ['teste',''];
+    if(p.status==='pendente') return ['PIX pendente',''];
+    if(sv.some(function(s){ return s.envio&&!s.entrega; })) return ['Entregar','faz'];
+    if(sv.some(function(s){ return !s.envio; })) return ['esperando o material',''];
+    if(sv.length&&sv.every(function(s){ return s.entrega; })&&!p.beats.length) return ['entregue',''];
+    return [p.baixou?'baixou '+p.baixou:'não baixou ainda',''];
+  }
+  function iniciais(q){ var s=String(q||'?').replace(/^@/,'').trim(); return (s.slice(0,2)||'?').toUpperCase(); }
+  function paginaPedidos(){
+    var box=document.createElement('div');
+    if(!entrega){ box.innerHTML='<div class="vazio">carregando…</div>'; return box; }
+    var todos=entrega.pedidos||[];
+    var fazer=todos.filter(function(p){ return estadoPedido(p)[1]==='faz'; });
+    var testes=todos.filter(function(p){ return p.status==='teste'; });
+    if(!fazer.length&&filtroPed==='fazer') filtroPed='todos';
+    var mostra=filtroPed==='fazer'?fazer:filtroPed==='testes'?testes:todos.filter(function(p){ return p.status!=='teste'; });
+    var h='<div class="filtros">'+[['fazer','Pra fazer',fazer.length],['todos','Todos',null],['testes','Testes',testes.length]].map(function(f){
+      return '<button type="button" data-f="'+f[0]+'" aria-pressed="'+(filtroPed===f[0])+'">'+f[1]+(f[2]?' '+f[2]:'')+'</button>';
+    }).join('')+'</div>';
+    h+=mostra.length?mostra.map(function(p){
+      var e=estadoPedido(p), itens=p.beats.concat((p.servicos||[]).map(function(x){return x.nome})).join(', ');
+      return '<button type="button" class="ped" data-t="'+esc(p.token)+'"><span class="av">'+esc(iniciais(p.quem))+'</span><span class="t"><b>'+esc((p.quem?p.quem+' · ':'')+itens)+'</b><small>'+dm(p.em)+(p.valor?' · R$'+Math.round(p.valor):'')+'</small></span><span class="chip'+(e[1]?' '+e[1]:'')+'">'+esc(e[0])+'</span></button>';
+    }).join(''):'<p class="nada">'+(filtroPed==='testes'?'Nenhum pedido de teste.':'Nenhum pedido com link ainda.')+'</p>';
+    h+='<div class="rot" style="margin-top:26px">TESTAR</div><p class="sub">Cria um pedido de mentira e abre a página que o comprador vê. Nada é vendido.</p>'+
+      '<div class="acoes" style="margin-top:12px;flex-wrap:wrap"><button type="button" class="pill" id="enTeste">Criar pedido de teste</button><button type="button" class="pill" id="enTesteSv">Criar pedido de teste de serviço</button></div><div id="enTesteLink" class="sub" style="margin-top:10px"></div>';
+    box.innerHTML=h;
+    box.querySelectorAll('[data-f]').forEach(function(b){ b.addEventListener('click',function(){ filtroPed=b.dataset.f; desenhar(); }); });
+    box.querySelectorAll('.ped').forEach(function(b){ b.addEventListener('click',function(){ var p=todos.filter(function(x){ return x.token===b.dataset.t; })[0]; if(p) abrirPedido(p); }); });
+    var teste=function(id,op,rot,msg){ box.querySelector('#'+id).addEventListener('click',function(){
+      var b=this; b.disabled=true; b.textContent='Criando…';
+      acao(op,{}).then(function(j){
+        b.disabled=false; b.textContent=rot;
+        if(!j||!j.ok){ flash((j&&j.erro)||'Não criou. Tenta de novo.'); return; }
+        entrega.pedidos=j.pedidos||entrega.pedidos; filtroPed='testes'; desenhar();
+        var l=$('enTesteLink'); if(l) l.innerHTML=msg(j)+': <a href="'+esc(j.caminho)+'" target="_blank" rel="noopener">abrir a página do pedido</a>';
+      });
+    }); };
+    teste('enTeste','pedido-teste','Criar pedido de teste',function(j){ return 'Pedido de teste com '+esc(j.beat); });
+    teste('enTesteSv','pedido-teste-servico','Criar pedido de teste de serviço',function(){ return 'Pedido de teste com Mix + Master e Beat personalizado'; });
+    return box;
+  }
+  // um pedido aberto: o que comprou, o material de cada serviço e a entrega por link (SERVIÇOS DOS PEDIDOS)
+  function abrirPedido(p){
+    var card=$('card'), ROT={ref:'referência',guia:'guia das vozes',link:'link',musica:'música',recado:'recado'};
+    var pinta=function(){
+      var h='<h2>'+esc((p.quem||'Pedido')+(p.status==='teste'?' · teste':''))+'</h2><p>'+dm(p.em)+(p.valor?' · R$'+Math.round(p.valor):'')+' · '+esc(estadoPedido(p)[0])+'</p>';
+      if(p.beats.length) h+='<div class="bloco"><div class="rot">BEATS</div><p>'+esc(p.beats.join(', '))+' · '+(p.baixou?'baixou '+p.baixou+(p.baixou===1?' arquivo':' arquivos'):'ainda não baixou')+'</p></div>';
+      (p.servicos||[]).forEach(function(sv){
+        var e=sv.envio, en=sv.entrega;
+        h+='<div class="bloco"><div class="rot">'+esc(sv.nome.toUpperCase())+' · '+(en?'ENTREGUE '+dm(en.em):e?'MATERIAL CHEGOU '+dm(e.em):'ESPERANDO O MATERIAL')+'</div>'+
+          (e?Object.keys(ROT).filter(function(k){ return e[k]; }).map(function(k){ var v=String(e[k]); return '<p class="mat"><span>'+ROT[k]+':</span> '+(/^https?:/.test(v)?'<a href="'+esc(v)+'" target="_blank" rel="noopener">'+esc(v)+'</a>':esc(v))+'</p>'; }).join(''):'<p>Quem comprou ainda não mandou. A página do pedido pede o material.</p>')+
+          '<div class="entrega"><input type="url" class="sv-link" data-k="'+sv.k+'" placeholder="Link do arquivo final (Drive, WeTransfer…)" value="'+(en?esc(en.link):'')+'">'+
+          '<button type="button" class="pill solid sv-ent" data-k="'+sv.k+'">'+(en?'Trocar o link':'Entregar')+'</button></div>'+
+          '<p class="sub" style="margin-top:6px">Quem comprou recebe um e-mail e o botão de baixar aparece no pedido.</p></div>';
+      });
+      h+='<div class="acoes"><a class="pill" href="/pedido/'+esc(p.token)+'" target="_blank" rel="noopener">Abrir a página</a><button type="button" class="pill" data-close>Fechar</button></div>';
+      card.innerHTML=h;
+      card.querySelector('[data-close]').addEventListener('click',fechar);
+      card.querySelectorAll('.sv-ent').forEach(function(b){ b.addEventListener('click',function(){
+        var k=Number(b.dataset.k), inp=card.querySelector('.sv-link[data-k="'+k+'"]'), link=(inp&&inp.value||'').trim();
+        if(!link){ flash('Cola o link do arquivo final primeiro.'); if(inp) inp.focus(); return; }
+        b.disabled=true; b.textContent='Entregando…';
+        acao('pedido-entregar',{token:p.token,k:k,link:link}).then(function(j){
+          b.disabled=false;
+          if(!j||!j.ok){ b.textContent='Entregar'; flash((j&&j.erro)||'Não salvou. Tenta de novo.'); return; }
+          entrega.pedidos=j.pedidos||entrega.pedidos;
+          p=(entrega.pedidos.filter(function(x){ return x.token===p.token; })[0])||p; pinta(); pintarNav();
+          flash(j.avisou?'Entregue. Quem comprou recebeu o e-mail.':'Entregue. O botão já aparece na página do pedido.');
+        });
+      }); });
+    };
+    $('veil').hidden=false; pinta();
+  }
+  // Vendas > Lista: o que era a folha "Lista de e-mails", agora na página
+  function paginaLista(){
+    var box=document.createElement('div'), l=lista;
+    if(!l){ box.innerHTML='<div class="vazio">carregando…</div>'; return box; }
+    box.innerHTML='<p class="sub" style="margin-top:4px">Quem se cadastrou no "Fique por dentro" da vitrine e das tapes. Cada pessoa ganha um cupom só dela: 25% nos beats do catálogo, uso único, 15 dias. Os cupons da lista não aparecem em Cupons.</p>'+
+      '<div class="bloco"><div class="rot">NA LISTA</div><p>'+textoLista()+(l.sairam?' · '+l.sairam+(l.sairam===1?' saiu':' saíram'):'')+'</p>'+
+      (l.emails&&l.emails.length?'<div class="acoes" style="margin-top:12px"><button type="button" class="pill solid" id="liCopia">Copiar os e-mails</button></div>':'')+'</div>'+
+      '<div class="bloco"><div class="rot">ÚLTIMOS CADASTROS</div>'+((l.ultimos||[]).length?l.ultimos.map(function(u){
+        return '<div class="ev"><span>'+dm(u.em)+'</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(u.email)+(u.usou?' · usou o cupom':'')+'</span></div>';
+      }).join(''):'<p>Ninguém ainda.</p>')+'</div>'+
+      '<div class="bloco"><div class="rot">E-MAILS DO CUPOM</div>'+((l.envios||[]).length?l.envios.map(function(u){
+        var d=new Date(u.em), hh=isNaN(d)?'':' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+        return '<div class="ev"><span>'+dm(u.em)+hh+'</span><span style="min-width:0">'+esc(u.email)+' · '+(u.ok?'saiu':'<em>não saiu</em> ('+esc(u.erro||'erro')+')')+'</span></div>';
+      }).join(''):'<p>Nenhum envio registrado ainda (o registro começou em 12/10).</p>')+'</div>';
+    var cp=box.querySelector('#liCopia');
+    if(cp) cp.addEventListener('click',function(){
+      var txt=(l.emails||[]).join(', ');
+      (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){ flash(l.emails.length+' e-mails copiados.'); }).catch(function(){ prompt('Copie os e-mails:',txt); });
+    });
+    return box;
+  }
+  // Perfil: tudo que mexe no /rideblan33
+  function paginaPerfil(){
+    var box=document.createElement('div'); box.className='hoje';
+    var lm=linhaAcao('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>','Músicas',textoMusicas()+' · destaques e recentes',function(){ irPara('musicas'); }); lm.id='musPerfil'; box.appendChild(lm);
+    var noP=noPerfil().length;
+    box.appendChild(linhaAcao(svg('catalogo'),'Ordem das beat tapes',noP+(noP===1?' tape no perfil':' tapes no perfil')+' · arrastar pra ordenar',abrirPerfil));
+    var ln=linhaAcao('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/></svg>','Números do site',numerosSite?esc(textoNumeros(numerosSite,'curto')):'artistas, faixas e streams',abrirNumeros); ln.id='numSite'; box.appendChild(ln);
+    box.appendChild(linhaAcao('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>','Ver o perfil','abre /rideblan33 com a prévia do que está desligado',function(){ window.open('/rideblan33?de=painel','_blank','noopener'); }));
+    return box;
+  }
+  // Ajustes: as chaves do site e o consumo do plano grátis
+  function paginaAjustes(){
+    var box=document.createElement('div');
+    var lig=!!(entrega&&entrega.ligada), mus=musicasResumo;
+    var c=consumoHoje, pct=c?Math.min(100,Math.round(c.hoje/c.teto*100)):0;
+    box.innerHTML='<div class="rot" style="margin-top:22px">CHAVES</div>'+
+      '<div class="sw"><div><b>Entrega na hora</b><small>'+(lig?'Ligada: beat sai no link na hora; serviço ganha a página pra mandar o material.':'Desligada: o checkout fica como era, sem link.')+'</small></div>'+
+        '<button type="button" class="toggle" id="ajEntrega" aria-pressed="'+lig+'" aria-label="Entrega na hora"'+(entrega?'':' disabled')+'><i></i></button></div>'+
+      '<div class="sw"><div><b>Músicas no perfil</b><small>'+(mus?(mus.noAr?'No ar: a aba Músicas aparece pra todo mundo.':'Fora do ar: a prévia aparece só pra quem entra no painel.'):'carregando…')+'</small></div>'+
+        '<button type="button" class="toggle" id="ajMusicas" aria-pressed="'+!!(mus&&mus.noAr)+'" aria-label="Músicas no perfil"'+(mus?'':' disabled')+'><i></i></button></div>'+
+      '<div class="sw"><div><b>Comentários nas pastas</b><small>'+(COMENTARIOS_LIGADOS?'Ligados.':'Desligados desde 11/10/2026. Pra religar, é comigo (muda no código).')+'</small></div></div>'+
+      '<div class="rot" style="margin-top:26px">CONSUMO HOJE</div>'+
+      '<button type="button" class="sw sw-b" id="ajBanco"><div style="flex:1"><b>Banco</b><small>'+(c?milhar(c.hoje)+' de '+milhar(c.teto)+' leituras · zera às 21h':'carregando…')+'</small><div class="barra-c"><i style="width:'+pct+'%"></i></div></div><span class="seta" aria-hidden="true">›</span></button>'+
+      '<div class="sw"><div style="flex:1"><b>Prateleira de arquivos</b><small>'+(prateleira!=null?gb(prateleira)+' de 8 GB':'carregando…')+'</small><div class="barra-c"><i style="width:'+(prateleira!=null?Math.min(100,Math.round(prateleira/(8*1073741824)*100)):0)+'%"></i></div></div></div>';
+    var be=box.querySelector('#ajEntrega');
+    be.addEventListener('click',function(){
+      var quer=be.getAttribute('aria-pressed')!=='true'; be.disabled=true;
+      acao('entrega',{ligada:quer}).then(function(j){
+        be.disabled=false;
+        if(!j||!j.ok){ flash((j&&j.erro)||'Não salvou. Tenta de novo.'); return; }
+        entrega=j; desenhar(); flash(quer?'Entrega na hora ligada.':'Entrega na hora desligada.');
+      });
+    });
+    var bm=box.querySelector('#ajMusicas');
+    bm.addEventListener('click',function(){
+      var quer=bm.getAttribute('aria-pressed')!=='true'; bm.disabled=true;
+      acao('musicas-no-ar',{noAr:quer}).then(function(j){
+        bm.disabled=false;
+        if(!j||j.erro){ flash((j&&j.erro)||'Não salvou. Tenta de novo.'); return; }
+        musicasResumo={n:musicasResumo?musicasResumo.n:0,noAr:quer}; desenhar(); flash(quer?'Músicas no ar.':'Músicas fora do ar (só a prévia).');
+      });
+    });
+    box.querySelector('#ajBanco').addEventListener('click',abrirConsumo);
+    return box;
+  }
+
   function textoEntrega(){
     if(!entrega) return 'o beat sai num link na hora em que o pagamento cai';
     var n=(entrega.pedidos||[]).filter(function(p){ return p.status!=='teste'; }).length;
@@ -484,7 +729,7 @@ function pagina() {
     if(entregaPedida) return; entregaPedida=true;
     fetch('/api/painel?op=entrega').then(function(r){return r.json()}).then(function(j){
       if(!j||!j.ok||!Array.isArray(j.pedidos)) return; entrega=j;
-      var el=$('entregaHora'); if(el&&vista==='home') el.querySelector('small').innerHTML=textoEntrega();
+      pintarNav(); refazer();
     }).catch(function(){});
   }
   function listaPedidos(){
@@ -593,7 +838,7 @@ function pagina() {
     if(listaPedida) return; listaPedida=true;
     fetch('/api/painel?op=lista').then(function(r){return r.json()}).then(function(j){
       if(!j||!j.ok) return; lista=j;
-      var el=$('listaEmails'); if(el&&vista==='home') el.querySelector('small').innerHTML=textoLista();
+      refazer(['hoje','lista']);
     }).catch(function(){});
   }
   function abrirLista(){
@@ -633,7 +878,7 @@ function pagina() {
     fetch('/api/painel?op=comentarios-resumo').then(function(r){return r.json()}).then(function(j){
       if(!j||!j.ok) return;
       comentResumo=j;
-      var el=$('comPastas'); if(el&&vista==='home') el.querySelector('small').innerHTML=textoComent();
+      refazer(['hoje']);
     }).catch(function(){});
   }
   function textoMusicas(){
@@ -646,7 +891,7 @@ function pagina() {
     fetch('/api/painel?op=musicas').then(function(r){return r.json()}).then(function(j){
       if(!j||!j.ok) return;
       musicasResumo={ n:j.destaques.length+j.recentes.length, noAr:!!j.noAr };
-      var el=$('musPerfil'); if(el&&vista==='home') el.querySelector('small').innerHTML=textoMusicas();
+      refazer(['perfil','ajustes']);
     }).catch(function(){});
   }
   function milharPonto(n){ return String(Math.round(n)).replace(/\\B(?=(\\d{3})+(?!\\d))/g,'.'); }
@@ -658,7 +903,7 @@ function pagina() {
   function pedirNumeros(){
     if(numerosPedido) return; numerosPedido=true;
     fetch('/api/painel?op=numeros').then(function(r){return r.json()}).then(function(j){
-      if(j&&j.numeros){ numerosSite=j.numeros; var el=$('numSite'); if(el&&vista==='home') el.querySelector('small').textContent=textoNumeros(numerosSite,'curto'); }
+      if(j&&j.numeros){ numerosSite=j.numeros; refazer(['perfil']); }
     }).catch(function(){});
   }
   function abrirNumeros(){
@@ -690,20 +935,32 @@ function pagina() {
   }
   // o selo do topo: numa subpágina volta pra home do painel; na home, leva pro site
   document.querySelector('.topo .marca').addEventListener('click',function(e){
-    if(vista!=='home'){ e.preventDefault(); irPara('home'); }
+    if(vista!=='hoje'){ e.preventDefault(); irPara('hoje'); }
   });
+  $('engBtn').addEventListener('click',function(){ irPara('ajustes'); });
 
   function desenhar(){
     $('titulo').textContent=TITULOS[vista];
-    document.querySelector('.topo .marca').setAttribute('aria-label', vista==='home' ? 'Voltar pro site' : 'Voltar pro painel');
+    document.querySelector('.topo .marca').setAttribute('aria-label', vista==='hoje' ? 'Voltar pro site' : 'Voltar pro Hoje');
+    if(vista==='ajustes') $('engBtn').setAttribute('aria-current','page'); else $('engBtn').removeAttribute('aria-current');
+    var vit=!!VITRINE_ABA[vista];
     $('barra').hidden = !(vista==='artistas'||vista==='tapes');
     $('resumo').hidden = vista==='analytics';
-    $('lista').hidden = vista==='analytics'||vista==='vitrine'||vista==='musicas'||vista==='comentarios';
+    $('lista').hidden = vista==='analytics'||vit||vista==='musicas'||vista==='comentarios';
     $('analytics').hidden = vista!=='analytics';
-    $('vitrine').hidden = vista!=='vitrine';
+    $('vitrine').hidden = !vit;
     $('musicas').hidden = vista!=='musicas';
     $('comentarios').hidden = vista!=='comentarios';
-    if(vista==='home'){ pedirResumoFunil(); pedirResumoLoja(); pedirConsumo(); pedirNumeros(); pedirMusicas(); if(COMENTARIOS_LIGADOS) pedirComent(); pedirEntrega(); pedirLista(); $('lista').innerHTML=''; $('lista').appendChild(home()); pintarConsumo(); return; }
+    pintarNav(); pintarSecoes();
+    if(vista==='hoje'){
+      pedirResumoFunil(); pedirConsumo(); pedirMusicas(); if(COMENTARIOS_LIGADOS) pedirComent(); pedirEntrega(); pedirLista(); pedirFila();
+      $('resumo').textContent=hojeData();
+      $('lista').innerHTML=''; $('lista').appendChild(hoje()); return;
+    }
+    if(vista==='pedidos'){ pedirEntrega(); $('resumo').textContent='pedidos com link, cupons e a lista de e-mails'; $('lista').innerHTML=''; $('lista').appendChild(paginaPedidos()); return; }
+    if(vista==='lista'){ pedirLista(); $('resumo').textContent='pedidos com link, cupons e a lista de e-mails'; $('lista').innerHTML=''; $('lista').appendChild(paginaLista()); return; }
+    if(vista==='perfil'){ pedirMusicas(); pedirNumeros(); $('resumo').textContent='o que aparece em /rideblan33'; $('lista').innerHTML=''; $('lista').appendChild(paginaPerfil()); return; }
+    if(vista==='ajustes'){ pedirEntrega(); pedirMusicas(); pedirConsumo(); $('resumo').textContent='chaves do site e o consumo do plano grátis'; $('lista').innerHTML=''; $('lista').appendChild(paginaAjustes()); return; }
     if(vista==='comentarios'){
       if(!$('comentarios').dataset.montado && window.CaramujoComentarios){
         $('comentarios').dataset.montado='1';
@@ -721,13 +978,13 @@ function pagina() {
       if(!window.CaramujoMusicas) $('musicas').innerHTML='<div class="vazio">carregando…</div>';
       return;
     }
-    if(vista==='vitrine'){
+    if(vit){
       // monta uma vez só (igual ao analytics): a lista de artistas recarrega sozinha
       // durante conversão e não pode apagar o que você está digitando aqui
       if(!$('vitrine').dataset.montado && window.CaramujoVitrine){
         $('vitrine').dataset.montado='1';
-        window.CaramujoVitrine.abrir($('vitrine'));
-      } else if(window.CaramujoVitrine) window.CaramujoVitrine.pintar();
+        window.CaramujoVitrine.abrir($('vitrine'),{semAbas:true,aba:VITRINE_ABA[vista]});
+      } else if(window.CaramujoVitrine) window.CaramujoVitrine.aba(VITRINE_ABA[vista]);
       if(!window.CaramujoVitrine) $('vitrine').innerHTML='<div class="vazio">carregando…</div>';
       return;
     }
@@ -736,11 +993,12 @@ function pagina() {
       // derrubar o período nem a aba que você escolheu
       if(!$('analytics').dataset.montado && window.CaramujoAnalytics){
         $('analytics').dataset.montado='1';
-        window.CaramujoAnalytics.abrir($('analytics'),function(){ irPara('home'); });
+        window.CaramujoAnalytics.abrir($('analytics'),function(){ irPara('hoje'); });
       }
       if(!window.CaramujoAnalytics) $('analytics').innerHTML='<div class="vazio">carregando…</div>';
       return;
     }
+    if(prateleira!=null) pintarResumo(prateleira);   // a vitrine escreve o resumo dela; aqui volta o das pastas
     var fonte = vista==='tapes' ? tapes : artistas;
     var alvo=fonte.filter(function(a){
       return !filtro || a.name.toLowerCase().indexOf(filtro)>-1;
@@ -801,7 +1059,8 @@ function pagina() {
     });
   }
   function pintarResumo(usado){
-    if(vista==='vitrine'||vista==='musicas'||vista==='comentarios') return;            // lá o resumo é da loja / das músicas / dos comentários
+    prateleira=usado;
+    if(vista!=='tapes'&&vista!=='artistas') return;            // 12/10/2026: o resumo das pastas só nas listas (o resto tem o seu)
     var r=$('resumo');
     r.textContent = artistas.length+(artistas.length===1?' artista no ar':' artistas no ar')+
       (tapes.length?' · '+tapes.length+(tapes.length===1?' beat tape':' beat tapes'):'')+
@@ -832,15 +1091,15 @@ function pagina() {
   function pedirResumoFunil(){
     if(funilPedido) return; funilPedido=true;
     fetch('/api/painel?op=funil&dias=7').then(function(r){return r.json()}).then(function(j){
-      funilResumo=(j&&j.etapas)?j:{erro:true}; if(vista==='home') desenhar();
-    }).catch(function(){ funilResumo={erro:true}; if(vista==='home') desenhar(); });
+      funilResumo=(j&&j.etapas)?j:{erro:true}; refazer(['hoje']);
+    }).catch(function(){ funilResumo={erro:true}; refazer(['hoje']); });
   }
   function nEtapa(j,e){ var x=(j.etapas||[]).filter(function(t){return t.etapa===e})[0]; return x?x.total:0; }
   // Quanto o banco já leu hoje (o limite gratuito é 5 milhões por dia, zera às 21h).
   function pedirConsumo(){
     if(consumoPedido) return; consumoPedido=true;
     fetch('/api/painel?op=consumo').then(function(r){return r.json()}).then(function(j){
-      consumoHoje=(j&&typeof j.hoje==='number')?j:null; if(vista==='home') pintarConsumo();
+      consumoHoje=(j&&typeof j.hoje==='number')?j:null; refazer(['hoje','ajustes']);
     }).catch(function(){});
   }
   function milhar(n){
@@ -850,7 +1109,7 @@ function pagina() {
   }
   function pintarConsumo(){
     var velho=$('consumo'); if(velho) velho.remove();
-    if(!consumoHoje||vista!=='home') return;
+    return;   // 12/10/2026: o consumo mora em Ajustes (e no Hoje, quando passa da metade)
     var c=consumoHoje, pct=c.hoje/c.teto;
     var el=document.createElement('button');
     el.type='button'; el.id='consumo'; el.className='consumo'+(pct>=0.5?' alto':'');
@@ -882,8 +1141,8 @@ function pagina() {
         aVenda:j.beats.filter(function(b){return !b.sold}).length,
         cupons:(j.cupons||[]).filter(function(c){return c.ativo && !(c.max_usos!==null && c.usos>=c.max_usos)}).length
       };
-      if(vista==='home') desenhar();
-    }).catch(function(){ lojaResumo={erro:true}; if(vista==='home') desenhar(); });
+      refazer(['hoje']);
+    }).catch(function(){ lojaResumo={erro:true}; });
   }
 
   function cartaoRevisar(){
@@ -1350,7 +1609,7 @@ function pagina() {
     c.querySelector('[data-close]').addEventListener('click',fechar);
     c.querySelectorAll('[data-ordem]').forEach(function(b){
       b.addEventListener('click',function(){
-        ordem=b.dataset.ordem;
+        ordem=b.dataset.ordem; if(ordemDe[vista]) ordemDe[vista]=ordem;
         $('ordemLabel').textContent=ORDENS[ordem];
         fechar();
       });
@@ -1377,12 +1636,15 @@ function pagina() {
   }
 
   carregar();
-  // /painel#comentarios (link do e-mail de comentário): abre direto na lista, quando o
-  // arquivo da tela chegar (ele vem com defer)
-  if(location.hash==='#comentarios'){
+  // /painel#<seção> abre direto nela (o e-mail de comentário usa #comentarios); as telas que
+  // vêm de arquivo à parte (defer) esperam o arquivo chegar
+  (function(){
+    var h=location.hash.replace('#','');
+    if(!h||!TITULOS[h]){ desenhar(); return; }
+    var precisa={comentarios:'CaramujoComentarios',musicas:'CaramujoMusicas',analytics:'CaramujoAnalytics',vitrine:'CaramujoVitrine',fila:'CaramujoVitrine',cupons:'CaramujoVitrine'}[h];
     var tenta=0;
-    (function vai(){ if(window.CaramujoComentarios||tenta++>40){ irPara('comentarios'); return; } setTimeout(vai,50); })();
-  }
+    (function vai(){ if(!precisa||window[precisa]||tenta++>40){ irPara(h); return; } setTimeout(vai,50); })();
+  })();
 })();
 </script>
 </body></html>`;

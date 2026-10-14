@@ -220,6 +220,9 @@ body.tocando .aviso{bottom:96px}
 .dono span{display:block;margin-top:8px;font-size:.84rem;line-height:1.6;color:var(--read)}
 /* vendido (11/10/2026): o fim do quadro "Esse beat já tem dono" alinha com o fim do card da tape, como na página do beat à venda */
 @media(min-width:861px){.beat.fora .info{align-self:stretch;display:flex;flex-direction:column}.beat.fora .compra{margin-bottom:22px}.beat.fora .dono{margin-top:auto}}
+/* 12/10/2026: no computador as duas colunas terminam juntas também no beat à venda. O card da tape desce
+   pro fim da coluna da esquerda; se a esquerda for mais alta, a compra desce na direita. */
+@media(min-width:861px){.beat .tape{align-self:end}.beat:not(.fora) .info{align-self:stretch;display:flex;flex-direction:column}.beat:not(.fora) .tocador{margin-bottom:26px}.beat:not(.fora) .compra{margin-top:auto}}
 .tape{grid-area:tape;display:flex;align-items:center;gap:14px;padding:12px;border:1px solid var(--wire);background:var(--mole);transition:border-color .14s}
 .tape:hover{border-color:var(--clay)}
 .tape img{flex:none;object-fit:cover;border:1px solid var(--wire)}
