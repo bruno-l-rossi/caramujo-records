@@ -913,25 +913,7 @@ async function goToPayment(){
                 return;
               }
               resolve();
-              // armazena PDF do contrato para download
-              if (data.contractPdf) {
-                contractPdfData = data.contractPdf;
-              }
-              if(brickController){try{brickController.unmount();}catch(e){}brickController=null;}
-              document.getElementById('mpStep2').style.display='none';
-              document.getElementById('mpStep3').style.display='block';
-
-              if (data.pix && data.pix.qrCodeBase64) {
-                // Mostra tela PIX com QR code
-                document.getElementById('mpPixPending').style.display='block';
-                document.getElementById('mpPixConfirmed').style.display='none';
-                document.getElementById('mpPixQrImg').src = 'data:image/png;base64,' + data.pix.qrCodeBase64;
-                document.getElementById('mpPixCode').value = data.pix.qrCode || '';
-                startPixPolling(data.paymentId);
-              } else {
-                // Pagamento já aprovado (cartão) — vai direto para confirmado
-                showPixConfirmed();
-              }
+              mostrarPagamentoFeito(data);
             } catch(err) {
               reject('Erro de conexão. Tente novamente.');
             }
@@ -985,22 +967,80 @@ async function goToPayment(){
     aplicarLeveMais(); const subtotalFallback=cart.reduce((s,c)=>s+c.price,0);
     const discountFallback=calcDiscount(subtotalFallback);
     const totalFallback=subtotalFallback - discountFallback;
-    // Fallback: show manual payment instructions
+    // 14/10/2026: quando o módulo do cartão (Brick) não carrega, o PIX sai direto do servidor (o PIX
+    // do Mercado Pago não precisa do SDK no navegador). Antes: "envie via PIX para contato@", que não
+    // é chave PIX e não criava pedido nem entrega.
     document.getElementById('mpStep1').style.display='none';
     document.getElementById('mpStep2').style.display='block';
     document.getElementById('mpBrickContainer').innerHTML=`
-      <div style="padding:1.5rem;border:1px solid var(--wire);background:var(--mole);">
+      <div class="pix-reserva" style="padding:1.5rem;border:1px solid var(--wire);background:var(--mole);">
         <p style="font-family:'Cormorant Garamond',sans-serif;font-size:1rem;color:var(--cream);letter-spacing:.1em;margin-bottom:.5rem;">PAGAMENTO VIA PIX</p>
-        <p style="font-size:.66rem;color:var(--amber);margin-bottom:1rem;">O módulo de cartão não carregou. Use PIX abaixo ou recarregue a página.</p>
-        <p style="font-size:.76rem;color:var(--dim);line-height:1.8;">
-          Envie <strong style="color:var(--cream)">R$ ${totalFallback}</strong> via PIX para:<br/>
-          <strong style="color:var(--bone);font-size:.9rem;">contato@caramujorecords.com.br</strong><br/><br/>
-          Itens: ${cart.map(c=>c.name).join(', ')}<br/>
-          Email para entrega: <strong style="color:var(--bone)">${document.getElementById('mpEmail').value}</strong><br/><br/>
-          Após o pagamento, envie o comprovante para <strong style="color:var(--bone)">@rideblan33</strong> no Instagram.
-        </p>
-        <button class="mp-btn-primary" style="margin-top:1.2rem;" onclick="document.getElementById('mpStep2').style.display='none';document.getElementById('mpStep3').style.display='block';">CONFIRMAR PEDIDO</button>
+        <p style="font-size:.7rem;color:var(--amber);margin-bottom:1rem;line-height:1.6;">O cartão não carregou agora. Dá pra pagar com PIX: o código sai na hora e a entrega é a mesma.</p>
+        <p style="font-size:.76rem;color:var(--dim);line-height:1.8;">Total: <strong style="color:var(--cream)">R$ ${String(totalFallback).replace('.',',')}</strong></p>
+        <button class="mp-btn-primary" id="mpPixDireto" type="button" style="margin-top:1rem;" onclick="pagarPixDireto(this)">GERAR O PIX</button>
+        <p id="mpPixDiretoErr" role="alert" style="font-size:.7rem;color:var(--bone);line-height:1.6;margin-top:.8rem;"></p>
+        <p style="font-size:.66rem;color:var(--dim);line-height:1.7;margin-top:.8rem;">Prefere cartão? <button type="button" onclick="location.reload()" style="all:unset;cursor:pointer;color:var(--amber);text-decoration:underline;">Recarregue a página</button>. Qualquer problema, chama o <strong style="color:var(--bone)">@rideblan33</strong> no Instagram.</p>
       </div>`;
+  }
+}
+
+// Mostra o resultado do /api/create-payment: QR do PIX (aguardando) ou confirmado (cartão aprovado).
+function mostrarPagamentoFeito(data){
+  // armazena PDF do contrato para download
+  if (data.contractPdf) {
+    contractPdfData = data.contractPdf;
+  }
+  if(brickController){try{brickController.unmount();}catch(e){}brickController=null;}
+  document.getElementById('mpStep2').style.display='none';
+  document.getElementById('mpStep3').style.display='block';
+
+  if (data.pix && data.pix.qrCodeBase64) {
+    // Mostra tela PIX com QR code
+    document.getElementById('mpPixPending').style.display='block';
+    document.getElementById('mpPixConfirmed').style.display='none';
+    document.getElementById('mpPixQrImg').src = 'data:image/png;base64,' + data.pix.qrCodeBase64;
+    document.getElementById('mpPixCode').value = data.pix.qrCode || '';
+    startPixPolling(data.paymentId);
+  } else {
+    // Pagamento já aprovado (cartão) — vai direto para confirmado
+    showPixConfirmed();
+  }
+}
+
+// PIX sem o Brick (14/10/2026): mesmo pedido que o Brick manda, com payment_method_id 'pix'.
+async function pagarPixDireto(btn){
+  const err=document.getElementById('mpPixDiretoErr');
+  if(err) err.textContent='';
+  if(btn){ btn.disabled=true; btn.textContent='GERANDO O PIX…'; }
+  aplicarLeveMais(); const sub=cart.reduce((s,c)=>s+c.price,0);
+  const total=sub - calcDiscount(sub);
+  try{
+    const res=await fetch('/api/create-payment',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        formData:{ payment_method_id:'pix' }, selectedPaymentMethod:'bank_transfer',
+        amount: total,
+        description: cart.map(c=>c.qty&&c.qty>1?`${c.name} x${c.qty}`:c.name).join(' + '),
+        email: document.getElementById('mpEmail').value.trim(),
+        name: document.getElementById('mpName').value.trim(),
+        artistName: document.getElementById('mpArtist').value.trim(),
+        cpf: document.getElementById('mpCpf').value.replace(/\D/g,''),
+        items: cart.map(c=>({name:c.qty&&c.qty>1?`${c.name} x${c.qty}`:c.name,price:c.price,type:c.type,pkgBeats:c.pkgBeats||null})),
+        termsAcceptance:{ accepted:true, version:'caramujo-termos-v1-2026', timestamp:new Date().toISOString(), userAgent:navigator.userAgent, pageUrl:window.location.href },
+        couponCode: activeCoupon ? activeCoupon.code : null,
+      }),
+    });
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok || !data.success){
+      if(err) err.textContent=data.error || 'Não consegui gerar o PIX. Tenta de novo em instantes.';
+      if(btn){ btn.disabled=false; btn.textContent='GERAR O PIX'; }
+      return;
+    }
+    mostrarPagamentoFeito(data);
+  }catch(e){
+    if(err) err.textContent='Sem conexão agora. Confere a internet e toca de novo.';
+    if(btn){ btn.disabled=false; btn.textContent='GERAR O PIX'; }
   }
 }
 

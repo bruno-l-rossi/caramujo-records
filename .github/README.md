@@ -79,6 +79,8 @@ scripts/                conversor do Drive e cálculo da onda de cada faixa
 
 **Lista com cupom (desde 11/10/2026).** "Fique por dentro" na vitrine: o e-mail entra na tabela `lista` (`/api/lista`) e recebe um cupom LISTA-XXXX de 25%, uso único, válido por 15 dias, só nos beats do catálogo. A caixa aparece na vitrine e na página de cada beat tape. Sair da lista pelo link do e-mail. Painel: home > Lista de e-mails (desde 12/10/2026 com o resultado de cada e-mail do cupom: saiu, ou o motivo que o Resend deu).
 
+**Cartão que não carrega (14/10/2026).** Se o módulo do cartão do Mercado Pago não abrir, o checkout oferece "GERAR O PIX": o mesmo pedido vai pro `create-payment` como PIX (o PIX não depende do módulo no navegador) e abre o QR de sempre, com pedido, e-mails e entrega. Antes pedia PIX manual pro contato@, que não é chave PIX.
+
 **PIX no celular.** O PIX gerado fica guardado no navegador por 2 horas. Voltou do app do banco: o site confere na hora. Se a página recarregou ou a pessoa fechou no X, aparece a faixa "Seu PIX de R$ X tá aguardando" (VER O PIX / DESCARTAR); se já pagou, abre o PEDIDO CONFIRMADO. O checkout lembra e-mail e nomes neste navegador (o CPF nunca fica guardado).
 
 **Voltar do celular.** Em todas as páginas, o voltar do Android (e o gesto do iPhone) fecha a folha aberta (carrinho, pacote, checkout, mídia, menu, compartilhar, "...", ENVIAR/BAIXAR) em vez de sair. Com o PIX na tela ele não fecha.
@@ -97,7 +99,7 @@ Desde 12/10/2026 o painel abre no **Hoje** e se divide em 5 seções (barra emba
 
 - **Hoje:** o que precisa do Bruno (serviço com material pra entregar, beats na Fila, beats pra revisar nas tapes, e-mail do cupom que não saiu, comentário aberto, banco passando da metade), os números dos últimos 7 dias e atalhos.
 - **Vendas:** Pedidos (filtro Pra fazer / Todos / Testes; cada pedido abre com o material de cada serviço e o campo pra entregar pelo link; pedido de teste de beat e de serviço), Cupons e Lista (quem se cadastrou, copiar os e-mails, resultado de cada e-mail do cupom).
-- **Catálogo:** Vitrine (beats: editar, vender, destaque, tirar), Fila (publicar beats das tapes), Beat tapes (revisão, linha do @rideblan33 e chave "Mostrar no perfil") e Pastas (dos artistas; abre pela última atividade, desde 14/10/2026).
+- **Catálogo:** Vitrine (beats: editar, vender, destaque, tirar), Fila (publicar beats das tapes), Beat tapes (revisão, linha do @rideblan33 e chave "Mostrar no perfil") e Artistas (as pastas; abre pela última atividade, desde 14/10/2026).
 - **Perfil:** Músicas (colar o link do Spotify ou do YouTube, Destaque ou Recente, arrastar, o áudio que toca inteiro), Ordem das beat tapes, Números do site e Ver o perfil.
 - **Números:** o Analytics (Vitrine, Beat tapes, Artistas e Portfólio, com período livre e comparação; não conta as visitas do Bruno nem troca de rede como outra pessoa).
 - **Ajustes** (engrenagem): chaves Entrega na hora e Músicas no perfil, a situação dos Comentários das pastas (chave no código), o consumo do banco e da prateleira de arquivos.

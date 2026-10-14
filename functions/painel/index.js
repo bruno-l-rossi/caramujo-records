@@ -486,7 +486,7 @@ function pagina() {
   window.__painelIr=irPara;
 
   /* ---------- painel novo (12/10/2026): Hoje, Vendas, Catálogo, Perfil, Números e Ajustes ----------
-     As telas de antes viraram partes das seções: Vitrine e Fila (vitrine.js), Beat tapes e Pastas
+     As telas de antes viraram partes das seções: Vitrine e Fila (vitrine.js), Beat tapes e Artistas
      (listas daqui), Cupons (vitrine.js), Pedidos (entrega na hora + serviços), Lista, Músicas
      (musicas.js), Analytics. Barra embaixo no celular, menu do lado no computador. */
   var IC={
@@ -501,7 +501,7 @@ function pagina() {
   function svg(k,t){ return '<svg width="'+(t||20)+'" height="'+(t||20)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+IC[k]+'</svg>'; }
   var GRUPO={hoje:'hoje',pedidos:'vendas',cupons:'vendas',lista:'vendas',vitrine:'catalogo',fila:'catalogo',tapes:'catalogo',artistas:'catalogo',perfil:'perfil',musicas:'perfil',analytics:'numeros',ajustes:'ajustes',comentarios:'hoje'};
   var ENTRADA={hoje:'hoje',vendas:'pedidos',catalogo:'vitrine',perfil:'perfil',numeros:'analytics',ajustes:'ajustes'};
-  var SUB={vendas:[['pedidos','Pedidos'],['cupons','Cupons'],['lista','Lista']],catalogo:[['vitrine','Vitrine'],['fila','Fila'],['tapes','Beat tapes'],['artistas','Pastas']]};
+  var SUB={vendas:[['pedidos','Pedidos'],['cupons','Cupons'],['lista','Lista']],catalogo:[['vitrine','Vitrine'],['fila','Fila'],['tapes','Beat tapes'],['artistas','Artistas']]};
   var NAV=[['hoje','Hoje'],['vendas','Vendas'],['catalogo','Catálogo'],['perfil','Perfil'],['numeros','Números']];
   var filaN=null, filaPedida=false, prateleira=null;
   // a Fila vem do relatório da vitrine (lê as faixas todas): o Hoje guarda a conta por 30 min
