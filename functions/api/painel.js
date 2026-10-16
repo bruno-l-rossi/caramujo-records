@@ -17,6 +17,8 @@ import { somUrl } from '../_lib/midia.js';
 import { entregaLigada, ligarEntrega, pedidoDeTeste, pedidoDeTesteServico, ultimosPedidos, salvarEntrega } from '../_lib/pedidos.js';
 import { avisarEntrega } from '../_lib/servicoemails.js';
 import { painelLista } from '../_lib/lista.js';
+import { varrer as varrerGravou } from '../_lib/gravou.js';
+import { CHAVE as MUS_CHAVE, deTexto as musDeTexto } from '../_lib/musicas.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
 
@@ -55,6 +57,13 @@ export async function onRequest({ request, env }) {
   if (op === 'entrega' && request.method !== 'POST') return json({ ok: true, ligada: await entregaLigada(d), pedidos: await ultimosPedidos(d) });
   // lista de e-mails com cupom (11/10/2026): quantos, quantos usaram o cupom, os e-mails pra copiar
   if (op === 'lista' && request.method !== 'POST') return json({ ok: true, ...(await painelLista(d)) });
+  // Quem já gravou (16/10/2026): só lê e responde (não guarda nada). Varre as músicas da aba
+  // Músicas do perfil nas páginas públicas do Spotify: é o teste de verdade, de dentro da Cloudflare.
+  if (op === 'gravou-teste') {
+    const row = await d.prepare('SELECT valor FROM meta WHERE chave = ?').bind(MUS_CHAVE).first();
+    const mus = musDeTexto(row && row.valor);
+    return json({ ok: true, ...(await varrerGravou(mus.lista || [])) });
+  }
   if (request.method !== 'POST') return json({ erro: 'op desconhecida' }, 400);
 
   const body = await request.json().catch(() => ({}));

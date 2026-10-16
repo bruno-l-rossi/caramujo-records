@@ -55,8 +55,9 @@ let cart=[], curFilt='todos', showAvailOnly=false; // vendidos visíveis por pad
 let sortMode='padrao', shuffleOrder=null;
 function toggleAvail(btn){
   showAvailOnly=!showAvailOnly;
+  // 16/10/2026: virou a chave "Só à venda" da barra (desligada ao abrir; o estado mora no aria-checked)
   btn.classList.toggle('on',showAvailOnly);
-  btn.textContent=showAvailOnly?'Mostrar vendidos':'Esconder vendidos';
+  btn.setAttribute('aria-checked',showAvailOnly?'true':'false');
   curPage=1; renderCards();
 }
 function sortBeats(v){
@@ -164,7 +165,6 @@ function renderCards(){
   if(src.length===0){
     wrap.innerHTML=`<div style="padding:2.5rem;text-align:center;color:var(--dim);font-size:.78rem;">Nenhum beat disponível neste filtro no momento.</div>`;
     document.getElementById('pagination').style.display='flex';
-    document.getElementById('paginationTop').style.display='flex';
     ['pgPrev','pgNext','pgPrevTop','pgNextTop'].forEach(id=>{
       const el=document.getElementById(id); if(el) el.style.visibility='hidden';
     });
@@ -172,6 +172,7 @@ function renderCards(){
     document.getElementById('pgInfoTop').style.display='none';
     document.getElementById('pgNums').innerHTML='';
     document.getElementById('pgNumsTop').innerHTML='';
+    if(typeof window.pintarBarra==='function') window.pintarBarra(0,0);
     return;
   }
   const totalPages=Math.ceil(src.length/BEATS_PER_PAGE);
@@ -205,7 +206,6 @@ function renderCards(){
 
   // Barras sempre visíveis (contêm a busca); apenas botões somem com 1 página
   document.getElementById('pagination').style.display = 'flex';
-  document.getElementById('paginationTop').style.display = 'flex';
   const hideNav = totalPages <= 1;
   ['pgPrev','pgNext','pgPrevTop','pgNextTop'].forEach(id=>{
     const el=document.getElementById(id);
@@ -221,6 +221,7 @@ function renderCards(){
   document.getElementById('pgNext').disabled    = (curPage===totalPages);
   document.getElementById('pgPrevTop').disabled = (curPage===1);
   document.getElementById('pgNextTop').disabled = (curPage===totalPages);
+  if(typeof window.pintarBarra==='function') window.pintarBarra(src.length,totalPages);
   setTimeout(bindPlayers,30);
 }
 
@@ -1585,7 +1586,6 @@ try{
     vs.forEach(function(v){ io.observe(v); });
   }
 
-  window.toggleFilters=function(){var p=document.getElementById('filtersPanel'),b=document.getElementById('filtersToggle');if(!p)return;var open=p.classList.toggle('open');if(b)b.setAttribute('aria-expanded',open?'true':'false');};
   window.studioScroll=function(dir){var st=document.querySelector('.studio-strip');if(!st)return;var it=st.querySelector('.studio-ph');var w=it?it.getBoundingClientRect().width+16:st.clientWidth*0.8;st.scrollBy({left:dir*w,behavior:'smooth'});};
   (function(){var st=document.querySelector('.studio-strip');if(!st||!('IntersectionObserver'in window))return;var figs=st.querySelectorAll('.studio-ph');if(figs.length<2)return;var first=figs[0],last=figs[figs.length-1];var pv=document.querySelector('.studio-nav.prev'),nx=document.querySelector('.studio-nav.next');var io=new IntersectionObserver(function(ents){ents.forEach(function(en){if(en.target===first&&pv)pv.style.display=en.isIntersecting?'none':'';if(en.target===last&&nx)nx.style.display=en.isIntersecting?'none':'';});},{root:st,threshold:0.6});io.observe(first);io.observe(last);})();
 
@@ -1915,7 +1915,7 @@ try{
     var st=document.getElementById('beatSearchTop'); if(st)st.value='';
     var sb=document.getElementById('beatSearchBottom'); if(sb)sb.value='';
     document.querySelectorAll('.ft:not(#filtAvail)').forEach(function(x){var oc=x.getAttribute('onclick')||'';x.classList.toggle('on',oc.indexOf("'todos'")>-1);});
-    var fa=document.getElementById('filtAvail'); if(fa){fa.classList.remove('on');fa.textContent='Esconder vendidos';}
+    var fa=document.getElementById('filtAvail'); if(fa){fa.classList.remove('on');fa.setAttribute('aria-checked','false');}
     // acha a página na mesma ordenação do renderCards
     var src=BEATS.slice();
     if(typeof sortMode!=='undefined'&&sortMode==='aleatorio'&&typeof shuffleOrder!=='undefined'&&shuffleOrder) src.sort(function(a,c){return shuffleOrder.indexOf(a.id)-shuffleOrder.indexOf(c.id);});
@@ -2446,7 +2446,10 @@ try{
       segura:function(){ var p=$('mpPixPending'); return !!(p&&p.style.display==='block'); } },
     { aberta:function(){ return tem('cartPanel','open'); }, fechar:function(){ closeAll(); } },
     { aberta:function(){ var l=document.querySelector('.nav-links'); return !!(l&&l.classList.contains('open')); },
-      fechar:function(){ toggleMenu(); } }
+      fechar:function(){ toggleMenu(); } },
+    // menus da barra dos beats (16/10/2026): no celular são folhas que sobem de baixo
+    { aberta:function(){ return !!document.querySelector('#nbar .mn:not([hidden])'); },
+      fechar:function(){ if(window.fecharMenusBarra) window.fecharMenusBarra(); } }
   ];
   var MARCA={folha:1}, empilhado=false, proprio=false, urlTopo=null, y=null, lenTopo=0, linkEm=0;
   // voltar no histórico devolveria a rolagem de quando a folha abriu: com a folha aberta o
@@ -2549,5 +2552,65 @@ try{
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ nota.textContent='Esse e-mail não parece certo. Confere e tenta de novo.'; nota.classList.add('erro'); inp.focus(); return; }
     enviar(email,null);
   });
+})();
+}catch(e){ setTimeout(function(){ throw e; }); }
+
+try{
+/* ── BARRA DOS BEATS (16/10/2026, opção A do Bruno) ─────────────────────
+   Busca, ✦, Gênero, Ordem e a chave Só à venda (desligada ao abrir: vendidos aparecem).
+   Os botões de gênero são os mesmos .ft de antes (links /beats/<gênero> com filtLink),
+   agora dentro do menu; a Ordem chama o sortBeats de sempre (o <select> segue escondido).
+   No celular (≤860px) o menu é uma folha que sobe de baixo, com fundo escuro; no
+   computador desce do botão. Fecha ao escolher, no X, no Esc, tocando fora e no voltar. */
+(function(){
+  var $=function(i){ return document.getElementById(i); };
+  var MENUS={ genero:['genBtn','genMenu'], ordem:['ordBtn','ordMenu'] };
+  function folha(){ try{ return window.matchMedia('(max-width:860px)').matches; }catch(_){ return false; } }
+  function fechar(){
+    Object.keys(MENUS).forEach(function(k){ var b=$(MENUS[k][0]), m=$(MENUS[k][1]); if(m) m.hidden=true; if(b) b.setAttribute('aria-expanded','false'); });
+    var f=$('mnFundo'); if(f) f.hidden=true;
+    document.body.classList.remove('mn-aberto');
+  }
+  window.fecharMenusBarra=fechar;
+  window.menuBarra=function(nome){
+    var par=MENUS[nome]; if(!par) return;
+    var m=$(par[1]), estava=m&&!m.hidden;
+    fechar();
+    if(!m||estava) return;
+    m.hidden=false; $(par[0]).setAttribute('aria-expanded','true');
+    if(folha()){ var f=$('mnFundo'); if(f) f.hidden=false; document.body.classList.add('mn-aberto'); }
+    var foco=m.querySelector('.ft.on,.mn-o.on'); if(foco){ try{ foco.focus({preventScroll:true}); }catch(_){} }
+  };
+  window.ordemBarra=function(v){
+    var s=$('beatSort'); if(s) s.value=v;
+    sortBeats(v);
+    fechar();
+  };
+  // o que a barra mostra: gênero e ordem escolhidos, a chave, quantos beats e a página
+  window.pintarBarra=function(total,paginas){
+    var gv=$('genVal'), gb=$('genBtn');
+    if(gv) gv.textContent = curFilt==='todos' ? 'Todos' : ((typeof GENRE_LABELS==='object'&&GENRE_LABELS[curFilt])||curFilt);
+    if(gb) gb.classList.toggle('ativo',curFilt!=='todos');
+    var ov=$('ordVal'); if(ov) ov.textContent = sortMode==='aleatorio' ? 'Aleatória' : 'Padrão';
+    document.querySelectorAll('#ordMenu .mn-o').forEach(function(o){ o.classList.toggle('on',o.getAttribute('data-ordem')===sortMode); });
+    var fa=$('filtAvail'); if(fa) fa.setAttribute('aria-checked',showAvailOnly?'true':'false');
+    var t=$('nbTotal'); if(t) t.textContent = total + (total===1?' beat':' beats');
+    var p=$('nbPag'); if(p) p.textContent = paginas>1 ? 'página '+curPage+' de '+paginas : '';
+  };
+  var gm=$('genMenu');
+  if(gm) gm.addEventListener('click',function(e){
+    var ft=e.target.closest&&e.target.closest('.ft');
+    // com Ctrl/Cmd o link abre a página do gênero em outra aba: o menu fica
+    if(ft&&!(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)) setTimeout(fechar,0);
+  });
+  document.addEventListener('click',function(e){
+    if(!document.querySelector('#nbar .mn:not([hidden])')) return;
+    if(e.target.closest&&e.target.closest('.nb-dd')) return;
+    fechar();
+  });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') fechar(); });
+  window.addEventListener('resize',function(){ if(document.querySelector('#nbar .mn:not([hidden])')&&!folha()){ var f=$('mnFundo'); if(f) f.hidden=true; document.body.classList.remove('mn-aberto'); } });
+  // a 1ª lista saiu antes deste bloco existir: desenha de novo pra barra ganhar os números
+  if(typeof renderCards==='function'&&$('beatCards')&&$('beatCards').children.length){ try{ renderCards(); }catch(_){} }
 })();
 }catch(e){ setTimeout(function(){ throw e; }); }

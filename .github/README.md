@@ -79,6 +79,10 @@ scripts/                conversor do Drive e cálculo da onda de cada faixa
 
 **Lista com cupom (desde 11/10/2026).** "Fique por dentro" na vitrine: o e-mail entra na tabela `lista` (`/api/lista`) e recebe um cupom LISTA-XXXX de 25%, uso único, válido por 15 dias, só nos beats do catálogo. A caixa aparece na vitrine e na página de cada beat tape. Sair da lista pelo link do e-mail. Painel: home > Lista de e-mails (desde 12/10/2026 com o resultado de cada e-mail do cupom: saiu, ou o motivo que o Resend deu).
 
+**Barra dos beats (16/10/2026).** Em cima da lista: busca, ✦ (Estou com sorte), Gênero e Ordem (menus; no celular sobem de baixo e o voltar fecha) e a chave Só à venda, desligada ao abrir. Os botões de gênero continuam sendo links `/beats/<gênero>` (o clique filtra ali mesmo).
+
+**Quem já gravou, a leitura (16/10/2026).** `functions/_lib/gravou.js` descobre quem canta em cada música da aba Músicas do perfil pelas páginas públicas do Spotify (embed da faixa, página da faixa, álbum e artista), sem chave nem app de desenvolvedor, e traz nome e foto. `?op=gravou-teste` no painel só lê e responde (não grava). A página pública e a parte do painel ainda não existem.
+
 **Cartão que não carrega (14/10/2026).** Se o módulo do cartão do Mercado Pago não abrir, o checkout oferece "GERAR O PIX": o mesmo pedido vai pro `create-payment` como PIX (o PIX não depende do módulo no navegador) e abre o QR de sempre, com pedido, e-mails e entrega. Antes pedia PIX manual pro contato@, que não é chave PIX.
 
 **PIX no celular.** O PIX gerado fica guardado no navegador por 2 horas. Voltou do app do banco: o site confere na hora. Se a página recarregou ou a pessoa fechou no X, aparece a faixa "Seu PIX de R$ X tá aguardando" (VER O PIX / DESCARTAR); se já pagou, abre o PEDIDO CONFIRMADO. O checkout lembra e-mail e nomes neste navegador (o CPF nunca fica guardado).
