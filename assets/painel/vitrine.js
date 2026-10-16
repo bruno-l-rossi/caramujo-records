@@ -394,6 +394,7 @@
   function abaFila(corpo) {
     if (!rel) {
       corpo.innerHTML = '<div class="vt-vazio">' + (relErro ? 'Não consegui conferir a fila. Recarrega a página.' : 'conferindo as tapes…') + '</div>';
+      $('resumo').textContent = relErro ? 'a fila não carregou' : 'conferindo as tapes…';
       return;
     }
     var grupos = rel.tapesFila || [];

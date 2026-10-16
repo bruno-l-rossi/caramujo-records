@@ -135,6 +135,13 @@ uma tape, do "Ver tudo"/"Portfólio completo" da pasta de artista, da página de
 story do catálogo. O resto (vitrine, @ da pasta, story do perfil, link, bio, Instagram,
 Google, redes, direto) abre em Músicas.
 
+## Quem já gravou (desde 16/10/2026)
+Página `/rideblan33/artistas` e a linha no fim da aba Músicas (mockup aprovado: canvas linha M). Fundo preto do bloco do perfil (`--preto`, `--folha` nos cartões, `--div` nas linhas), texto em Schibsted Grotesk; nada de cor fora da paleta.
+- Topo: logo `caramujo-h` (132px no celular, 168px no computador) e o botão-pílula "@rideblan33" que volta pro perfil. Kicker "PORTFÓLIO DO @RIDEBLAN33", h1 "Quem já gravou" 40/56px 800, frase com os números da lista (nunca inventar), busca em pílula.
+- Cartão do artista aberto: foto redonda (96px celular, 180px computador; sem foto = iniciais em `#1c1c1c`), "N músicas com o @rideblan33", botão branco "Spotify". Faixas com capa 48px, nome, quem canta e a seta ↗; 6 no celular e 8 no computador (2 colunas) + pílula "Ver as N músicas".
+- Grade: fotos redondas, 3 colunas no celular, 4 a partir de 600px, 6 no computador; o artista aberto ganha aro branco. Ordem = mais faixas primeiro.
+- Linha da aba Músicas: título "Quem já gravou", "N artistas ›", até 7 fotos sobrepostas (quem tem foto primeiro) + "+N", e a frase "A, B, C e mais N artistas cantaram em músicas produzidas pelo @rideblan33." Entrou no lugar do "Ouvir o portfólio completo" (saiu em 16/10/2026).
+
 ## Pastilhas do perfil (desde 27/09/2026)
 
 Na grade do /rideblan33, canto de cima à esquerda da capa, o mesmo desenho do DISPONÍVEL

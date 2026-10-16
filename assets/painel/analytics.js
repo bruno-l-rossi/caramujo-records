@@ -131,7 +131,7 @@
     'pagina-beat': 'Página de beat', 'pagina-genero': 'Página de gênero', artista: '@ da pasta de artista',
     'artista-mais': 'Ver tudo da pasta de artista', painel: 'Painel (você)',
     // 11/10/2026: caixa "Quer um som assim?" da aba Músicas, topo da página do pedido
-    'perfil-musicas': 'Quer um som assim? (aba Músicas)', pedido: 'Página do pedido', vendido: 'Parecidos de um vendido (vitrine)', lista: 'E-mail da lista'
+    'perfil-musicas': 'Quer um som assim? (aba Músicas)', 'perfil-gravou': 'Linha Quem já gravou (aba Músicas)', artistas: 'Página Quem já gravou', pedido: 'Página do pedido', vendido: 'Parecidos de um vendido (vitrine)', lista: 'E-mail da lista'
   };
   var nomeOrigem = function (o) { return o.nome ? 'Tape: ' + o.nome : (ORIGEM[o.origem] || o.origem); };
 
@@ -520,7 +520,10 @@
     'aba-musicas': 'Abriu a aba Músicas', 'aba-tapes': 'Abriu a aba Beat tapes', trecho: 'Ouviu o trecho de uma música',
     // 06/10/2026: a música toca inteira no perfil
     'musica-play': 'Ouviu uma música no perfil',
-    'musica-spotify': 'Abriu uma música no Spotify', 'musica-youtube': 'Abriu uma música no YouTube', 'portfolio-spotify': 'Portfólio completo no Spotify', 'servico-mix': 'Quer um som assim: Mix & Master', 'servico-beat': 'Quer um som assim: Beat personalizado' };
+    'musica-spotify': 'Abriu uma música no Spotify', 'musica-youtube': 'Abriu uma música no YouTube', 'portfolio-spotify': 'Portfólio completo no Spotify', 'servico-mix': 'Quer um som assim: Mix & Master', 'servico-beat': 'Quer um som assim: Beat personalizado',
+    // 16/10/2026 (rodada K): Quem já gravou (a linha da aba Músicas e a página /rideblan33/artistas)
+    'aba-gravou': 'Abriu Quem já gravou (aba Músicas)', 'gravou-abre': 'Quem já gravou: abriu um artista', 'gravou-faixa': 'Quem já gravou: abriu uma faixa no Spotify',
+    'gravou-spotify': 'Quem já gravou: Spotify do artista', 'gravou-todas': 'Quem já gravou: Ver todas as músicas', 'gravou-perfil-spotify': 'Quem já gravou: Spotify do @rideblan33' };
   function perfil(j, corpo) {
     var a = j.agora, an = j.antes;
     corpo.appendChild(tiles([

@@ -5,6 +5,8 @@
 // Aba Músicas (05/10/2026): o bloco preto abre em Músicas ou em Beat tapes conforme de
 // onde a pessoa veio (o mapa do Bruno fica em _lib/musicas.js, ABRE_TAPES). Enquanto o
 // "No ar" estiver desligado no painel, a aba só aparece pra quem está logado no painel.
+// Quem já gravou (16/10/2026): a linha no fim da aba Músicas segue a mesma regra, com a
+// chave própria (Perfil > Quem já gravou).
 
 import { lerPerfil, paginaPerfil } from '../_lib/perfil.js';
 import { origem, abaInicial } from '../_lib/musicas.js';
@@ -17,15 +19,19 @@ const BARRA_FIXA = false;   // 26/09/2026: o Bruno escolheu SEM a barra
 export async function onRequestGet({ request, env }) {
   const dados = await lerPerfil(request, env);
   const m = dados.musicas;
+  const temMus = !!(m && m.lista && m.lista.length);
   // só confere o login quando existe prévia pra mostrar (lista com música e fora do ar)
-  const previa = !!(m && m.lista && m.lista.length && !m.noAr) && await autenticado(request, env);
-  const html = paginaPerfil(dados, { url: request.url, barraFixa: BARRA_FIXA, aba: abaInicial(origem(request)), previa });
+  const querPrevia = (temMus && !m.noAr) || (temMus && dados.gravou && !dados.gravou.noAr);
+  const logado = querPrevia ? await autenticado(request, env) : false;
+  const previa = !!(temMus && !m.noAr && logado);
+  const previaGravou = !!(logado && dados.gravou && !dados.gravou.noAr);
+  const html = paginaPerfil(dados, { url: request.url, barraFixa: BARRA_FIXA, aba: abaInicial(origem(request)), previa, previaGravou });
   return new Response(html, {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       // o navegador sempre pergunta de novo (tape nova aparece na hora);
       // quem segura o banco é a cópia da região. A prévia é só de quem está logado.
-      'cache-control': previa ? 'private, no-store' : 'no-cache'
+      'cache-control': previa || previaGravou ? 'private, no-store' : 'no-cache'
     }
   });
 }

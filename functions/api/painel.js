@@ -17,7 +17,7 @@ import { somUrl } from '../_lib/midia.js';
 import { entregaLigada, ligarEntrega, pedidoDeTeste, pedidoDeTesteServico, ultimosPedidos, salvarEntrega } from '../_lib/pedidos.js';
 import { avisarEntrega } from '../_lib/servicoemails.js';
 import { painelLista } from '../_lib/lista.js';
-import { varrer as varrerGravou } from '../_lib/gravou.js';
+import { varrer as varrerGravou, painelGravou } from '../_lib/gravou.js';
 import { CHAVE as MUS_CHAVE, deTexto as musDeTexto } from '../_lib/musicas.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
@@ -64,6 +64,8 @@ export async function onRequest({ request, env }) {
     const mus = musDeTexto(row && row.valor);
     return json({ ok: true, ...(await varrerGravou(mus.lista || [])) });
   }
+  // Quem já gravou (16/10/2026, rodada K): a lista do painel (só lê)
+  if (op === 'gravou' && request.method !== 'POST') return json((await painelGravou('gravou', d)).corpo);
   if (request.method !== 'POST') return json({ erro: 'op desconhecida' }, 400);
 
   const body = await request.json().catch(() => ({}));
@@ -106,6 +108,14 @@ export async function onRequest({ request, env }) {
   if (op === 'venda') return venda(d, body);
   if (/^musicas?-/.test(op)) {
     const r = await musicasAcao(op, d, env, body, somUrl);
+    if (r) {
+      if (r.mudou) await esquecerPerfil(request);
+      return json(r.corpo, r.status || 200);
+    }
+  }
+  // Quem já gravou: No ar, esconder artista/faixa, buscar fotos e capas no Spotify (em lotes)
+  if (/^gravou-/.test(op)) {
+    const r = await painelGravou(op, d, body);
     if (r) {
       if (r.mudou) await esquecerPerfil(request);
       return json(r.corpo, r.status || 200);

@@ -14,6 +14,8 @@ import { RODAPE_GENEROS, CSS_RODAPE_GENEROS } from './generos.js';
 import { PADRAO as NUM_PADRAO, deTexto as numDeTexto, limpar as numLimpar, curto, longo } from './numeros.js';
 import { CHAVE as MUS_CHAVE, deTexto as musDeTexto, separar } from './musicas.js';
 import { LEVA_DE, deAttr } from './origem.js';
+import { CHAVE_GRAVOU, gravouDeTexto, gravouLimpar, montarGravou } from './gravou.js';
+import { fotoArtista } from './gravoupagina.js';
 
 const VALIDADE = 60 * 1000;
 const REGIAO = '/__cache/perfil-v3';
@@ -50,19 +52,20 @@ export function escolherEmAlta(ranking, nova) {
 async function lerMetaBruta(d) {
   try {
     const { results } = await d.prepare(
-      `SELECT chave, valor FROM meta WHERE chave IN ('${EM_ALTA_CHAVE}', 'numeros', '${MUS_CHAVE}')`
+      `SELECT chave, valor FROM meta WHERE chave IN ('${EM_ALTA_CHAVE}', 'numeros', '${MUS_CHAVE}', '${CHAVE_GRAVOU}')`
     ).all();
     return results || [];
   } catch (_) { return null; }
 }
 
 async function lerMetaPerfil(d, nova, linhas) {
-  let ranking = null, numeros = { ...NUM_PADRAO }, musicas = { noAr: false, lista: [] };
+  let ranking = null, numeros = { ...NUM_PADRAO }, musicas = { noAr: false, lista: [] }, gravou = gravouLimpar({});
   try {
     const results = linhas === undefined ? await lerMetaBruta(d) : linhas;
     for (const r of results || []) {
       if (r.chave === 'numeros') numeros = numDeTexto(r.valor);
       else if (r.chave === MUS_CHAVE) musicas = musDeTexto(r.valor);
+      else if (r.chave === CHAVE_GRAVOU) gravou = gravouDeTexto(r.valor);
       else { try { ranking = JSON.parse(r.valor); } catch (_) { ranking = null; } }
     }
   } catch (_) { /* segue com o padrão */ }
@@ -80,7 +83,7 @@ async function lerMetaPerfil(d, nova, linhas) {
         .bind(JSON.stringify(ranking)).run();
     } catch (_) { if (!ranking || !Array.isArray(ranking.top)) ranking = { top: [] }; }
   }
-  return { emAlta: escolherEmAlta(ranking.top, nova), numeros, musicas };
+  return { emAlta: escolherEmAlta(ranking.top, nova), numeros, musicas, gravou };
 }
 
 // O perfil inteiro: { tapes: [{ id, name, slug, code, capa, n }], faixas: [...], nova, emAlta }.
@@ -133,7 +136,7 @@ export async function lerPerfil(request, env) {
   const nova = tapes.length ? tapes[0].id : null;
   const meta = await lerMetaPerfil(d, nova, await pMeta);
   const emAlta = meta.emAlta;
-  const dados = { tapes, faixas, nova, emAlta: tapes.some((t) => t.id === emAlta) ? emAlta : null, numeros: meta.numeros, musicas: meta.musicas };
+  const dados = { tapes, faixas, nova, emAlta: tapes.some((t) => t.id === emAlta) ? emAlta : null, numeros: meta.numeros, musicas: meta.musicas, gravou: meta.gravou };
   cache = { at: Date.now(), dados };
   if (c && chave) {
     try {
@@ -212,7 +215,6 @@ function capaMus(m) {
 }
 const linkMus = (m) => m.spotify || m.youtube;
 const temAudio = (m) => !!m.faixa;
-const ICONE_SETA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>';
 
 function redesMus(m) {
   return `<span class="mx-redes">${m.spotify ? `<a href="${esc(m.spotify)}" target="_blank" rel="noopener" aria-label="Ouvir ${esc(m.nome)} no Spotify" title="Spotify" data-rede="musica-spotify">${ICONES.spotify}</a>` : ''}${m.youtube ? `<a href="${esc(m.youtube)}" target="_blank" rel="noopener" aria-label="Ver ${esc(m.nome)} no YouTube" title="YouTube" data-rede="musica-youtube">${ICONES.youtube}</a>` : ''}</span>`;
@@ -234,7 +236,20 @@ function linhaRecente(m, k, vaga) {
   return `<li class="mx-row" data-m="${k}"><img class="mx-mini${c.sem ? ' sem' : ''}" src="${esc(c.src)}" alt="" width="52" height="52" loading="lazy" decoding="async"><div class="mx-info"><b class="mx-n">${esc(m.nome)}</b>${m.artistas ? `<span class="mx-a">${esc(m.artistas)}</span>` : ''}</div>${quando ? `<time class="mx-data" datetime="${esc(m.data)}">${quando}</time>` : ''}${redesMus(m)}${temAudio(m) ? playMus(m, k) : vaga ? '<span class="mx-vaga" aria-hidden="true"></span>' : ''}</li>`;
 }
 
-export function abaMusicas(mus, { previa = false } = {}) {
+// Linha "Quem já gravou" no fim da aba Músicas (16/10/2026, rodada K; entrou no lugar do
+// "Ouvir o portfólio completo", que o Bruno tirou: a página de artistas faz o mesmo papel).
+// Só aparece com a página no ar (ou na prévia de quem está logado).
+export function linhaGravou(gv) {
+  if (!gv || !gv.artistas || !gv.artistas.length) return '';
+  // na fileira, quem tem foto vem antes (iniciais só completam); a frase segue a ordem da página
+  const n = gv.artistas.length, mostra = gv.artistas.filter((a) => a.foto).concat(gv.artistas.filter((a) => !a.foto)).slice(0, 7), resto = n - mostra.length;
+  const nomes = gv.artistas.slice(0, 3).map((a) => esc(a.nome));
+  const frase = n > 3 ? `${nomes.join(', ')} e mais ${n - 3} artistas cantaram em músicas produzidas pelo @rideblan33.` : `${nomes.join(', ')} cantaram em músicas produzidas pelo @rideblan33.`;
+  return `<a class="qg-ent" href="/rideblan33/artistas"${deAttr('perfil-gravou')} data-rede="aba-gravou"><span class="qg-ent-cab"><b>Quem já gravou</b><span class="qg-ver">${n} artistas ›</span></span>` +
+    `<span class="qg-fila" aria-hidden="true">${mostra.map((a) => fotoArtista(a)).join('')}${resto > 0 ? `<span class="qg-mais">+${resto}</span>` : ''}</span><span class="qg-frase">${frase}</span></a>`;
+}
+
+export function abaMusicas(mus, { previa = false, gravou = null } = {}) {
   const { destaques, recentes } = separar(mus);
   const n = destaques.length + recentes.length;
   let h = '';
@@ -245,8 +260,8 @@ export function abaMusicas(mus, { previa = false } = {}) {
       `<div class="mx-trilho" id="mxTrilho">${destaques.map((m, k) => cardDestaque(m, k)).join('')}</div></section>`;
   }
   const vaga = recentes.some(temAudio);
-  // só o título (06/10/2026: o subtítulo saiu)
-  const todas = `<a class="mx-todas" href="${REDES.spotify}" target="_blank" rel="noopener" data-rede="portfolio-spotify" aria-label="Ouvir o portfólio completo no Spotify">${ICONES.spotify}<span>Ouvir o portfólio completo</span>${ICONE_SETA}</a>`;
+  // 16/10/2026: o "Ouvir o portfólio completo" saiu (pedido do Bruno); no lugar, a linha Quem já gravou
+  const todas = linhaGravou(gravou);
   // 4b (11/10/2026, opção A do Bruno, sem o texto): quem ouviu as músicas e quer um som assim vai
   // direto pros serviços da vitrine
   // 12/10/2026: opção D (cartão com a foto do estúdio), kicker "Caramujo Records"
@@ -303,7 +318,8 @@ export const FAVICON = ICONES_ABA;
 // desce pras capas (o Bruno decide se fica; 26/09/2026).
 // aba: em que aba o bloco preto abre ('musicas' ou 'tapes'; vem da origem, _lib/musicas.js).
 // previa: a aba Músicas fora do ar aparece mesmo assim (quem está logado no painel).
-export function paginaPerfil(dados, { url, barraFixa = true, aba = 'musicas', previa = false } = {}) {
+// previaGravou: a linha "Quem já gravou" aparece mesmo fora do ar (quem está logado no painel).
+export function paginaPerfil(dados, { url, barraFixa = true, aba = 'musicas', previa = false, previaGravou = false } = {}) {
   const tapes = Array.isArray(dados) ? dados : dados.tapes;
   const faixas = Array.isArray(dados) ? [] : (dados.faixas || []);
   const idNova = !Array.isArray(dados) && dados.nova != null ? dados.nova : (tapes.length ? tapes[0].id : null);
@@ -318,7 +334,9 @@ export function paginaPerfil(dados, { url, barraFixa = true, aba = 'musicas', pr
   // aba Músicas (05/10/2026): só com música na lista e com o "No ar" ligado (ou na prévia)
   const mus = !Array.isArray(dados) && dados.musicas && Array.isArray(dados.musicas.lista) && dados.musicas.lista.length ? dados.musicas : null;
   const comMusicas = !!(mus && (mus.noAr || previa));
-  const abaMus = comMusicas ? abaMusicas(mus, { previa }) : null;
+  const gvMeta = !Array.isArray(dados) && dados.gravou ? dados.gravou : null;
+  const gravou = gvMeta && (gvMeta.noAr || previaGravou) ? montarGravou(gvMeta) : null;
+  const abaMus = comMusicas ? abaMusicas(mus, { previa, gravou }) : null;
   const tocaveis = comMusicas ? musicasDoPerfil(mus) : [];
   const abaIni = comMusicas && aba === 'tapes' ? 'tapes' : 'musicas';
   const tocaAlgo = !!(tocador || tocaveis.length);
@@ -555,11 +573,17 @@ a.mx-c .mx-img{transition:transform .35s ease}
 .mx-som a.cheio{background:var(--branco);border-color:var(--branco);color:#000}
 @media (hover:hover){.mx-som a:hover{border-color:var(--branco)}.mx-som a.cheio:hover{background:#d9d9d9;border-color:#d9d9d9}}
 @media (min-width:900px){.mx-som{padding-top:150px}}
-.mx-todas{display:flex;align-items:center;gap:14px;margin-top:14px;padding:16px 18px;border:1px solid #2a2a2a;color:var(--branco);transition:border-color .2s,background .2s}
-.mx-todas>svg{width:22px;height:22px;flex:none}
-.mx-todas>svg:last-child{width:18px;height:18px;color:var(--meta);transition:color .2s}
-.mx-todas span{flex:1;min-width:0;font:700 13px/1.3 var(--grot);letter-spacing:.16em;text-transform:uppercase}
-@media (hover:hover){.mx-todas:hover{border-color:var(--branco);background:#0b0b0b}.mx-todas:hover>svg:last-child{color:var(--branco)}}
+.qg-ent{display:block;margin-top:22px;padding:18px 0 4px;border-top:1px solid var(--div);color:var(--branco)}
+.qg-ent-cab{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+.qg-ent-cab b{font:700 20px/1.2 var(--grot)}
+.qg-ver{font:600 13.5px var(--grot);color:var(--apoio);white-space:nowrap}
+.qg-fila{display:flex;align-items:center}
+.qg-fila img,.qg-fila .qg-ini,.qg-fila .qg-mais{width:52px;height:52px;border-radius:50%;object-fit:cover;border:3px solid var(--preto);margin-left:-12px;flex:none}
+.qg-fila>:first-child{margin-left:0}
+.qg-fila .qg-ini{display:flex;align-items:center;justify-content:center;background:#1c1c1c;color:var(--apoio);font:800 17px var(--grot)}
+.qg-mais{display:flex;align-items:center;justify-content:center;background:var(--folha);color:var(--branco);font:700 14px var(--grot)}
+.qg-frase{display:block;margin-top:12px;font:400 14px/1.5 var(--grot);color:var(--apoio)}
+@media (hover:hover){.qg-ent:hover .qg-ver{color:var(--branco)}}
 /* rodapé igual ao da vitrine (26/09/2026): selo, © e @rideblan33, mesmas letras e disposição */
 footer{padding:1.4rem 2.4rem calc(1.4rem + env(safe-area-inset-bottom,0px));background:var(--black);border-top:1px solid var(--wire);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
 footer img{height:30px;width:auto;display:block}
@@ -605,8 +629,6 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
   .mx-data{display:none}
   .mx-row{gap:11px;padding:11px 10px}
   .mx-redes a{width:32px;height:32px}
-  .mx-todas{padding:14px}
-  .mx-todas span{font-size:12px;letter-spacing:.12em}
   .grade{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 8px}
   .leg{gap:4px;padding-top:8px}
   .leg b{font-size:12.5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}

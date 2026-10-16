@@ -75,11 +75,20 @@ ${ICONES}
   .sub{font-size:14px;color:var(--ink4)}
   .barra{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
   .barra .pill{flex:0 0 auto}
-  .barra[hidden],#resumo[hidden],#lista[hidden],#analytics[hidden],#vitrine[hidden],#musicas[hidden],#comentarios[hidden]{display:none}
+  .barra[hidden],#resumo[hidden],#lista[hidden],#analytics[hidden],#vitrine[hidden],#musicas[hidden],#gravou[hidden],#comentarios[hidden]{display:none}
   @media (max-width:560px){
-    .barra .pill{margin-left:auto}
+    /* 16/10/2026 (rodada K): busca na linha toda e os dois botões dividindo a de baixo
+       (antes o 1º ficava solto no meio, com um buraco à esquerda) */
+    .barra .campo{flex:1 1 100%}
+    .barra .pill{flex:1 1 0;justify-content:center;min-width:0}
     h1{font-size:30px}
     .wrap{padding:0 16px 120px}
+  }
+  /* celular (16/10/2026, rodada K): campo com letra menor que 16px faz o iPhone dar zoom
+     ao tocar, e a tela fica cortada até a pessoa tirar o zoom na mão. Vale pros campos das
+     telas que vêm de arquivo à parte também (por isso o seletor mais forte). */
+  @media (max-width:899px){
+    html body :is(input,select,textarea):not([type="checkbox"]):not([type="radio"]){font-size:16px}
   }
   .campo{flex:1;display:flex;align-items:center;gap:10px;background:var(--campo);
     border:1px solid var(--borda);border-radius:12px;padding:11px 14px}
@@ -115,7 +124,7 @@ ${ICONES}
   .veil[hidden]{display:none}
   .card{width:100%;max-width:560px;background:#141414;border:1px solid var(--borda);
     border-radius:20px 20px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom,0px));
-    max-height:86vh;overflow-y:auto}
+    max-height:86vh;max-height:86dvh;overflow-y:auto;overscroll-behavior:contain}
   .card h2{margin:0 0 3px;font-size:20px;overflow-wrap:anywhere}
   .cab{display:flex;align-items:center;gap:13px}
   .cab-txt{flex:1;min-width:0}
@@ -378,11 +387,13 @@ function pagina() {
   <div id="analytics" hidden></div>
   <div id="vitrine" hidden></div>
   <div id="musicas" hidden></div>
+  <div id="gravou" hidden></div>
   <div id="comentarios" hidden></div>
 </div>
-<script src="/assets/painel/analytics.js?v=2026-10-12a" defer></script>
-<script src="/assets/painel/vitrine.js?v=2026-10-14a" defer></script>
+<script src="/assets/painel/analytics.js?v=2026-10-16a" defer></script>
+<script src="/assets/painel/vitrine.js?v=2026-10-16a" defer></script>
 <script src="/assets/painel/musicas.js?v=2026-10-06a" defer></script>
+<script src="/assets/painel/gravou.js?v=2026-10-16a" defer></script>
 <script src="/assets/painel/comentarios.js?v=2026-10-10a" defer></script>
 
 <nav class="nav-p" id="navP" aria-label="Seções do painel"></nav>
@@ -481,7 +492,7 @@ function pagina() {
     });
   }
 
-  var TITULOS={hoje:'Hoje',pedidos:'Vendas',cupons:'Vendas',lista:'Vendas',vitrine:'Catálogo',fila:'Catálogo',tapes:'Catálogo',artistas:'Catálogo',perfil:'Perfil',musicas:'Músicas do perfil',analytics:'Números',ajustes:'Ajustes',comentarios:'Comentários'};
+  var TITULOS={hoje:'Hoje',pedidos:'Vendas',cupons:'Vendas',lista:'Vendas',vitrine:'Catálogo',fila:'Catálogo',tapes:'Catálogo',artistas:'Catálogo',perfil:'Perfil',musicas:'Músicas do perfil',gravou:'Quem já gravou',analytics:'Números',ajustes:'Ajustes',comentarios:'Comentários'};
   var VITRINE_ABA={vitrine:'beats',fila:'fila',cupons:'cupons'};
   /* Voltar (16/10/2026): o histórico do navegador segue o caminho Hoje > seção > parte. Numa
      parte (Músicas, Cupons, Fila…), voltar cai na página da seção (Perfil, Vendas, Catálogo…);
@@ -540,7 +551,7 @@ function pagina() {
     site:'<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v6H4V6h6"/>'
   };
   function svg(k,t){ return '<svg width="'+(t||20)+'" height="'+(t||20)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+IC[k]+'</svg>'; }
-  var GRUPO={hoje:'hoje',pedidos:'vendas',cupons:'vendas',lista:'vendas',vitrine:'catalogo',fila:'catalogo',tapes:'catalogo',artistas:'catalogo',perfil:'perfil',musicas:'perfil',analytics:'numeros',ajustes:'ajustes',comentarios:'hoje'};
+  var GRUPO={hoje:'hoje',pedidos:'vendas',cupons:'vendas',lista:'vendas',vitrine:'catalogo',fila:'catalogo',tapes:'catalogo',artistas:'catalogo',perfil:'perfil',musicas:'perfil',gravou:'perfil',analytics:'numeros',ajustes:'ajustes',comentarios:'hoje'};
   var ENTRADA={hoje:'hoje',vendas:'pedidos',catalogo:'vitrine',perfil:'perfil',numeros:'analytics',ajustes:'ajustes'};
   var SUB={vendas:[['pedidos','Pedidos'],['cupons','Cupons'],['lista','Lista']],catalogo:[['vitrine','Vitrine'],['fila','Fila'],['tapes','Beat tapes'],['artistas','Artistas']]};
   var NAV=[['hoje','Hoje'],['vendas','Vendas'],['catalogo','Catálogo'],['perfil','Perfil'],['numeros','Números']];
@@ -560,7 +571,7 @@ function pagina() {
   function contaVendas(){ return pendServicos().length; }
   // 16/10/2026: no computador o menu do lado abre as partes da seção embaixo do pai (Vendas,
   // Catálogo, Perfil). Clicar no pai segue abrindo a seção; dá pra ir direto numa parte.
-  var FILHOS={vendas:SUB.vendas,catalogo:SUB.catalogo,perfil:[['musicas','Músicas'],['@ordem','Ordem das beat tapes'],['@numeros','Números do site']]};
+  var FILHOS={vendas:SUB.vendas,catalogo:SUB.catalogo,perfil:[['musicas','Músicas'],['gravou','Quem já gravou'],['@ordem','Ordem das beat tapes'],['@numeros','Números do site']]};
   function pintarNav(){
     var g=GRUPO[vista]||'hoje', n=$('navP'); if(!n) return;
     var bolha={vendas:contaVendas(), catalogo:(filaN||0)+(revisar.length||0)};
@@ -729,8 +740,9 @@ function pagina() {
   }
   // Perfil: tudo que mexe no /rideblan33
   function paginaPerfil(){
-    var box=document.createElement('div'); box.className='hoje';
+    var box=document.createElement('div'); box.className='hoje'; box.style.paddingTop='14px';
     var lm=linhaAcao('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>','Músicas',textoMusicas()+' · destaques e recentes',function(){ irPara('musicas'); }); lm.id='musPerfil'; box.appendChild(lm);
+    box.appendChild(linhaAcao('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2c3 .3 5.5 2.7 5.5 5.8"/></svg>','Quem já gravou','os artistas das suas músicas no Spotify · página /rideblan33/artistas',function(){ irPara('gravou'); }));
     var noP=noPerfil().length;
     box.appendChild(linhaAcao(svg('catalogo'),'Ordem das beat tapes',noP+(noP===1?' tape no perfil':' tapes no perfil')+' · arrastar pra ordenar',abrirPerfil));
     var ln=linhaAcao('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/></svg>','Números do site',numerosSite?esc(textoNumeros(numerosSite,'curto')):'artistas, faixas e streams',abrirNumeros); ln.id='numSite'; box.appendChild(ln);
@@ -1000,10 +1012,11 @@ function pagina() {
     var vit=!!VITRINE_ABA[vista];
     $('barra').hidden = !(vista==='artistas'||vista==='tapes');
     $('resumo').hidden = vista==='analytics';
-    $('lista').hidden = vista==='analytics'||vit||vista==='musicas'||vista==='comentarios';
+    $('lista').hidden = vista==='analytics'||vit||vista==='musicas'||vista==='gravou'||vista==='comentarios';
     $('analytics').hidden = vista!=='analytics';
     $('vitrine').hidden = !vit;
     $('musicas').hidden = vista!=='musicas';
+    $('gravou').hidden = vista!=='gravou';
     $('comentarios').hidden = vista!=='comentarios';
     pintarNav(); pintarSecoes();
     if(vista==='hoje'){
@@ -1030,6 +1043,14 @@ function pagina() {
         window.CaramujoMusicas.abrir($('musicas'));
       } else if(window.CaramujoMusicas) window.CaramujoMusicas.pintar();
       if(!window.CaramujoMusicas) $('musicas').innerHTML='<div class="vazio">carregando…</div>';
+      return;
+    }
+    if(vista==='gravou'){
+      if(!$('gravou').dataset.montado && window.CaramujoGravou){
+        $('gravou').dataset.montado='1';
+        window.CaramujoGravou.abrir($('gravou'));
+      } else if(window.CaramujoGravou) window.CaramujoGravou.carregar();
+      if(!window.CaramujoGravou) $('gravou').innerHTML='<div class="vazio">carregando…</div>';
       return;
     }
     if(vit){
@@ -1696,7 +1717,7 @@ function pagina() {
     var h=location.hash.replace('#','');
     if(!h||!TITULOS[h]){ iniciarHistorico('hoje'); desenhar(); return; }
     iniciarHistorico(h);
-    var precisa={comentarios:'CaramujoComentarios',musicas:'CaramujoMusicas',analytics:'CaramujoAnalytics',vitrine:'CaramujoVitrine',fila:'CaramujoVitrine',cupons:'CaramujoVitrine'}[h];
+    var precisa={comentarios:'CaramujoComentarios',musicas:'CaramujoMusicas',gravou:'CaramujoGravou',analytics:'CaramujoAnalytics',vitrine:'CaramujoVitrine',fila:'CaramujoVitrine',cupons:'CaramujoVitrine'}[h];
     var tenta=0;
     (function vai(){ if(!precisa||window[precisa]||tenta++>40){ irPara(h,true); return; } setTimeout(vai,50); })();
   })();
