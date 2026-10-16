@@ -265,7 +265,7 @@ ${ICONES}
   .nav-p button,.nav-p a{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px;border:0;background:transparent;color:var(--ink4);font-size:10.5px;font-weight:600;text-decoration:none;cursor:pointer}
   .nav-p [aria-current="page"]{color:#fff}
   .nav-p em{position:absolute;top:0;left:calc(50% + 5px);min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#fff;color:#000;font-style:normal;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
-  .nav-p .np-marca,.nav-p .np-sep,.nav-p .np-lado{display:none}
+  .nav-p .np-marca,.nav-p .np-sep,.nav-p .np-lado,.nav-p .np-sub,.nav-p .np-seta{display:none}
   .topo .eng{width:40px;height:40px;border-radius:12px;border:1px solid var(--borda);background:#141414;color:#d9d9d9;display:flex;align-items:center;justify-content:center;cursor:pointer}
   .topo .eng[aria-current="page"]{background:#fff;color:#000;border-color:#fff}
   @media (min-width:900px){
@@ -276,19 +276,30 @@ ${ICONES}
     .nav-p button:hover,.nav-p a:hover{background:#151515;color:#fff}
     .nav-p em{position:static;margin-left:auto}
     .nav-p .np-sep{display:block;height:1px;background:var(--linha);margin:14px 6px}
+    .nav-p .np-pai[aria-expanded="true"] .np-seta{transform:rotate(90deg)}
+    .nav-p .np-seta{display:inline;margin-left:auto;color:var(--ink4);font-size:13px;transition:transform .15s}
+    .nav-p em+.np-seta{margin-left:8px}
+    .nav-p .np-sub{display:flex;flex-direction:column;gap:1px;margin:0 0 6px 32px;padding-left:10px;border-left:1px solid var(--linha)}
+    .nav-p .np-sub button{padding:7px 10px;border-radius:8px;font-size:13.5px;font-weight:500;color:var(--ink3)}
+    .nav-p .np-sub button[aria-current="true"]{background:none;color:#fff;font-weight:600}
+    .nav-p .np-sub em{position:static;margin-left:auto}
     .nav-p .np-lado{display:flex}
     .wrap{margin-left:236px;max-width:900px;padding:0 44px 80px}
     .topo .marca,.topo .eng{display:none}
     .topo{min-height:10px}
   }
-  .secoes{display:flex;gap:6px;margin:16px 0 4px;overflow-x:auto;scrollbar-width:none}
+  /* 16/10/2026: as partes da seção viraram abas (linha embaixo), e os filtros um seletor menor,
+     pra não confundir uma coisa com a outra */
+  .secoes{display:flex;gap:24px;margin:14px 0 4px;border-bottom:1px solid var(--linha);overflow-x:auto;scrollbar-width:none}
   .secoes::-webkit-scrollbar{display:none}
   .secoes[hidden]{display:none}
-  .secoes button,.filtros button{flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--borda);background:transparent;color:var(--ink2);font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap}
-  .secoes button[aria-pressed="true"]{background:#fff;color:#000;border-color:#fff;font-weight:600}
-  .secoes i{font-style:normal;margin-left:6px;opacity:.6}
-  .filtros{display:flex;gap:6px;margin:14px 0 6px;flex-wrap:wrap}
-  .filtros button[aria-pressed="true"]{background:#1d1d1d;color:#fff;border-color:#3a3a3a;font-weight:600}
+  .secoes button{flex:none;display:flex;align-items:center;gap:7px;padding:11px 1px 12px;margin-bottom:-1px;border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;color:var(--ink3);font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .secoes button:hover{color:#fff}
+  .secoes button[aria-pressed="true"]{color:#fff;border-bottom-color:#fff}
+  .secoes i{font-style:normal;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#fff;color:#000;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+  .filtros{display:inline-flex;gap:2px;margin:16px 0 8px;padding:3px;border-radius:10px;background:#141414;border:1px solid var(--borda)}
+  .filtros button{flex:none;padding:6px 12px;border:0;border-radius:8px;background:transparent;color:var(--ink3);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
+  .filtros button[aria-pressed="true"]{background:#2a2a2a;color:#fff;font-weight:600}
   .hoje .rot{margin:24px 0 8px}
   .ac{display:flex;align-items:center;gap:12px;width:100%;padding:14px;margin-bottom:8px;border:1px solid var(--borda);border-radius:16px;background:#121212;color:var(--ink);text-align:left;cursor:pointer}
   .ac:hover{background:#161616;border-color:#343434}
@@ -472,12 +483,42 @@ function pagina() {
 
   var TITULOS={hoje:'Hoje',pedidos:'Vendas',cupons:'Vendas',lista:'Vendas',vitrine:'Catálogo',fila:'Catálogo',tapes:'Catálogo',artistas:'Catálogo',perfil:'Perfil',musicas:'Músicas do perfil',analytics:'Números',ajustes:'Ajustes',comentarios:'Comentários'};
   var VITRINE_ABA={vitrine:'beats',fila:'fila',cupons:'cupons'};
-  function irPara(v){
+  /* Voltar (16/10/2026): o histórico do navegador segue o caminho Hoje > seção > parte. Numa
+     parte (Músicas, Cupons, Fila…), voltar cai na página da seção (Perfil, Vendas, Catálogo…);
+     na página da seção, cai no Hoje. Trocar de parte ou de seção troca a entrada, não empilha. */
+  var pilha=[], pendente=null;
+  function caminhoDe(v){
+    if(v==='hoje') return ['hoje'];
+    var g=GRUPO[v]||'hoje', e=ENTRADA[g];
+    return (g==='hoje'||v===e)?['hoje',v]:['hoje',e,v];
+  }
+  function endereco(v){ return location.pathname+(v==='hoje'?'':'#'+v); }
+  function poe(v){ history.pushState({painel:v},'',endereco(v)); pilha.push(v); }
+  function historico(v){
+    var c=caminhoDe(v), k=0;
+    while(k<pilha.length&&k<c.length&&pilha[k]===c[k]) k++;
+    var tira=pilha.length-k, falta=c.slice(k);
+    if(!tira){ falta.forEach(poe); return; }
+    if(tira===1&&falta.length===1){ history.replaceState({painel:falta[0]},'',endereco(falta[0])); pilha[pilha.length-1]=falta[0]; return; }
+    pilha.length=k; pendente=falta;            // volta o que sobra e, quando o navegador voltar, empilha o resto
+    history.go(-tira);
+  }
+  function iniciarHistorico(v){
+    try{ history.replaceState({painel:'hoje'},'',endereco('hoje')); pilha=['hoje']; if(v&&v!=='hoje') caminhoDe(v).slice(1).forEach(poe); }catch(_){ }
+  }
+  window.addEventListener('popstate',function(e){
+    if(pendente){ var f=pendente; pendente=null; try{ f.forEach(poe); }catch(_){ } return; }
+    var v=(e.state&&e.state.painel)||((location.hash||'').replace('#',''))||'hoje';
+    pilha=caminhoDe(TITULOS[v]?v:'hoje');
+    if(!$('veil').hidden){ $('veil').hidden=true; $('card').innerHTML=''; }   // folha aberta fecha junto
+    irPara(v,true);
+  });
+  function irPara(v,semHistorico){
     if(v==='home') v='hoje';
     if(!TITULOS[v]) v='hoje';
     if(v==='hoje'){ lojaPedida=false; consumoPedido=false; numerosPedido=false; musicasPedido=false; comentPedido=false; entregaPedida=false; listaPedida=false; filaPedida=false; }   // volta com os números novos
     // o endereço guarda a seção (recarregar volta pra ela); Hoje = /painel
-    try{ history.replaceState(null,'',location.pathname+(v==='hoje'?'':'#'+v)); }catch(_){ }
+    if(!semHistorico && v!==vista){ try{ historico(v); }catch(_){ } }
     vista=v; filtro=''; $('q').value='';
     if(ordemDe[v]){ ordem=ordemDe[v]; $('ordemLabel').textContent=ORDENS[ordem]; }
     $('q').placeholder = v==='tapes' ? 'Buscar beat tape' : 'Buscar artista';
@@ -517,15 +558,28 @@ function pagina() {
   function refazer(vs){ if((vs||['hoje','pedidos','lista','perfil','ajustes']).indexOf(vista)>-1 && $('veil').hidden) desenhar(); }
   function pendServicos(){ return servicosAbertos().filter(function(x){ return x.s.envio && x.p.status!=='teste'; }); }
   function contaVendas(){ return pendServicos().length; }
+  // 16/10/2026: no computador o menu do lado abre as partes da seção embaixo do pai (Vendas,
+  // Catálogo, Perfil). Clicar no pai segue abrindo a seção; dá pra ir direto numa parte.
+  var FILHOS={vendas:SUB.vendas,catalogo:SUB.catalogo,perfil:[['musicas','Músicas'],['@ordem','Ordem das beat tapes'],['@numeros','Números do site']]};
   function pintarNav(){
     var g=GRUPO[vista]||'hoje', n=$('navP'); if(!n) return;
     var bolha={vendas:contaVendas(), catalogo:(filaN||0)+(revisar.length||0)};
     n.innerHTML='<a class="np-marca" href="/" aria-label="Voltar pro site"></a>'+NAV.map(function(it){
-      var b=bolha[it[0]];
-      return '<button type="button" data-sec="'+it[0]+'"'+(g===it[0]?' aria-current="page"':'')+'>'+svg(it[0])+'<span>'+it[1]+'</span>'+(b?'<em>'+b+'</em>':'')+'</button>';
+      var b=bolha[it[0]], f=FILHOS[it[0]], aberto=g===it[0];
+      var sub=f&&aberto?'<div class="np-sub">'+f.map(function(x){
+        var nn=x[0]==='fila'?filaN:x[0]==='pedidos'?contaVendas():null;
+        return '<button type="button" data-filho="'+x[0]+'"'+(vista===x[0]?' aria-current="true"':'')+'>'+x[1]+(nn?'<em>'+nn+'</em>':'')+'</button>';
+      }).join('')+'</div>':'';
+      return '<button type="button" data-sec="'+it[0]+'"'+(f?' class="np-pai" aria-expanded="'+aberto+'"':'')+(aberto?' aria-current="page"':'')+'>'+svg(it[0])+'<span>'+it[1]+'</span>'+(b?'<em>'+b+'</em>':'')+(f?'<span class="np-seta" aria-hidden="true">›</span>':'')+'</button>'+sub;
     }).join('')+'<i class="np-sep"></i><button type="button" class="np-lado" data-sec="ajustes"'+(g==='ajustes'?' aria-current="page"':'')+'>'+svg('ajustes')+'<span>Ajustes</span></button>'+
       '<a class="np-lado" href="/" target="_blank" rel="noopener">'+svg('site')+'<span>Ver o site</span></a>';
     n.querySelectorAll('[data-sec]').forEach(function(b){ b.addEventListener('click',function(){ irPara(ENTRADA[b.dataset.sec]); }); });
+    n.querySelectorAll('[data-filho]').forEach(function(b){ b.addEventListener('click',function(){
+      var v=b.dataset.filho;
+      if(v==='@ordem'){ irPara('perfil'); abrirPerfil(); return; }
+      if(v==='@numeros'){ irPara('perfil'); abrirNumeros(); return; }
+      irPara(v);
+    }); });
   }
   function pintarSecoes(){
     var g=GRUPO[vista], s=$('secoes'), l=SUB[g];
@@ -1640,10 +1694,11 @@ function pagina() {
   // vêm de arquivo à parte (defer) esperam o arquivo chegar
   (function(){
     var h=location.hash.replace('#','');
-    if(!h||!TITULOS[h]){ desenhar(); return; }
+    if(!h||!TITULOS[h]){ iniciarHistorico('hoje'); desenhar(); return; }
+    iniciarHistorico(h);
     var precisa={comentarios:'CaramujoComentarios',musicas:'CaramujoMusicas',analytics:'CaramujoAnalytics',vitrine:'CaramujoVitrine',fila:'CaramujoVitrine',cupons:'CaramujoVitrine'}[h];
     var tenta=0;
-    (function vai(){ if(!precisa||window[precisa]||tenta++>40){ irPara(h); return; } setTimeout(vai,50); })();
+    (function vai(){ if(!precisa||window[precisa]||tenta++>40){ irPara(h,true); return; } setTimeout(vai,50); })();
   })();
 })();
 </script>

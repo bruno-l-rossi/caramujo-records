@@ -204,6 +204,10 @@ Página da tape: caixa "Fique por dentro" antes do "Mais de @rideblan33", fundo 
 `#2a2a2a`, cantos de 18px, kicker cinza, título 26px peso 800, campo e botão redondos (botão
 branco cheio). Nunca na pasta de artista.
 
+## Painel: abas, seletor e menu do lado (16/10/2026)
+
+Partes da seção (Pedidos, Cupons, Lista; Vitrine, Fila, Beat tapes, Artistas) em abas: texto 15px `--ink3`, a escolhida em branco com linha de 2px embaixo, contador numa bolinha branca; linha `--linha` sob as abas. Filtros (Pra fazer, Todos, Testes) num seletor: caixa `#141414` com borda, botões de 13px, o escolhido em `#2a2a2a`. Computador: o menu do lado mostra as partes da seção aberta embaixo dela (recuo de 32px, fio `--linha` à esquerda, 13.5px; a parte atual em branco) e uma seta › que gira quando aberta.
+
 ## Painel novo e "Quer um som assim?" (12-14/10/2026)
 
 Painel: barra de 5 seções fixa embaixo no celular (ícone + nome, bolinha branca com número) e

@@ -34,7 +34,7 @@
 <!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
      a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=27f9947252">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=334617301b">
 
 <!-- ═══ EMAILJS (formulário de contato) ══════════════
   Chaves em emailjs.com: Account > Public Key, Email Services > Service ID,
@@ -217,7 +217,17 @@
     </div>
     <button class="nb-tg" id="filtAvail" type="button" role="switch" aria-checked="false" onclick="toggleAvail(this)">Só à venda<b aria-hidden="true"></b></button>
   </div>
-  <div class="nb-meta"><b id="nbTotal"></b><span id="nbPag"></span></div>
+  <div class="nb-meta">
+    <span class="nb-conta"><b id="nbTotal"></b><span id="nbPag"></span></span>
+    <!-- Leve mais, pague menos (16/10/2026, opção B do Bruno): a tabela abre ao tocar; números do LEVE_MAIS (pintarLeveMais) -->
+    <div class="nb-dd lm-dd" id="leveMais">
+      <button class="lm-bt" id="lmBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="lmMenu" onclick="menuBarra('leve')">Leve 2 ou mais e pague menos <i aria-hidden="true">▾</i></button>
+      <div class="mn mn-lm" id="lmMenu" hidden>
+        <div class="mn-t"><b>Leve mais, pague menos</b><button class="mn-x" type="button" onclick="fecharMenusBarra()" aria-label="Fechar">×</button></div>
+        <div class="lm-tab" id="lmTab"></div>
+      </div>
+    </div>
+  </div>
   </div>
   <div class="mn-fundo" id="mnFundo" hidden onclick="fecharMenusBarra()"></div>
 
@@ -230,8 +240,6 @@
       <span class="pagination-info" id="pgInfoTop"></span>
     </div>
   </div>
-  <!-- Leve mais, pague menos (12/10/2026, opção A): os números vêm do LEVE_MAIS (vitrine.js) -->
-  <div class="lm-faixa" id="leveMais" aria-label="Leve mais, pague menos"><span class="lm-k">Leve mais, pague menos</span></div>
   <div class="beat-cards" id="beatCards"></div>
   <div class="pagination" id="pagination">
     <div class="pg-search">
@@ -632,7 +640,7 @@ const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':
 const FEATURED_OVERRIDE_ID=null;
 const FEATURED_OVERRIDE_ATE='';
 </script>
-<script src="/assets/vitrine/vitrine.js?v=479c709aab"></script>
+<script src="/assets/vitrine/vitrine.js?v=f1bad6fd9f"></script>
 <!-- leva-de -->
 <script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
 (function(){

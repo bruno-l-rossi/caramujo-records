@@ -1387,12 +1387,6 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 @media(max-width:600px){.lista-box{padding:1.3rem 1.1rem 1.2rem}.lista-t{font-size:1.7rem}.lista-f{flex-direction:column}.lista-bt{width:100%}}
 
 /* Leve mais, pague menos (12/10/2026): faixa em cima da lista (opção A) e régua no carrinho (opção C) */
-.lm-faixa{display:flex;flex-wrap:wrap;align-items:center;gap:.45rem;margin:0 0 1rem;padding:.75rem .9rem;border:1px solid var(--clay);background:rgba(185,143,94,.08)}
-.lm-k{flex:0 0 auto;font-size:.58rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--fire);margin-right:.4rem}
-@media(max-width:600px){.lm-k{flex-basis:100%;margin-bottom:.1rem}}
-.lm-l{flex:none;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--bone);border:1px solid var(--wire);padding:.32rem .55rem;white-space:nowrap}
-.lm-l b{font-weight:400;color:var(--fire)}
-.lm-l i{font-style:normal;color:var(--read);font-size:.64rem;margin-left:.15rem}
 .lm-reg{margin:1rem 0 0;padding:.9rem 1rem;border:1px solid var(--wire);background:var(--deep)}
 .lm-reg p{font-size:.78rem;line-height:1.6;color:var(--bone);margin:0 0 .6rem}
 .lm-reg p b{color:var(--fire);font-weight:600}
@@ -1448,6 +1442,18 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .mn-o.on{color:var(--fire)}
 .mn-o.on:after{content:'✓';color:var(--fire)}
 @media(min-width:861px){.nb>.nb-ic{order:5}#nbar .mn-gen{left:auto;right:0}}
+/* Leve mais na linha da contagem (16/10/2026, B) e o preço do próximo no botão (D) */
+.nb-conta{display:flex;align-items:baseline;gap:.8rem;flex-wrap:wrap}
+.lm-dd{position:relative}
+.lm-bt{background:none;border:0;padding:.2rem 0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--fire);border-bottom:1px dashed var(--clay)}
+.lm-bt i{font-style:normal;color:var(--amber);margin-left:.2rem;display:inline-block;transition:transform .2s}
+.lm-bt[aria-expanded="true"] i{transform:rotate(180deg)}
+#nbar .mn-lm{left:auto;right:0;width:320px}
+.lm-l{display:flex;justify-content:space-between;gap:1rem;padding:.6rem .9rem;font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--bone)}
+.lm-l i{font-style:normal;color:var(--fire);margin-left:.3rem}
+.lm-pe{margin:.3rem 0 0;padding:.6rem .9rem .3rem;border-top:1px solid var(--wire);font-size:.72rem;line-height:1.55;color:var(--read)}
+#beatCards .preco .lm-prox{display:inline-flex;flex-direction:column;align-items:flex-end;line-height:1.15}
+#beatCards .preco .lm-prox s{font-size:.62rem;color:var(--dim);text-decoration-color:var(--blood)}
 .mn-fundo{position:fixed;inset:0;z-index:8300;background:rgba(0,0,0,.62)}
 .mn-fundo[hidden]{display:none}
 @media(max-width:860px){
@@ -1468,6 +1474,9 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
   #nbar .mn .ft{min-height:44px;padding:.7rem 1rem;border:1px solid var(--wire);font-size:.66rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--read)}
   #nbar .mn .ft.on{background:var(--fire);border-color:var(--fire);color:var(--black)}
   #nbar .mn .ft.on:after{content:none}
+  #nbar .mn-lm{width:auto}
+  .lm-l{padding:.9rem 1.1rem;font-size:.9rem;border-bottom:1px solid rgba(255,255,255,.05)}
+  .lm-pe{padding:.9rem 1.1rem 0;font-size:.8rem;border:0}
   .mn-o{min-height:60px;padding:.9rem 1.1rem;font-size:.95rem;border-bottom:1px solid rgba(255,255,255,.05)}
   body.mn-aberto{overflow:hidden}
 }

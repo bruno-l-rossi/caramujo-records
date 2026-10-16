@@ -274,8 +274,19 @@ function syncBeatButtons(){
 // Botão do beat na lista (11/10/2026): igual ao do player do rodapé. 1º toque põe no
 // carrinho; já no carrinho, o toque abre o carrinho. Tirar fica só dentro do carrinho.
 const escA=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+// 16/10/2026 (opção D do Bruno): com beat no carrinho, o botão dos outros já mostra quanto o
+// próximo sai pelo Leve mais (R$119 riscado e "+ R$100"). Só mostra: a conta de verdade continua
+// no aplicarLeveMais e no servidor.
+function precoDoProximo(){
+  const n=cart.filter(c=>c.type==='Beat'&&!c.stems).length;
+  if(!n) return PRICE_BEAT;
+  const p=totalDosBeats(n+1)-totalDosBeats(n);
+  return p>0&&p<PRICE_BEAT?p:PRICE_BEAT;
+}
 function rotuloBotao(no){
-  return (no?ICO_OK:ICO_CART)+'<span class="rotulo">'+(no?'No carrinho':'R$'+PRICE_BEAT)+'</span>'+(no?'<span class="ir" aria-hidden="true">›</span>':'');
+  if(no) return ICO_OK+'<span class="rotulo">No carrinho</span><span class="ir" aria-hidden="true">›</span>';
+  const p=precoDoProximo();
+  return ICO_CART+(p<PRICE_BEAT?'<span class="rotulo lm-prox"><s>R$'+PRICE_BEAT+'</s>+ R$'+p+'</span>':'<span class="rotulo">R$'+PRICE_BEAT+'</span>');
 }
 function botaoBeat(id){
   if(cart.some(c=>c.beatId===id&&c.stems===false)){ openCart(); return; }
@@ -504,18 +515,18 @@ function precosDosBeats(n){
   for(let i=0;i<n;i++) out.push(i<n-1?cada:tot-cada*(n-1));
   return out;
 }
-// Faixa "Leve mais, pague menos" em cima da lista (12/10/2026): 1 a 5 com o % off, da tabela LEVE_MAIS
+// Tabela do "Leve 2 ou mais e pague menos" (16/10/2026, opção B): de 1 a 5 beats, sempre o total
+// (4 e 5 também, pedido do Bruno) com o % off; embaixo, quanto sai cada beat do 6º em diante.
 function pintarLeveMais(){
-  const el=document.getElementById('leveMais'); if(!el||el.dataset.ok) return;
+  const el=document.getElementById('lmTab'); if(!el||el.dataset.ok) return;
   const T=n=>totalDosBeats(n);
-  const chips=[1,2,3,4,5].map(n=>{
+  const linhas=[1,2,3,4,5].map(n=>{
     const off=Math.round((1-T(n)/(PRICE_BEAT*n))*100);
-    const cada=n>=4&&T(n)%n===0;
-    const rot=n===5?'5+':String(n);
-    const preco=cada?`R$${T(n)/n} cada`:`R$${T(n)}`;
-    return `<span class="lm-l"><b>${rot}</b> ${preco}${off>0?` <i>${off}% off</i>`:''}</span>`;
+    return `<div class="lm-l"><span>${n} ${n===1?'beat':'beats'}</span><span>R$${T(n)}${off>0?` <i>${off}% off</i>`:''}</span></div>`;
   }).join('');
-  el.insertAdjacentHTML('beforeend',chips); el.dataset.ok='1';
+  const seis=T(6)-T(5);
+  const pe=(seis>0&&seis<PRICE_BEAT?`Do 6º em diante, R$${seis} cada. `:'')+'O desconto entra sozinho no carrinho, e o cupom da lista vale em cima.';
+  el.innerHTML=linhas+`<p class="lm-pe">${pe}</p>`; el.dataset.ok='1';
 }
 try{ pintarLeveMais(); }catch(e){ setTimeout(function(){ throw e; }); }
 function aplicarLeveMais(){
@@ -2564,7 +2575,7 @@ try{
    computador desce do botão. Fecha ao escolher, no X, no Esc, tocando fora e no voltar. */
 (function(){
   var $=function(i){ return document.getElementById(i); };
-  var MENUS={ genero:['genBtn','genMenu'], ordem:['ordBtn','ordMenu'] };
+  var MENUS={ genero:['genBtn','genMenu'], ordem:['ordBtn','ordMenu'], leve:['lmBtn','lmMenu'] };
   function folha(){ try{ return window.matchMedia('(max-width:860px)').matches; }catch(_){ return false; } }
   function fechar(){
     Object.keys(MENUS).forEach(function(k){ var b=$(MENUS[k][0]), m=$(MENUS[k][1]); if(m) m.hidden=true; if(b) b.setAttribute('aria-expanded','false'); });
@@ -2605,7 +2616,7 @@ try{
   });
   document.addEventListener('click',function(e){
     if(!document.querySelector('#nbar .mn:not([hidden])')) return;
-    if(e.target.closest&&e.target.closest('.nb-dd')) return;
+    if(e.target.closest&&e.target.closest('.nb-dd')) return;   // inclui o Leve mais (.lm-dd)
     fechar();
   });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') fechar(); });

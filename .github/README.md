@@ -79,6 +79,8 @@ scripts/                conversor do Drive e cálculo da onda de cada faixa
 
 **Lista com cupom (desde 11/10/2026).** "Fique por dentro" na vitrine: o e-mail entra na tabela `lista` (`/api/lista`) e recebe um cupom LISTA-XXXX de 25%, uso único, válido por 15 dias, só nos beats do catálogo. A caixa aparece na vitrine e na página de cada beat tape. Sair da lista pelo link do e-mail. Painel: home > Lista de e-mails (desde 12/10/2026 com o resultado de cada e-mail do cupom: saiu, ou o motivo que o Resend deu).
 
+**Leve mais na vitrine (16/10/2026).** "Leve 2 ou mais e pague menos" ao lado da contagem abre a tabela (total de 1 a 5 beats e o preço do 6º em diante, tudo do `LEVE_MAIS`). Com beat no carrinho, o botão dos outros mostra o preço do próximo (R$119 riscado, + R$100). Só aparência: a conta segue no carrinho e no servidor.
+
 **Barra dos beats (16/10/2026).** Em cima da lista: busca, ✦ (Estou com sorte), Gênero e Ordem (menus; no celular sobem de baixo e o voltar fecha) e a chave Só à venda, desligada ao abrir. Os botões de gênero continuam sendo links `/beats/<gênero>` (o clique filtra ali mesmo).
 
 **Quem já gravou, a leitura (16/10/2026).** `functions/_lib/gravou.js` descobre quem canta em cada música da aba Músicas do perfil pelas páginas públicas do Spotify (embed da faixa, página da faixa, álbum e artista), sem chave nem app de desenvolvedor, e traz nome e foto. `?op=gravou-teste` no painel só lê e responde (não grava). A página pública e a parte do painel ainda não existem.
@@ -99,7 +101,7 @@ scripts/                conversor do Drive e cálculo da onda de cada faixa
 
 ## Painel
 
-Desde 12/10/2026 o painel abre no **Hoje** e se divide em 5 seções (barra embaixo no celular, menu do lado no computador). O endereço guarda a seção (`/painel#pedidos`, `#fila`…).
+Desde 12/10/2026 o painel abre no **Hoje** e se divide em 5 seções (barra embaixo no celular, menu do lado no computador). O endereço guarda a seção (`/painel#pedidos`, `#fila`…). Desde 16/10/2026 o voltar sobe um nível (parte → página da seção → Hoje; trocar de aba ou de seção não empilha), as partes de cada seção são abas (linha embaixo) e os filtros um seletor menor, e no computador o menu do lado abre as partes embaixo da seção (Perfil: Músicas, Ordem das beat tapes, Números do site).
 
 - **Hoje:** o que precisa do Bruno (serviço com material pra entregar, beats na Fila, beats pra revisar nas tapes, e-mail do cupom que não saiu, comentário aberto, banco passando da metade), os números dos últimos 7 dias e atalhos.
 - **Vendas:** Pedidos (filtro Pra fazer / Todos / Testes; cada pedido abre com o material de cada serviço e o campo pra entregar pelo link; pedido de teste de beat e de serviço), Cupons e Lista (quem se cadastrou, copiar os e-mails, resultado de cada e-mail do cupom).
