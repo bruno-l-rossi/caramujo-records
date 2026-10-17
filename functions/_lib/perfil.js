@@ -241,12 +241,16 @@ function linhaRecente(m, k, vaga) {
 // Só aparece com a página no ar (ou na prévia de quem está logado).
 export function linhaGravou(gv) {
   if (!gv || !gv.artistas || !gv.artistas.length) return '';
-  // na fileira, quem tem foto vem antes (iniciais só completam); a frase segue a ordem da página
-  const n = gv.artistas.length, mostra = gv.artistas.filter((a) => a.foto).concat(gv.artistas.filter((a) => !a.foto)).slice(0, 7), resto = n - mostra.length;
-  const nomes = gv.artistas.slice(0, 3).map((a) => esc(a.nome));
-  const frase = n > 3 ? `${nomes.join(', ')} e mais ${n - 3} artistas cantaram em músicas produzidas pelo @rideblan33.` : `${nomes.join(', ')} cantaram em músicas produzidas pelo @rideblan33.`;
-  return `<a class="qg-ent" href="/rideblan33/artistas"${deAttr('perfil-gravou')} data-rede="aba-gravou"><span class="qg-ent-cab"><b>Quem já gravou</b><span class="qg-ver">${n} artistas ›</span></span>` +
-    `<span class="qg-fila" aria-hidden="true">${mostra.map((a) => fotoArtista(a)).join('')}${resto > 0 ? `<span class="qg-mais">+${resto}</span>` : ''}</span><span class="qg-frase">${frase}</span><span class="qg-cta">Ver todos os ${n} artistas<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>`;
+  // Opção D (17/10/2026, rodada N): fileira de fotos grandes que desliza; cada foto abre o artista na
+  // página e o último cartão é o "Ver todos" (como na opção C). O próprio @rideblan33 fica fora da
+  // fileira (a página é dele); quem tem foto vem antes.
+  const lista = gv.artistas.filter((a) => !a.eu);
+  const mostra = lista.filter((a) => a.foto).concat(lista.filter((a) => !a.foto)).slice(0, 10);
+  const resto = gv.artistas.length - mostra.length;
+  const de = deAttr('perfil-gravou');
+  return `<section class="qg-ent" aria-labelledby="qgEntT"><div class="qg-ent-cab"><h3 id="qgEntT">Quem já gravou</h3><a class="qg-ver" href="/rideblan33/artistas"${de} data-rede="aba-gravou">Ver todos ›</a></div>` +
+    `<div class="qg-tr">${mostra.map((a) => `<a class="qg-c" href="/rideblan33/artistas#${esc(a.slug)}"${de} data-rede="aba-gravou-artista">${fotoArtista(a)}<b>${esc(a.nome)}</b></a>`).join('')}` +
+    `<a class="qg-c" href="/rideblan33/artistas"${de} data-rede="aba-gravou"><span class="qg-fim">${resto > 0 ? `+${resto}` : ''}<small>ver todos</small></span><b>Ver todos</b></a></div></section>`;
 }
 
 // 17/10/2026 (teste do Bruno): a lista Recentes saiu do perfil pra aba ficar mais enxuta; a página
@@ -583,21 +587,20 @@ a.mx-c .mx-img{transition:transform .35s ease}
 .mx-som a.cheio{background:var(--branco);border-color:var(--branco);color:#000}
 @media (hover:hover){.mx-som a:hover{border-color:var(--branco)}.mx-som a.cheio:hover{background:#d9d9d9;border-color:#d9d9d9}}
 @media (min-width:900px){.mx-som{padding-top:150px}}
-.qg-ent{display:block;margin-top:22px;padding:18px 0 4px;border-top:1px solid var(--div);color:var(--branco)}
+.qg-ent{margin-top:22px;padding-top:18px;border-top:1px solid var(--div);color:var(--branco)}
 .qg-ent-cab{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
-.qg-ent-cab b{font:700 20px/1.2 var(--grot)}
-.qg-ver{font:600 13.5px var(--grot);color:var(--apoio);white-space:nowrap}
-.qg-fila{display:flex;align-items:center}
-.qg-fila img,.qg-fila .qg-ini,.qg-fila .qg-mais{width:52px;height:52px;border-radius:50%;object-fit:cover;border:3px solid var(--preto);margin-left:-12px;flex:none}
-.qg-fila>:first-child{margin-left:0}
-.qg-fila .qg-ini{display:flex;align-items:center;justify-content:center;background:#1c1c1c;color:var(--apoio);font:800 17px var(--grot)}
-.qg-mais{display:flex;align-items:center;justify-content:center;background:var(--folha);color:var(--branco);font:700 14px var(--grot)}
-.qg-frase{display:block;margin-top:12px;font:400 14px/1.5 var(--grot);color:var(--apoio)}
-/* 17/10/2026: chamada clara pra página de artistas (pedido do Bruno) */
-.qg-cta{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;margin-top:16px;padding:0 20px;border:1px solid rgba(255,255,255,.5);border-radius:999px;font:700 12px/1.2 var(--grot);letter-spacing:.16em;text-transform:uppercase;color:var(--branco);transition:border-color .2s,background .2s,color .2s}
-.qg-cta svg{width:16px;height:16px;flex:none}
-@media (min-width:601px){.qg-cta{display:inline-flex}}
-@media (hover:hover){.qg-ent:hover .qg-ver{color:var(--branco)}.qg-ent:hover .qg-cta{background:var(--branco);border-color:var(--branco);color:#000}}
+.qg-ent-cab h3{margin:0;font:700 20px/1.2 var(--grot)}
+.qg-ver{font:600 13.5px var(--grot);color:var(--branco);white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.4);padding-bottom:2px;transition:border-color .2s}
+.qg-tr{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin:0 -2px;-webkit-overflow-scrolling:touch}
+.qg-tr::-webkit-scrollbar{display:none}
+.qg-c{flex:none;width:96px;text-align:center;color:var(--branco)}
+.qg-c img,.qg-c .qg-ini,.qg-fim{width:96px;height:96px;border-radius:50%;object-fit:cover;display:flex}
+.qg-c .qg-ini{align-items:center;justify-content:center;background:#1c1c1c;color:var(--apoio);font:800 22px var(--grot)}
+.qg-c b{display:block;margin-top:8px;font:600 12.5px var(--grot);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qg-fim{align-items:center;justify-content:center;flex-direction:column;background:var(--branco);color:#000;font:800 20px/1 var(--grot)}
+.qg-fim small{font:700 9px var(--grot);letter-spacing:.14em;text-transform:uppercase;margin-top:4px}
+@media (min-width:900px){.qg-c{width:128px}.qg-c img,.qg-c .qg-ini,.qg-fim{width:128px;height:128px}.qg-tr{gap:22px}}
+@media (hover:hover){.qg-ver:hover{border-bottom-color:var(--branco)}.qg-c:hover img{opacity:.85}.qg-c:hover .qg-fim{background:#d9d9d9}}
 /* rodapé igual ao da vitrine (26/09/2026): selo, © e @rideblan33, mesmas letras e disposição */
 footer{padding:1.4rem 2.4rem calc(1.4rem + env(safe-area-inset-bottom,0px));background:var(--black);border-top:1px solid var(--wire);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
 footer img{height:30px;width:auto;display:block}

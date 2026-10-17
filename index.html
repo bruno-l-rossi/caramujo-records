@@ -34,7 +34,7 @@
 <!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
      a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=8aa8c63ba4">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=5cfa3c8e49">
 
 <!-- ═══ EMAILJS (formulário de contato) ══════════════
   Chaves em emailjs.com: Account > Public Key, Email Services > Service ID,
@@ -105,10 +105,9 @@
       São Carlos, SP — Desde 2018
     </div>
 
-    <h1 class="hero-title">
-      Caramujo
-      <span class="sub">R E C O R D S</span>
-    </h1>
+    <!-- 17/10/2026 (rodada N): o nome do hero é o logo (caramujo-wordmark.svg, a letra do caramujo-v
+         vetorizada), pra não destoar da marca. O alt mantém o texto do h1 pro Google. -->
+    <h1 class="hero-title"><img class="hero-wm" src="/assets/brand/caramujo-wordmark.svg" alt="Caramujo Records" width="640" height="129" fetchpriority="high"></h1>
 
     <p class="hero-lede">Atenção! Você está ouvindo um beat do Rideblan</p>
 

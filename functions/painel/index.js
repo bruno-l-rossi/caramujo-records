@@ -393,7 +393,7 @@ function pagina() {
 <script src="/assets/painel/analytics.js?v=2026-10-16a" defer></script>
 <script src="/assets/painel/vitrine.js?v=2026-10-16a" defer></script>
 <script src="/assets/painel/musicas.js?v=2026-10-17a" defer></script>
-<script src="/assets/painel/gravou.js?v=2026-10-17b" defer></script>
+<script src="/assets/painel/gravou.js?v=2026-10-17c" defer></script>
 <script src="/assets/painel/comentarios.js?v=2026-10-10a" defer></script>
 
 <nav class="nav-p" id="navP" aria-label="Seções do painel"></nav>
@@ -1722,7 +1722,9 @@ function pagina() {
   // /painel#<seção> abre direto nela (o e-mail de comentário usa #comentarios); as telas que
   // vêm de arquivo à parte (defer) esperam o arquivo chegar
   (function(){
-    var h=location.hash.replace('#','');
+    // volta do atalho "Plays Caramujo" (rodada N): #gravou&plays=<id>:<n>,... (o gravou.js guarda)
+    var hh=location.hash.replace('#','').split('&plays='); if(hh[1]) window.__gvPlays=hh[1];
+    var h=hh[0];
     if(!h||!TITULOS[h]){ iniciarHistorico('hoje'); desenhar(); return; }
     iniciarHistorico(h);
     var precisa={comentarios:'CaramujoComentarios',musicas:'CaramujoMusicas',gravou:'CaramujoGravou',analytics:'CaramujoAnalytics',vitrine:'CaramujoVitrine',fila:'CaramujoVitrine',cupons:'CaramujoVitrine'}[h];

@@ -17,8 +17,8 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 const jsonSeguro = (o) => JSON.stringify(o).replace(/[<>&\u2028\u2029]/g, (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
 export const iniciais = (nome) => String(nome || '').replace(/^@/, '').split(/[\s_.-]+/).filter(Boolean).map((p) => p[0]).join('').slice(0, 2).toUpperCase() || '?';
 const nMus = (n) => n + (n === 1 ? ' música' : ' músicas');
-// o cartão das faixas solo do @rideblan33 (rodada M) fala "N músicas solo" em vez de "com @rideblan33"
-const linhaQtd = (a) => (a.eu ? nMus(a.faixas.length) + ' solo' : nMus(a.faixas.length) + ' com @rideblan33');
+// o cartão do próprio @rideblan33 (rodada N: artista da lista, na ordem por ouvintes) fala "N músicas como artista"
+const linhaQtd = (a) => nMus(a.faixas.length) + (a.eu ? ' como artista' : ' com @rideblan33');
 const ICONE_SP = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm4.6 14.4a.62.62 0 01-.86.2c-2.35-1.44-5.3-1.76-8.79-.96a.62.62 0 11-.28-1.22c3.81-.87 7.08-.5 9.72 1.12.3.18.39.57.2.86zm1.22-2.73a.78.78 0 01-1.07.26c-2.69-1.65-6.8-2.13-9.98-1.17a.78.78 0 11-.45-1.5c3.64-1.1 8.16-.57 11.24 1.33.37.22.48.71.26 1.08zm.1-2.84C14.7 8.92 9.38 8.74 6.3 9.68a.94.94 0 11-.54-1.8c3.53-1.07 9.4-.86 13.1 1.33a.94.94 0 01-.95 1.62z"/></svg>';
 const ICONE_BUSCA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg>';
 const SETA = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>';
@@ -48,14 +48,15 @@ function cartao(a, faixas) {
 export function paginaGravou(dados, { previa = false } = {}) {
   const { artistas, faixas, nFaixas } = dados;
   const n = artistas.length;
-  const todos = (dados.eu ? [dados.eu] : []).concat(artistas);   // o cartão solo vem antes; os números contam só os artistas
+  const todos = artistas;
   const primeiro = todos[0];
   const titulo = 'Quem já gravou · Portfólio do @rideblan33';
-  const nomes3 = artistas.slice(0, 3).map((a) => a.nome);
+  const outros = artistas.filter((a) => !a.eu);   // nas frases e no Google, quem gravou com ele
+  const nomes3 = outros.slice(0, 3).map((a) => a.nome);
   const descricao = `${n} artistas cantaram em ${nFaixas} músicas produzidas pelo @rideblan33: ${nomes3.join(', ')} e mais. Ouça no Spotify.`;
   const lista = {
-    '@context': 'https://schema.org', '@type': 'ItemList', name: 'Artistas que gravaram com o @rideblan33', numberOfItems: n,
-    itemListElement: artistas.map((a, i) => ({ '@type': 'ListItem', position: i + 1, item: { '@type': 'MusicGroup', name: a.nome, sameAs: `https://open.spotify.com/artist/${a.id}` } }))
+    '@context': 'https://schema.org', '@type': 'ItemList', name: 'Artistas que gravaram com o @rideblan33', numberOfItems: outros.length,
+    itemListElement: outros.map((a, i) => ({ '@type': 'ListItem', position: i + 1, item: { '@type': 'MusicGroup', name: a.nome, sameAs: `https://open.spotify.com/artist/${a.id}` } }))
   };
   const json = { artistas: todos.map((a) => Object.assign({ id: a.id, n: a.nome, s: a.slug, f: a.foto, fx: a.faixas }, a.eu ? { e: 1 } : {})), faixas };
   return `<!doctype html>
@@ -79,9 +80,12 @@ ${ICONES_ABA}
 <script type="application/ld+json">${jsonSeguro(lista)}</script>
 <style>
 @font-face{font-family:'Schibsted Grotesk';font-weight:400 900;font-display:swap;src:url(/assets/fonts/schibsted-grotesk-latin-wght-normal.woff2) format('woff2')}
+@font-face{font-family:'Cormorant Garamond';font-weight:500;font-style:normal;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'IBM Plex Mono';font-weight:400;font-display:swap;src:url(/assets/fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2')}
 :root{color-scheme:dark;
   --black:#14110d;--fire:#b98f5e;--amber:#c3a074;--cream:#f2ecdf;--bone:#E8E0CF;--label:#9e7c48;--wire:#332c22;--dim:#6f6757;
   --preto:#000;--folha:#141414;--div:#1f1f1f;--branco:#fff;--apoio:#b7b7b7;--meta:#8a8a8a;
+  --read:#b89e72;--clay:#A87B4A;--serif:'Cormorant Garamond',Georgia,serif;--mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
   --sans:'Helvetica Neue',Helvetica,Arial,sans-serif;--grot:'Schibsted Grotesk',-apple-system,'Helvetica Neue',Arial,sans-serif}
 *{box-sizing:border-box}
 html,body{background:var(--preto)}
@@ -142,9 +146,13 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 footer{padding:1.4rem 2.4rem calc(1.4rem + env(safe-area-inset-bottom,0px));background:var(--black);border-top:1px solid var(--wire);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
 footer img{height:30px;width:auto;display:block}
 footer p{margin:0;font-size:.57rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);font-family:var(--sans)}
-footer a.foot-perfil{border-bottom:1px solid var(--wire)}
+footer a.foot-perfil{border-bottom:1px solid var(--wire);transition:color .2s,border-color .2s}
+@media (hover:hover){footer a.foot-perfil:hover{color:var(--fire);border-bottom-color:var(--fire)}}
+/* rodapé igual ao da vitrine (rodada N, 17/10/2026): gêneros em Cormorant e cor de leitura (antes saíam
+   na letra e no branco da página, porque faltavam as variáveis e as fontes da vitrine aqui) */
 ${CSS_RODAPE_GENEROS}
 @media (max-width:860px){footer{flex-direction:column;align-items:flex-start;padding:1.2rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom,0px))}footer p{font-size:.63rem}}
+@media (max-width:480px){footer{gap:.5rem}}
 </style>
 </head>
 <body>
@@ -159,7 +167,7 @@ ${previa ? '<p class="previa">Prévia: só você vê esta página, porque está 
   ${primeiro ? `<section class="qg-aberto" id="qgAberto" aria-live="polite" aria-labelledby="qgNome">${cartao(primeiro, faixas)}</section>` : ''}
   <div class="qg-cab"><b>Todos</b><span>${n} artistas</span></div>
   <ul class="qg-grade" id="qgGrade">
-${todos.map((a, i) => `    <li${a.eu ? ' class="qg-eu"' : ''} data-busca="${esc(a.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase())}"><button type="button" data-i="${i}" aria-pressed="${i === 0}">${fotoArtista(a)}<b>${esc(a.nome)}</b><small>${nMus(a.faixas.length)}${a.eu ? ' solo' : ''}</small></button></li>`).join('\n')}
+${todos.map((a, i) => `    <li data-busca="${esc(a.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase())}"><button type="button" data-i="${i}" aria-pressed="${i === 0}">${fotoArtista(a)}<b>${esc(a.nome)}</b><small>${nMus(a.faixas.length)}</small></button></li>`).join('\n')}
   </ul>
   <p class="qg-nada" id="qgNada" hidden>Nenhum artista com esse nome.</p>
 </main>
@@ -184,7 +192,7 @@ ${todos.map((a, i) => `    <li${a.eu ? ' class="qg-eu"' : ''} data-busca="${esc(
   function abrir(i,rolar){
     var a=A[i]; if(!a||!ab) return;
     var foto=a.f?'<img src="'+esc(a.f)+'" alt="" width="320" height="320">':'<span class="qg-ini" aria-hidden="true">'+esc(ini(a.n))+'</span>';
-    ab.innerHTML='<div class="qg-foto">'+foto+'</div><div class="qg-cab2"><div class="q">'+(a.e?'Produtor e artista':'Artista')+'</div><h2 id="qgNome">'+esc(a.n)+'</h2><div class="q">'+nm(a.fx.length)+(a.e?' solo':' com @rideblan33')+'</div>'+
+    ab.innerHTML='<div class="qg-foto">'+foto+'</div><div class="qg-cab2"><div class="q">'+(a.e?'Produtor e artista':'Artista')+'</div><h2 id="qgNome">'+esc(a.n)+'</h2><div class="q">'+nm(a.fx.length)+(a.e?' como artista':' com @rideblan33')+'</div>'+
       '<div class="qg-bts"><a class="cheio" href="https://open.spotify.com/artist/'+esc(a.id)+'" target="_blank" rel="noopener" data-rede="gravou-spotify">'+SP+'<span>Spotify</span></a></div></div>'+
       '<ul class="qg-fx'+(a.fx.length>6?' curta':'')+'">'+a.fx.map(function(id){var f=F[id];if(!f)return '';return '<li><a href="https://open.spotify.com/track/'+esc(f.id)+'" target="_blank" rel="noopener" data-rede="gravou-faixa" aria-label="Ouvir '+esc(f.nome)+' no Spotify">'+(f.capa?'<img src="'+esc(peq(f.capa))+'" alt="" loading="lazy" width="48" height="48">':'<span class="qg-sem" aria-hidden="true"></span>')+'<div><b>'+esc(f.nome)+'</b><small>'+esc(f.com.join(', '))+'</small></div><i>'+SETA+'</i></a></li>';}).join('')+'</ul>'+(a.fx.length>6?'<button class="qg-todas" type="button" data-todas>Ver as '+a.fx.length+' músicas</button>':'');
     [].forEach.call(grade.querySelectorAll('button[data-i]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.i===i));});

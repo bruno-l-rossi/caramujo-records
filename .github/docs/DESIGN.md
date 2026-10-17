@@ -144,7 +144,9 @@ Página `/rideblan33/artistas` e a linha no fim da aba Músicas (mockup aprovado
 - Grade: fotos redondas, 3 colunas no celular, 4 a partir de 600px, 6 no computador; o artista aberto ganha aro branco. Ordem (desde 17/10/2026) = mais ouvintes mensais no Spotify primeiro; diferença pequena (menos de 35%) conta como empate e vence quem tem mais faixas.
 - Linha da aba Músicas: título "Quem já gravou", "N artistas ›", até 7 fotos sobrepostas (quem tem foto primeiro) + "+N", e a frase "A, B, C e mais N artistas cantaram em músicas produzidas pelo @rideblan33." Entrou no lugar do "Ouvir o portfólio completo" (saiu em 16/10/2026). Desde 17/10/2026 termina na chamada "VER TODOS OS N ARTISTAS →": pílula de borda branca 50% (48px de altura, Schibsted 700 12px caixa alta espaçada), a linha toda no celular e do tamanho do texto a partir de 601px; no mouse vira branca com texto preto (igual ao "Mix & Master" do "Quer um som assim?").
 - Fotos e capas saem do nosso R2 (capa/grv-*, capa/gra-*), não do endereço do Spotify (desde 17/10/2026). Faixa sem capa no R2 usa a capa do Spotify anotada na lista.
-- Cartão @rideblan33 (desde 17/10/2026, rodada M): primeiro da grade e aberto ao entrar, foto do perfil do site, kicker "PRODUTOR E ARTISTA", "N músicas solo". Não entra nos números da página, da vitrine nem do perfil.
+- Cartão @rideblan33 (rodada N, 17/10/2026): artista da lista como os outros (ordem por ouvintes, foto do Spotify), kicker "PRODUTOR E ARTISTA", "N músicas como artista". Fica fora da fileira do perfil e das frases "A, B, C e mais".
+- Linha do perfil (rodada N, opção D): fileira que desliza com até 10 fotos redondas grandes (96px celular, 128px computador) e o nome embaixo; último cartão branco com "+N" e "ver todos", nome "Ver todos"; no título, link "Ver todos ›" sublinhado. Cada foto abre o artista na página.
+- Rodapé: o mesmo da vitrine (gêneros em Cormorant 1.05rem cor --read, kicker em IBM Plex Mono --clay).
 - Faixas do cartão: as mais tocadas primeiro (faixas de 30% nos plays); plays parecidos ou abaixo de mil, a mais nova antes. A ordem dos artistas pode ser a do Bruno (painel: arrastar) ou a padrão por ouvintes.
 
 ## Pastilhas do perfil (desde 27/09/2026)
@@ -327,3 +329,7 @@ página do pedido). Cabeçalho igual ao da vitrine (`_lib/topo.js`) e rodapé no
 A partir de 861px as duas colunas terminam na mesma altura, à venda e vendido. O card "Da beat
 tape" desce pro fim da coluna da esquerda; se a esquerda for mais alta, a compra (à venda) ou o
 quadro "Esse beat já tem dono" (vendido) desce na direita. No celular nada muda.
+
+
+## Hero da vitrine com o logo (17/10/2026, rodada N)
+O nome do hero é o logo: `assets/brand/caramujo-wordmark.svg`, a letra do `caramujo-v.webp` vetorizada (CARAMUJO #eae2d0, RECORDS #ab7d4c espaçado e alinhado à esquerda, como no `caramujo-h`). Largura 4.55em do tamanho do título (o mesmo espaço do texto antigo). O texto fica no alt do h1.

@@ -63,6 +63,17 @@
     '.gv-ol li.pego{position:relative;z-index:2;box-shadow:0 8px 24px rgba(0,0,0,.6);background:#1a1a1a}',
     '.gv-alca{width:44px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;color:#8a8a8a;cursor:grab;touch-action:none;background:transparent;border:0;border-radius:10px;padding:0}',
     '.gv-alca:focus-visible{outline:2px solid #fff;outline-offset:-2px}',
+    '.gv-pl{background:#101010;border:1px solid var(--borda);border-radius:14px;padding:12px 14px;margin:-6px 0 16px}',
+    '.gv-pl-topo{display:flex;align-items:center;gap:12px}',
+    '.gv-pl-topo div{flex:1;min-width:0}',
+    '.gv-pl b{display:block;font-size:14px;font-weight:600}',
+    '.gv-pl small{display:block;margin-top:3px;font-size:12.5px;color:var(--ink4);line-height:1.45}',
+    '.gv-pl .pill{flex:none;padding:9px 14px;font-size:13px}',
+    '.gv-pl ol{margin:12px 0 0;padding:0 0 0 20px;font-size:13.5px;line-height:1.5;color:var(--ink2)}',
+    '.gv-pl li{margin:0 0 12px}',
+    '.gv-pl li small{color:var(--ink4)}',
+    '.gv-atalho{display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:10px 16px;border-radius:999px;background:#fff;color:#000!important;font-weight:700;font-size:13px;text-decoration:none;cursor:grab}',
+    '.gv-pl .gv-sp{display:inline-block;margin-top:8px;color:#fff;text-underline-offset:3px}',
     '@media (max-width:420px){.gv-fx,.gv-troca{margin-left:0}}'
   ].join('\n');
 
@@ -75,7 +86,43 @@
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {})
     }).then(function (r) { return r.json(); }).catch(function () { return { erro: 'Sem conexão. Tenta de novo.' }; });
   }
-  var verOrdem = false;
+  var verOrdem = false, verPlays = false;
+  /* Plays (17/10/2026, rodada N): o Spotify só mostra os plays pra quem está logado, e o servidor
+     não loga. Então quem lê é o navegador do Bruno: o atalho "Plays Caramujo" (favorito) roda dentro
+     do open.spotify.com, abre cada música da lista como uma pessoa faria (uma por vez, ~1 s cada),
+     lê o número e volta pro painel com tudo no endereço (#gravou&plays=...). O painel guarda. */
+  function codigoAtalho(ids) {
+    var c = '(async()=>{' +
+      'if(!/(^|\\.)open\\.spotify\\.com$/.test(location.hostname)){alert("Abra o open.spotify.com (logado) e toque no Plays Caramujo de novo.");return}' +
+      'if(document.querySelector(\'[data-testid="login-button"]\')){alert("Entre na sua conta do Spotify antes: sem login ele não mostra os plays.");return}' +
+      'const ids=' + JSON.stringify(ids) + ';' +
+      'const sl=m=>new Promise(r=>setTimeout(r,m));' +
+      'const go=p=>{history.pushState({},"",p);dispatchEvent(new PopStateEvent("popstate",{state:{}}))};' +
+      'const b=document.createElement("div");b.style.cssText="position:fixed;z-index:2147483647;left:50%;top:16px;transform:translateX(-50%);background:#111;color:#fff;padding:14px 20px;border-radius:12px;font:600 14px system-ui,sans-serif;box-shadow:0 10px 30px #000;border:1px solid #333";document.body.appendChild(b);' +
+      'const out=[];let lidos=0;' +
+      'for(let i=0;i<ids.length;i++){' +
+        'b.textContent="Caramujo: lendo os plays "+(i+1)+" de "+ids.length+" (não feche esta aba)";' +
+        'const ja=location.pathname.indexOf(ids[i])>=0,antes=document.querySelector("main h1");if(!ja)go("/track/"+ids[i]);let ok=false;' +
+        'for(let k=0;k<80;k++){await sl(120);const h=document.querySelector("main h1");if(location.pathname.indexOf(ids[i])>=0&&h&&(ja||h!==antes)){ok=true;break}}' +
+        'if(!ok)continue;await sl(700);' +
+        'const pc=document.querySelector(\'main [data-testid="playcount"]\');const n=pc?parseInt(pc.textContent.replace(/\\D/g,""),10)||0:0;if(n)lidos++;out.push(ids[i]+":"+n)}' +
+      'if(!lidos){b.textContent="Não achei nenhum play. Confira se está logado no Spotify e tente de novo.";return}' +
+      'b.textContent="Pronto: voltando pro painel…";' +
+      'location.href="https://caramujorecords.com.br/painel#gravou&plays="+out.join(",")' +
+      '})()';
+    return 'javascript:' + encodeURIComponent(c);
+  }
+  function quando(iso) { try { return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }); } catch (_) { return ''; } }
+  // volta do atalho: /painel#gravou&plays=<id>:<n>,... (o começo do painel guarda em window.__gvPlays)
+  function playsDaVolta() {
+    var t = window.__gvPlays; window.__gvPlays = null;
+    if (!t) return;
+    var plays = {}, n = 0;
+    String(t).split(',').forEach(function (par) { var m = par.match(/^([A-Za-z0-9]{22}):(\d{1,11})$/); if (m) { plays[m[1]] = +m[2]; n++; } });
+    if (!n) return;
+    flash('Guardando ' + n + ' plays…');
+    acao('gravou-plays', { plays: plays }).then(function (j) { usar(j, 'Plays atualizados: ' + n + ' músicas. A ordem das músicas já segue os números novos.'); });
+  }
   var ALCA = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
   function peq(u) { return String(u || '').replace('ab67616d0000b273', 'ab67616d00001e02').replace('ab6761610000e5eb', 'ab67616100005174').replace(/(\/capa\/gr[va]-[A-Za-z0-9_-]+?)(?:-m)?\.jpg$/, '$1-p.jpg'); }
   // 67000 → "67 mil ouvintes"; 1200000 → "1,2 mi ouvintes"
@@ -93,7 +140,7 @@
   var raiz = null, dados = null, erroCarga = false, abertos = {}, filtro = '', buscando = false;
 
   function carregar() {
-    pedir('gravou').then(function (j) { erroCarga = !j || !j.ok; dados = erroCarga ? null : j; desenhar(); })
+    pedir('gravou').then(function (j) { erroCarga = !j || !j.ok; dados = erroCarga ? null : j; desenhar(); if (dados) playsDaVolta(); })
       .catch(function () { erroCarga = true; desenhar(); });
   }
   function usar(j, msg) {
@@ -106,13 +153,13 @@
 
   function linhaArtista(a) {
     var n = a.faixas.length, v = visiveis(a);
-    var meta = a.eu ? (v === n ? n + (n === 1 ? ' música solo' : ' músicas solo') : v + ' de ' + n + ' músicas solo na página') + ' · o primeiro cartão da página (não conta nos números)' : (v === n ? n + (n === 1 ? ' música' : ' músicas') : v + ' de ' + n + ' músicas na página') +
+    var meta = a.eu ? (v === n ? n + ' músicas como artista' : v + ' de ' + n + ' músicas na página') + (a.ouvintes != null ? ' · ' + ouv(a.ouvintes) : '') + ' · entra na ordem por ouvintes, como os outros' : (v === n ? n + (n === 1 ? ' música' : ' músicas') : v + ' de ' + n + ' músicas na página') +
       (a.ouvintes != null ? ' · ' + ouv(a.ouvintes) : '') +
       (a.pasta ? ' · pasta ' + esc(a.pasta) : ' · só participação') + (a.provavel ? ' · <em>confira se é a mesma pessoa</em>' : '') +
       (a.foto ? (a.tipo === 'capa' ? ' · <em>sem foto no Spotify (usa uma capa)</em>' : '') : ' · <em>sem foto</em>');
     var foto = a.foto ? '<img src="' + esc(peq(a.foto)) + '" alt="" loading="lazy">' : esc(ini(a.nome));
     // foto própria (17/10/2026): artista sem foto no Spotify ganha a que o Bruno subir
-    var troca = abertos[a.id] && !a.eu ? '<div class="gv-troca"><label class="pill"><input type="file" accept="image/*" data-foto="' + esc(a.id) + '" hidden>' + (a.manual ? 'Trocar a foto' : 'Subir uma foto') + '</label>' +
+    var troca = abertos[a.id] ? '<div class="gv-troca"><label class="pill"><input type="file" accept="image/*" data-foto="' + esc(a.id) + '" hidden>' + (a.manual ? 'Trocar a foto' : 'Subir uma foto') + '</label>' +
       (a.manual ? '<button class="pill" type="button" data-tirarfoto="' + esc(a.id) + '">Voltar pra do Spotify</button>' : '') +
       '<small>' + (a.manual ? 'Foto sua (o Atualizar não troca).' : a.tipo === 'capa' ? 'No Spotify ele não tem foto: a página usa a capa de um lançamento.' : a.foto ? 'Foto do Spotify.' : 'Sem foto: a página mostra as iniciais.') + '</small></div>' : '';
     var fx = abertos[a.id] ? troca + '<ul class="gv-fx">' + a.faixas.map(function (id) {
@@ -136,7 +183,7 @@
       if (res) res.textContent = 'os artistas das suas músicas';
       return;
     }
-    var mostra = dados.artistas.filter(function (a) { return !a.eu && !a.fora && visiveis(a) > 0; }).length;
+    var mostra = dados.artistas.filter(function (a) { return !a.fora && visiveis(a) > 0; }).length;
     if (res) res.textContent = mostra + ' artistas na página · ' + (dados.noAr ? 'no ar pra todo mundo' : 'fora do ar (só você vê a prévia)');
     var h = '<div class="gv-topo"><div class="sw"><div><b>No ar</b><small>' +
       (dados.noAr ? 'Todo mundo vê a página e a linha "Quem já gravou" no fim da aba Músicas.' : 'Desligado: a página e a linha só aparecem pra você, logado no painel.') +
@@ -144,6 +191,12 @@
       '<a href="' + PAGINA + '" target="_blank" rel="noopener">Ver ' + (dados.noAr ? 'a página' : 'a prévia') + ' ↗</a></div>';
     h += '<div class="gv-img"><div><b>Fotos, capas e ouvintes</b><small>' + (dados.faltam ? (buscando ? 'buscando no Spotify… faltam ' + dados.faltam : 'faltam ' + dados.faltam + ' (fotos, capas das faixas e ouvintes mensais). Sem foto, a página mostra as iniciais.') : 'Tudo guardado no nosso servidor' + (dados.atualizado ? ' (' + new Date(dados.atualizado).toLocaleDateString('pt-BR') + ')' : '') + '. Toca em Atualizar quando um artista trocar a foto ou pra ler os ouvintes do mês.') + '</small></div>' +
       '<button class="pill' + (dados.faltam ? ' solid' : '') + '" type="button" id="gvImg"' + (buscando ? ' disabled' : '') + '>' + (buscando ? 'Buscando…' : dados.faltam ? 'Buscar' : 'Atualizar') + '</button></div>';
+    var nFx = Object.keys(dados.faixas || {}).length;
+    h += '<div class="gv-pl"><div class="gv-pl-topo"><div><b>Plays das músicas</b><small>' + (dados.playsEm ? 'Lidos em ' + quando(dados.playsEm) + '.' : 'Os da varredura de 17/10/2026.') + ' As músicas de cada artista aparecem das mais tocadas pras menos.</small></div>' +
+      '<button class="pill" type="button" data-plays="1" aria-expanded="' + verPlays + '">' + (verPlays ? 'Fechar' : 'Atualizar plays') + '</button></div>' +
+      (verPlays ? '<ol><li><b>Uma vez só:</b> arraste este botão pra barra de favoritos do navegador.<br><a class="gv-atalho" href="' + esc(codigoAtalho(Object.keys(dados.faixas || {}))) + '" onclick="event.preventDefault();return false">Plays Caramujo</a><br><small>Se a lista de músicas mudar, arraste de novo (o atalho leva a lista de hoje: ' + nFx + ' músicas).</small></li>' +
+        '<li>Abra o Spotify neste navegador, logado na sua conta.<br><a class="gv-sp" href="https://open.spotify.com/" target="_blank" rel="noopener">Abrir o Spotify ↗</a></li>' +
+        '<li>Lá no Spotify, toque no favorito <b>Plays Caramujo</b>. Ele passa pelas ' + nFx + ' músicas (uns ' + Math.max(1, Math.round(nFx * 1.1 / 60)) + ' minutos) e volta pra cá sozinho com os números.<br><small>Não precisa fazer nada no meio. Música com menos de mil plays fica 0 (o Spotify não mostra) e vai pela data.</small></li></ol>' : '') + '</div>';
     // Ordem da página (17/10/2026): padrão por ouvintes ou a do Bruno (arrastar)
     var porId = {}; dados.artistas.forEach(function (a) { porId[a.id] = a; });
     var manual = !!dados.ordemManual;
@@ -161,7 +214,7 @@
     var comPasta = outros.filter(function (a) { return a.pasta; }), feat = outros.filter(function (a) { return !a.pasta; });
     var posPag = {}; (dados.ordemPagina || []).forEach(function (id, i) { posPag[id] = i; });
     var ord = function (x, y) { return (x.id in posPag ? posPag[x.id] : 1e6) - (y.id in posPag ? posPag[y.id] : 1e6) || faixaOuv(y.ouvintes) - faixaOuv(x.ouvintes) || y.faixas.length - x.faixas.length || x.nome.localeCompare(y.nome, 'pt'); };
-    if (solo.length) h += '<div class="gv-sec"><b>Suas músicas solo</b><small>O cartão @rideblan33 abre a página. A chave tira ele (ou uma faixa) da página.</small><ul class="gv-lista">' + solo.map(linhaArtista).join('') + '</ul></div>';
+    if (solo.length) h += '<div class="gv-sec"><b>Você</b><small>Seu cartão: as músicas em que você aparece como artista (solo, principal ou feat). A chave tira ele ou uma faixa da página.</small><ul class="gv-lista">' + solo.map(linhaArtista).join('') + '</ul></div>';
     h += '<div class="gv-sec"><b>Com pasta no Drive · ' + comPasta.length + '</b><small>Toque no nome pra ver as músicas. A chave tira da página.</small><ul class="gv-lista">' + comPasta.sort(ord).map(linhaArtista).join('') + '</ul></div>';
     h += '<div class="gv-sec"><b>Só participação · ' + feat.length + '</b><small>Cantaram junto nas faixas, mas não têm pasta no Drive.</small><ul class="gv-lista">' + feat.sort(ord).map(linhaArtista).join('') + '</ul></div>';
     raiz.innerHTML = h;
@@ -206,6 +259,7 @@
         buscarImagens(); return;
       }
       if (t.dataset.verordem) { verOrdem = !verOrdem; desenhar(); return; }
+      if (t.dataset.plays) { verPlays = !verPlays; desenhar(); return; }
       if (t.dataset.modo) {
         var quer = t.dataset.modo === 'manual';
         if (quer === !!dados.ordemManual) return;

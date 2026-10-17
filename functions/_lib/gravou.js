@@ -14,7 +14,10 @@
 // no lugar da foto, 1 sem imagem.
 
 export const EU = '15K9QWM2Q6Zyxb6RsAn9RZ';          // o @rideblan33 no Spotify
-const FOTO_EU = '/assets/perfil/rideblan33-480.webp'; // a foto do perfil do site (cartão das faixas solo)
+// rodada N (17/10/2026): o @rideblan33 é artista da lista (ordem por ouvintes, foto do Spotify como
+// os outros); a foto do perfil do site só entra enquanto o painel não buscou a do Spotify
+const FOTO_EU = '/assets/perfil/rideblan33-480.webp';
+const playsDe = (g, id, daLista) => (id in g.plays ? g.plays[id] : daLista || 0);
 const UA = 'Mozilla/5.0 (compatible; CaramujoRecords/1.0; +https://caramujorecords.com.br)';
 const RE_ID = /^[A-Za-z0-9]{22}$/;
 const ehEu = (id, nome) => id === EU || id === '5z5vPFiQeDagCbYiVAysa3' || /^@?rideblan(33)?$/i.test(String(nome || '').trim());
@@ -195,6 +198,8 @@ export function gravouLimpar(o) {
   return {
     noAr: !!o.noAr, escondidos: soIds(o.escondidos), faixasFora: soIds(o.faixasFora), fotos: soImgs(o.fotos), tipos, capas: soImgs(o.capas),
     guardadas, manuais: soIds(o.manuais), ordem: soIds(o.ordem), ordemManual: !!o.ordemManual, ouvintes: soNums(o.ouvintes, (n) => n >= 0 && n < 1e10), conferido: soNums(o.conferido, (n) => n > 0 && n < 1e9),
+    // plays lidos pelo botão do painel (rodada N): {<id da faixa>: plays}; valem no lugar dos da lista
+    plays: soNums(o.plays, (n) => n >= 0 && n < 1e11), playsEm: typeof o.playsEm === 'string' ? o.playsEm.slice(0, 30) : null,
     refazer: Number.isFinite(Number(o.refazer)) && Number(o.refazer) > 0 ? Math.round(Number(o.refazer)) : 0,
     at: typeof o.at === 'string' ? o.at.slice(0, 30) : null
   };
@@ -230,7 +235,7 @@ export function montarGravou(g) {
   const fora = new Set(g.escondidos), ff = new Set(g.faixasFora);
   const nomes = Object.fromEntries(ARTISTAS.map((a) => [a[0], a[1]]));
   const faixas = FAIXAS.filter((f) => !ff.has(f[0])).map(([id, nome, alb, ars, plays, data, img]) => ({
-    id, nome, alb, ars: ars.filter((a) => !fora.has(a)), capa: capaDaFaixa(g, alb, img), plays: plays || 0, data: data || ''
+    id, nome, alb, ars: ars.filter((a) => !fora.has(a)), capa: capaDaFaixa(g, alb, img), plays: playsDe(g, id, plays), data: data || ''
   })).filter((f) => f.ars.length);
   const usados = new Set();
   const slugs = new Set();
@@ -241,7 +246,7 @@ export function montarGravou(g) {
     let s = slugArtista(nome), n = 2;
     while (slugs.has(s)) s = slugArtista(nome) + '-' + n++;
     slugs.add(s);
-    return { id, nome, slug: s, pasta: !!pasta, foto: fotoDe(g, id), tipo: g.manuais.includes(id) ? 'foto' : g.tipos[id] || '', ouvintes: g.ouvintes[id] || 0, faixas: fs.map((f) => f.id) };
+    return { id, nome, slug: s, pasta: !!pasta, eu: id === EU, foto: fotoDe(g, id) || (id === EU ? FOTO_EU : null), tipo: g.manuais.includes(id) ? 'foto' : g.tipos[id] || '', ouvintes: g.ouvintes[id] || 0, faixas: fs.map((f) => f.id) };
   }).filter((a) => a.faixas.length)
     .sort((x, y) => faixaDeOuvintes(y.ouvintes) - faixaDeOuvintes(x.ouvintes) || y.faixas.length - x.faixas.length ||
       y.ouvintes - x.ouvintes || x.nome.localeCompare(y.nome, 'pt', { sensitivity: 'base' }));
@@ -251,14 +256,8 @@ export function montarGravou(g) {
     const pos = new Map(g.ordem.map((id, i) => [id, i]));
     artistas.sort((x, y) => (pos.has(x.id) ? pos.get(x.id) : 1e6) - (pos.has(y.id) ? pos.get(y.id) : 1e6));
   }
-  // Cartão "@rideblan33" (17/10/2026): as faixas solo dele (ars = [EU]); vem antes de todos na
-  // página e não conta como artista (os números e a vitrine falam de quem gravou com ele)
-  nomes[EU] = '@rideblan33';
-  const solo = fora.has(EU) ? [] : faixas.filter((f) => f.ars.length === 1 && f.ars[0] === EU)
-    .sort((x, y) => faixaDePlays(y.plays) - faixaDePlays(x.plays) || (y.data > x.data ? 1 : y.data < x.data ? -1 : 0));
-  const eu = solo.length ? { id: EU, nome: '@rideblan33', slug: 'rideblan33', eu: true, pasta: false, foto: FOTO_EU, tipo: 'foto', ouvintes: 0, faixas: solo.map((f) => f.id) } : null;
   const porId = Object.fromEntries(faixas.map((f) => [f.id, { id: f.id, nome: f.nome, capa: f.capa, com: f.ars.map((a) => nomes[a]).filter(Boolean) }]));
-  return { noAr: g.noAr, artistas, eu, faixas: porId, nFaixas: usados.size };
+  return { noAr: g.noAr, artistas, faixas: porId, nFaixas: usados.size };
 }
 
 // O que falta ler: artista sem foto lida, sem ouvintes, foto do Spotify ainda não guardada no
@@ -368,13 +367,14 @@ function corpoPainel(g, comR2 = true) {
   return {
     ok: true, noAr: g.noAr, atualizado: g.at, ordemManual: g.ordemManual, ordemPagina: montarGravou(g).artistas.map((a) => a.id),
     faltam: f.art.length + f.albs.length,
-    artistas: [[EU, '@rideblan33', '', 0, true]].concat(ARTISTAS).filter((a) => !a[4] || FAIXAS.some((f) => f[3].length === 1 && f[3][0] === EU)).map(([id, nome, pasta, provavel, eu]) => ({ eu: !!eu,
+    artistas: ARTISTAS.map(([id, nome, pasta, provavel]) => ({ eu: id === EU,
       id, nome, pasta: pasta || '', provavel: !!provavel, fora: fora.has(id),
-      foto: eu ? FOTO_EU : fotoDe(g, id), tipo: eu ? 'foto' : g.manuais.includes(id) ? 'foto' : g.tipos[id] || '', guardada: !!g.guardadas[id], manual: g.manuais.includes(id),
+      foto: fotoDe(g, id) || (id === EU ? FOTO_EU : null), tipo: g.manuais.includes(id) ? 'foto' : g.tipos[id] || '', guardada: !!g.guardadas[id], manual: g.manuais.includes(id),
       ouvintes: id in g.ouvintes ? g.ouvintes[id] : null,
       faixas: FAIXAS.filter((x) => x[3].includes(id)).map((x) => x[0])
     })),
-    faixas: Object.fromEntries(FAIXAS.map(([id, nome, alb, ars, plays, data, img]) => [id, { nome, ars, capa: capaDaFaixa(g, alb, img), plays: plays || 0, data: data || '', fora: ff.has(id) }]))
+    faixas: Object.fromEntries(FAIXAS.map(([id, nome, alb, ars, plays, data, img]) => [id, { nome, ars, capa: capaDaFaixa(g, alb, img), plays: playsDe(g, id, plays), data: data || '', fora: ff.has(id) }])),
+    playsEm: g.playsEm
   };
 }
 // op: 'gravou' (GET), 'gravou-no-ar', 'gravou-esconder', 'gravou-imagens', 'gravou-atualizar'
@@ -388,7 +388,7 @@ export async function painelGravou(op, d, body = {}, { pegar = pegarPadrao, baix
   if (op === 'gravou-esconder') {
     const id = String(body.id || '');
     const lista = body.tipo === 'faixa' ? 'faixasFora' : body.tipo === 'artista' ? 'escondidos' : null;
-    const existe = body.tipo === 'faixa' ? FAIXAS.some((f) => f[0] === id) : ARTISTAS.some((a) => a[0] === id) || id === EU;
+    const existe = body.tipo === 'faixa' ? FAIXAS.some((f) => f[0] === id) : ARTISTAS.some((a) => a[0] === id);
     if (!lista || !existe) return { corpo: { erro: 'item não encontrado' }, status: 400, mudou: false };
     const s = new Set(g[lista]);
     if (body.esconder) s.add(id); else s.delete(id);
@@ -428,6 +428,21 @@ export async function painelGravou(op, d, body = {}, { pegar = pegarPadrao, baix
     g.ordem = [...new Set(ids)]; g.ordemManual = true;
     await gravarMeta(d, g);
     return { corpo: corpoPainel2(g), mudou: true };
+  }
+  // Plays (rodada N): o Spotify só mostra os plays pra quem está logado, então quem lê é o navegador do
+  // Bruno (o atalho "Plays Caramujo" do painel passa pelas faixas e volta pro painel com os números);
+  // aqui só confere e guarda. Faixa fora da lista ou número estranho fica de fora.
+  if (op === 'gravou-plays') {
+    const ok = new Set(FAIXAS.map((f) => f[0]));
+    const novos = {};
+    for (const [id, n] of Object.entries(body.plays && typeof body.plays === 'object' ? body.plays : {})) {
+      const v = Number(n);
+      if (ok.has(id) && Number.isInteger(v) && v >= 0 && v < 1e11) novos[id] = v;
+    }
+    if (!Object.keys(novos).length) return { corpo: { erro: 'nenhum play' }, status: 400, mudou: false };
+    g.plays = { ...g.plays, ...novos }; g.playsEm = new Date().toISOString();
+    await gravarMeta(d, g);
+    return { corpo: { ...corpoPainel2(g), lidos: Object.keys(novos).length }, mudou: true };
   }
   if (op === 'gravou-ordem-modo') {
     if (body.manual && !g.ordem.length) g.ordem = montarGravou(g).artistas.map((a) => a.id);

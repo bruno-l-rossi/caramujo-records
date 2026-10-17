@@ -1500,3 +1500,6 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .qg-card b{display:block;margin-top:10px;font-size:.74rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (hover:hover){.qg-ver:hover{color:var(--cream);border-bottom-color:var(--cream)}.qg-card:hover b{color:var(--cream)}.qg-card:hover img{border-color:var(--fire)}}
 @media (min-width:900px){.qg-trilho{gap:26px}.qg-card{width:140px}.qg-card img,.qg-card .qg-ini,.qg-card .qg-mais{width:140px;height:140px}}
+
+/* hero com o logo (17/10/2026, rodada N): o nome é a letra do logo (SVG), no tamanho do título antigo */
+.hero-title .hero-wm{display:block;width:4.55em;max-width:100%;height:auto}
