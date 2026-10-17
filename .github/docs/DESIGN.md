@@ -113,8 +113,10 @@ em peso normal). Sem música no ar, o bloco volta a ser só "Beat tapes" como an
   quando tem áudio; sem áudio, a capa leva pro Spotify. Embaixo: nome (16px, 700),
   artistas em cinza e os botões redondos do Spotify/YouTube (só dos links que existem). A
   que está tocando ganha a barra fina branca do andamento embaixo.
-- **Recentes** (a mais nova primeiro, pela data de lançamento; ou na ordem que o Bruno
-  arrastar no painel): lista na caixa `#141414` com borda `#1f1f1f`: capinha 52px, nome,
+- **Recentes** (FORA DO PERFIL desde 17/10/2026, teste do Bruno pra aba ficar mais enxuta;
+  a chave é `RECENTES_NO_PERFIL` em functions/_lib/musicas.js e os dados seguem no painel.
+  Sem nenhum destaque, a lista aparece pra aba não ficar vazia. Quando volta: a mais nova
+  primeiro, pela data de lançamento; ou na ordem que o Bruno arrastar no painel): lista na caixa `#141414` com borda `#1f1f1f`: capinha 52px, nome,
   artistas, data "jul 2026" em mono (só no computador), botões e o play.
 - **Chamada no fim:** caixa com borda `#2a2a2a`, ícone do Spotify, só o título "OUVIR O
   PORTFÓLIO COMPLETO" e a seta ↗ (desde 06/10/2026, sem subtítulo). Abre o perfil de
@@ -139,8 +141,9 @@ Google, redes, direto) abre em Músicas.
 Página `/rideblan33/artistas` e a linha no fim da aba Músicas (mockup aprovado: canvas linha M). Fundo preto do bloco do perfil (`--preto`, `--folha` nos cartões, `--div` nas linhas), texto em Schibsted Grotesk; nada de cor fora da paleta.
 - Topo: logo `caramujo-h` (132px no celular, 168px no computador) e o botão-pílula "@rideblan33" que volta pro perfil. Kicker "PORTFÓLIO DO @RIDEBLAN33", h1 "Quem já gravou" 40/56px 800, frase com os números da lista (nunca inventar), busca em pílula.
 - Cartão do artista aberto: foto redonda (96px celular, 180px computador; sem foto = iniciais em `#1c1c1c`), "N músicas com o @rideblan33", botão branco "Spotify". Faixas com capa 48px, nome, quem canta e a seta ↗; 6 no celular e 8 no computador (2 colunas) + pílula "Ver as N músicas".
-- Grade: fotos redondas, 3 colunas no celular, 4 a partir de 600px, 6 no computador; o artista aberto ganha aro branco. Ordem = mais faixas primeiro.
-- Linha da aba Músicas: título "Quem já gravou", "N artistas ›", até 7 fotos sobrepostas (quem tem foto primeiro) + "+N", e a frase "A, B, C e mais N artistas cantaram em músicas produzidas pelo @rideblan33." Entrou no lugar do "Ouvir o portfólio completo" (saiu em 16/10/2026).
+- Grade: fotos redondas, 3 colunas no celular, 4 a partir de 600px, 6 no computador; o artista aberto ganha aro branco. Ordem (desde 17/10/2026) = mais ouvintes mensais no Spotify primeiro; diferença pequena (menos de 35%) conta como empate e vence quem tem mais faixas.
+- Linha da aba Músicas: título "Quem já gravou", "N artistas ›", até 7 fotos sobrepostas (quem tem foto primeiro) + "+N", e a frase "A, B, C e mais N artistas cantaram em músicas produzidas pelo @rideblan33." Entrou no lugar do "Ouvir o portfólio completo" (saiu em 16/10/2026). Desde 17/10/2026 termina na chamada "VER TODOS OS N ARTISTAS →": pílula de borda branca 50% (48px de altura, Schibsted 700 12px caixa alta espaçada), a linha toda no celular e do tamanho do texto a partir de 601px; no mouse vira branca com texto preto (igual ao "Mix & Master" do "Quer um som assim?").
+- Fotos e capas saem do nosso R2 (capa/grv-*, capa/gra-*), não do endereço do Spotify (desde 17/10/2026).
 
 ## Pastilhas do perfil (desde 27/09/2026)
 

@@ -60,6 +60,16 @@ function toggleAvail(btn){
   btn.setAttribute('aria-checked',showAvailOnly?'true':'false');
   curPage=1; renderCards();
 }
+// Ordem da lista (17/10/2026: + "Mais novos" e "BPM"). Mais novos = a beat tape do beat na ordem
+// do perfil (nv, da /api/vitrine; a 1ª tape do perfil = a mais nova); dentro da tape, a ordem
+// do catálogo. BPM = do mais lento pro mais rápido (sem BPM no fim). Sort estável: empate
+// fica na ordem do catálogo.
+function ordenarBeats(src){
+  if(sortMode==='aleatorio'&&shuffleOrder) src.sort((a,b)=>shuffleOrder.indexOf(a.id)-shuffleOrder.indexOf(b.id));
+  else if(sortMode==='novos'){ const nv=b=>{ const f=(window.__VIT||{})[String(b.id)]; return f&&typeof f.nv==='number'?f.nv:9999; }; src.sort((a,b)=>nv(a)-nv(b)); }
+  else if(sortMode==='bpm'){ const bp=b=>Number(b.bpm)||9999; src.sort((a,b)=>bp(a)-bp(b)); }
+  return src;
+}
 function sortBeats(v){
   sortMode=v;
   if(v==='aleatorio'){ // embaralha de novo a cada seleção
@@ -161,7 +171,7 @@ function renderCards(){
   if(window.__VIT_OK) src=src.filter(b=>(window.__VIT[String(b.id)]||{}).mp3);
   if(showAvailOnly) src=src.filter(b=>!b.sold);
   if(beatQuery) src=src.filter(b=>normalizeStr(b.name).includes(beatQuery));
-  if(sortMode==='aleatorio'&&shuffleOrder) src.sort((a,b)=>shuffleOrder.indexOf(a.id)-shuffleOrder.indexOf(b.id));
+  ordenarBeats(src);
   if(src.length===0){
     wrap.innerHTML=`<div style="padding:2.5rem;text-align:center;color:var(--dim);font-size:.78rem;">Nenhum beat disponível neste filtro no momento.</div>`;
     document.getElementById('pagination').style.display='flex';
@@ -337,7 +347,7 @@ function feelingLucky(){
   // recalcula a lista na mesma ordem do renderCards pra achar a página do sorteado
   let src=curFilt==='todos'?BEATS.slice():BEATS.filter(b=>b.genre===curFilt);
   if(showAvailOnly) src=src.filter(b=>!b.sold);
-  if(sortMode==='aleatorio'&&shuffleOrder) src.sort((a,b)=>shuffleOrder.indexOf(a.id)-shuffleOrder.indexOf(b.id));
+  ordenarBeats(src);
   const idx=src.findIndex(b=>b.id===pick.id);
   curPage=Math.floor(idx/BEATS_PER_PAGE)+1;
   luckyPlayId=pick.id;
@@ -494,23 +504,29 @@ function clearCart(){
 // O front só envia o código digitado pra /api/validate-coupon.
 let activeCoupon = null; // { code, pct?, fixedPrice? }
 
-/* ── LEVE MAIS, PAGUE MENOS (11/10/2026) ─────────────────────────────────
-   Desconto por quantidade de beats, sozinho no carrinho: 1 = R$119, 2 = R$219, 3 = R$299,
-   4 = R$90 cada, 5 ou mais = R$80 cada (LEVE_MAIS no index.html; o servidor refaz a mesma conta
-   com a mesma tabela). No carrinho, cada beat mostra o preço cheio riscado e o novo ao lado:
-   até 3 beats, o 2º sai por R$100 e o 3º por R$80; com 4 ou mais, todos saem pelo preço do degrau. */
+/* ── LEVE MAIS, PAGUE MENOS (11/10/2026; curva nova em 17/10/2026) ─────────────────────────
+   Desconto por quantidade de beats, sozinho no carrinho. Desde 17/10: o 1º R$119, o 2º R$99 e do
+   3º em diante R$79 cada (LEVE_MAIS={'2':218,'3':297,'+':79} no index.html: '+' = quanto soma cada
+   beat depois do último degrau). O servidor refaz a mesma conta com a mesma tabela. No carrinho,
+   cada beat mostra o preço cheio riscado e o que ele custa a mais (119, 99, 79, 79…). */
 function totalDosBeats(n){
   if(n<=0) return 0;
   if(n===1) return PRICE_BEAT;
   const t=(typeof LEVE_MAIS==='object'&&LEVE_MAIS)||{};
   if(t[String(n)]) return t[String(n)];
+  if(t['+']){
+    let k=0; Object.keys(t).forEach(x=>{ if(/^\d+$/.test(x)&&Number(x)<n&&Number(x)>k) k=Number(x); });
+    return (k?t[String(k)]:PRICE_BEAT)+(n-(k||1))*t['+'];
+  }
   let cada=0, desde=0;
   Object.keys(t).forEach(k=>{ const m=k.match(/^(\d+)\+$/); if(m&&n>=Number(m[1])&&Number(m[1])>desde){ desde=Number(m[1]); cada=t[k]; } });
   return cada ? cada*n : PRICE_BEAT*n;
 }
 function precosDosBeats(n){
   const out=[];
-  if(n<=3){ for(let i=1;i<=n;i++) out.push(totalDosBeats(i)-totalDosBeats(i-1)); return out; }
+  // curva por beat a mais: cada beat mostra o que ele soma (119, 99, 79…)
+  const t=(typeof LEVE_MAIS==='object'&&LEVE_MAIS)||{};
+  if(n<=3||t['+']){ for(let i=1;i<=n;i++) out.push(totalDosBeats(i)-totalDosBeats(i-1)); return out; }
   const tot=totalDosBeats(n), cada=Math.floor(tot/n);
   for(let i=0;i<n;i++) out.push(i<n-1?cada:tot-cada*(n-1));
   return out;
@@ -524,8 +540,10 @@ function pintarLeveMais(){
     const off=Math.round((1-T(n)/(PRICE_BEAT*n))*100);
     return `<div class="lm-l"><span>${n} ${n===1?'beat':'beats'}</span><span>R$${T(n)}${off>0?` <i>${off}% off</i>`:''}</span></div>`;
   }).join('');
-  const seis=T(6)-T(5);
-  const pe=(seis>0&&seis<PRICE_BEAT?`Do 6º em diante, R$${seis} cada. `:'')+'O desconto entra sozinho no carrinho, e o cupom da lista vale em cima.';
+  const seis=T(6)-T(5), LM=(typeof LEVE_MAIS==='object'&&LEVE_MAIS)||{};
+  // 17/10/2026: com a curva por beat a mais, o pé conta a regra inteira
+  const regra=LM['+']?`O 2º sai por R$${T(2)-T(1)} e do 3º em diante, R$${T(3)-T(2)} cada. `:(seis>0&&seis<PRICE_BEAT?`Do 6º em diante, R$${seis} cada. `:'');
+  const pe=regra+'O desconto entra sozinho no carrinho, e o cupom da lista vale em cima.';
   el.innerHTML=linhas+`<p class="lm-pe">${pe}</p>`; el.dataset.ok='1';
 }
 try{ pintarLeveMais(); }catch(e){ setTimeout(function(){ throw e; }); }
@@ -539,6 +557,18 @@ function descontoLeveMais(){
   return beats.length*PRICE_BEAT-totalDosBeats(beats.length);
 }
 
+// PIX com desconto (17/10/2026): PIX_OFF no index.html (5%); o servidor cobra igual (valorPix)
+function pixOff(){ return (typeof PIX_OFF==='number'&&PIX_OFF>0)?PIX_OFF:0; }
+function valorPix(total){ const o=pixOff(); return o?Math.round(total*(100-o))/100:total; }
+function reais(v){ return Number.isInteger(v)?String(v):v.toFixed(2).replace('.',','); }
+// De onde veio quem compra (17/10/2026): a visita desta aba (cr_origem, o mesmo do funil) e a
+// 1ª visita do aparelho (cr_primeira, 90 dias). Vai junto do pagamento; o servidor guarda.
+function origemCompra(){
+  let visita=null, primeira=null;
+  try{ visita=sessionStorage.getItem('cr_origem'); }catch(_){}
+  try{ const p=JSON.parse(localStorage.getItem('cr_primeira')||'null'); if(p&&p.o&&Date.now()-p.t<90*864e5) primeira=p.o; }catch(_){}
+  return { visita: visita||null, primeira: primeira||visita||null };
+}
 function calcDiscount(subtotal) {
   if (!activeCoupon) return 0;
   if (activeCoupon.fixedPrice !== undefined && activeCoupon.fixedPrice !== null) return Math.max(0, subtotal - activeCoupon.fixedPrice);
@@ -626,6 +656,8 @@ function updateCart(){
     conta.hidden=!linhas.length;
   }
   totEl.textContent=`R$ ${total}`;
+  const parc=document.getElementById('cpParc');
+  if(parc) parc.innerHTML = pixOff()&&total>0 ? `No PIX <b>R$ ${reais(valorPix(total))}</b> (${pixOff()}% off) ou cartão em até 12x` : 'PIX ou cartão em até 12x';
   const pb=document.getElementById('cpBody');
   if(cart.length===0){
     pb.innerHTML='<div class="cp-empty">Nenhum item adicionado.</div>';
@@ -658,12 +690,18 @@ function updateCart(){
   if(nBeats>=1){
     const T=n=>totalDosBeats(n), prox=nBeats+1, cada=n=>T(n)/n;
     let msg;
-    if(nBeats>=5||!(cada(prox)<cada(nBeats))) msg=`Você chegou no menor preço: <b>R$${Math.round(cada(nBeats))}</b> cada beat.`;
+    const LM=(typeof LEVE_MAIS==='object'&&LEVE_MAIS)||{}, mais=T(prox)-T(nBeats);
+    // 17/10/2026: curva por beat a mais (o 2º R$99, do 3º em diante R$79)
+    if(LM['+']){
+      if(nBeats===1) msg=`Põe mais 1 beat e o 2º sai por <b>R$${mais}</b>. Do 3º em diante, R$${T(3)-T(2)} cada.`;
+      else msg=`Cada beat a mais sai por <b>R$${mais}</b>.`;
+    }
+    else if(nBeats>=5||!(cada(prox)<cada(nBeats))) msg=`Você chegou no menor preço: <b>R$${Math.round(cada(nBeats))}</b> cada beat.`;
     else if(prox>=4&&T(prox)%prox===0) msg=`Põe mais 1 e os ${prox} saem por <b>R$${T(prox)/prox}</b> cada (R$${T(prox)}).`;
     else msg=`Põe mais 1 beat e o ${prox}º sai por <b>R$${T(prox)-T(nBeats)}</b>.`;
-    if(nBeats<=2&&T(4)%4===0) msg+=` Com 4, cada um sai por R$${T(4)/4}; com 5 ou mais, R$${Math.round(cada(5))}.`;
+    if(!LM['+']&&nBeats<=2&&T(4)%4===0) msg+=` Com 4, cada um sai por R$${T(4)/4}; com 5 ou mais, R$${Math.round(cada(5))}.`;
     const seg=[1,2,3,4,5].map(k=>`<i${k<=nBeats?' class="on"':''}></i>`).join('');
-    const num=[1,2,3,4,5].map(k=>`<span${k<=nBeats?' class="on"':''}>${k===5?'5+':k} · ${T(k)}</span>`).join('');
+    const num=[1,2,3,4,5].map(k=>`<span${k<=nBeats?' class="on"':''}>${k===5&&!LM['+']?'5+':k} · ${T(k)}</span>`).join('');
     regua=`<div class="lm-reg" id="lmRegua"><p>${msg}</p><div class="lm-bar" aria-hidden="true">${seg}</div><div class="lm-num" aria-hidden="true">${num}</div></div>`;
   }
 
@@ -834,6 +872,8 @@ async function goToPayment(){
     const discountPay=calcDiscount(subtotalPay);
     const total=subtotalPay - discountPay;
     const itemsDesc=cart.map(c=>c.qty&&c.qty>1?`${c.name} x${c.qty}`:c.name).join(' + ');
+    const av=document.getElementById('mpPixAviso');
+    if(av){ av.hidden=!pixOff(); if(pixOff()) av.innerHTML=`No PIX sai por <b>R$ ${reais(valorPix(total))}</b> (${pixOff()}% off). No cartão, R$ ${reais(total)} em até 12x.`; }
     const email=document.getElementById('mpEmail').value.trim();
     const cpf=document.getElementById('mpCpf').value.replace(/\D/g,'');
 
@@ -908,13 +948,14 @@ async function goToPayment(){
                 headers:{'Content-Type':'application/json'},
                 body: JSON.stringify({
                   formData, selectedPaymentMethod,
-                  amount: total,
+                  amount: (formData&&formData.payment_method_id==='pix') ? valorPix(total) : total,
                   description: itemsDesc,
                   email, name, artistName,
                   cpf: document.getElementById('mpCpf').value.replace(/\D/g,''),
                   items: cart.map(c=>({name:c.qty&&c.qty>1?`${c.name} x${c.qty}`:c.name,price:c.price,type:c.type,pkgBeats:c.pkgBeats||null})),
                   termsAcceptance,
                   couponCode: activeCoupon ? activeCoupon.code : null,
+                  origem: origemCompra(),
                 }),
               });
               const data = await res.json();
@@ -988,7 +1029,7 @@ async function goToPayment(){
       <div class="pix-reserva" style="padding:1.5rem;border:1px solid var(--wire);background:var(--mole);">
         <p style="font-family:'Cormorant Garamond',sans-serif;font-size:1rem;color:var(--cream);letter-spacing:.1em;margin-bottom:.5rem;">PAGAMENTO VIA PIX</p>
         <p style="font-size:.7rem;color:var(--amber);margin-bottom:1rem;line-height:1.6;">O cartão não carregou agora. Dá pra pagar com PIX: o código sai na hora e a entrega é a mesma.</p>
-        <p style="font-size:.76rem;color:var(--dim);line-height:1.8;">Total: <strong style="color:var(--cream)">R$ ${String(totalFallback).replace('.',',')}</strong></p>
+        <p style="font-size:.76rem;color:var(--dim);line-height:1.8;">Total no PIX: <strong style="color:var(--cream)">R$ ${reais(valorPix(totalFallback))}</strong>${pixOff()?` (${pixOff()}% off)`:''}</p>
         <button class="mp-btn-primary" id="mpPixDireto" type="button" style="margin-top:1rem;" onclick="pagarPixDireto(this)">GERAR O PIX</button>
         <p id="mpPixDiretoErr" role="alert" style="font-size:.7rem;color:var(--bone);line-height:1.6;margin-top:.8rem;"></p>
         <p style="font-size:.66rem;color:var(--dim);line-height:1.7;margin-top:.8rem;">Prefere cartão? <button type="button" onclick="location.reload()" style="all:unset;cursor:pointer;color:var(--amber);text-decoration:underline;">Recarregue a página</button>. Qualquer problema, chama o <strong style="color:var(--bone)">@rideblan33</strong> no Instagram.</p>
@@ -1032,7 +1073,7 @@ async function pagarPixDireto(btn){
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         formData:{ payment_method_id:'pix' }, selectedPaymentMethod:'bank_transfer',
-        amount: total,
+        amount: valorPix(total),
         description: cart.map(c=>c.qty&&c.qty>1?`${c.name} x${c.qty}`:c.name).join(' + '),
         email: document.getElementById('mpEmail').value.trim(),
         name: document.getElementById('mpName').value.trim(),
@@ -1041,6 +1082,7 @@ async function pagarPixDireto(btn){
         items: cart.map(c=>({name:c.qty&&c.qty>1?`${c.name} x${c.qty}`:c.name,price:c.price,type:c.type,pkgBeats:c.pkgBeats||null})),
         termsAcceptance:{ accepted:true, version:'caramujo-termos-v1-2026', timestamp:new Date().toISOString(), userAgent:navigator.userAgent, pageUrl:window.location.href },
         couponCode: activeCoupon ? activeCoupon.code : null,
+        origem: origemCompra(),
       }),
     });
     const data=await res.json().catch(()=>({}));
@@ -1929,7 +1971,7 @@ try{
     var fa=document.getElementById('filtAvail'); if(fa){fa.classList.remove('on');fa.setAttribute('aria-checked','false');}
     // acha a página na mesma ordenação do renderCards
     var src=BEATS.slice();
-    if(typeof sortMode!=='undefined'&&sortMode==='aleatorio'&&typeof shuffleOrder!=='undefined'&&shuffleOrder) src.sort(function(a,c){return shuffleOrder.indexOf(a.id)-shuffleOrder.indexOf(c.id);});
+    if(typeof ordenarBeats==='function') ordenarBeats(src);
     var idx=src.findIndex(function(x){return x.id===b.id;});
     if(idx>=0) curPage=Math.floor(idx/BEATS_PER_PAGE)+1;
     renderCards();
@@ -2137,6 +2179,8 @@ try{
     else origem='direto';
     ls('cr_origem',origem);
   }
+  // a 1ª visita do aparelho (17/10/2026): por onde a pessoa conheceu; vale 90 dias (vai junto da compra)
+  try{ var pr=JSON.parse(localStorage.getItem('cr_primeira')||'null'); if(!pr||!pr.o||Date.now()-pr.t>90*864e5) localStorage.setItem('cr_primeira',JSON.stringify({o:origem,t:Date.now()})); }catch(_){}
   // o ?de= já cumpriu o papel: sai da barra de endereço (o #beat= fica)
   try{ if(/[?&]de=/.test(location.search)&&history.replaceState) history.replaceState(null,'',location.pathname+location.hash); }catch(_){}
 
@@ -2602,7 +2646,7 @@ try{
     var gv=$('genVal'), gb=$('genBtn');
     if(gv) gv.textContent = curFilt==='todos' ? 'Todos' : ((typeof GENRE_LABELS==='object'&&GENRE_LABELS[curFilt])||curFilt);
     if(gb) gb.classList.toggle('ativo',curFilt!=='todos');
-    var ov=$('ordVal'); if(ov) ov.textContent = sortMode==='aleatorio' ? 'Aleatória' : 'Padrão';
+    var ov=$('ordVal'); if(ov) ov.textContent = ({aleatorio:'Aleatória',novos:'Mais novos',bpm:'BPM'})[sortMode] || 'Padrão';
     document.querySelectorAll('#ordMenu .mn-o').forEach(function(o){ o.classList.toggle('on',o.getAttribute('data-ordem')===sortMode); });
     var fa=$('filtAvail'); if(fa) fa.setAttribute('aria-checked',showAvailOnly?'true':'false');
     var t=$('nbTotal'); if(t) t.textContent = total + (total===1?' beat':' beats');

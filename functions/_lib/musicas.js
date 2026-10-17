@@ -13,6 +13,8 @@ import { slug } from './casar.js';
 import { somUrl as somPadrao } from './midia.js';
 
 export const CHAVE = 'musicas';
+// 17/10/2026 (teste do Bruno): a lista Recentes fora do perfil (os dados seguem no painel). Voltar = true.
+export const RECENTES_NO_PERFIL = false;
 export const MAX = 60;                 // músicas na lista (destaques + recentes)
 
 /* ---------- de onde a pessoa veio e em que aba o perfil abre ---------- */
@@ -272,7 +274,7 @@ async function resposta(d, m, somUrl) {
     audio: x.faixa && nomes[x.faixa] ? { titulo: nomes[x.faixa].title, pasta: nomes[x.faixa].pasta, som: somUrl(x.faixa) } : null
   });
   const faltamCapas = m.lista.filter((x) => !x.capa && x.capaUrl).length;
-  return { ok: true, noAr: m.noAr, ordemRecentes: m.ordemRecentes, destaques: destaques.map(mostra), recentes: recentes.map(mostra), max: MAX, faltamCapas };
+  return { ok: true, noAr: m.noAr, ordemRecentes: m.ordemRecentes, recentesNoPerfil: RECENTES_NO_PERFIL, destaques: destaques.map(mostra), recentes: recentes.map(mostra), max: MAX, faltamCapas };
 }
 
 // Abrir a tela: guarda as capas que faltam (até 4 por vez) e procura o áudio de quem

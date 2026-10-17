@@ -12,7 +12,7 @@ import { MIDIA, capaUrl, CAPA_VOLTA } from './midia.js';
 import { ICONES as ICONES_ABA, SELO_GRANDE } from './icones.js';
 import { RODAPE_GENEROS, CSS_RODAPE_GENEROS } from './generos.js';
 import { PADRAO as NUM_PADRAO, deTexto as numDeTexto, limpar as numLimpar, curto, longo } from './numeros.js';
-import { CHAVE as MUS_CHAVE, deTexto as musDeTexto, separar } from './musicas.js';
+import { CHAVE as MUS_CHAVE, deTexto as musDeTexto, separar, RECENTES_NO_PERFIL } from './musicas.js';
 import { LEVA_DE, deAttr } from './origem.js';
 import { CHAVE_GRAVOU, gravouDeTexto, gravouLimpar, montarGravou } from './gravou.js';
 import { fotoArtista } from './gravoupagina.js';
@@ -246,11 +246,21 @@ export function linhaGravou(gv) {
   const nomes = gv.artistas.slice(0, 3).map((a) => esc(a.nome));
   const frase = n > 3 ? `${nomes.join(', ')} e mais ${n - 3} artistas cantaram em músicas produzidas pelo @rideblan33.` : `${nomes.join(', ')} cantaram em músicas produzidas pelo @rideblan33.`;
   return `<a class="qg-ent" href="/rideblan33/artistas"${deAttr('perfil-gravou')} data-rede="aba-gravou"><span class="qg-ent-cab"><b>Quem já gravou</b><span class="qg-ver">${n} artistas ›</span></span>` +
-    `<span class="qg-fila" aria-hidden="true">${mostra.map((a) => fotoArtista(a)).join('')}${resto > 0 ? `<span class="qg-mais">+${resto}</span>` : ''}</span><span class="qg-frase">${frase}</span></a>`;
+    `<span class="qg-fila" aria-hidden="true">${mostra.map((a) => fotoArtista(a)).join('')}${resto > 0 ? `<span class="qg-mais">+${resto}</span>` : ''}</span><span class="qg-frase">${frase}</span><span class="qg-cta">Ver todos os ${n} artistas<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>`;
+}
+
+// 17/10/2026 (teste do Bruno): a lista Recentes saiu do perfil pra aba ficar mais enxuta; a página
+// de artistas (Quem já gravou) faz o papel de "ver tudo". Os dados seguem no painel: a chave é
+// RECENTES_NO_PERFIL em _lib/musicas.js. Sem nenhum destaque, as recentes aparecem (senão a aba fica vazia).
+// (globalThis.__CR_RECENTES só nos testes antigos, que conferem a lista com as recentes)
+const mostrarRecentes = () => (typeof globalThis.__CR_RECENTES === 'boolean' ? globalThis.__CR_RECENTES : RECENTES_NO_PERFIL);
+function separarNaPagina(mus) {
+  const { destaques, recentes } = separar(mus);
+  return mostrarRecentes() || !destaques.length ? { destaques, recentes } : { destaques, recentes: [] };
 }
 
 export function abaMusicas(mus, { previa = false, gravou = null } = {}) {
-  const { destaques, recentes } = separar(mus);
+  const { destaques, recentes } = separarNaPagina(mus);
   const n = destaques.length + recentes.length;
   let h = '';
   if (previa && !mus.noAr) h += '<p class="mx-previa">Prévia: só você vê esta aba, porque está logado no painel. Ela aparece pra todo mundo quando você ligar "No ar" em Músicas do perfil.</p>';
@@ -276,7 +286,7 @@ export function abaMusicas(mus, { previa = false, gravou = null } = {}) {
 // O que o mini player precisa pra tocar as músicas (inteiras), na ordem da página:
 // destaques e depois as recentes
 export function musicasDoPerfil(mus) {
-  const { destaques, recentes } = separar(mus);
+  const { destaques, recentes } = separarNaPagina(mus);
   return destaques.concat(recentes).map((m, k) => (temAudio(m) ? {
     k, n: m.nome, a: m.artistas || '', f: m.faixa, url: linkMus(m), sp: !!m.spotify,
     capa: capaMus(m).src, arte: capaMus(m).grande
@@ -285,7 +295,7 @@ export function musicasDoPerfil(mus) {
 
 // Pro Google: cada música é uma gravação produzida pelo @rideblan33 (a mesma pessoa do topo)
 function jsonMusicas(mus) {
-  const { destaques, recentes } = separar(mus);
+  const { destaques, recentes } = separarNaPagina(mus);
   const todas = destaques.concat(recentes);
   return {
     '@context': 'https://schema.org',
@@ -583,7 +593,11 @@ a.mx-c .mx-img{transition:transform .35s ease}
 .qg-fila .qg-ini{display:flex;align-items:center;justify-content:center;background:#1c1c1c;color:var(--apoio);font:800 17px var(--grot)}
 .qg-mais{display:flex;align-items:center;justify-content:center;background:var(--folha);color:var(--branco);font:700 14px var(--grot)}
 .qg-frase{display:block;margin-top:12px;font:400 14px/1.5 var(--grot);color:var(--apoio)}
-@media (hover:hover){.qg-ent:hover .qg-ver{color:var(--branco)}}
+/* 17/10/2026: chamada clara pra página de artistas (pedido do Bruno) */
+.qg-cta{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;margin-top:16px;padding:0 20px;border:1px solid rgba(255,255,255,.5);border-radius:999px;font:700 12px/1.2 var(--grot);letter-spacing:.16em;text-transform:uppercase;color:var(--branco);transition:border-color .2s,background .2s,color .2s}
+.qg-cta svg{width:16px;height:16px;flex:none}
+@media (min-width:601px){.qg-cta{display:inline-flex}}
+@media (hover:hover){.qg-ent:hover .qg-ver{color:var(--branco)}.qg-ent:hover .qg-cta{background:var(--branco);border-color:var(--branco);color:#000}}
 /* rodapé igual ao da vitrine (26/09/2026): selo, © e @rideblan33, mesmas letras e disposição */
 footer{padding:1.4rem 2.4rem calc(1.4rem + env(safe-area-inset-bottom,0px));background:var(--black);border-top:1px solid var(--wire);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
 footer img{height:30px;width:auto;display:block}

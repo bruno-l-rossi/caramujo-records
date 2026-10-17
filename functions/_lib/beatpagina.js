@@ -53,6 +53,13 @@ export function pacotes(precos) {
   const out = [];
   const lm = (precos && precos.leveMais) || {};
   if (unit && Object.keys(lm).length) {
+    // 17/10/2026: '+' = cada beat a mais depois do último degrau ("do 4º em diante, R$79 cada")
+    if (lm['+']) {
+      const exatos = Object.keys(lm).filter((k) => /^\d+$/.test(k)).map(Number);
+      const n = (exatos.length ? Math.max(...exatos) : 1) + 1;
+      const off = Math.round((1 - lm['+'] / unit) * 100);
+      if (off > 0) out.push({ n, cada: lm['+'], off, depois: true, preco: null });
+    }
     for (const [k, v] of Object.entries(lm)) {
       const m = k.match(/^(\d+)(\+?)$/); if (!m || !v) continue;
       const n = Number(m[1]), cada = m[2] ? v : null, preco = cada ? v * n : v;
@@ -338,7 +345,7 @@ ${acao}
 
 function pacotesTexto(pk, { link = true } = {}) {
   if (!pk.length) return '';
-  const lis = pk.map((p) => `<li>${p.cada ? `${p.n} ou mais a ${real(p.cada)} cada` : `${p.n} beats por ${real(p.preco)}`}<span class="off">${p.off}% off</span></li>`).join('');
+  const lis = pk.map((p) => `<li>${p.depois ? `do ${p.n}º em diante, ${real(p.cada)} cada` : p.cada ? `${p.n} ou mais a ${real(p.cada)} cada` : `${p.n} beats por ${real(p.preco)}`}<span class="off">${p.off}% off</span></li>`).join('');
   return `<ul class="pacs">${lis}</ul>`;
 }
 
@@ -547,7 +554,7 @@ export function paginaGenero(gslug, loja) {
 
   const p2 = pk.find((p) => p.n === 2), p3 = pk.find((p) => p.n === 3);
   const pacoteBloco = pk.length
-    ? `<div class="pacote"><div><div class="k">Leve mais, pague menos</div><p>Leva mais de um? ${pk.map((p) => `<span>${p.cada ? `${p.n} ou mais a ${real(p.cada)} cada` : `${p.n} beats por ${real(p.preco)}`}<span class="off">${p.off}% off</span></span>`).join(', ')}.</p></div><a href="/#beats"${deAttr(de)}>Escolher beats ›</a></div>`
+    ? `<div class="pacote"><div><div class="k">Leve mais, pague menos</div><p>Leva mais de um? ${pk.map((p) => `<span>${p.depois ? `do ${p.n}º em diante, ${real(p.cada)} cada` : p.cada ? `${p.n} ou mais a ${real(p.cada)} cada` : `${p.n} beats por ${real(p.preco)}`}<span class="off">${p.off}% off</span></span>`).join(', ')}.</p></div><a href="/#beats"${deAttr(de)}>Escolher beats ›</a></div>`
     : '';
   const corpo = `<body class="pg-genero">
 ${topo(de, gslug, aVendaPorGenero(beats))}

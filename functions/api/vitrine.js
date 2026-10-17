@@ -113,6 +113,10 @@ async function montar(request, env) {
     porTitulo.get(k).push(f);
   }
 
+  // "Mais novos" na vitrine (17/10/2026): a posição da beat tape do beat na ordem do perfil
+  // (a 1ª do perfil = a mais nova). nv = 0, 1, 2…; beat sem tape fica no fim.
+  const tapes = [...new Map((results || []).filter((x) => x.tipo === 'tape').map((x) => [x.aid, x])).values()].sort(tapeMaisNova);
+  const posDaTape = new Map(tapes.map((x, i) => [x.aid, i]));
   const dados = beats.map((b) => {
     const candidatos = (porTitulo.get(limpo(b.name)) || []).filter((x) => mesma(b, x)).sort(tapeMaisNova);
     // A capa do beat é a arte da BEAT TAPE onde ele está, que é arte do Bruno.
@@ -128,7 +132,8 @@ async function montar(request, env) {
       // endereços prontos pro navegador (miniatura, média e inteira), pelo R2
       capa: key ? '/capa/' + key : null,
       ...(key ? { capaP: capaUrl(key, 'p'), capaM: capaUrl(key, 'm'), capaG: capaUrl(key) } : {}),
-      dur: f ? (f.dur || 0) : 0
+      dur: f ? (f.dur || 0) : 0,
+      nv: f && f.tipo === 'tape' && posDaTape.has(f.aid) ? posDaTape.get(f.aid) : 9999
     };
   });
 

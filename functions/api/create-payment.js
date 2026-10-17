@@ -13,6 +13,7 @@
  * sempre o valor do servidor. Antes, quem mexesse na página pagava o que quisesse.
  */
 
+import { registrarOrigem, rotuloOrigem } from '../_lib/vendasorigem.js';
 import { db } from '../_lib/db.js';
 import { lerCupom, situacaoCupom, vendidosEntre, lerEstatico, totalDosBeats } from '../_lib/loja.js';
 import { fmtCpf, contratoHtml, enviarEmailComprador } from '../_lib/emails.js';
@@ -39,7 +40,10 @@ async function conferirCupom(request, env, couponCode) {
 // Devolve { total } ou { erro } (item que a página não vende, pacote torto).
 // 11/10/2026: os beats do catálogo (avulsos e os de pacote) somam pela tabela do Leve mais,
 // pague menos (totalDosBeats): 2 = 219, 3 = 299, 4 = 360, 5+ = 80 cada.
-export function contaDoCarrinho(itens, precos, cupom) {
+// 17/10/2026: PIX com desconto (PIX_OFF no index.html, 5%) em cima de tudo, cupom incluído;
+// arredonda no centavo, igual ao navegador (valorPix no vitrine.js).
+export const valorPix = (total, off) => (off > 0 ? Math.round(total * (100 - off)) / 100 : total);
+export function contaDoCarrinho(itens, precos, cupom, { pix = false } = {}) {
   let subtotal = 0, nBeats = 0;
   for (const it of Array.isArray(itens) ? itens : []) {
     const nome = String(it && it.name || '').trim();
@@ -80,7 +84,12 @@ export function contaDoCarrinho(itens, precos, cupom) {
     else if (cupom.escopo === 'beats') desconto = Math.round(dosBeats * Number(cupom.pct || 0) / 100);
     else desconto = Math.round(subtotal * Number(cupom.pct || 0) / 100);
   }
-  return { total: Math.round((subtotal - desconto) * 100) / 100, subtotal, desconto };
+  const total = Math.round((subtotal - desconto) * 100) / 100;
+  if (pix && precos.pixOff > 0) {
+    const comPix = valorPix(total, precos.pixOff);
+    return { total: comPix, subtotal, desconto, pixDesconto: Math.round((total - comPix) * 100) / 100 };
+  }
+  return { total, subtotal, desconto };
 }
 
 async function jaVendidos(request, env, nomes) {
@@ -222,7 +231,7 @@ export async function onRequestPost({ request, env }) {
   try { body = await request.json(); }
   catch { return Response.json({ error: 'Dados inválidos.' }, { status: 400, headers: cors }); }
 
-  const { formData, selectedPaymentMethod, amount: amountCliente, description, email: rawEmail, name: rawName, artistName: rawArtist, cpf: rawCpf, items, termsAcceptance, couponCode: rawCoupon } = body;
+  const { formData, selectedPaymentMethod, amount: amountCliente, description, email: rawEmail, name: rawName, artistName: rawArtist, cpf: rawCpf, items, termsAcceptance, couponCode: rawCoupon, origem: rawOrigem } = body;
   const email      = sanitize(rawEmail, 254);
   const name       = sanitize(rawName, 120);
   const artistName = sanitize(rawArtist || '', 80);
@@ -261,7 +270,9 @@ export async function onRequestPost({ request, env }) {
   // O valor cobrado é o do servidor. O do navegador só serve pra conferir.
   let conta;
   try {
-    conta = contaDoCarrinho(items, (await lerEstatico(request, env)).precos, cupom);
+    // PIX (o Brick manda payment_method_id 'pix'; o "GERAR O PIX" de reserva também) sai com desconto
+    const ehPix = String(formData && formData.payment_method_id || '') === 'pix';
+    conta = contaDoCarrinho(items, (await lerEstatico(request, env)).precos, cupom, { pix: ehPix });
   } catch (e) {
     console.error('[preco] Falha ao montar a conta:', e.message);
     conta = { erro: 'tabela de preço indisponível' };
@@ -334,6 +345,9 @@ export async function onRequestPost({ request, env }) {
       ...(couponCode ? { coupon_code: couponCode } : {}),
       ...(pkgBeatsList.length > 0    ? { pkg_beats:     pkgBeatsList.join('||')     } : {}),
       ...(catalogBeatsList.length > 0 ? { catalog_beats: catalogBeatsList.join('||') } : {}),
+      // de onde veio quem compra (17/10/2026, _lib/vendasorigem.js)
+      ...(rotuloOrigem(rawOrigem && rawOrigem.visita) ? { origem_visita: rotuloOrigem(rawOrigem.visita) } : {}),
+      ...(rotuloOrigem(rawOrigem && rawOrigem.primeira) ? { origem_primeira: rotuloOrigem(rawOrigem.primeira) } : {}),
     };
 
     // Beat que alguém acabou de comprar (ou que saiu do site) não pode ser vendido.
@@ -362,6 +376,14 @@ export async function onRequestPost({ request, env }) {
       return Response.json({ error: `Pagamento recusado: ${payment.status_detail || 'tente outro método.'}` }, { status: 400, headers: cors });
 
     const pixInfo   = payment.point_of_interaction?.transaction_data;
+
+    // cartão aprovado na hora: a venda entra no "de onde vêm as vendas" (PIX entra pelo webhook)
+    if (payment.status === 'approved') {
+      try {
+        await registrarOrigem(await db(env), { pagamento: payment.id, valor: amount, metodo: 'cartao',
+          visita: rawOrigem && rawOrigem.visita, primeira: rawOrigem && rawOrigem.primeira });
+      } catch (e) { console.warn('[origem] Não guardou:', e.message); }
+    }
 
     // Entrega na hora dos beats (10/10/2026, _lib/pedidos.js): com a chave ligada no painel,
     // o pedido com beat ganha o link com WAV, MP3 e contrato. Falhou = sem link, venda igual.

@@ -392,8 +392,8 @@ function pagina() {
 </div>
 <script src="/assets/painel/analytics.js?v=2026-10-16a" defer></script>
 <script src="/assets/painel/vitrine.js?v=2026-10-16a" defer></script>
-<script src="/assets/painel/musicas.js?v=2026-10-06a" defer></script>
-<script src="/assets/painel/gravou.js?v=2026-10-16a" defer></script>
+<script src="/assets/painel/musicas.js?v=2026-10-17a" defer></script>
+<script src="/assets/painel/gravou.js?v=2026-10-17a" defer></script>
 <script src="/assets/painel/comentarios.js?v=2026-10-10a" defer></script>
 
 <nav class="nav-p" id="navP" aria-label="Seções do painel"></nav>
@@ -667,6 +667,14 @@ function pagina() {
       var e=estadoPedido(p), itens=p.beats.concat((p.servicos||[]).map(function(x){return x.nome})).join(', ');
       return '<button type="button" class="ped" data-t="'+esc(p.token)+'"><span class="av">'+esc(iniciais(p.quem))+'</span><span class="t"><b>'+esc((p.quem?p.quem+' · ':'')+itens)+'</b><small>'+dm(p.em)+(p.valor?' · R$'+Math.round(p.valor):'')+'</small></span><span class="chip'+(e[1]?' '+e[1]:'')+'">'+esc(e[0])+'</span></button>';
     }).join(''):'<p class="nada">'+(filtroPed==='testes'?'Nenhum pedido de teste.':'Nenhum pedido com link ainda.')+'</p>';
+    // De onde vêm as vendas (17/10/2026): por onde a pessoa conheceu (1ª visita) e de onde veio na compra
+    var og=entrega.origens;
+    if(og&&og.vendas){
+      var linhaOg=function(x){ return '<div class="ev"><span>'+esc(x.origem)+'</span><span style="margin-left:auto">'+x.n+(x.n===1?' venda':' vendas')+' · R$'+Math.round(x.valor)+'</span></div>'; };
+      h+='<div class="rot" style="margin-top:26px">DE ONDE VÊM AS VENDAS · '+og.dias+' DIAS</div><p class="sub">'+og.vendas+(og.vendas===1?' venda aprovada':' vendas aprovadas')+' desde que o site começou a guardar (17/10/2026).</p>'+
+        '<p class="sub" style="margin-top:10px"><b>Conheceu por</b> (1ª visita do aparelho)</p>'+og.conheceu.map(linhaOg).join('')+
+        '<p class="sub" style="margin-top:10px"><b>Comprou vindo de</b> (a visita da compra)</p>'+og.comprou.map(linhaOg).join('');
+    }
     h+='<div class="rot" style="margin-top:26px">TESTAR</div><p class="sub">Cria um pedido de mentira e abre a página que o comprador vê. Nada é vendido.</p>'+
       '<div class="acoes" style="margin-top:12px;flex-wrap:wrap"><button type="button" class="pill" id="enTeste">Criar pedido de teste</button><button type="button" class="pill" id="enTesteSv">Criar pedido de teste de serviço</button></div><div id="enTesteLink" class="sub" style="margin-top:10px"></div>';
     box.innerHTML=h;

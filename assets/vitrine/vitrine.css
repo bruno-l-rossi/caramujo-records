@@ -926,6 +926,11 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
    Parcelar em até 12x aparece no total do carrinho e embaixo do botão de cada
    pacote. Na linha de cada beat, não: a lista fica limpa. */
 .cp-parc{margin:-.6rem 0 1rem;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--read);letter-spacing:.04em}
+.cp-parc b{color:var(--cream);font-weight:600}
+/* PIX com desconto (17/10/2026): o aviso em cima do Mercado Pago */
+.mp-pix-aviso{margin:0 0 .9rem;padding:.7rem 1rem;border:1px solid var(--wire);border-left:3px solid var(--amber);background:var(--mole);font-family:'IBM Plex Mono',monospace;font-size:.72rem;line-height:1.55;color:var(--bone)}
+.mp-pix-aviso b{color:var(--cream);font-weight:600}
+.mp-pix-aviso[hidden]{display:none}
 /* o botão de preço do pé aceso = já está no carrinho (igual à lista) */
 .pe-dir #npPreco.on{background:var(--fire);border-color:var(--fire)}
 
@@ -1481,3 +1486,17 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
   body.mn-aberto{overflow:hidden}
 }
 @media (prefers-reduced-motion:reduce){.nb-sel i,.nb-tg b,.nb-tg b:after{transition:none}}
+
+/* QUEM JÁ GRAVOU na vitrine (17/10/2026, opção B, sem a contagem de músicas): fotos redondas que
+   deslizam entre o catálogo e os serviços. Seção montada no servidor (_lib/gravouvitrine.js). */
+.qg-vit .qg-head{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.6rem}
+.qg-ver{flex:none;font-size:.66rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--fire);border-bottom:1px solid var(--fire);padding-bottom:3px;white-space:nowrap;text-decoration:none;transition:color .2s,border-color .2s}
+.qg-trilho{display:flex;gap:18px;overflow-x:auto;scrollbar-width:none;padding-bottom:6px;scroll-snap-type:x proximity}
+.qg-trilho::-webkit-scrollbar{display:none}
+.qg-card{flex:none;width:112px;text-align:center;color:var(--bone);text-decoration:none;scroll-snap-align:start}
+.qg-card img,.qg-card .qg-ini,.qg-card .qg-mais{width:112px;height:112px;border-radius:50%;object-fit:cover;display:flex;align-items:center;justify-content:center;border:1px solid var(--wire);background:var(--earth)}
+.qg-card .qg-ini{color:var(--amber);font-size:1.4rem;font-weight:600}
+.qg-card .qg-mais{border:1px dashed var(--fire);background:transparent;color:var(--fire);font-size:.95rem;font-weight:600}
+.qg-card b{display:block;margin-top:10px;font-size:.74rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (hover:hover){.qg-ver:hover{color:var(--cream);border-bottom-color:var(--cream)}.qg-card:hover b{color:var(--cream)}.qg-card:hover img{border-color:var(--fire)}}
+@media (min-width:900px){.qg-trilho{gap:26px}.qg-card{width:140px}.qg-card img,.qg-card .qg-ini,.qg-card .qg-mais{width:140px;height:140px}}

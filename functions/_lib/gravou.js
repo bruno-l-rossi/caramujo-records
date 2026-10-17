@@ -16,7 +16,7 @@
 export const EU = '15K9QWM2Q6Zyxb6RsAn9RZ';          // o @rideblan33 no Spotify
 const UA = 'Mozilla/5.0 (compatible; CaramujoRecords/1.0; +https://caramujorecords.com.br)';
 const RE_ID = /^[A-Za-z0-9]{22}$/;
-const ehEu = (id, nome) => id === EU || /^@?rideblan(33)?$/i.test(String(nome || '').trim());
+const ehEu = (id, nome) => id === EU || id === '5z5vPFiQeDagCbYiVAysa3' || /^@?rideblan(33)?$/i.test(String(nome || '').trim());
 
 const desfaz = (s) => String(s || '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'")
   .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
@@ -74,10 +74,24 @@ export function dadosDoArtista(html) {
   const tipo = !ok ? '' : /\/ab676161/.test(img) ? 'foto' : /\/ab67616d/.test(img) ? 'capa' : 'foto';
   return {
     nome,
+    ouvintes: ouvintesDe(meta1(html, 'og:description') || meta1(html, 'description')),
     foto: ok ? img : null,
     fotoP: ok && tipo === 'foto' ? img.replace('ab6761610000e5eb', 'ab67616100005174') : ok && tipo === 'capa' ? img.replace('ab67616d0000b273', 'ab67616d00001e02') : null,
     tipo
   };
+}
+
+// "Artist · 67K monthly listeners." / "Artista · 67 mil ouvintes mensais." / "1,234 monthly listeners"
+// (17/10/2026: a página pública do Spotify mostra ouvintes mensais; seguidores só logado)
+export function ouvintesDe(txt) {
+  const m = String(txt || '').match(/([\d][\d.,\s]*)\s*(K|M|mil|mi|milhões|milhão)?\s*(?:monthly listeners|ouvintes mensais|ouvinte mensal|monthly listener)/i);
+  if (!m) return null;
+  const suf = (m[2] || '').toLowerCase();
+  const bruto = m[1].trim().replace(/\s+/g, '');
+  if (!suf) { const n = Number(bruto.replace(/[.,]/g, '')); return Number.isFinite(n) ? n : null; }
+  const n = Number(bruto.replace(',', '.'));
+  if (!Number.isFinite(n)) return null;
+  return Math.round(n * (suf === 'k' || suf === 'mil' ? 1e3 : 1e6));
 }
 
 async function pegarPadrao(url) {
@@ -148,6 +162,7 @@ export async function varrer(musicas, { pegar = pegarPadrao, conhecidos = {}, ma
 // '' = já tentou e o Spotify não tem imagem (não busca de novo).
 // Fotos e capas são o endereço do próprio Spotify (i.scdn.co); o site aceita imagem https.
 import { ARTISTAS, FAIXAS } from './gravou-lista.js';
+import { capaUrl } from './midia.js';
 
 export const CHAVE_GRAVOU = 'gravou';
 const RE_IMG = /^https:\/\/i\.scdn\.co\/image\/[a-f0-9]{40}$/;
@@ -158,18 +173,47 @@ function soImgs(o) {
   return r;
 }
 
+// 17/10/2026: as fotos e capas também ficam guardadas no nosso R2 (capa/grv-<artista>-<8 do
+// arquivo>.jpg e capa/gra-<álbum>-<8>.jpg, com -m e -p): o endereço do Spotify some quando o
+// artista troca a foto. guardadas = {<id>: chave no R2}. O nome leva um pedaço do arquivo do
+// Spotify: foto nova = chave nova (a CDN guarda a antiga por 1 semana sem confundir).
+// ouvintes = {<id>: ouvintes mensais} (ordem da página). conferido = {<id>: minuto da última
+// leitura}; refazer = minuto em que o Bruno pediu "Atualizar" (quem foi lido antes disso lê de novo).
+const RE_KEY = /^gr[va]-[A-Za-z0-9]{22}-[a-f0-9]{8}$/;
+const soNums = (o, ok) => {
+  const r = {};
+  if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) if (RE_ID.test(k) && Number.isFinite(Number(v)) && ok(Number(v))) r[k] = Math.round(Number(v));
+  return r;
+};
+export const agoraMin = () => Math.floor(Date.now() / 6e4);   // minutos desde 1970
 export function gravouLimpar(o) {
   o = o && typeof o === 'object' ? o : {};
-  const tipos = {};
+  const tipos = {}, guardadas = {};
   if (o.tipos && typeof o.tipos === 'object') for (const [k, v] of Object.entries(o.tipos)) if (RE_ID.test(k) && (v === 'foto' || v === 'capa')) tipos[k] = v;
-  return { noAr: !!o.noAr, escondidos: soIds(o.escondidos), faixasFora: soIds(o.faixasFora), fotos: soImgs(o.fotos), tipos, capas: soImgs(o.capas), at: typeof o.at === 'string' ? o.at.slice(0, 30) : null };
+  if (o.guardadas && typeof o.guardadas === 'object') for (const [k, v] of Object.entries(o.guardadas)) if (RE_ID.test(k) && RE_KEY.test(String(v))) guardadas[k] = String(v);
+  return {
+    noAr: !!o.noAr, escondidos: soIds(o.escondidos), faixasFora: soIds(o.faixasFora), fotos: soImgs(o.fotos), tipos, capas: soImgs(o.capas),
+    guardadas, manuais: soIds(o.manuais), ouvintes: soNums(o.ouvintes, (n) => n >= 0 && n < 1e10), conferido: soNums(o.conferido, (n) => n > 0 && n < 1e9),
+    refazer: Number.isFinite(Number(o.refazer)) && Number(o.refazer) > 0 ? Math.round(Number(o.refazer)) : 0,
+    at: typeof o.at === 'string' ? o.at.slice(0, 30) : null
+  };
 }
 export function gravouDeTexto(v) { try { return gravouLimpar(JSON.parse(v)); } catch (_) { return gravouLimpar({}); } }
 
 export const slugArtista = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
   .replace(/\$/g, 's').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'artista';
 // miniatura (300 px) da capa ou da foto, pra lista e grade
-export const imgPequena = (u) => String(u || '').replace('ab67616d0000b273', 'ab67616d00001e02').replace('ab6761610000e5eb', 'ab67616100005174');
+export const imgPequena = (u) => String(u || '').replace('ab67616d0000b273', 'ab67616d00001e02').replace('ab6761610000e5eb', 'ab67616100005174')
+  .replace(/(\/capa\/gr[va]-[A-Za-z0-9_-]+?)(?:-m)?\.jpg$/, '$1-p.jpg');
+// a imagem que a página usa: a guardada no R2 (pela CDN do som.caramujorecords.com.br) ou,
+// enquanto o painel não guardou, a do Spotify
+const imgDe = (g, id, url) => (g.guardadas[id] ? capaUrl(g.guardadas[id]) : url || null);
+// foto do artista: a que o Bruno subiu no painel (manual) ou a do Spotify
+const fotoDe = (g, id) => (g.manuais.includes(id) && g.guardadas[id] ? capaUrl(g.guardadas[id]) : g.fotos[id] ? imgDe(g, id, g.fotos[id]) : null);
+// Ordem da página (17/10/2026, pedido do Bruno): mais ouvintes mensais primeiro; diferença
+// pequena (menos de 35%, ex.: 67 mil x 80 mil) conta como empate e quem tem mais faixas vence.
+// Faixas de 35% em escala log: comparar a faixa de cada um é transitivo (a ordem não pula).
+export const faixaDeOuvintes = (n) => (n > 0 ? Math.floor(Math.log(n) / Math.log(1.35)) : -1);
 
 // O que a página mostra: artistas visíveis com as faixas (só as que sobram depois do que o
 // Bruno escondeu), em ordem de mais faixas; cada faixa com os nomes de quem canta.
@@ -178,7 +222,7 @@ export function montarGravou(g) {
   const fora = new Set(g.escondidos), ff = new Set(g.faixasFora);
   const nomes = Object.fromEntries(ARTISTAS.map((a) => [a[0], a[1]]));
   const faixas = FAIXAS.filter((f) => !ff.has(f[0])).map(([id, nome, alb, ars]) => ({
-    id, nome, alb, ars: ars.filter((a) => !fora.has(a)), capa: g.capas[alb] || null
+    id, nome, alb, ars: ars.filter((a) => !fora.has(a)), capa: imgDe(g, alb, g.capas[alb])
   })).filter((f) => f.ars.length);
   const usados = new Set();
   const slugs = new Set();
@@ -188,41 +232,102 @@ export function montarGravou(g) {
     let s = slugArtista(nome), n = 2;
     while (slugs.has(s)) s = slugArtista(nome) + '-' + n++;
     slugs.add(s);
-    return { id, nome, slug: s, pasta: !!pasta, foto: g.fotos[id] || null, tipo: g.tipos[id] || '', faixas: fs.map((f) => f.id) };
+    return { id, nome, slug: s, pasta: !!pasta, foto: fotoDe(g, id), tipo: g.manuais.includes(id) ? 'foto' : g.tipos[id] || '', ouvintes: g.ouvintes[id] || 0, faixas: fs.map((f) => f.id) };
   }).filter((a) => a.faixas.length)
-    .sort((x, y) => y.faixas.length - x.faixas.length || x.nome.localeCompare(y.nome, 'pt', { sensitivity: 'base' }));
+    .sort((x, y) => faixaDeOuvintes(y.ouvintes) - faixaDeOuvintes(x.ouvintes) || y.faixas.length - x.faixas.length ||
+      y.ouvintes - x.ouvintes || x.nome.localeCompare(y.nome, 'pt', { sensitivity: 'base' }));
   const porId = Object.fromEntries(faixas.map((f) => [f.id, { id: f.id, nome: f.nome, capa: f.capa, com: f.ars.map((a) => nomes[a]).filter(Boolean) }]));
   return { noAr: g.noAr, artistas, faixas: porId, nFaixas: usados.size };
 }
 
-// Fotos e capas que faltam: lê a página pública do artista e a do álbum (og:image).
-// max = idas ao Spotify nesta chamada (a função grátis aguenta 50 por pedido); o painel
-// chama de novo até 'faltam' zerar.
-export function faltando(g) {
+// O que falta ler: artista sem foto lida, sem ouvintes, foto do Spotify ainda não guardada no
+// R2, ou lido antes do "Atualizar" do Bruno. Mesma coisa pras capas dos álbuns.
+// max = idas ao Spotify nesta chamada (a função grátis aguenta 50 por pedido: página + 2
+// tamanhos da imagem); o painel chama de novo até 'faltam' zerar.
+const precisa = (g, id, tem) => !tem || !((g.conferido[id] || 0) >= (g.refazer || 0)) || !g.conferido[id];
+// comR2 = false (sem o R2 ligado, nos testes): não fica esperando cópia que não vai acontecer
+export function faltando(g, { comR2 = true } = {}) {
   g = gravouLimpar(g);
-  const art = ARTISTAS.map((a) => a[0]).filter((id) => !(id in g.fotos));
-  const albs = [...new Set(FAIXAS.map((f) => f[2]).filter((x) => RE_ID.test(x)))].filter((id) => !(id in g.capas));
+  const art = ARTISTAS.map((a) => a[0]).filter((id) => precisa(g, id, id in g.fotos && id in g.ouvintes) || (comR2 && g.fotos[id] && !g.guardadas[id] && !g.manuais.includes(id)));
+  const albs = [...new Set(FAIXAS.map((f) => f[2]).filter((x) => RE_ID.test(x)))].filter((id) => precisa(g, id, id in g.capas) || (comR2 && g.capas[id] && !g.guardadas[id]));
   return { art, albs };
 }
-export async function buscarImagens(g, { pegar = pegarPadrao, max = 40 } = {}) {
+const pedacoDe = (url) => (String(url).match(/\/image\/[a-f0-9]{16}([a-f0-9]{8})/) || [])[1] || null;
+async function baixarPadrao(url) {
+  try { const r = await fetch(url); if (!r.ok) return null; const b = await r.arrayBuffer(); return b.byteLength > 500 ? b : null; } catch (_) { return null; }
+}
+// guardar(chave, grande, pequena): põe capa/<chave>.jpg, -m e -p no R2
+export function guardarNoR2(env) {
+  if (!env || !env.AUDIO) return null;
+  const meta = { httpMetadata: { contentType: 'image/jpeg', cacheControl: 'public, max-age=604800' } };
+  return async (chave, grande, pequena) => {
+    await env.AUDIO.put(`capa/${chave}.jpg`, grande, meta);
+    await env.AUDIO.put(`capa/${chave}-m.jpg`, grande, meta);
+    await env.AUDIO.put(`capa/${chave}-p.jpg`, pequena || grande, meta);
+  };
+}
+export async function buscarImagens(g, { pegar = pegarPadrao, baixar = baixarPadrao, guardar = null, max = 45 } = {}) {
   g = gravouLimpar(g);
-  const { art, albs } = faltando(g);
-  let feitas = 0;
+  const comR2 = !!guardar;
+  const { art, albs } = faltando(g, { comR2 });
+  const hoje = agoraMin();
+  let feitas = 0, idas = 0;
+  // copia pro R2 (2 idas: grande e pequena). Sem R2 ligado, fica só o endereço do Spotify.
+  async function copiar(id, url, prefixo) {
+    if (!guardar || !url) { if (!url) delete g.guardadas[id]; return; }
+    const pedaco = pedacoDe(url);
+    if (!pedaco) return;
+    const chave = `${prefixo}-${id}-${pedaco}`;
+    if (g.guardadas[id] === chave) return;
+    if (idas + 2 > max) return;
+    idas += 2;
+    const grande = await baixar(url);
+    if (!grande) return;
+    const pequena = await baixar(imgPequena(url));
+    await guardar(chave, grande, pequena);
+    g.guardadas[id] = chave;
+  }
   for (const id of art) {
-    if (feitas >= max) break;
+    if (idas + 3 > max) break;
+    const leu = (g.conferido[id] || 0) >= (g.refazer || 0) && g.conferido[id] && id in g.fotos && id in g.ouvintes;
+    if (!leu) {
+      idas++;
+      const html = await pegar(`https://open.spotify.com/artist/${id}`);
+      if (!html) continue;
+      const d = dadosDoArtista(html);
+      g.fotos[id] = d.foto || '';
+      if (d.foto) g.tipos[id] = d.tipo || 'foto'; else delete g.tipos[id];
+      g.ouvintes[id] = d.ouvintes || 0;
+      g.conferido[id] = hoje;
+    }
+    // foto que o Bruno subiu no painel fica (o Spotify só dá os ouvintes)
+    if (!g.manuais.includes(id)) await copiar(id, g.fotos[id], 'grv');
     feitas++;
-    const d = dadosDoArtista(await pegar(`https://open.spotify.com/artist/${id}`));
-    g.fotos[id] = d.foto || '';
-    if (d.foto) g.tipos[id] = d.tipo || 'foto';
   }
   for (const id of albs) {
-    if (feitas >= max) break;
+    if (idas + 3 > max) break;
+    const leu = (g.conferido[id] || 0) >= (g.refazer || 0) && g.conferido[id] && id in g.capas;
+    if (!leu) {
+      idas++;
+      const html = await pegar(`https://open.spotify.com/album/${id}`);
+      if (!html) continue;
+      const img = meta1(html, 'og:image');
+      g.capas[id] = RE_IMG.test(img) ? img : '';
+      g.conferido[id] = hoje;
+    }
+    await copiar(id, g.capas[id], 'gra');
     feitas++;
-    const img = meta1(await pegar(`https://open.spotify.com/album/${id}`), 'og:image');
-    g.capas[id] = RE_IMG.test(img) ? img : '';
   }
-  const f = faltando(g);
-  return { g, feitas, faltam: f.art.length + f.albs.length };
+  const f = faltando(g, { comR2 });
+  return { g, feitas, idas, faltam: f.art.length + f.albs.length };
+}
+
+// Chaves do R2 que a página usa (a faxina do R2 guarda estas e apaga o resto de capa/gr*)
+export function chavesGuardadas(valor) {
+  const g = gravouDeTexto(valor);
+  const out = new Set();
+  for (const k of Object.values(g.guardadas)) for (const s of ['', '-m', '-p']) out.add(`capa/${k}${s}.jpg`);
+  return out;
 }
 
 // Painel (Perfil > Quem já gravou). Lê e grava a meta 'gravou'.
@@ -234,26 +339,29 @@ async function gravarMeta(d, g) {
   g.at = new Date().toISOString();
   await d.prepare('INSERT OR REPLACE INTO meta (chave, valor) VALUES (?, ?)').bind(CHAVE_GRAVOU, JSON.stringify(gravouLimpar(g))).run();
 }
-function corpoPainel(g) {
+function corpoPainel(g, comR2 = true) {
   const fora = new Set(g.escondidos), ff = new Set(g.faixasFora);
-  const f = faltando(g);
+  const f = faltando(g, { comR2 });
   return {
     ok: true, noAr: g.noAr, atualizado: g.at,
     faltam: f.art.length + f.albs.length,
     artistas: ARTISTAS.map(([id, nome, pasta, provavel]) => ({
       id, nome, pasta: pasta || '', provavel: !!provavel, fora: fora.has(id),
-      foto: g.fotos[id] || null, tipo: g.tipos[id] || '',
+      foto: fotoDe(g, id), tipo: g.manuais.includes(id) ? 'foto' : g.tipos[id] || '', guardada: !!g.guardadas[id], manual: g.manuais.includes(id),
+      ouvintes: id in g.ouvintes ? g.ouvintes[id] : null,
       faixas: FAIXAS.filter((x) => x[3].includes(id)).map((x) => x[0])
     })),
-    faixas: Object.fromEntries(FAIXAS.map(([id, nome, alb, ars]) => [id, { nome, ars, capa: g.capas[alb] || null, fora: ff.has(id) }]))
+    faixas: Object.fromEntries(FAIXAS.map(([id, nome, alb, ars]) => [id, { nome, ars, capa: imgDe(g, alb, g.capas[alb]), fora: ff.has(id) }]))
   };
 }
-// op: 'gravou' (GET), 'gravou-no-ar', 'gravou-esconder', 'gravou-imagens'
+// op: 'gravou' (GET), 'gravou-no-ar', 'gravou-esconder', 'gravou-imagens', 'gravou-atualizar'
 // devolve { corpo, status, mudou }
-export async function painelGravou(op, d, body = {}, { pegar = pegarPadrao } = {}) {
+export async function painelGravou(op, d, body = {}, { pegar = pegarPadrao, baixar = baixarPadrao, env = null, guardar = null } = {}) {
   const g = await lerMeta(d);
-  if (op === 'gravou') return { corpo: corpoPainel(g), mudou: false };
-  if (op === 'gravou-no-ar') { g.noAr = !!body.noAr; await gravarMeta(d, g); return { corpo: corpoPainel(g), mudou: true }; }
+  const gr = guardar || guardarNoR2(env), comR2 = !!gr;
+  const corpoPainel2 = (x) => corpoPainel(x, comR2);
+  if (op === 'gravou') return { corpo: corpoPainel2(g), mudou: false };
+  if (op === 'gravou-no-ar') { g.noAr = !!body.noAr; await gravarMeta(d, g); return { corpo: corpoPainel2(g), mudou: true }; }
   if (op === 'gravou-esconder') {
     const id = String(body.id || '');
     const lista = body.tipo === 'faixa' ? 'faixasFora' : body.tipo === 'artista' ? 'escondidos' : null;
@@ -263,12 +371,44 @@ export async function painelGravou(op, d, body = {}, { pegar = pegarPadrao } = {
     if (body.esconder) s.add(id); else s.delete(id);
     g[lista] = [...s];
     await gravarMeta(d, g);
-    return { corpo: corpoPainel(g), mudou: true };
+    return { corpo: corpoPainel2(g), mudou: true };
   }
   if (op === 'gravou-imagens') {
-    const r = await buscarImagens(g, { pegar, max: 40 });
-    if (r.feitas) await gravarMeta(d, r.g);
-    return { corpo: { ...corpoPainel(r.g), feitas: r.feitas }, mudou: r.feitas > 0 };
+    const r = await buscarImagens(g, { pegar, baixar, guardar: gr, max: 45 });
+    if (r.feitas || r.idas) await gravarMeta(d, r.g);
+    return { corpo: { ...corpoPainel2(r.g), feitas: r.feitas }, mudou: r.feitas > 0 };
+  }
+  // Foto do artista enviada pelo Bruno (17/10/2026: artista sem foto no Spotify). O painel manda
+  // duas JPEG já reduzidas (640 e 320 px, em base64); a chave leva 8 letras do conteúdo.
+  if (op === 'gravou-foto') {
+    const id = String(body.id || '');
+    if (!ARTISTAS.some((a) => a[0] === id)) return { corpo: { erro: 'artista não encontrado' }, status: 400, mudou: false };
+    if (!gr) return { corpo: { erro: 'o R2 não está ligado' }, status: 500, mudou: false };
+    const bin = (b) => { try { const s = atob(String(b || '')); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; } catch (_) { return null; } };
+    const grande = bin(body.grande), pequena = bin(body.pequena) || grande;
+    const jpeg = (u) => u && u.length > 500 && u.length < 900000 && u[0] === 0xff && u[1] === 0xd8;
+    if (!jpeg(grande) || !jpeg(pequena)) return { corpo: { erro: 'a imagem precisa ser JPEG de até 900 KB' }, status: 400, mudou: false };
+    const h = [...new Uint8Array(await crypto.subtle.digest('SHA-256', grande))].slice(0, 4).map((x) => x.toString(16).padStart(2, '0')).join('');
+    const chave = `grv-${id}-${h}`;
+    await gr(chave, grande.buffer, pequena.buffer);
+    g.guardadas[id] = chave;
+    if (!g.manuais.includes(id)) g.manuais.push(id);
+    await gravarMeta(d, g);
+    return { corpo: corpoPainel2(g), mudou: true };
+  }
+  // volta pra foto do Spotify (o próximo "Buscar" copia de novo)
+  if (op === 'gravou-foto-tirar') {
+    const id = String(body.id || '');
+    g.manuais = g.manuais.filter((x) => x !== id);
+    delete g.guardadas[id];
+    await gravarMeta(d, g);
+    return { corpo: corpoPainel2(g), mudou: true };
+  }
+  // "Atualizar fotos e ouvintes": tudo lê de novo (foto trocada vira chave nova no R2)
+  if (op === 'gravou-atualizar') {
+    g.refazer = agoraMin();
+    await gravarMeta(d, g);
+    return { corpo: corpoPainel2(g), mudou: false };
   }
   return null;
 }

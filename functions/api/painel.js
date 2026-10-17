@@ -1,6 +1,7 @@
 // As ações do painel: lista de artistas, permissão por pasta,
 // atividade e o disparo da conversão. Tudo atrás do mesmo cookie do painel.
 
+import { resumoOrigem } from '../_lib/vendasorigem.js';
 import { db, json, TETO_LEITURA } from '../_lib/db.js';
 import { autenticado } from '../_lib/sessao.js';
 import { mesma, mesmoTom, limpo } from '../_lib/casar.js';
@@ -54,7 +55,7 @@ export async function onRequest({ request, env }) {
   if (op === 'comentarios' && request.method !== 'POST') return json(await comentariosLer(d));
   if (op === 'comentarios-resumo') return json(await comentariosResumo(d));
   // Entrega na hora dos beats (10/10/2026): a chave e os últimos pedidos com link
-  if (op === 'entrega' && request.method !== 'POST') return json({ ok: true, ligada: await entregaLigada(d), pedidos: await ultimosPedidos(d) });
+  if (op === 'entrega' && request.method !== 'POST') return json({ ok: true, ligada: await entregaLigada(d), pedidos: await ultimosPedidos(d), origens: await resumoOrigem(d).catch(() => null) });
   // lista de e-mails com cupom (11/10/2026): quantos, quantos usaram o cupom, os e-mails pra copiar
   if (op === 'lista' && request.method !== 'POST') return json({ ok: true, ...(await painelLista(d)) });
   // Quem já gravou (16/10/2026): só lê e responde (não guarda nada). Varre as músicas da aba
@@ -65,7 +66,7 @@ export async function onRequest({ request, env }) {
     return json({ ok: true, ...(await varrerGravou(mus.lista || [])) });
   }
   // Quem já gravou (16/10/2026, rodada K): a lista do painel (só lê)
-  if (op === 'gravou' && request.method !== 'POST') return json((await painelGravou('gravou', d)).corpo);
+  if (op === 'gravou' && request.method !== 'POST') return json((await painelGravou('gravou', d, {}, { env })).corpo);
   if (request.method !== 'POST') return json({ erro: 'op desconhecida' }, 400);
 
   const body = await request.json().catch(() => ({}));
@@ -115,9 +116,10 @@ export async function onRequest({ request, env }) {
   }
   // Quem já gravou: No ar, esconder artista/faixa, buscar fotos e capas no Spotify (em lotes)
   if (/^gravou-/.test(op)) {
-    const r = await painelGravou(op, d, body);
+    const r = await painelGravou(op, d, body, { env });
     if (r) {
-      if (r.mudou) await esquecerPerfil(request);
+      // a vitrine também mostra o Quem já gravou (17/10/2026): a cópia da loja cai junto
+      if (r.mudou) { await esquecerPerfil(request); await esquecerLoja(request); }
       return json(r.corpo, r.status || 200);
     }
   }

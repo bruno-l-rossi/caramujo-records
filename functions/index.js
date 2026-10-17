@@ -9,6 +9,7 @@
 
 import { lojaParaPagina, injetar, lerEstatico } from './_lib/loja.js';
 import { injetarNumeros } from './_lib/numeros.js';
+import { injetarGravou } from './_lib/gravouvitrine.js';
 
 // Os mesmos cabeçalhos do bloco /* do _headers (moram em _lib/cabecalhos.js desde
 // 03/10/2026: as páginas de beat e de gênero usam os mesmos).
@@ -26,9 +27,11 @@ export async function onRequest({ request, env }) {
     saida = injetar(html, dados);
     // os números do hero (artistas, faixas, streams) vêm do painel; sem eles, os do arquivo
     if (dados && dados.numeros) saida = injetarNumeros(saida, dados.numeros);
+    // Quem já gravou (17/10/2026): a seção entra no lugar do marcador só com a página no ar
+    saida = injetarGravou(saida, dados && dados.gravou);
   } catch (e) {
     console.error('index sem loja', e && e.message);
-    saida = injetar(html, null);
+    saida = injetarGravou(injetar(html, null), null);
   }
 
   const headers = new Headers({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' });

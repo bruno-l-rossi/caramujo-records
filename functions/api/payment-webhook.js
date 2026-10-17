@@ -16,6 +16,7 @@
  *   RESEND_API_KEY   — API Key do Resend (re_...)
  */
 
+import { registrarOrigem } from '../_lib/vendasorigem.js';
 import { db } from '../_lib/db.js';
 import { marcarVendidos, usarCupom, esquecerLoja } from '../_lib/loja.js';
 import { esquecerVitrine } from '../_lib/vitrine.js';
@@ -253,6 +254,13 @@ export async function onRequestPost({ request, env }) {
         await marcarPago(d, payment.id);
         pedido = await pedidoDoPagamento(d, payment.id);
       } catch (pedErr) { console.error('[webhook] Pedido com link:', pedErr.message); }
+
+      // De onde veio quem comprou (17/10/2026): idempotente pelo id do pagamento; falhou = segue
+      try {
+        await registrarOrigem(await db(env), { pagamento: payment.id, valor: payment.transaction_amount,
+          metodo: payment.payment_type_id === 'bank_transfer' ? 'pix' : 'cartao',
+          visita: payment.metadata?.origem_visita, primeira: payment.metadata?.origem_primeira });
+      } catch (oErr) { console.warn('[webhook] Origem da venda:', oErr.message); }
 
       // ── Idempotência: evita processar o mesmo pagamento duas vezes ──────────
       // O MP dispara o webhook múltiplas vezes para o mesmo evento de pagamento.

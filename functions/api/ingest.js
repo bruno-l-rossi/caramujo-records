@@ -2,6 +2,7 @@
 // diz quais faixas faltam converter, guarda o MP3 no R2 e fecha a sincronia.
 // Protegido pelo token INGEST_TOKEN.
 
+import { chavesGuardadas } from '../_lib/gravou.js';
 import { db, now, slugify, code, json } from '../_lib/db.js';
 import { mesma, limpo } from '../_lib/casar.js';   // o cruzamento mora lá, um só pro site inteiro
 import { vitrine } from '../_lib/vitrine.js';
@@ -494,6 +495,11 @@ async function faxina(d, env) {
   for (const m of musLista || []) {
     if (m && m.capa) for (const s of ['', '-p', '-m']) capas.add('capa/' + m.capa + s + '.jpg');
   }
+  // Fotos e capas do Quem já gravou (capa/grv-*, capa/gra-*; 17/10/2026): o dono é a meta
+  // 'gravou'. Meta ilegível = não apaga nenhuma.
+  const grv = await d.prepare("SELECT valor FROM meta WHERE chave = 'gravou'").first();
+  let grvChaves = null;
+  try { grvChaves = grv ? chavesGuardadas(grv.valor) : new Set(); if (grv) JSON.parse(grv.valor); } catch (_) { grvChaves = null; }
   const limite = Date.now() - 3600e3;
   const apagar = [];
   const noR2 = new Set();
@@ -507,7 +513,8 @@ async function faxina(d, env) {
         if (prefixo === 'capa/') noR2.add(o.key);
         // lista de músicas ilegível: não apaga capa de música nenhuma
         const usado = prefixo === 'mp3/' ? faixas.has(o.key) : prefixo === 'onda/' ? ondas.has(o.key)
-          : capas.has(o.key) || (!musLista && o.key.startsWith('capa/mus-'));
+          : capas.has(o.key) || (!musLista && o.key.startsWith('capa/mus-')) ||
+            (/^capa\/gr[va]-/.test(o.key) && (!grvChaves || grvChaves.has(o.key)));
         const velho = !o.uploaded || new Date(o.uploaded).getTime() < limite;
         if (!usado && velho) { apagar.push(o.key); bytes += o.size || 0; }
       }

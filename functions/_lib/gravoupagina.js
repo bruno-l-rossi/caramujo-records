@@ -1,7 +1,7 @@
 // Página "Quem já gravou" do @rideblan33 (16/10/2026, rodada K): caramujorecords.com.br/rideblan33/artistas
 // Mockup aprovado pelo Bruno: canvas linha M ("a página de quem já gravou está ótima").
 // Topo com busca, o artista aberto (foto, nome, faixas com link pro Spotify) e a grade de
-// todos (mais faixas primeiro). Dados: _lib/gravou.js (montarGravou) sobre a lista conferida
+// todos (mais ouvintes mensais primeiro; diferença pequena = mais faixas, desde 17/10/2026). Dados: _lib/gravou.js (montarGravou) sobre a lista conferida
 // em _lib/gravou-lista.js. Nunca link de pasta privada: só Spotify e páginas do site.
 // Fora do ar: só quem está logado no painel vê (prévia, noindex).
 
@@ -9,6 +9,7 @@ import { ICONES as ICONES_ABA } from './icones.js';
 import { RODAPE_GENEROS, CSS_RODAPE_GENEROS } from './generos.js';
 import { LEVA_DE, deAttr } from './origem.js';
 import { imgPequena } from './gravou.js';
+import { CAPA_VOLTA } from './midia.js';
 
 const SITE = 'https://caramujorecords.com.br';
 const SPOTIFY_EU = 'https://open.spotify.com/artist/15K9QWM2Q6Zyxb6RsAn9RZ';
@@ -144,6 +145,7 @@ ${CSS_RODAPE_GENEROS}
 </style>
 </head>
 <body>
+${CAPA_VOLTA}
 <nav class="topo" aria-label="Caramujo Records">
   <a class="logo" href="/"${deAttr('artistas')} aria-label="Caramujo Records, beats à venda"><img src="/assets/brand/caramujo-h.webp" srcset="/assets/brand/caramujo-h-244.webp 244w, /assets/brand/caramujo-h-366.webp 366w, /assets/brand/caramujo-h.webp 504w" sizes="(max-width:899px) 132px, 168px" alt="Caramujo Records" width="296" height="54"></a>
   <a class="volta" href="/rideblan33"${deAttr('artistas')}>@rideblan33</a>
@@ -173,7 +175,7 @@ ${artistas.map((a, i) => `    <li data-busca="${esc(a.nome.normalize('NFD').repl
   function pessoa(){try{return localStorage.getItem('cr_pessoa')||'';}catch(e){return '';}}
   function manda(id){try{var o={kind:'perfil-rede',trackId:id,origem:'artistas'},p=pessoa();if(p)o.pessoa=p;var s=JSON.stringify(o);if(navigator.sendBeacon)navigator.sendBeacon('/api/play',new Blob([s],{type:'application/json'}));}catch(e){}}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-  function peq(u){return String(u||'').replace('ab67616d0000b273','ab67616d00001e02').replace('ab6761610000e5eb','ab67616100005174');}
+  function peq(u){return String(u||'').replace('ab67616d0000b273','ab67616d00001e02').replace('ab6761610000e5eb','ab67616100005174').replace(/(\\/capa\\/gr[va]-[A-Za-z0-9_-]+?)(?:-m)?\\.jpg$/,'$1-p.jpg');}
   function ini(n){return String(n||'').replace(/^@/,'').split(/[\\s_.-]+/).filter(Boolean).map(function(p){return p[0];}).join('').slice(0,2).toUpperCase()||'?';}
   var SP=${JSON.stringify(ICONE_SP)}, SETA=${JSON.stringify(SETA)};
   function nm(n){return n+(n===1?' música':' músicas');}

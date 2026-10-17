@@ -34,7 +34,7 @@
 <!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
      a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=334617301b">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=8aa8c63ba4">
 
 <!-- ═══ EMAILJS (formulário de contato) ══════════════
   Chaves em emailjs.com: Account > Public Key, Email Services > Service ID,
@@ -208,9 +208,13 @@
       <div class="mn mn-ord" id="ordMenu" hidden>
         <div class="mn-t"><b>Ordem</b><button class="mn-x" type="button" onclick="fecharMenusBarra()" aria-label="Fechar">×</button></div>
         <button class="mn-o on" type="button" data-ordem="padrao" onclick="ordemBarra('padrao')"><span>Padrão<small>a ordem do catálogo</small></span></button>
+        <button class="mn-o" type="button" data-ordem="novos" onclick="ordemBarra('novos')"><span>Mais novos<small>da beat tape mais nova pra trás</small></span></button>
+        <button class="mn-o" type="button" data-ordem="bpm" onclick="ordemBarra('bpm')"><span>BPM<small>do mais lento ao mais rápido</small></span></button>
         <button class="mn-o" type="button" data-ordem="aleatorio" onclick="ordemBarra('aleatorio')"><span>Aleatória<small>embaralha a lista</small></span></button>
         <select class="sort-select" id="beatSort" onchange="sortBeats(this.value)" aria-label="Ordem dos beats" hidden>
           <option value="padrao">Ordem padrão</option>
+          <option value="novos">Mais novos</option>
+          <option value="bpm">BPM</option>
           <option value="aleatorio">Ordem aleatória</option>
         </select>
       </div>
@@ -271,6 +275,9 @@
 <div class="hr"></div>
 
 <!-- interlude escondido a pedido -->
+
+<!-- ═══ QUEM JÁ GRAVOU (17/10/2026, opção B): o servidor troca o marcador pela seção quando a página está no ar (_lib/gravouvitrine.js) -->
+<!--QUEM-GRAVOU-->
 
 <!-- ═══ SERVICES ════════════════════════════════════ -->
 <section id="services" class="s s-earth">
@@ -500,7 +507,7 @@
       <span>Total</span>
       <span class="cp-tv" id="cpTot">R$ 0</span>
     </div>
-    <div class="cp-parc">PIX ou cartão em até 12x</div>
+    <div class="cp-parc" id="cpParc">PIX ou cartão em até 12x</div>
     <button class="cp-add-more" onclick="addMoreItems()">← ADICIONAR MAIS ITENS</button>
     <button class="cp-ck" id="checkoutBtn" onclick="openCheckout()">FINALIZAR COMPRA →</button>
   </div>
@@ -561,6 +568,7 @@
     <!-- step 2: MP Brick container -->
     <div id="mpStep2" style="display:none;">
       <div class="mp-back" onclick="backToStep1()">← Voltar</div>
+      <p class="mp-pix-aviso" id="mpPixAviso" hidden></p>
       <div id="mpBrickContainer"></div>
     </div>
 
@@ -634,13 +642,14 @@ const BEATS=[
 if(!BEATS.length) window.__LOJA_FORA=true;
 
 const PRICE_BEAT=119, PRICE_STEMS=144;
+const PIX_OFF=5; // % de desconto no PIX (17/10/2026); o servidor lê daqui e cobra igual
 /* Leve mais, pague menos (11/10/2026): total por quantidade de beats; 'N+' = preço de cada beat a partir de N */
-const LEVE_MAIS={'2':219,'3':299,'4':360,'5+':80};
+const LEVE_MAIS={'2':218,'3':297,'+':79};
 const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':'Hood Trap','experimental':'Experimental','detroit':'Detroit','drumless':'Drumless','hard':'Hard','funk':'Funk','pluggnb':'Pluggnb','drill':'Drill','nomelody':'No Melody','bounce':'Bounce'};
 const FEATURED_OVERRIDE_ID=null;
 const FEATURED_OVERRIDE_ATE='';
 </script>
-<script src="/assets/vitrine/vitrine.js?v=f1bad6fd9f"></script>
+<script src="/assets/vitrine/vitrine.js?v=bdc91b3ab7"></script>
 <!-- leva-de -->
 <script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
 (function(){

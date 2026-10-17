@@ -7,6 +7,7 @@
 
 import { deTexto, PADRAO } from './numeros.js';
 import { db, now } from './db.js';
+import { resumoVitrine } from './gravouvitrine.js';
 
 /* ---------- o que ainda vem do index.html servido ---------- */
 
@@ -37,12 +38,16 @@ export function parsePrecos(html) {
     return mapa;
   };
   // Leve mais, pague menos (11/10/2026): const LEVE_MAIS={'2':219,'3':299,'4':360,'5+':80}
+  // 17/10/2026 (curva por beat a mais): const LEVE_MAIS={'2':218,'3':297,'+':79}
   const leveMais = {};
   const lm = html.match(/const LEVE_MAIS\s*=\s*\{([^}]*)\}/);
-  if (lm) { const re = /'(\d+\+?)'\s*:\s*(\d+(?:\.\d+)?)/g; let m; while ((m = re.exec(lm[1]))) leveMais[m[1]] = Number(m[2]); }
+  // 17/10/2026: '+' = quanto soma cada beat depois do último degrau ({'2':218,'3':297,'+':79})
+  if (lm) { const re = /'(\d+\+?|\+)'\s*:\s*(\d+(?:\.\d+)?)/g; let m; while ((m = re.exec(lm[1]))) leveMais[m[1]] = Number(m[2]); }
   return {
     leveMais,
     beat: num(/const PRICE_BEAT\s*=\s*(\d+(?:\.\d+)?)/),
+    // % de desconto no PIX (17/10/2026): const PIX_OFF=5
+    pixOff: num(/const PIX_OFF\s*=\s*(\d+(?:\.\d+)?)/) || 0,
     stems: num(/PRICE_STEMS\s*=\s*(\d+(?:\.\d+)?)/),
     pacotes: tabela('addPkg'),
     servicos: tabela('addSvc')
@@ -58,6 +63,12 @@ export function totalDosBeats(n, precos) {
   if (n === 1) return unit;
   const t = (precos && precos.leveMais) || {};
   if (t[String(n)]) return t[String(n)];
+  // '+' (17/10/2026): preço por beat a mais depois do maior degrau exato abaixo de n
+  if (t['+']) {
+    let k = 0;
+    for (const x of Object.keys(t)) if (/^\d+$/.test(x) && Number(x) < n && Number(x) > k) k = Number(x);
+    return (k ? t[String(k)] : unit) + (n - (k || 1)) * t['+'];
+  }
   let cada = 0, desde = 0;
   for (const [k, v] of Object.entries(t)) { const m = k.match(/^(\d+)\+$/); if (m && n >= Number(m[1]) && Number(m[1]) > desde) { desde = Number(m[1]); cada = v; } }
   return cada ? cada * n : unit * n;
@@ -120,10 +131,11 @@ function destaqueDeTexto(v) {
 // Destaque e números numa consulta só (10/10/2026). Falhou = sem destaque e os números de sempre.
 async function lerMetaLoja(d) {
   try {
-    const { results } = await d.prepare("SELECT chave, valor FROM meta WHERE chave IN ('destaque', 'numeros')").all();
+    // 17/10/2026: + 'gravou' (a fileira Quem já gravou da vitrine), na mesma consulta
+    const { results } = await d.prepare("SELECT chave, valor FROM meta WHERE chave IN ('destaque', 'numeros', 'gravou')").all();
     const v = Object.fromEntries((results || []).map((r) => [r.chave, r.valor]));
-    return { destaque: destaqueDeTexto(v.destaque), numeros: v.numeros ? deTexto(v.numeros) : { ...PADRAO } };
-  } catch (_) { return { destaque: null, numeros: { ...PADRAO } }; }
+    return { destaque: destaqueDeTexto(v.destaque), numeros: v.numeros ? deTexto(v.numeros) : { ...PADRAO }, gravou: v.gravou ? resumoVitrine(v.gravou) : null };
+  } catch (_) { return { destaque: null, numeros: { ...PADRAO }, gravou: null }; }
 }
 
 /* ---------- a lista que vai dentro da página ---------- */
@@ -151,7 +163,7 @@ export async function lojaParaPagina(request, env) {
   if (pagina.dados && Date.now() - pagina.at < VALIDADE_PAGINA) return pagina.dados;
   const fresca = await lerCache(request, FRESCA);
   if (fresca && fresca.at && Date.now() - fresca.at < VALIDADE_PAGINA && Array.isArray(fresca.lista)) {
-    pagina = { at: fresca.at, dados: { lista: fresca.lista, destaque: fresca.destaque || null, numeros: fresca.numeros || null } };
+    pagina = { at: fresca.at, dados: { lista: fresca.lista, destaque: fresca.destaque || null, numeros: fresca.numeros || null, gravou: fresca.gravou || null } };
     return pagina.dados;
   }
   try {
@@ -163,7 +175,8 @@ export async function lojaParaPagina(request, env) {
     const dados = {
       lista: beats.map((b) => ({ id: b.id, name: b.name, bpm: b.bpm, key: b.key || '', genre: b.genre, sold: !!b.sold })),
       destaque: meta.destaque,
-      numeros: meta.numeros
+      numeros: meta.numeros,
+      gravou: meta.gravou
     };
     pagina = { at: Date.now(), dados };
     await guardar(request, FRESCA, { ...dados, at: pagina.at }, 60);
