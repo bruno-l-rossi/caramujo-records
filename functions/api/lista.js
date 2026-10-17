@@ -1,4 +1,4 @@
-// Lista de e-mails com cupom de 25% (11/10/2026, _lib/lista.js).
+// Lista de e-mails com cupom de 15% (11/10/2026; era 25% até 17/10, _lib/lista.js).
 //   POST /api/lista { email, de }   entra na lista; o cupom vai pro e-mail
 //   GET  /api/lista?sair=<token>     sai da lista (o link do rodapé do e-mail)
 import { db, json } from '../_lib/db.js';

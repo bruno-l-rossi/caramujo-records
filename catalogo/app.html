@@ -210,7 +210,7 @@ __META__
     transition:text-decoration-color .2s}
   .who .at-link svg{width:15px;height:15px;color:#b7b7b7;flex:none;transition:transform .2s}
   @media(hover:hover){.who .at-link:hover{text-decoration-color:#fff}.who .at-link:hover svg{transform:translateX(2px);color:#fff}}
-  /* Fique por dentro (12/10/2026): a lista com cupom de 25%, só na página da tape */
+  /* Fique por dentro (12/10/2026): a lista com cupom de 15% (era 25% até 17/10), só na página da tape */
   .fique{margin:32px 0 42px;padding:22px 20px;border:1px solid #2a2a2a;border-radius:18px;background:#0b0b0b}
   /* 12/10/2026: o mesmo espaço entre o fim dos beats e a caixa e entre a caixa e o "Mais de" */
   .fique:not([hidden])+.mais{margin-top:0;padding-top:0;border-top:0}
@@ -570,9 +570,9 @@ __META__
 
       <!-- Fique por dentro (12/10/2026): só na página de uma tape; o servidor (/api/lista) cria o cupom -->
       <section class="fique" id="fique" hidden aria-labelledby="fqTit">
-        <div class="fq-k">25% na primeira compra</div>
+        <div class="fq-k">15% na primeira compra</div>
         <h3 id="fqTit">Fique por dentro</h3>
-        <p id="fqP">Cadastre-se para receber um cupom exclusivo de 25% em sua primeira compra e ouvir as próximas beat tapes antes de todo mundo.</p>
+        <p id="fqP">Cadastre-se para receber um cupom exclusivo de 15% em sua primeira compra e ouvir as próximas beat tapes antes de todo mundo.</p>
         <form class="fq-f" id="fqForm" novalidate>
           <input class="fq-in" id="fqEmail" type="email" inputmode="email" autocomplete="email" placeholder="seu@email.com" aria-label="Seu e-mail" required>
           <button class="pill solid fq-bt" id="fqBt" type="submit">Quero o cupom</button>

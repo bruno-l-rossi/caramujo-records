@@ -2561,7 +2561,7 @@ try{
 /* ─────────────────────────────────────────────────────────────── */
 try{
 /* ── FIQUE POR DENTRO (11/10/2026) ───────────────────────────────────
-   Cadastro na lista: o servidor (/api/lista) cria o cupom de 25% só dessa pessoa e manda pro
+   Cadastro na lista: o servidor (/api/lista) cria o cupom de 15% só dessa pessoa e manda pro
    e-mail. Depois do cadastro, este navegador lembra e a caixa vira o recado de "pronto". */
 (function(){
   var CHAVE='caramujo_lista_v1';

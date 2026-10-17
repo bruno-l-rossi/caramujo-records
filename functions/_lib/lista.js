@@ -1,5 +1,5 @@
-// Lista de e-mails com cupom de 25% (11/10/2026, item 9 do Bruno). Quem deixa o e-mail na
-// vitrine ganha um cupom só dele (LISTA-XXXX): 25% nos beats do catálogo, uso único, válido por
+// Lista de e-mails com cupom (11/10/2026, item 9 do Bruno; 15% desde 17/10, era 25%). Quem deixa o e-mail na
+// vitrine ganha um cupom só dele (LISTA-XXXX): PCT% nos beats do catálogo, uso único, válido por
 // 15 dias. O cupom mora na tabela cupons e a pessoa (com o prazo do cupom) na tabela lista.
 // Mesmo e-mail de novo: nada de cupom novo (reenvia o mesmo, se ainda vale). Sair da lista: o
 // link do e-mail (/api/lista?sair=<token>).
@@ -8,7 +8,8 @@ import { now } from './db.js';
 import { hojeSP } from './loja.js';
 import { SITE } from './perfil.js';
 
-export const PCT = 25;
+// 17/10/2026: 25% → 15% (pedido do Bruno). Cupom já mandado segue com o % que saiu no e-mail (fica no banco).
+export const PCT = 15;
 export const DIAS = 15;
 export const POR_HORA = 5;            // cadastros por aparelho/rede por hora (robô não esvazia o caixa)
 

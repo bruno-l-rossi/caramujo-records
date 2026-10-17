@@ -46,6 +46,23 @@
     '.gv-troca{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px 56px}',
     '.gv-troca .pill{padding:8px 12px;font-size:12.5px;cursor:pointer}',
     '.gv-troca small{flex-basis:100%;font-size:12px;color:var(--ink4)}',
+    '.gv-ord{background:#101010;border:1px solid var(--borda);border-radius:14px;padding:12px 14px;margin-bottom:16px}',
+    '.gv-ord-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}',
+    '.gv-ord-topo b{font-size:14px;font-weight:600}',
+    '.gv-ord-modo{display:inline-flex;background:#141414;border:1px solid var(--borda);border-radius:999px;padding:3px}',
+    '.gv-ord-modo button{border:0;background:none;color:var(--ink3);font:inherit;font-size:12.5px;padding:7px 12px;border-radius:999px;cursor:pointer}',
+    '.gv-ord-modo button[aria-pressed=true]{background:#fff;color:#000;font-weight:600}',
+    '.gv-ord small{display:block;margin-top:6px;font-size:12px;color:var(--ink4);line-height:1.4}',
+    '.gv-ord-ver{margin-top:8px;background:none;border:0;color:var(--ink2);font:inherit;font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:4px 0}',
+    '.gv-ol{position:relative;list-style:none;margin:8px 0 0;padding:0;counter-reset:o}',
+    '.gv-ol li{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid #161616;background:#101010;counter-increment:o}',
+    '.gv-ol li:before{content:counter(o);width:22px;flex:none;font-size:12px;color:var(--ink4);text-align:right}',
+    '.gv-ol .gv-foto{width:34px;height:34px;font-size:11px}',
+    '.gv-ol .t{flex:1;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+    '.gv-ol .t small{display:inline;margin:0 0 0 6px;font-size:12px;color:var(--ink4)}',
+    '.gv-ol li.pego{position:relative;z-index:2;box-shadow:0 8px 24px rgba(0,0,0,.6);background:#1a1a1a}',
+    '.gv-alca{width:44px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;color:#8a8a8a;cursor:grab;touch-action:none;background:transparent;border:0;border-radius:10px;padding:0}',
+    '.gv-alca:focus-visible{outline:2px solid #fff;outline-offset:-2px}',
     '@media (max-width:420px){.gv-fx,.gv-troca{margin-left:0}}'
   ].join('\n');
 
@@ -58,6 +75,8 @@
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {})
     }).then(function (r) { return r.json(); }).catch(function () { return { erro: 'Sem conexão. Tenta de novo.' }; });
   }
+  var verOrdem = false;
+  var ALCA = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
   function peq(u) { return String(u || '').replace('ab67616d0000b273', 'ab67616d00001e02').replace('ab6761610000e5eb', 'ab67616100005174').replace(/(\/capa\/gr[va]-[A-Za-z0-9_-]+?)(?:-m)?\.jpg$/, '$1-p.jpg'); }
   // 67000 → "67 mil ouvintes"; 1200000 → "1,2 mi ouvintes"
   function ouv(n) {
@@ -87,13 +106,13 @@
 
   function linhaArtista(a) {
     var n = a.faixas.length, v = visiveis(a);
-    var meta = (v === n ? n + (n === 1 ? ' música' : ' músicas') : v + ' de ' + n + ' músicas na página') +
+    var meta = a.eu ? (v === n ? n + (n === 1 ? ' música solo' : ' músicas solo') : v + ' de ' + n + ' músicas solo na página') + ' · o primeiro cartão da página (não conta nos números)' : (v === n ? n + (n === 1 ? ' música' : ' músicas') : v + ' de ' + n + ' músicas na página') +
       (a.ouvintes != null ? ' · ' + ouv(a.ouvintes) : '') +
       (a.pasta ? ' · pasta ' + esc(a.pasta) : ' · só participação') + (a.provavel ? ' · <em>confira se é a mesma pessoa</em>' : '') +
       (a.foto ? (a.tipo === 'capa' ? ' · <em>sem foto no Spotify (usa uma capa)</em>' : '') : ' · <em>sem foto</em>');
     var foto = a.foto ? '<img src="' + esc(peq(a.foto)) + '" alt="" loading="lazy">' : esc(ini(a.nome));
     // foto própria (17/10/2026): artista sem foto no Spotify ganha a que o Bruno subir
-    var troca = abertos[a.id] ? '<div class="gv-troca"><label class="pill"><input type="file" accept="image/*" data-foto="' + esc(a.id) + '" hidden>' + (a.manual ? 'Trocar a foto' : 'Subir uma foto') + '</label>' +
+    var troca = abertos[a.id] && !a.eu ? '<div class="gv-troca"><label class="pill"><input type="file" accept="image/*" data-foto="' + esc(a.id) + '" hidden>' + (a.manual ? 'Trocar a foto' : 'Subir uma foto') + '</label>' +
       (a.manual ? '<button class="pill" type="button" data-tirarfoto="' + esc(a.id) + '">Voltar pra do Spotify</button>' : '') +
       '<small>' + (a.manual ? 'Foto sua (o Atualizar não troca).' : a.tipo === 'capa' ? 'No Spotify ele não tem foto: a página usa a capa de um lançamento.' : a.foto ? 'Foto do Spotify.' : 'Sem foto: a página mostra as iniciais.') + '</small></div>' : '';
     var fx = abertos[a.id] ? troca + '<ul class="gv-fx">' + a.faixas.map(function (id) {
@@ -117,7 +136,7 @@
       if (res) res.textContent = 'os artistas das suas músicas';
       return;
     }
-    var mostra = dados.artistas.filter(function (a) { return !a.fora && visiveis(a) > 0; }).length;
+    var mostra = dados.artistas.filter(function (a) { return !a.eu && !a.fora && visiveis(a) > 0; }).length;
     if (res) res.textContent = mostra + ' artistas na página · ' + (dados.noAr ? 'no ar pra todo mundo' : 'fora do ar (só você vê a prévia)');
     var h = '<div class="gv-topo"><div class="sw"><div><b>No ar</b><small>' +
       (dados.noAr ? 'Todo mundo vê a página e a linha "Quem já gravou" no fim da aba Músicas.' : 'Desligado: a página e a linha só aparecem pra você, logado no painel.') +
@@ -125,13 +144,29 @@
       '<a href="' + PAGINA + '" target="_blank" rel="noopener">Ver ' + (dados.noAr ? 'a página' : 'a prévia') + ' ↗</a></div>';
     h += '<div class="gv-img"><div><b>Fotos, capas e ouvintes</b><small>' + (dados.faltam ? (buscando ? 'buscando no Spotify… faltam ' + dados.faltam : 'faltam ' + dados.faltam + ' (fotos, capas das faixas e ouvintes mensais). Sem foto, a página mostra as iniciais.') : 'Tudo guardado no nosso servidor' + (dados.atualizado ? ' (' + new Date(dados.atualizado).toLocaleDateString('pt-BR') + ')' : '') + '. Toca em Atualizar quando um artista trocar a foto ou pra ler os ouvintes do mês.') + '</small></div>' +
       '<button class="pill' + (dados.faltam ? ' solid' : '') + '" type="button" id="gvImg"' + (buscando ? ' disabled' : '') + '>' + (buscando ? 'Buscando…' : dados.faltam ? 'Buscar' : 'Atualizar') + '</button></div>';
+    // Ordem da página (17/10/2026): padrão por ouvintes ou a do Bruno (arrastar)
+    var porId = {}; dados.artistas.forEach(function (a) { porId[a.id] = a; });
+    var manual = !!dados.ordemManual;
+    h += '<div class="gv-ord"><div class="gv-ord-topo"><b>Ordem da página</b><div class="gv-ord-modo" role="group" aria-label="Ordem da página">' +
+      '<button type="button" data-modo="ouvintes" aria-pressed="' + !manual + '">Por ouvintes (padrão)</button><button type="button" data-modo="manual" aria-pressed="' + manual + '">Na minha ordem</button></div></div>' +
+      '<small>' + (manual ? 'Na sua ordem: segura a alça e arrasta. Salva sozinho. Artista novo entra no fim.' : 'Mais ouvintes mensais primeiro; diferença pequena, quem tem mais faixas. Arrastar um artista liga a sua ordem.') + '</small>' +
+      '<button type="button" class="gv-ord-ver" data-verordem="1" aria-expanded="' + verOrdem + '">' + (verOrdem ? 'Esconder a lista' : 'Ver e arrastar a ordem (' + (dados.ordemPagina || []).length + ')') + '</button>' +
+      (verOrdem ? '<ol class="gv-ol" id="gvOl">' + (dados.ordemPagina || []).map(function (id) {
+        var a = porId[id]; if (!a) return '';
+        return '<li data-id="' + esc(id) + '"><span class="gv-foto">' + (a.foto ? '<img src="' + esc(peq(a.foto)) + '" alt="" loading="lazy">' : esc(ini(a.nome))) + '</span><span class="t">' + esc(a.nome) + (a.ouvintes != null ? '<small>' + ouv(a.ouvintes) + '</small>' : '') + '</span>' +
+          '<button class="gv-alca" type="button" aria-label="Mover ' + esc(a.nome) + ' (setas pra cima e pra baixo)">' + ALCA + '</button></li>';
+      }).join('') + '</ol>' : '') + '</div>';
     h += '<div class="campo gv-busca"><input id="gvFiltro" type="search" placeholder="Buscar artista ou pasta" autocomplete="off" aria-label="Buscar artista" value="' + esc(filtro) + '"></div>';
-    var comPasta = dados.artistas.filter(function (a) { return a.pasta; }), feat = dados.artistas.filter(function (a) { return !a.pasta; });
-    var ord = function (x, y) { return faixaOuv(y.ouvintes) - faixaOuv(x.ouvintes) || y.faixas.length - x.faixas.length || (y.ouvintes || 0) - (x.ouvintes || 0) || x.nome.localeCompare(y.nome, 'pt'); };
+    var solo = dados.artistas.filter(function (a) { return a.eu; }), outros = dados.artistas.filter(function (a) { return !a.eu; });
+    var comPasta = outros.filter(function (a) { return a.pasta; }), feat = outros.filter(function (a) { return !a.pasta; });
+    var posPag = {}; (dados.ordemPagina || []).forEach(function (id, i) { posPag[id] = i; });
+    var ord = function (x, y) { return (x.id in posPag ? posPag[x.id] : 1e6) - (y.id in posPag ? posPag[y.id] : 1e6) || faixaOuv(y.ouvintes) - faixaOuv(x.ouvintes) || y.faixas.length - x.faixas.length || x.nome.localeCompare(y.nome, 'pt'); };
+    if (solo.length) h += '<div class="gv-sec"><b>Suas músicas solo</b><small>O cartão @rideblan33 abre a página. A chave tira ele (ou uma faixa) da página.</small><ul class="gv-lista">' + solo.map(linhaArtista).join('') + '</ul></div>';
     h += '<div class="gv-sec"><b>Com pasta no Drive · ' + comPasta.length + '</b><small>Toque no nome pra ver as músicas. A chave tira da página.</small><ul class="gv-lista">' + comPasta.sort(ord).map(linhaArtista).join('') + '</ul></div>';
     h += '<div class="gv-sec"><b>Só participação · ' + feat.length + '</b><small>Cantaram junto nas faixas, mas não têm pasta no Drive.</small><ul class="gv-lista">' + feat.sort(ord).map(linhaArtista).join('') + '</ul></div>';
     raiz.innerHTML = h;
     filtrar();
+    var ol = $('gvOl'); if (ol) ligarOrdem(ol);
   }
   function filtrar() {
     var q = sem(filtro).trim();
@@ -170,6 +205,13 @@
         }
         buscarImagens(); return;
       }
+      if (t.dataset.verordem) { verOrdem = !verOrdem; desenhar(); return; }
+      if (t.dataset.modo) {
+        var quer = t.dataset.modo === 'manual';
+        if (quer === !!dados.ordemManual) return;
+        acao('gravou-ordem-modo', { manual: quer }).then(function (j) { usar(j, quer ? 'Na sua ordem.' : 'De volta à ordem por ouvintes.'); });
+        return;
+      }
       if (t.dataset.tirarfoto) {
         t.disabled = true;
         acao('gravou-foto-tirar', { id: t.dataset.tirarfoto }).then(function (j) { usar(j, 'Volta pra foto do Spotify no próximo Buscar.'); });
@@ -191,6 +233,68 @@
         return acao('gravou-foto', { id: inp.dataset.foto, grande: f.grande, pequena: f.pequena });
       }).then(function (j) { usar(j, 'Foto nova no ar em até 1 minuto.'); })
         .catch(function () { flash('Não consegui ler essa imagem. Tenta um JPEG ou PNG.'); });
+    });
+  }
+
+  /* ---------- arrastar a ordem (o mesmo jeito das Músicas e das beat tapes) ---------- */
+  var salvarT = null;
+  function salvarOrdem(ol) {
+    clearTimeout(salvarT);
+    salvarT = setTimeout(function () {
+      var ids = [].slice.call(ol.children).map(function (li) { return li.dataset.id; });
+      acao('gravou-ordem', { ids: ids }).then(function (j) { usar(j, 'Ordem salva (na sua ordem).'); });
+    }, 600);
+  }
+  function ligarOrdem(ol) {
+    var pego = null, dy = 0, DUR = 180;
+    function topoLayout(li) { return ol.getBoundingClientRect().top + li.offsetTop; }
+    function desliza(mudar) {
+      var outros = [].slice.call(ol.children).filter(function (li) { return li !== pego; });
+      var antes = outros.map(function (li) { return li.getBoundingClientRect().top; });
+      mudar();
+      outros.forEach(function (li, i) {
+        var d = antes[i] - li.getBoundingClientRect().top; if (!d) return;
+        li.style.transition = 'none'; li.style.transform = 'translateY(' + d + 'px)';
+        li.getBoundingClientRect();
+        li.style.transition = 'transform ' + DUR + 'ms cubic-bezier(.2,.7,.3,1)'; li.style.transform = '';
+      });
+    }
+    ol.addEventListener('pointerdown', function (e) {
+      var h = e.target.closest('.gv-alca'); if (!h) return;
+      pego = h.closest('li'); e.preventDefault();
+      try { h.setPointerCapture(e.pointerId); } catch (_) {}
+      dy = e.clientY - pego.getBoundingClientRect().top;
+      pego.classList.add('pego');
+    });
+    ol.addEventListener('pointermove', function (e) {
+      if (!pego) return;
+      var rolar = e.clientY < 70 ? -10 : e.clientY > window.innerHeight - 70 ? 10 : 0;
+      if (rolar) window.scrollBy(0, rolar);
+      var meio = e.clientY - dy + pego.offsetHeight / 2;
+      var outros = [].slice.call(ol.children).filter(function (li) { return li !== pego; });
+      var alvo = null;
+      for (var i = 0; i < outros.length; i++) { if (meio < topoLayout(outros[i]) + outros[i].offsetHeight / 2) { alvo = outros[i]; break; } }
+      if (alvo ? pego.nextElementSibling !== alvo : ol.lastElementChild !== pego) desliza(function () { if (alvo) ol.insertBefore(pego, alvo); else ol.appendChild(pego); });
+      pego.style.transform = 'translateY(' + (e.clientY - dy - topoLayout(pego)) + 'px)';
+    });
+    function solta() {
+      if (!pego) return;
+      var li = pego; pego = null;
+      li.style.transition = 'transform ' + DUR + 'ms cubic-bezier(.2,.7,.3,1)'; li.style.transform = '';
+      li.classList.remove('pego');
+      setTimeout(function () { li.style.transition = ''; }, DUR + 20);
+      salvarOrdem(ol);
+    }
+    ol.addEventListener('pointerup', solta); ol.addEventListener('pointercancel', solta);
+    ol.addEventListener('keydown', function (e) {
+      var h = e.target.closest('.gv-alca'); if (!h || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+      e.preventDefault();
+      var li = h.closest('li'); pego = li;
+      desliza(function () {
+        if (e.key === 'ArrowUp' && li.previousElementSibling) ol.insertBefore(li, li.previousElementSibling);
+        if (e.key === 'ArrowDown' && li.nextElementSibling) ol.insertBefore(li.nextElementSibling, li);
+      });
+      pego = null; h.focus(); salvarOrdem(ol);
     });
   }
 

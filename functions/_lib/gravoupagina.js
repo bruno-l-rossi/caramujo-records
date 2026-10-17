@@ -17,6 +17,8 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 const jsonSeguro = (o) => JSON.stringify(o).replace(/[<>&\u2028\u2029]/g, (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
 export const iniciais = (nome) => String(nome || '').replace(/^@/, '').split(/[\s_.-]+/).filter(Boolean).map((p) => p[0]).join('').slice(0, 2).toUpperCase() || '?';
 const nMus = (n) => n + (n === 1 ? ' música' : ' músicas');
+// o cartão das faixas solo do @rideblan33 (rodada M) fala "N músicas solo" em vez de "com @rideblan33"
+const linhaQtd = (a) => (a.eu ? nMus(a.faixas.length) + ' solo' : nMus(a.faixas.length) + ' com @rideblan33');
 const ICONE_SP = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm4.6 14.4a.62.62 0 01-.86.2c-2.35-1.44-5.3-1.76-8.79-.96a.62.62 0 11-.28-1.22c3.81-.87 7.08-.5 9.72 1.12.3.18.39.57.2.86zm1.22-2.73a.78.78 0 01-1.07.26c-2.69-1.65-6.8-2.13-9.98-1.17a.78.78 0 11-.45-1.5c3.64-1.1 8.16-.57 11.24 1.33.37.22.48.71.26 1.08zm.1-2.84C14.7 8.92 9.38 8.74 6.3 9.68a.94.94 0 11-.54-1.8c3.53-1.07 9.4-.86 13.1 1.33a.94.94 0 01-.95 1.62z"/></svg>';
 const ICONE_BUSCA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg>';
 const SETA = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>';
@@ -37,7 +39,7 @@ function faixaLi(f) {
 // 6 no celular, 8 no computador (2 colunas). As outras já vêm no HTML (o Google lê).
 const CURTA = 6;
 function cartao(a, faixas) {
-  return `<div class="qg-foto">${fotoArtista(a, '', true)}</div><div class="qg-cab2"><div class="q">Artista</div><h2 id="qgNome">${esc(a.nome)}</h2><div class="q">${nMus(a.faixas.length)} com o @rideblan33</div>` +
+  return `<div class="qg-foto">${fotoArtista(a, '', true)}</div><div class="qg-cab2"><div class="q">${a.eu ? 'Produtor e artista' : 'Artista'}</div><h2 id="qgNome">${esc(a.nome)}</h2><div class="q">${linhaQtd(a)}</div>` +
     `<div class="qg-bts"><a class="cheio" href="https://open.spotify.com/artist/${esc(a.id)}" target="_blank" rel="noopener" data-rede="gravou-spotify">${ICONE_SP}<span>Spotify</span></a></div></div>` +
     `<ul class="qg-fx${a.faixas.length > CURTA ? ' curta' : ''}">${a.faixas.map((id) => faixaLi(faixas[id])).join('')}</ul>` +
     (a.faixas.length > CURTA ? `<button class="qg-todas" type="button" data-todas>Ver as ${a.faixas.length} músicas</button>` : '');
@@ -46,7 +48,8 @@ function cartao(a, faixas) {
 export function paginaGravou(dados, { previa = false } = {}) {
   const { artistas, faixas, nFaixas } = dados;
   const n = artistas.length;
-  const primeiro = artistas[0];
+  const todos = (dados.eu ? [dados.eu] : []).concat(artistas);   // o cartão solo vem antes; os números contam só os artistas
+  const primeiro = todos[0];
   const titulo = 'Quem já gravou · Portfólio do @rideblan33';
   const nomes3 = artistas.slice(0, 3).map((a) => a.nome);
   const descricao = `${n} artistas cantaram em ${nFaixas} músicas produzidas pelo @rideblan33: ${nomes3.join(', ')} e mais. Ouça no Spotify.`;
@@ -54,7 +57,7 @@ export function paginaGravou(dados, { previa = false } = {}) {
     '@context': 'https://schema.org', '@type': 'ItemList', name: 'Artistas que gravaram com o @rideblan33', numberOfItems: n,
     itemListElement: artistas.map((a, i) => ({ '@type': 'ListItem', position: i + 1, item: { '@type': 'MusicGroup', name: a.nome, sameAs: `https://open.spotify.com/artist/${a.id}` } }))
   };
-  const json = { artistas: artistas.map((a) => ({ id: a.id, n: a.nome, s: a.slug, f: a.foto, fx: a.faixas })), faixas };
+  const json = { artistas: todos.map((a) => Object.assign({ id: a.id, n: a.nome, s: a.slug, f: a.foto, fx: a.faixas }, a.eu ? { e: 1 } : {})), faixas };
   return `<!doctype html>
 <html lang="pt-BR"><head>
 <meta charset="utf-8">
@@ -156,10 +159,9 @@ ${previa ? '<p class="previa">Prévia: só você vê esta página, porque está 
   ${primeiro ? `<section class="qg-aberto" id="qgAberto" aria-live="polite" aria-labelledby="qgNome">${cartao(primeiro, faixas)}</section>` : ''}
   <div class="qg-cab"><b>Todos</b><span>${n} artistas</span></div>
   <ul class="qg-grade" id="qgGrade">
-${artistas.map((a, i) => `    <li data-busca="${esc(a.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase())}"><button type="button" data-i="${i}" aria-pressed="${i === 0}">${fotoArtista(a)}<b>${esc(a.nome)}</b><small>${nMus(a.faixas.length)}</small></button></li>`).join('\n')}
+${todos.map((a, i) => `    <li${a.eu ? ' class="qg-eu"' : ''} data-busca="${esc(a.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase())}"><button type="button" data-i="${i}" aria-pressed="${i === 0}">${fotoArtista(a)}<b>${esc(a.nome)}</b><small>${nMus(a.faixas.length)}${a.eu ? ' solo' : ''}</small></button></li>`).join('\n')}
   </ul>
   <p class="qg-nada" id="qgNada" hidden>Nenhum artista com esse nome.</p>
-  <p class="qg-nada">Todas no <a href="${SPOTIFY_EU}" target="_blank" rel="noopener" data-rede="gravou-perfil-spotify" style="text-decoration:underline;text-underline-offset:3px">Spotify do @rideblan33</a>.</p>
 </main>
 <script type="application/json" id="qgDados">${jsonSeguro(json)}</script>
 <footer>
@@ -182,7 +184,7 @@ ${artistas.map((a, i) => `    <li data-busca="${esc(a.nome.normalize('NFD').repl
   function abrir(i,rolar){
     var a=A[i]; if(!a||!ab) return;
     var foto=a.f?'<img src="'+esc(a.f)+'" alt="" width="320" height="320">':'<span class="qg-ini" aria-hidden="true">'+esc(ini(a.n))+'</span>';
-    ab.innerHTML='<div class="qg-foto">'+foto+'</div><div class="qg-cab2"><div class="q">Artista</div><h2 id="qgNome">'+esc(a.n)+'</h2><div class="q">'+nm(a.fx.length)+' com o @rideblan33</div>'+
+    ab.innerHTML='<div class="qg-foto">'+foto+'</div><div class="qg-cab2"><div class="q">'+(a.e?'Produtor e artista':'Artista')+'</div><h2 id="qgNome">'+esc(a.n)+'</h2><div class="q">'+nm(a.fx.length)+(a.e?' solo':' com @rideblan33')+'</div>'+
       '<div class="qg-bts"><a class="cheio" href="https://open.spotify.com/artist/'+esc(a.id)+'" target="_blank" rel="noopener" data-rede="gravou-spotify">'+SP+'<span>Spotify</span></a></div></div>'+
       '<ul class="qg-fx'+(a.fx.length>6?' curta':'')+'">'+a.fx.map(function(id){var f=F[id];if(!f)return '';return '<li><a href="https://open.spotify.com/track/'+esc(f.id)+'" target="_blank" rel="noopener" data-rede="gravou-faixa" aria-label="Ouvir '+esc(f.nome)+' no Spotify">'+(f.capa?'<img src="'+esc(peq(f.capa))+'" alt="" loading="lazy" width="48" height="48">':'<span class="qg-sem" aria-hidden="true"></span>')+'<div><b>'+esc(f.nome)+'</b><small>'+esc(f.com.join(', '))+'</small></div><i>'+SETA+'</i></a></li>';}).join('')+'</ul>'+(a.fx.length>6?'<button class="qg-todas" type="button" data-todas>Ver as '+a.fx.length+' músicas</button>':'');
     [].forEach.call(grade.querySelectorAll('button[data-i]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.i===i));});

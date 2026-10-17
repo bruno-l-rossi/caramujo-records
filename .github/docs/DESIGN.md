@@ -140,10 +140,12 @@ Google, redes, direto) abre em Músicas.
 ## Quem já gravou (desde 16/10/2026)
 Página `/rideblan33/artistas` e a linha no fim da aba Músicas (mockup aprovado: canvas linha M). Fundo preto do bloco do perfil (`--preto`, `--folha` nos cartões, `--div` nas linhas), texto em Schibsted Grotesk; nada de cor fora da paleta.
 - Topo: logo `caramujo-h` (132px no celular, 168px no computador) e o botão-pílula "@rideblan33" que volta pro perfil. Kicker "PORTFÓLIO DO @RIDEBLAN33", h1 "Quem já gravou" 40/56px 800, frase com os números da lista (nunca inventar), busca em pílula.
-- Cartão do artista aberto: foto redonda (96px celular, 180px computador; sem foto = iniciais em `#1c1c1c`), "N músicas com o @rideblan33", botão branco "Spotify". Faixas com capa 48px, nome, quem canta e a seta ↗; 6 no celular e 8 no computador (2 colunas) + pílula "Ver as N músicas".
+- Cartão do artista aberto: foto redonda (96px celular, 180px computador; sem foto = iniciais em `#1c1c1c`), "N músicas com @rideblan33" (sem o "o" desde 17/10/2026), botão branco "Spotify". Faixas com capa 48px, nome, quem canta e a seta ↗; 6 no celular e 8 no computador (2 colunas) + pílula "Ver as N músicas".
 - Grade: fotos redondas, 3 colunas no celular, 4 a partir de 600px, 6 no computador; o artista aberto ganha aro branco. Ordem (desde 17/10/2026) = mais ouvintes mensais no Spotify primeiro; diferença pequena (menos de 35%) conta como empate e vence quem tem mais faixas.
 - Linha da aba Músicas: título "Quem já gravou", "N artistas ›", até 7 fotos sobrepostas (quem tem foto primeiro) + "+N", e a frase "A, B, C e mais N artistas cantaram em músicas produzidas pelo @rideblan33." Entrou no lugar do "Ouvir o portfólio completo" (saiu em 16/10/2026). Desde 17/10/2026 termina na chamada "VER TODOS OS N ARTISTAS →": pílula de borda branca 50% (48px de altura, Schibsted 700 12px caixa alta espaçada), a linha toda no celular e do tamanho do texto a partir de 601px; no mouse vira branca com texto preto (igual ao "Mix & Master" do "Quer um som assim?").
-- Fotos e capas saem do nosso R2 (capa/grv-*, capa/gra-*), não do endereço do Spotify (desde 17/10/2026).
+- Fotos e capas saem do nosso R2 (capa/grv-*, capa/gra-*), não do endereço do Spotify (desde 17/10/2026). Faixa sem capa no R2 usa a capa do Spotify anotada na lista.
+- Cartão @rideblan33 (desde 17/10/2026, rodada M): primeiro da grade e aberto ao entrar, foto do perfil do site, kicker "PRODUTOR E ARTISTA", "N músicas solo". Não entra nos números da página, da vitrine nem do perfil.
+- Faixas do cartão: as mais tocadas primeiro (faixas de 30% nos plays); plays parecidos ou abaixo de mil, a mais nova antes. A ordem dos artistas pode ser a do Bruno (painel: arrastar) ou a padrão por ouvintes.
 
 ## Pastilhas do perfil (desde 27/09/2026)
 

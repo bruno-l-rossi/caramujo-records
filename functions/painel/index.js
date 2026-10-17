@@ -393,7 +393,7 @@ function pagina() {
 <script src="/assets/painel/analytics.js?v=2026-10-16a" defer></script>
 <script src="/assets/painel/vitrine.js?v=2026-10-16a" defer></script>
 <script src="/assets/painel/musicas.js?v=2026-10-17a" defer></script>
-<script src="/assets/painel/gravou.js?v=2026-10-17a" defer></script>
+<script src="/assets/painel/gravou.js?v=2026-10-17b" defer></script>
 <script src="/assets/painel/comentarios.js?v=2026-10-10a" defer></script>
 
 <nav class="nav-p" id="navP" aria-label="Seções do painel"></nav>
@@ -729,7 +729,7 @@ function pagina() {
   function paginaLista(){
     var box=document.createElement('div'), l=lista;
     if(!l){ box.innerHTML='<div class="vazio">carregando…</div>'; return box; }
-    box.innerHTML='<p class="sub" style="margin-top:4px">Quem se cadastrou no "Fique por dentro" da vitrine e das tapes. Cada pessoa ganha um cupom só dela: 25% nos beats do catálogo, uso único, 15 dias. Os cupons da lista não aparecem em Cupons.</p>'+
+    box.innerHTML='<p class="sub" style="margin-top:4px">Quem se cadastrou no "Fique por dentro" da vitrine e das tapes. Cada pessoa ganha um cupom só dela: 15% nos beats do catálogo, uso único, 15 dias. Os cupons da lista não aparecem em Cupons.</p>'+
       '<div class="bloco"><div class="rot">NA LISTA</div><p>'+textoLista()+(l.sairam?' · '+l.sairam+(l.sairam===1?' saiu':' saíram'):'')+'</p>'+
       (l.emails&&l.emails.length?'<div class="acoes" style="margin-top:12px"><button type="button" class="pill solid" id="liCopia">Copiar os e-mails</button></div>':'')+'</div>'+
       '<div class="bloco"><div class="rot">ÚLTIMOS CADASTROS</div>'+((l.ultimos||[]).length?l.ultimos.map(function(u){
@@ -903,7 +903,7 @@ function pagina() {
   }
   var lista=null, listaPedida=false;
   function textoLista(){
-    if(!lista) return 'quem se cadastrou pra receber o cupom de 25%';
+    if(!lista) return 'quem se cadastrou pra receber o cupom de 15%';
     if(!lista.total) return 'ninguém ainda';
     var falhou=(lista.envios||[])[0]&&!lista.envios[0].ok;
     return lista.total+(lista.total===1?' pessoa':' pessoas')+' · '+lista.usaram+(lista.usaram===1?' usou o cupom':' usaram o cupom')+(falhou?' · <em>o último e-mail não saiu</em>':'');
@@ -919,7 +919,7 @@ function pagina() {
     var card=$('card');
     var pinta=function(){
       var l=lista||{total:0,ultimos:[],emails:[]};
-      card.innerHTML='<h2>Lista de e-mails</h2><p>Quem se cadastrou no "Fique por dentro" da vitrine. Cada pessoa ganha um cupom só dela: 25% nos beats do catálogo, uso único, 15 dias. Os cupons da lista não aparecem na tela de Cupons.</p>'+
+      card.innerHTML='<h2>Lista de e-mails</h2><p>Quem se cadastrou no "Fique por dentro" da vitrine. Cada pessoa ganha um cupom só dela: 15% nos beats do catálogo, uso único, 15 dias. Os cupons da lista não aparecem na tela de Cupons.</p>'+
         '<div class="bloco"><div class="rot">NA LISTA</div><p>'+esc(textoLista())+(l.sairam?' · '+l.sairam+(l.sairam===1?' saiu':' saíram'):'')+'</p>'+
         (l.emails&&l.emails.length?'<div class="acoes" style="margin-top:12px"><button type="button" class="pill solid" id="liCopia">Copiar os e-mails</button></div>':'')+'</div>'+
         '<div class="bloco"><div class="rot">ÚLTIMOS CADASTROS</div>'+((l.ultimos||[]).length?'<div style="margin-top:6px">'+l.ultimos.map(function(u){
