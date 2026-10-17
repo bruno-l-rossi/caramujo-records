@@ -241,11 +241,11 @@ function linhaRecente(m, k, vaga) {
 // Só aparece com a página no ar (ou na prévia de quem está logado).
 export function linhaGravou(gv) {
   if (!gv || !gv.artistas || !gv.artistas.length) return '';
-  // Opção D (17/10/2026, rodada N): fileira de fotos grandes que desliza; cada foto abre o artista na
+  // Opção D (17/10/2026, rodada N): fileira de fotos grandes que desliza (até 20 artistas desde a rodada O); cada foto abre o artista na
   // página e o último cartão é o "Ver todos" (como na opção C). O próprio @rideblan33 fica fora da
   // fileira (a página é dele); quem tem foto vem antes.
   const lista = gv.artistas.filter((a) => !a.eu);
-  const mostra = lista.filter((a) => a.foto).concat(lista.filter((a) => !a.foto)).slice(0, 10);
+  const mostra = lista.filter((a) => a.foto).concat(lista.filter((a) => !a.foto)).slice(0, 20);   // até 20 (pedido do Bruno, rodada O)
   const resto = gv.artistas.length - mostra.length;
   const de = deAttr('perfil-gravou');
   return `<section class="qg-ent" aria-labelledby="qgEntT"><div class="qg-ent-cab"><h3 id="qgEntT">Quem já gravou</h3><a class="qg-ver" href="/rideblan33/artistas"${de} data-rede="aba-gravou">Ver todos ›</a></div>` +

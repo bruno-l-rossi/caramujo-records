@@ -275,6 +275,22 @@ body.tocando .aviso{bottom:96px}
 .barra{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--deep);border-top:1px solid var(--wire);padding:10px 2.4rem calc(12px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:14px;transform:translateY(110%);transition:transform .25s ease}
 body.tocando .barra{transform:none}
 body.tocando{padding-bottom:64px}
+/* Ajuda (17/10/2026, rodada N, opção B do Bruno): botão flutuante que abre uma folha com o Direct do
+   Instagram. Sem WhatsApp (é o número pessoal dele). Sobe junto quando a barra do tocador aparece. */
+.ajuda{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:58;display:flex;align-items:center;gap:8px;height:46px;padding:0 18px 0 14px;border:0;border-radius:999px;background:var(--cream);color:var(--black);font:700 .7rem var(--sans);letter-spacing:.16em;text-transform:uppercase;box-shadow:0 10px 26px rgba(0,0,0,.55);cursor:pointer;transition:bottom .25s ease,background .2s}
+.ajuda svg{width:17px;height:17px;flex:none}
+body.tocando .ajuda{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+.ajuda-veu{position:fixed;inset:0;z-index:84;background:rgba(0,0,0,.55)}
+.ajuda-folha{position:fixed;left:0;right:0;bottom:0;z-index:85;background:#1b1712;border-top:1px solid var(--wire);padding:22px 20px calc(24px + env(safe-area-inset-bottom,0px));box-shadow:0 -20px 40px rgba(0,0,0,.6)}
+.ajuda-veu[hidden],.ajuda-folha[hidden]{display:none}
+.ajuda-folha h2{margin:0 36px 0 0;font:500 1.6rem/1.15 var(--serif);color:var(--cream)}
+.ajuda-folha p{margin:8px 0 16px;font-size:.8rem;line-height:1.6;color:var(--read)}
+.ajuda-folha a{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 16px;border:1px solid var(--wire);color:var(--cream);font:700 .72rem var(--sans);letter-spacing:.16em;text-transform:uppercase;text-decoration:none;transition:border-color .2s}
+.ajuda-folha a svg{width:18px;height:18px;flex:none}
+.ajuda-folha a small{margin-left:auto;font:400 .7rem var(--mono);letter-spacing:.04em;text-transform:none;color:var(--read)}
+.ajuda-folha .fecha{position:absolute;top:14px;right:12px;width:40px;height:40px;border:0;background:none;color:var(--read);font-size:1.6rem;line-height:1;cursor:pointer}
+@media(hover:hover){.ajuda:hover{background:#fff}.ajuda-folha a:hover{border-color:var(--fire)}}
+@media(min-width:861px){.ajuda{right:28px;bottom:28px}body.tocando .ajuda{bottom:92px}.ajuda-folha{left:auto;right:28px;bottom:86px;width:380px;border:1px solid var(--wire)}body.tocando .ajuda-folha{bottom:150px}}
 .barra .t{font:400 .7rem var(--mono);color:var(--dim);flex:none}
 .barra .trilha{max-width:420px}
 .barra .capinha{width:38px;height:38px}
@@ -385,6 +401,12 @@ ${CAPA_VOLTA}
 // O que o tocador precisa de cada beat (vai pro navegador)
 // Barra do pé (página de gênero, e na do beat quando toca um parecido). Capa, nome e a
 // seta levam pra página do beat: é por ela (e não pela lista) que se abre a página (04/10/2026).
+// Ajuda (rodada N): só o Direct do Instagram (o WhatsApp do Bruno é pessoal e não vai pro site)
+const DIRECT = 'https://ig.me/m/rideblan33';
+const ICO_AJUDA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 01-12.6 7.4L3 21l1.6-5.2A8.5 8.5 0 1121 12z"/><path d="M9.6 9.6a2.4 2.4 0 014.6.9c0 1.6-2.2 2-2.2 3.3"/><path d="M12 16.8h.01"/></svg>';
+const ICO_IG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg>';
+const ajudaHtml = (nome) => `<button class="ajuda js-ajuda" type="button" aria-haspopup="dialog" aria-controls="ajudaFolha" aria-expanded="false">${ICO_AJUDA}<span>Ajuda</span></button>
+<div class="ajuda-veu js-ajuda-fecha" hidden></div><div class="ajuda-folha" id="ajudaFolha" role="dialog" aria-modal="true" aria-labelledby="ajudaT" hidden><button class="fecha js-ajuda-fecha" type="button" aria-label="Fechar">×</button><h2 id="ajudaT">Dúvida sobre o ${esc(nome)}?</h2><p>Dúvidas sobre licença, entrega, ajustes no beat, etc.</p><a href="${DIRECT}" target="_blank" rel="noopener">${ICO_IG}<span>Direct no Instagram</span><small>@rideblan33</small></a></div>`;
 const BARRA = `<div class="barra" aria-label="Tocando agora">
 <span class="t js-agora">0:00</span><div class="trilha js-trilha" data-bid="" role="slider" tabindex="0" aria-label="Posição na faixa" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div><span class="t js-total">0:00</span>
 <a class="quem js-blink" href="#"><img class="capinha js-bcapa" src="/assets/brand/selo-creme.svg" alt="" width="38" height="38"><span class="nm js-bnome">&nbsp;</span><span class="ir" aria-hidden="true">›</span></a>
@@ -490,6 +512,7 @@ ${par.length ? `<section class="secao" id="parecidos" aria-labelledby="tParecido
 <ol class="lista js-lista">${par.map((x, i) => linha(x, i, de, preco)).join('')}</ol></section>` : ''}
 </main>
 ${par.length ? BARRA : ''}
+${ajudaHtml(b.name)}
 ${RODAPE}
 <script>window.__PG=${jsonSeguro({ pagina: 'beat', atual: b.id, beats: lista.map(praTela) })}</script>
 <script>${JS}</script>
@@ -598,6 +621,14 @@ const JS = `(function(){
   som.preload='none';
   P.beats.forEach(function(b){ porId[b.id]=b; });
   function $(s,c){ return (c||document).querySelector(s); }
+  /* Ajuda (rodada N): abre e fecha a folha do Direct */
+  (function(){
+    var bt=$('.js-ajuda'), fo=$('#ajudaFolha'), veu=$('.ajuda-veu'); if(!bt||!fo) return;
+    function poe(abre){ fo.hidden=!abre; veu.hidden=!abre; bt.setAttribute('aria-expanded',String(abre)); if(abre){ var a=fo.querySelector('a'); if(a) a.focus(); } else bt.focus(); }
+    bt.addEventListener('click',function(){ poe(fo.hidden); });
+    document.addEventListener('click',function(e){ if(e.target.closest&&e.target.closest('.js-ajuda-fecha')) poe(false); });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!fo.hidden) poe(false); });
+  })();
   function $$(s,c){ return Array.prototype.slice.call((c||document).querySelectorAll(s)); }
   function mmss(s){ s=Math.max(0,Math.round(s||0)); return Math.floor(s/60)+':'+(s%60<10?'0':'')+(s%60); }
   function aviso(t){ var a=$('.aviso'); if(!a) return; a.textContent=t; a.classList.add('on'); clearTimeout(aviso.t); aviso.t=setTimeout(function(){ a.classList.remove('on'); },2200); }
