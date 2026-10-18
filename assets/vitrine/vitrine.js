@@ -2682,10 +2682,11 @@ try{(function(){
   marca();
   var calmo=false; try{ calmo=matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
   if(calmo||!('IntersectionObserver' in window)) return;
-  var io=new IntersectionObserver(function(es){
+  var mexeu=false; ['pointerdown','wheel','touchstart','keydown'].forEach(function(t){ tr.addEventListener(t,function(){ mexeu=true; },{passive:true,once:true}); });
+    var io=new IntersectionObserver(function(es){
     if(!es[0].isIntersecting) return; io.disconnect();
     if(tr.scrollLeft>4||tr.scrollWidth-tr.clientWidth<40) return;
-    setTimeout(function(){ tr.scrollTo({left:72,behavior:'smooth'}); setTimeout(function(){ if(tr.scrollLeft<=80) tr.scrollTo({left:0,behavior:'smooth'}); },650); },350);
+    setTimeout(function(){ if(mexeu) return; var sn=tr.style.scrollSnapType; tr.style.scrollSnapType='none'; tr.scrollTo({left:72,behavior:'smooth'}); setTimeout(function(){ if(!mexeu) tr.scrollTo({left:0,behavior:'smooth'}); setTimeout(function(){ tr.style.scrollSnapType=sn; },700); },650); },350);
   },{threshold:0.6});
   io.observe(tr);
 })();}catch(_){}

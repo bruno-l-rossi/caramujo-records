@@ -225,6 +225,18 @@ __META__
   .fq-n{margin-top:12px;font-size:12px;color:#777;line-height:1.5}
   .fq-n.erro{color:#e0a96d}
   .fq-re{background:none;border:0;padding:0;font:inherit;color:#fff;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+  /* rodada R (18/10/2026): depois do cadastro a caixa vira uma linha (desenho B) com o lembrete do cupom (C):
+     até quando vale, "Usar" enquanto vale e o Reenviar com contagem (2 min entre um e-mail e outro) */
+  .fique.fq-ok{padding:0;border:0;background:none}
+  .fq-linha{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px 12px;padding:14px 16px;border:1px solid #232323;border-radius:14px;font-size:13.5px;line-height:1.45;color:#b7b7b7}
+  .fq-linha .ok{width:22px;height:22px;border-radius:50%;background:#1f3a24;color:#7ad08a;display:grid;place-items:center;font-size:13px;align-self:start;margin-top:1px}
+  .fq-linha .ok.av{background:#3a2c1a;color:#e0a96d}
+  .fq-linha b{color:#fff;font-weight:700}
+  .fq-usar{padding:10px 16px;border-radius:999px;background:#fff;color:#000;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;white-space:nowrap}
+  .fq-usar[hidden]{display:none}
+  .fq-pe{grid-column:2/4;font-size:12px;color:#777;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+  .fq-pe .fq-re:disabled{color:#777;text-decoration:none;cursor:default;font-variant-numeric:tabular-nums}
+  @media(hover:hover){.fq-usar:hover{background:#d9d9d9}}
   @media(min-width:861px){.fq-f{flex-direction:row}.fq-in{flex:1}.fq-bt{width:auto;flex:none;padding-left:26px;padding-right:26px}}
   .mais{padding:22px 0 20px;border-top:1px solid rgba(255,255,255,.06);margin-top:8px}
   .mais[hidden]{display:none}
@@ -715,29 +727,44 @@ __META__
   // A NOVA segue ligada.
   var COMENTA = !!CAT.comentarios;
   var COMS = COMENTA && PASTA && Array.isArray(CAT.coment) ? CAT.coment.slice() : [];
-  // NOVA desde a última visita neste aparelho: faixa que não estava = NOVA; arquivo trocado
-  // (mod mudou) = VERSÃO NOVA. A marca vale a visita inteira (recarregar não apaga) e some
-  // na próxima. Primeira visita no aparelho: o que subiu nos últimos 7 dias (se não for tudo).
+  // NOVA / VERSÃO NOVA (10/10/2026; revisto na rodada R, 18/10/2026). Compara com a última visita
+  // neste aparelho: faixa que não estava = NOVA; arquivo trocado = VERSÃO NOVA. Arquivo novo no
+  // Drive com o mesmo nome de uma faixa que saiu (a versão nova subida como arquivo novo ganha outro
+  // código) também é VERSÃO NOVA: antes virava NOVA. A marca fica por 3 visitas (VISITAS) ou 14 dias
+  // e depois some. VERSÃO NOVA nunca vira NOVA. 1ª visita no aparelho: o que subiu nos últimos 7 dias
+  // (se não for tudo) sai como NOVA.
   var NOVAS = {};
   (function(){
     if(!PASTA) return;
-    var k='cr_visto_'+CAT.code, ks='cr_novas_'+CAT.code, antes=null, sessao=null, agora={};
+    var VISITAS=3, PRAZO=14*864e5, agoraMs=Date.now();
+    var k='cr_visto_'+CAT.code, km='cr_marcas_'+CAT.code, ks='cr_sess_'+CAT.code, antes=null, marcas=null, nova=true, f={}, tt={};
     try{ antes=JSON.parse(localStorage.getItem(k)||'null'); }catch(_){}
-    try{ sessao=JSON.parse(sessionStorage.getItem(ks)||'null'); }catch(_){}
-    var novas = sessao && typeof sessao==='object' ? sessao : {};
-    var recentes = [];
-    CAT.tracks.forEach(function(t){
-      var m=t.mod||''; agora[t.id]=m;
-      if(antes && antes.f){
-        if(!Object.prototype.hasOwnProperty.call(antes.f,t.id)) novas[t.id]='nova';
-        else if(antes.f[t.id]!==m) novas[t.id]='versao';
-      } else if(!sessao && m && Date.now()-Date.parse(m) < 7*864e5) recentes.push(t.id);
-    });
-    if(recentes.length && recentes.length < CAT.tracks.length) recentes.forEach(function(id){ novas[id]='nova'; });
-    Object.keys(novas).forEach(function(id){ if(!Object.prototype.hasOwnProperty.call(agora,id)) delete novas[id]; });
-    NOVAS=novas;
-    try{ sessionStorage.setItem(ks, JSON.stringify(novas)); }catch(_){}
-    try{ localStorage.setItem(k, JSON.stringify({ at:new Date().toISOString(), f:agora })); }catch(_){}
+    try{ marcas=JSON.parse(localStorage.getItem(km)||'null'); }catch(_){}
+    try{ nova=!sessionStorage.getItem(ks); sessionStorage.setItem(ks,'1'); }catch(_){}
+    if(!marcas||typeof marcas!=='object'){
+      marcas={};
+      // marca da versão antiga (só a visita) entra na conta nova
+      try{ var velha=JSON.parse(sessionStorage.getItem('cr_novas_'+CAT.code)||'null'); if(velha) Object.keys(velha).forEach(function(id){ marcas[id]={t:velha[id],v:1,em:agoraMs}; }); }catch(_){}
+    }
+    // nova visita: cada marca conta mais uma; passou de 3 visitas ou de 14 dias, sai
+    if(nova) Object.keys(marcas).forEach(function(id){ var m=marcas[id]; if(!m||typeof m!=='object'){ delete marcas[id]; return; } m.v=(+m.v||0)+1; if(m.v>VISITAS||agoraMs-(+m.em||0)>PRAZO) delete marcas[id]; });
+    function chave(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\.(mp3|wav|m4a|aiff?|flac)$/,'').replace(/\b(v|vers[aã]o|version)\s*\d+\b/g,'').replace(/\b(final|nova|novo|new)\b/g,'').replace(/[^a-z0-9]+/g,''); }
+    function marca(id,tipo){ var m=marcas[id]; if(tipo==='nova'&&m&&m.t==='versao') return; marcas[id]={t:tipo,v:1,em:agoraMs}; }
+    var ids={}; CAT.tracks.forEach(function(t){ ids[t.id]=1; f[t.id]=t.mod||''; tt[t.id]=chave(t.title); });
+    var recentes=[];
+    if(antes && antes.f){
+      // faixas que sumiram desde a última visita, pelo nome (pra achar a versão nova subida como arquivo novo)
+      var saiu={}; Object.keys(antes.f).forEach(function(id){ if(!ids[id] && antes.t && antes.t[id]) saiu[antes.t[id]]=1; });
+      CAT.tracks.forEach(function(t){
+        var m=t.mod||'';
+        if(!Object.prototype.hasOwnProperty.call(antes.f,t.id)) marca(t.id, tt[t.id]&&saiu[tt[t.id]]?'versao':'nova');
+        else if(antes.f[t.id]!==m) marca(t.id,'versao');
+      });
+    } else CAT.tracks.forEach(function(t){ var m=t.mod||''; if(m && agoraMs-Date.parse(m) < 7*864e5) recentes.push(t.id); });
+    if(recentes.length && recentes.length < CAT.tracks.length) recentes.forEach(function(id){ marca(id,'nova'); });
+    Object.keys(marcas).forEach(function(id){ if(!ids[id]) delete marcas[id]; else NOVAS[id]=marcas[id].t; });
+    try{ localStorage.setItem(km, JSON.stringify(marcas)); }catch(_){}
+    try{ localStorage.setItem(k, JSON.stringify({ at:new Date().toISOString(), f:f, t:tt })); }catch(_){}
   })();
   // os comentários que este aparelho escreveu (pra mostrar "Apagar")
   var MEUS = {};
@@ -756,7 +783,7 @@ __META__
     if(!PASTA) return '';
     if(t.kind==='son' && aprovacaoDe(t)) return '<span class="selo aprovada">APROVADA</span>';
     if(NOVAS[t.id]==='nova') return '<span class="selo nova">NOVA</span>';
-    if(NOVAS[t.id]==='versao') return '<span class="selo nova">VERSÃO NOVA</span>';
+    if(NOVAS[t.id]==='versao') return '<span class="selo nova versao">VERSÃO NOVA</span>';
     return '';
   }
   function textoComs(t){
@@ -1753,7 +1780,7 @@ __META__
       open('<h2 id="cardTitle">Capa do catálogo</h2><p>Altere quantas vezes quiser.</p>'+
         '<div class="card-list">'+
         item('trocar','<path d="M3 8.5A1.5 1.5 0 014.5 7h2L8 5h8l1.5 2h2A1.5 1.5 0 0121 8.5v9A1.5 1.5 0 0119.5 19h-15A1.5 1.5 0 013 17.5z"/><circle cx="12" cy="12.5" r="3.2"/>','Trocar a imagem')+
-        item('tirar','<path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6 7l1 13h10l1-13"/>','Voltar pra capa padrão')+
+        item('tirar','<path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6 7l1 13h10l1-13"/>',CAT.artist.coverPadrao?'Voltar pra foto do Spotify':'Voltar pra capa padrão')+
         '</div><button class="card-close" data-close>Fechar</button>');
       card.querySelector('[data-act=trocar]').addEventListener('click',function(){ close(); campo.click() });
       card.querySelector('[data-act=tirar]').addEventListener('click',function(){
@@ -1761,7 +1788,7 @@ __META__
         fetch('/api/capa?a='+encodeURIComponent(location.pathname.split('/')[1])+'&c='+encodeURIComponent(CAT.code),{method:'DELETE'})
           .then(function(r){return r.json()}).then(function(j){
             if(!j.ok){ flash(j.erro||'Não consegui tirar a capa.'); return; }
-            CAT.artist.cover=null; CAT.artist.capaDoArtista=false;
+            CAT.artist.cover=CAT.artist.coverPadrao||null; CAT.artist.capaDoArtista=false;   // rodada R: volta pra foto do Spotify, quando tem
             jaTrocou=false; botao.hidden=false;
             aplicarCapa();
             flash('Voltou a capa padrão.');
@@ -1951,34 +1978,57 @@ __META__
     var box=$('fique'); if(!box || !CAT.artist.tape || CAT.preview) return;
     var CH='caramujo_lista_v1', form=$('fqForm'), inp=$('fqEmail'), bt=$('fqBt'), nota=$('fqN'), p=$('fqP'), tit=$('fqTit');
     box.hidden=false;
-    function pronto(email,status,enviado){
-      form.hidden=true;
-      if(status==='sem-cupom'){ tit.textContent='Você já está na lista'; p.textContent='O cupom desse e-mail já foi usado ou venceu, mas as próximas beat tapes seguem chegando por lá.'; }
-      else if(enviado===false){ tit.textContent='Você entrou na lista'; p.textContent='Só que o e-mail com o cupom não saiu agora. Toca em reenviar daqui a pouco.'; }
-      else { tit.textContent='Pronto. O cupom chegou no seu e-mail.'; p.textContent='Não achou? Olha no spam e na aba Promoções, e marca a Caramujo como contato.'; }
-      nota.textContent=''; nota.classList.remove('erro');
+    // rodada R: linha de lembrete (cupom e prazo) + Reenviar com contagem
+    function hoje(){ try{ return new Date().toLocaleDateString('sv',{timeZone:'America/Sao_Paulo'}); }catch(_){ return new Date().toISOString().slice(0,10); } }
+    function br(iso){ var p=String(iso||'').split('-'); return p.length===3?p[2]+'/'+p[1]:''; }
+    function guardar(o){ try{ localStorage.setItem(CH,JSON.stringify(o)); }catch(_){} }
+    var tique=null;
+    function pronto(g){
+      var email=g.email, vale=g.valeAte||(g.at?new Date(g.at+15*864e5).toLocaleDateString('sv',{timeZone:'America/Sao_Paulo'}):'');
+      var semCupom=g.status==='sem-cupom'||(vale&&vale<hoje()), falhou=!semCupom&&g.enviado===false;
+      box.classList.add('fq-ok'); clearInterval(tique);
+      var pct=g.pct||15;
+      box.innerHTML='<div class="fq-linha" role="status"><span class="ok'+(falhou?' av':'')+'" aria-hidden="true">'+(falhou?'!':'✓')+'</span><div class="fq-tx"></div><a class="fq-usar" href="/#beats" data-de="tape-cupom">Usar</a><div class="fq-pe"></div></div>';
+      var tx=box.querySelector('.fq-tx'), usar=box.querySelector('.fq-usar'), pe=box.querySelector('.fq-pe');
+      var b=document.createElement('b');
+      if(semCupom){ b.textContent='Você está na lista.'; tx.appendChild(b); tx.appendChild(document.createTextNode(' O cupom desse e-mail já foi usado ou venceu. As próximas beat tapes seguem chegando por lá.')); usar.hidden=true; }
+      else if(falhou){ b.textContent='Você entrou na lista.'; tx.appendChild(b); tx.appendChild(document.createTextNode(' Só que o e-mail com o cupom não saiu agora. Toca em reenviar.')); usar.hidden=true; }
+      else { b.textContent='Seu cupom de '+pct+'% vale até '+br(vale)+'.'; tx.appendChild(b); tx.appendChild(document.createTextNode(' Tá no seu e-mail (olha o spam também) e vale nos beats do catálogo.')); }
       if(!email) return;
-      nota.appendChild(document.createTextNode('Cadastrado: '+email));
-      if(status!=='sem-cupom'){
-        var re=document.createElement('button'); re.type='button'; re.className='fq-re'; re.textContent='Reenviar o cupom';
-        re.addEventListener('click',function(){ enviar(email,re); });
-        nota.appendChild(document.createTextNode(' · ')); nota.appendChild(re);
+      pe.appendChild(document.createTextNode(email));
+      if(semCupom) return;
+      var re=document.createElement('button'); re.type='button'; re.className='fq-re';
+      var sep=document.createElement('span'); sep.setAttribute('aria-hidden','true'); sep.textContent='·'; pe.appendChild(sep); pe.appendChild(re);
+      function conta(){
+        var falta=Math.ceil(((g.prox||0)-Date.now())/1000);
+        if(falta>0){ re.disabled=true; re.textContent='Reenviar em '+Math.floor(falta/60)+':'+('0'+falta%60).slice(-2); }
+        else { re.disabled=false; re.textContent='Reenviar o cupom'; clearInterval(tique); }
       }
+      conta(); if(re.disabled) tique=setInterval(conta,1000);
+      re.addEventListener('click',function(){ if(!re.disabled) enviar(email,re); });
     }
     function enviar(email,quem){
       var b=quem||bt, rot=b.textContent; b.disabled=true; b.textContent='Enviando…'; nota.classList.remove('erro');
       fetch('/api/lista',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:email,de:'tape'})})
         .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
         .then(function(x){
-          b.disabled=false; b.textContent=rot;
-          if(!x.ok||!x.j||!x.j.ok){ nota.textContent=(x.j&&x.j.erro)||'Não deu pra cadastrar agora. Tenta de novo em instantes.'; nota.classList.add('erro'); return; }
-          try{ localStorage.setItem(CH,JSON.stringify({email:email,status:x.j.status,enviado:x.j.enviado,at:Date.now()})); }catch(_){}
-          pronto(email,x.j.status,x.j.enviado);
-          if(quem&&x.j.enviado==='recente') p.textContent='O cupom acabou de ser enviado. Dá uma olhada no spam e na aba Promoções antes de pedir de novo.';
+          if(!x.ok||!x.j||!x.j.ok){
+            b.disabled=false; b.textContent=rot;
+            var msg=(x.j&&x.j.erro)||'Não deu pra cadastrar agora. Tenta de novo em instantes.';
+            if(quem){ var pe=box.querySelector('.fq-pe'); if(pe){ var e=pe.querySelector('.fq-err')||document.createElement('span'); e.className='fq-err'; e.style.color='#e0a96d'; e.textContent=msg; pe.appendChild(e); } }
+            else { nota.textContent=msg; nota.classList.add('erro'); }
+            return;
+          }
+          var g={email:email,status:x.j.status,enviado:x.j.enviado,valeAte:x.j.valeAte||null,pct:x.j.pct||15,prox:Date.now()+(+x.j.espera||0)*1000,at:Date.now()};
+          guardar(g); pronto(g);
         })
-        .catch(function(){ b.disabled=false; b.textContent=rot; nota.textContent='Sem conexão agora. Tenta de novo em instantes.'; nota.classList.add('erro'); });
+        .catch(function(){
+          b.disabled=false; b.textContent=rot;
+          if(quem){ var pe=box.querySelector('.fq-pe'); if(pe){ var e=document.createElement('span'); e.className='fq-err'; e.style.color='#e0a96d'; e.textContent='Sem conexão agora.'; pe.appendChild(e); } }
+          else { nota.textContent='Sem conexão agora. Tenta de novo em instantes.'; nota.classList.add('erro'); }
+        });
     }
-    try{ var g=JSON.parse(localStorage.getItem(CH)||'null'); if(g&&g.email) pronto(g.email,g.status,g.enviado); }catch(_){}
+    try{ var g=JSON.parse(localStorage.getItem(CH)||'null'); if(g&&g.email) pronto(g); }catch(_){}
     form.addEventListener('submit',function(e){
       e.preventDefault();
       var email=(inp.value||'').trim();

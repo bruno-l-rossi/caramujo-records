@@ -16,7 +16,8 @@ export function resumoVitrine(valor) {
     if (!g.noAr) return null;
     const m = montarGravou(g);
     if (!m.artistas.length) return null;
-    return { n: m.artistas.length, a: m.artistas.slice(0, MOSTRA).map((a) => ({ n: a.nome, s: a.slug, f: a.foto ? imgPequena(a.foto) : '' })) };
+    const fora = m.artistas.slice(MOSTRA).filter((a) => a.foto).slice(0, 4).map((a) => imgPequena(a.foto));   // rodada R: grade do "Ver todos"
+    return { n: m.artistas.length, a: m.artistas.slice(0, MOSTRA).map((a) => ({ n: a.nome, s: a.slug, f: a.foto ? imgPequena(a.foto) : '' })), x: fora };
   } catch (_) { return null; }
 }
 
@@ -28,7 +29,10 @@ export function secaoVitrine(r) {
     ? `<img src="${esc(a.f)}" alt="" width="140" height="140" loading="lazy" decoding="async">`
     : `<span class="qg-ini" aria-hidden="true">${esc(ini(a.n))}</span>`}<b>${esc(a.n)}</b></a>`).join('');
   const resto = r.n - r.a.length;
-  const mais = resto > 0 ? `<a class="qg-card qg-todos" href="/rideblan33/artistas" data-de="vitrine-gravou"><span class="qg-mais" aria-hidden="true">+${resto}</span><b>Ver todos</b></a>` : '';
+  // rodada R (18/10/2026): o "Ver todos" com a cara do "Portfólio completo" das tapes (4 fotos de quem
+  // não apareceu na fileira, numa grade redonda, e o +N por cima)
+  const fotos = (r.x || []).concat(r.a.filter((a) => a.f).map((a) => a.f).reverse()).slice(0, 4);
+  const mais = resto > 0 ? `<a class="qg-card qg-todos" href="/rideblan33/artistas" data-de="vitrine-gravou" aria-label="Ver todos os ${r.n} artistas"><span class="qg-mais"><span class="qg-mos" aria-hidden="true">${fotos.map((u) => `<img src="${esc(u)}" alt="" width="70" height="70" loading="lazy" decoding="async">`).join('')}</span><span class="qg-veu" aria-hidden="true">+${resto}</span></span><b>Ver todos</b><i class="qg-n">${r.n} artistas</i></a>` : '';
   return `<section id="quemGravou" class="s s-earth qg-vit" aria-labelledby="qgTit">
   <div class="s-head qg-head"><div><span class="s-kicker">Portfólio</span><h2 class="s-title" id="qgTit">Quem já <span class="r">gravou</span></h2></div><span class="qg-dir"><a class="qg-ver" href="/rideblan33/artistas" data-de="vitrine-gravou">Ver os ${r.n} ›</a><span class="qg-setas" hidden><button type="button" id="qgvAnt" aria-label="Artistas anteriores"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><button type="button" id="qgvProx" aria-label="Mais artistas"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></span></span></div>
   <div class="qg-tr-w"><div class="qg-trilho" id="qgvTr">${cards}${mais}</div></div>

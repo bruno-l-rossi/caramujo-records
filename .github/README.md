@@ -91,6 +91,8 @@ scripts/                conversor do Drive e cálculo da onda de cada faixa
 
 **Ordem da vitrine (17/10/2026).** Padrão, Mais novos (a beat tape do beat na ordem do perfil: `nv` em `/api/vitrine`), BPM e Aleatória.
 
+**Rodapé único e Quem já gravou pelo painel (18/10/2026, rodada R).** O rodapé das páginas do servidor mora em `functions/_lib/rodape.js` (a vitrine tem o mesmo desenho no `index.html`/`vitrine.css`; o `teste60` compara). Música e artista novos do Quem já gravou entram pelo painel (Perfil > Quem já gravou > Adicionar música: cola o link do Spotify, confere, salva); ficam na meta `gravou` (`extras`) e somam com a lista fixa de `functions/_lib/gravou-lista.js`. Pasta de artista sem capa usa a foto do artista no Spotify (achada pelo nome da pasta).
+
 **Topo único (18/10/2026, rodada Q).** Todas as páginas usam `functions/_lib/topo.js` (topo, Ajuda e o JS do menu). Páginas do servidor importam; `404.html` e a vitrine levam cópia gerada por `node testes/topo-estatico.mjs`. A consulta dos beats da tape do perfil usa `INDEXED BY tracks_beat_tape` (índice criado no `UMA_VEZ`).
 
 **Quem já gravou, rodada N (17/10/2026).** O @rideblan33 entrou em `ARTISTAS` (ordem por ouvintes, foto do Spotify) e o cartão dele traz toda faixa em que aparece como artista. Plays: o painel tem "Atualizar plays", que entrega o favorito "Plays Caramujo" (roda no Spotify logado do Bruno, lê o número de cada faixa e volta pra `/painel#gravou&plays=...`); a op `gravou-plays` guarda na meta (`plays`, `playsEm`) e esses números valem no lugar dos da lista. O hero da vitrine usa o logo vetorizado (`assets/brand/caramujo-wordmark.svg`).

@@ -34,7 +34,7 @@
 <!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
      a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=955e93f810">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=c8884fe0ab">
 
 <!-- ═══ EMAILJS (formulário de contato) ══════════════
   Chaves em emailjs.com: Account > Public Key, Email Services > Service ID,
@@ -320,7 +320,7 @@
 <div class="hr"></div>
 
 <!-- ═══ NO ESTÚDIO (placeholder: trocar por fotos/quote reais) ══ -->
-<!-- rodada Q (18/10/2026): o cartão do @rideblan33 abre o perfil já na aba Beat tapes (#tapes) -->
+<!-- rodada R (18/10/2026): o cartão do @rideblan33 abre o perfil no topo, já na aba Beat tapes (a origem "sobre" escolhe a aba no servidor) -->
 <section id="estudio" class="s s-earth">
   <div class="s-head">
     <span class="s-kicker">Sobre nós</span>
@@ -330,8 +330,8 @@
   <div class="studio-carousel">
     <button class="studio-nav prev" type="button" onclick="studioScroll(-1)" aria-label="Anterior">‹</button>
   <div class="studio-strip">
-    <a class="studio-ph sp-0 studio-eu" href="/rideblan33#tapes" data-de="sobre" aria-label="Beat tapes do @rideblan33">
-      <span class="eu-box"><span class="eu-33" aria-hidden="true">33</span><img src="assets/perfil/rideblan33-480.webp" alt="@rideblan33 de costas, com a camisa 33" loading="lazy" width="480" height="800"><span class="eu-sel"><b>@rideblan33</b><i>Portfólio →</i></span></span>
+    <a class="studio-ph sp-0 studio-eu" href="/rideblan33" data-de="sobre" aria-label="Beat tapes do @rideblan33">
+      <span class="eu-box"><span class="eu-33" aria-hidden="true">33</span><img src="assets/perfil/rideblan33-480.webp" alt="@rideblan33 de costas, com a camisa 33" loading="lazy" width="480" height="800"><span class="eu-sel"><b>@rideblan33</b><i>Ver portfólio →</i></span></span>
       <span class="eu-cap">Quem faz o som</span>
     </a>
     <figure class="studio-ph sp-1" tabindex="0" role="button" aria-label="Ampliar foto do estúdio" onclick="openLB('img','assets/studio-hero.jpg')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLB('img','assets/studio-hero.jpg');}">
@@ -640,7 +640,7 @@ const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':
 const FEATURED_OVERRIDE_ID=null;
 const FEATURED_OVERRIDE_ATE='';
 </script>
-<script src="/assets/vitrine/vitrine.js?v=d194d8d7f5"></script>
+<script src="/assets/vitrine/vitrine.js?v=7b962aa973"></script>
 <!-- leva-de -->
 <script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
 (function(){

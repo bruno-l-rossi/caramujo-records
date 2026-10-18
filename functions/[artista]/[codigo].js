@@ -9,6 +9,7 @@ import { tapesDoPerfil } from '../_lib/perfil.js';
 import { MIDIA } from '../_lib/midia.js';
 import { slug as slugDe } from '../_lib/casar.js';
 import { SQL_PASTA, praPagina, COMENTARIOS } from '../_lib/comentarios.js';
+import { CHAVE_GRAVOU, fotoDaPasta } from '../_lib/gravou.js';
 
 // caminhos do site que não são artista
 const RESERVADO = new Set(['api', 'audio', 'assets', 'docs', 'previews', 'functions',
@@ -81,7 +82,16 @@ export async function onRequestGet({ params, request, env }) {
       if (!artist.dl_beats && t.tag === 'disponivel') t.buy = b.slug;
     }
   }
-  const capa = artist.cover_key ? `${url.origin}/capa/${artist.cover_key}` : `${url.origin}/og-image.png`;
+  // rodada R (18/10/2026): pasta de artista sem capa nenhuma usa a foto do artista no Spotify
+  // (Quem já gravou); quem já tem imagem (subida pelo artista ou no Drive) fica com a dele
+  let fotoPadrao = null;
+  if (artist.tipo !== 'tape' && !artist.cover_key) {
+    try {
+      const r = await d.prepare('SELECT valor FROM meta WHERE chave = ?').bind(CHAVE_GRAVOU).first();
+      fotoPadrao = r && r.valor ? fotoDaPasta(JSON.parse(r.valor), artist.name) : null;
+    } catch (_) { fotoPadrao = null; }
+  }
+  const capa = artist.cover_key ? `${url.origin}/capa/${artist.cover_key}` : fotoPadrao || `${url.origin}/og-image.png`;
 
   const tape = artist.tipo === 'tape';
 
@@ -131,7 +141,8 @@ export async function onRequestGet({ params, request, env }) {
       artist: {
         id: artist.id, name: artist.name, who: '@rideblan33',
         tape,
-        cover: artist.cover_key ? `/capa/${artist.cover_key}` : null,
+        cover: artist.cover_key ? `/capa/${artist.cover_key}` : fotoPadrao,
+        coverPadrao: fotoPadrao,
         capaDoArtista: !tape && artist.cover_origem === 'artista',
         descricao: artist.descricao || null
       },

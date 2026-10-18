@@ -393,7 +393,7 @@ function pagina() {
 <script src="/assets/painel/analytics.js?v=2026-10-16a" defer></script>
 <script src="/assets/painel/vitrine.js?v=2026-10-16a" defer></script>
 <script src="/assets/painel/musicas.js?v=2026-10-17a" defer></script>
-<script src="/assets/painel/gravou.js?v=2026-10-17c" defer></script>
+<script src="/assets/painel/gravou.js?v=2026-10-18a" defer></script>
 <script src="/assets/painel/comentarios.js?v=2026-10-10a" defer></script>
 
 <nav class="nav-p" id="navP" aria-label="Seções do painel"></nav>

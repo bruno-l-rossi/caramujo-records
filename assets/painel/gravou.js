@@ -74,6 +74,28 @@
     '.gv-pl li small{color:var(--ink4)}',
     '.gv-atalho{display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:10px 16px;border-radius:999px;background:#fff;color:#000!important;font-weight:700;font-size:13px;text-decoration:none;cursor:grab}',
     '.gv-pl .gv-sp{display:inline-block;margin-top:8px;color:#fff;text-underline-offset:3px}',
+    /* Adicionar música (rodada R) */
+    '.gv-add{background:#101010;border:1px solid var(--borda);border-radius:14px;padding:12px 14px;margin-bottom:16px}',
+    '.gv-add>b{display:block;font-size:14px;font-weight:600}',
+    '.gv-add>small{display:block;margin-top:3px;font-size:12.5px;color:var(--ink4);line-height:1.45}',
+    '.gv-add-f{display:flex;gap:8px;margin-top:10px}',
+    '.gv-add-f input{flex:1;min-width:0;background:#0b0b0b;border:1px solid var(--borda);border-radius:999px;color:#fff;padding:11px 16px;font:inherit;font-size:16px}',
+    '.gv-add-f .pill{flex:none;padding:9px 16px;font-size:13px}',
+    '.gv-lidas{list-style:none;margin:12px 0 0;padding:0}',
+    '.gv-lidas>li{display:flex;gap:12px;padding:10px 0;border-top:1px solid #1c1c1c}',
+    '.gv-lidas img,.gv-lidas .gv-sem{width:52px;height:52px;flex:none;border-radius:6px;object-fit:cover;background:#1c1c1c}',
+    '.gv-lidas .t{flex:1;min-width:0}',
+    '.gv-lidas .t b{display:block;font-size:14.5px;font-weight:600}',
+    '.gv-lidas .t small{display:block;margin-top:2px;font-size:12px;color:var(--ink4)}',
+    '.gv-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}',
+    '.gv-chips span{font-size:12px;padding:4px 9px;border-radius:999px;border:1px solid #2a2a2a;color:var(--ink2)}',
+    '.gv-chips span.novo{border-color:#6b5a3f;color:#e0b155}',
+    '.gv-lidas label{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--ink2);cursor:pointer}',
+    '.gv-lidas em{display:block;margin-top:6px;font-style:normal;font-size:12px;color:#e0b155;line-height:1.4}',
+    '.gv-lidas li.ja{opacity:.5}',
+    '.gv-add-bts{display:flex;gap:8px;margin-top:12px}',
+    '.gv-add-bts .pill{padding:9px 16px;font-size:13px}',
+    '.gv-fx .gv-tira{flex:none;background:none;border:1px solid #2a2a2a;color:var(--ink2);border-radius:999px;font:inherit;font-size:12px;padding:6px 10px;cursor:pointer}',
     '@media (max-width:420px){.gv-fx,.gv-troca{margin-left:0}}'
   ].join('\n');
 
@@ -138,6 +160,8 @@
   var PAGINA = '/rideblan33/artistas';
 
   var raiz = null, dados = null, erroCarga = false, abertos = {}, filtro = '', buscando = false;
+  // Adicionar música (rodada R): link digitado, faixas lidas do Spotify e quais têm você cantando
+  var addLink = '', lendo = false, lidas = null, euCanta = {}, salvando = false;
 
   function carregar() {
     pedir('gravou').then(function (j) { erroCarga = !j || !j.ok; dados = erroCarga ? null : j; desenhar(); if (dados) playsDaVolta(); })
@@ -167,6 +191,7 @@
       var com = f.ars.map(nomeDe).filter(Boolean).join(', ');
       return '<li' + (f.fora ? ' class="gv-fora"' : '') + '>' + (f.capa ? '<img src="' + esc(peq(f.capa)) + '" alt="" loading="lazy">' : '<span class="gv-sem"></span>') +
         '<a href="https://open.spotify.com/track/' + esc(id) + '" target="_blank" rel="noopener"><b>' + esc(f.nome) + '</b><small>' + esc(com) + '</small></a>' +
+        (f.extra ? '<button class="gv-tira" type="button" data-tirar="' + esc(id) + '" aria-label="Tirar ' + esc(f.nome) + ' da lista">Tirar</button>' : '') +
         '<button class="toggle" type="button" data-faixa="' + esc(id) + '" aria-pressed="' + !f.fora + '" aria-label="Mostrar ' + esc(f.nome) + ' na página"><i></i></button></li>';
     }).join('') + '</ul>' : '';
     return '<li data-busca="' + esc(sem(a.nome + ' ' + a.pasta)) + '"' + (a.fora ? ' class="gv-fora"' : '') + '><div class="gv-art">' +
@@ -189,6 +214,7 @@
       (dados.noAr ? 'Todo mundo vê a página e a linha "Quem já gravou" no fim da aba Músicas.' : 'Desligado: a página e a linha só aparecem pra você, logado no painel.') +
       '</small></div><button class="toggle" type="button" id="gvNoAr" aria-pressed="' + !!dados.noAr + '" aria-label="Quem já gravou no ar"><i></i></button></div>' +
       '<a href="' + PAGINA + '" target="_blank" rel="noopener">Ver ' + (dados.noAr ? 'a página' : 'a prévia') + ' ↗</a></div>';
+    h += blocoAdicionar();
     h += '<div class="gv-img"><div><b>Fotos, capas e ouvintes</b><small>' + (dados.faltam ? (buscando ? 'buscando no Spotify… faltam ' + dados.faltam : 'faltam ' + dados.faltam + ' (fotos, capas das faixas e ouvintes mensais). Sem foto, a página mostra as iniciais.') : 'Tudo guardado no nosso servidor' + (dados.atualizado ? ' (' + new Date(dados.atualizado).toLocaleDateString('pt-BR') + ')' : '') + '. Toca em Atualizar quando um artista trocar a foto ou pra ler os ouvintes do mês.') + '</small></div>' +
       '<button class="pill' + (dados.faltam ? ' solid' : '') + '" type="button" id="gvImg"' + (buscando ? ' disabled' : '') + '>' + (buscando ? 'Buscando…' : dados.faltam ? 'Buscar' : 'Atualizar') + '</button></div>';
     var nFx = Object.keys(dados.faixas || {}).length;
@@ -220,6 +246,55 @@
     raiz.innerHTML = h;
     filtrar();
     var ol = $('gvOl'); if (ol) ligarOrdem(ol);
+  }
+  function blocoAdicionar() {
+    var h = '<div class="gv-add" id="gvAdd"><b>Adicionar música</b><small>Cole o link do Spotify da música (ou do álbum inteiro). Eu leio quem canta, a capa e a data; você confere e salva. Artista que ainda não está aqui entra junto, e a foto vem no Buscar.</small>' +
+      '<form class="gv-add-f" id="gvAddF"><input id="gvAddL" type="url" inputmode="url" placeholder="https://open.spotify.com/track/…" autocomplete="off" aria-label="Link do Spotify" value="' + esc(addLink) + '"><button class="pill solid" type="submit"' + (lendo ? ' disabled' : '') + '>' + (lendo ? 'Lendo…' : 'Ler') + '</button></form>';
+    if (lidas && lidas.length) {
+      var novas = lidas.filter(function (f) { return !f.jaTem; });
+      h += '<ul class="gv-lidas">' + lidas.map(function (f) {
+        var temEu = f.artistas.some(function (a) { return a.eu; }), outros = f.artistas.filter(function (a) { return !a.eu; });
+        return '<li' + (f.jaTem ? ' class="ja"' : '') + '>' + (f.img ? '<img src="https://i.scdn.co/image/' + esc(f.img) + '" alt="">' : '<span class="gv-sem"></span>') +
+          '<div class="t"><b>' + esc(f.nome) + '</b><small>' + (f.data ? esc(f.data.split('-').reverse().join('/')) : 'sem data') + (f.jaTem ? ' · já está na lista' : '') + '</small>' +
+          '<div class="gv-chips">' + (outros.length ? outros.map(function (a) { return '<span' + (a.conhecido ? '' : ' class="novo"') + '>' + esc(a.nome) + (a.conhecido ? '' : ' · novo') + '</span>'; }).join('') : '<span>só você</span>') + '</div>' +
+          (!f.jaTem && temEu && outros.length ? '<label><input type="checkbox" data-canta="' + esc(f.id) + '"' + (euCanta[f.id] ? ' checked' : '') + '> Eu canto nessa (entra no meu cartão)</label>' : '') +
+          (!f.jaTem && !f.marcado ? '<em>O Spotify não marca você nessa música. Entra mesmo assim se foi você que produziu.</em>' : '') +
+          '</div></li>';
+      }).join('') + '</ul>' +
+        '<div class="gv-add-bts">' + (novas.length ? '<button class="pill solid" type="button" id="gvAddOk"' + (salvando ? ' disabled' : '') + '>' + (salvando ? 'Salvando…' : 'Adicionar ' + (novas.length === 1 ? 'a música' : 'as ' + novas.length)) + '</button>' : '') +
+        '<button class="pill" type="button" id="gvAddX">' + (novas.length ? 'Cancelar' : 'Fechar') + '</button></div>';
+    }
+    return h + '</div>';
+  }
+  function lerLink() {
+    if (lendo) return;
+    var l = (addLink || '').trim();
+    if (!/open\.spotify\.com\/(intl-[a-z-]+\/)?(track|album)\//.test(l)) { flash('Cole um link de música ou álbum do Spotify.'); return; }
+    lendo = true; lidas = null; euCanta = {}; desenhar();
+    acao('gravou-ler', { link: l }).then(function (j) {
+      lendo = false;
+      if (!j || !j.ok) { flash((j && j.erro) || 'Não consegui ler esse link.'); desenhar(); return; }
+      lidas = j.faixas;
+      // música só sua (sem mais ninguém) entra no seu cartão sem precisar marcar
+      lidas.forEach(function (f) { if (f.artistas.every(function (a) { return a.eu; })) euCanta[f.id] = true; });
+      desenhar();
+      if (j.falhas && j.falhas.length) flash('Não li ' + j.falhas.length + ' do link. Tenta de novo daqui a pouco.');
+    });
+  }
+  function salvarLidas() {
+    if (salvando || !lidas) return;
+    var fx = lidas.filter(function (f) { return !f.jaTem; }).map(function (f) {
+      return { id: f.id, nome: f.nome, alb: f.alb, data: f.data, img: f.img, euCanta: !!euCanta[f.id], ars: f.artistas.map(function (a) { return { id: a.id, nome: a.nome }; }) };
+    });
+    salvando = true; desenhar();
+    acao('gravou-adicionar', { faixas: fx }).then(function (j) {
+      salvando = false;
+      if (!j || !j.ok) { usar(j); return; }
+      var n = j.adicionadas || fx.length;
+      lidas = null; addLink = ''; euCanta = {};
+      usar(j, (n === 1 ? 'Música adicionada.' : n + ' músicas adicionadas.') + ' Buscando fotos e capas…');
+      if (dados.faltam) buscarImagens();
+    });
   }
   function filtrar() {
     var q = sem(filtro).trim();
@@ -258,6 +333,14 @@
         }
         buscarImagens(); return;
       }
+      if (t.id === 'gvAddOk') { salvarLidas(); return; }
+      if (t.id === 'gvAddX') { lidas = null; euCanta = {}; desenhar(); return; }
+      if (t.dataset.tirar) {
+        if (t.dataset.certeza !== '1') { t.dataset.certeza = '1'; t.textContent = 'Tirar mesmo?'; return; }
+        t.disabled = true;
+        acao('gravou-tirar', { id: t.dataset.tirar }).then(function (j) { usar(j, 'Música tirada da lista.'); });
+        return;
+      }
       if (t.dataset.verordem) { verOrdem = !verOrdem; desenhar(); return; }
       if (t.dataset.plays) { verPlays = !verPlays; desenhar(); return; }
       if (t.dataset.modo) {
@@ -279,8 +362,18 @@
           .then(function (j) { usar(j, esconder ? 'Saiu da página.' : 'Voltou pra página.'); });
       }
     });
-    raiz.addEventListener('input', function (e) { if (e.target && e.target.id === 'gvFiltro') { filtro = e.target.value; filtrar(); } });
+    raiz.addEventListener('input', function (e) {
+      if (e.target && e.target.id === 'gvFiltro') { filtro = e.target.value; filtrar(); }
+      if (e.target && e.target.id === 'gvAddL') addLink = e.target.value;
+    });
+    raiz.addEventListener('submit', function (e) { if (e.target && e.target.id === 'gvAddF') { e.preventDefault(); lerLink(); } });
+    // colar o link já lê (igual às Músicas do perfil)
+    raiz.addEventListener('paste', function (e) {
+      if (!e.target || e.target.id !== 'gvAddL') return;
+      setTimeout(function () { addLink = e.target.value; if (/open\.spotify\.com/.test(addLink)) lerLink(); }, 0);
+    });
     raiz.addEventListener('change', function (e) {
+      if (e.target && e.target.dataset && e.target.dataset.canta) { euCanta[e.target.dataset.canta] = e.target.checked; return; }
       var inp = e.target; if (!inp || !inp.dataset || !inp.dataset.foto || !inp.files || !inp.files[0]) return;
       flash('Preparando a foto…');
       reduzir(inp.files[0]).then(function (f) {

@@ -3,6 +3,7 @@
 // nomes, Helvetica nos botões, IBM Plex Mono nas fichas, bordas de 1px, cantos retos.
 // Privada: noindex, sem cópia em lugar nenhum.
 
+import { rodape, RODAPE_CSS } from './rodape.js';
 import { ICONES } from './icones.js';
 import { capaUrl, CAPA_VOLTA } from './midia.js';
 import { topo as topoSite, TOPO_CSS, TOPO_CSS_899, TOPO_CSS_CEL, TOPO_JS } from './topo.js';
@@ -127,7 +128,7 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.7rem;line-height:1;color
 .mandou .pode{margin-top:10px;font-family:var(--mono);font-size:.62rem;color:var(--dim)}
 .pronto{margin-top:14px}
 .pronto .b{min-height:52px}
-footer{padding:22px 18px 30px;border-top:1px solid var(--wire);text-align:center;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+${RODAPE_CSS}
 `;
 
 export function cabecalho(titulo) {
@@ -147,7 +148,7 @@ ${CAPA_VOLTA}
 
 // menu do celular, número do carrinho e Ajuda: TOPO_JS do topo.js (rodada Q)
 const topo = topoSite('pedido');
-const rodape = '<footer>© 2026 Caramujo Records · São Carlos, SP</footer>' + TOPO_JS + LEVA_DE;
+const rodapeP = rodape('pedido') + TOPO_JS + LEVA_DE;   // rodada R: o rodapé de todas as páginas
 const ajuda = `<a class="ajuda" href="https://ig.me/m/rideblan33" rel="noopener">${IG}Dúvida? Chama no Direct</a>`;
 
 // p = pedido (lerPedido), faixas = Map(id -> {wav_bytes, mp3_bytes}) das faixas que ainda existem
@@ -164,7 +165,7 @@ export function paginaPedido(p, faixas = new Map()) {
     html += `<h1>Esperando o PIX</h1><p class="lede">Assim que o pagamento cair, os arquivos aparecem aqui sozinhos. Pode deixar esta página aberta.</p>` +
       '<p class="espera" id="espera"><i></i><span>conferindo o pagamento…</span></p>' +
       `<script>(function(){var n=0;function v(){if(n++>80)return;fetch('${base}/estado',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){if(j&&j.status==='pago')location.reload();else setTimeout(v,n<12?5000:12000)}).catch(function(){setTimeout(v,12000)})}setTimeout(v,4000)})();</script>`;
-    html += ajuda + '</main>' + rodape + '\n</body></html>';
+    html += ajuda + '</main>' + rodapeP + '\n</body></html>';
     return html;
   }
   const um = beats.length === 1;
@@ -202,7 +203,7 @@ export function paginaPedido(p, faixas = new Map()) {
     if (!beats.length) html += `<div class="contrato"><div><b>Contrato do pedido</b><small>no nome de ${esc(p.nome || quem || 'quem comprou')} · ${esc(dataCurta(p.criado_em))}</small></div><a href="${base}/contrato" download>Baixar</a></div>`;
     html += FORM_JS;
   }
-  html += ajuda + '</main>' + rodape + '\n</body></html>';
+  html += ajuda + '</main>' + rodapeP + '\n</body></html>';
   return html;
 }
 
@@ -260,5 +261,5 @@ document.querySelectorAll('form[data-envio]').forEach(function(f){f.addEventList
 export function paginaAviso(titulo, texto, voltar, kicker = 'Pedido') {
   return cabecalho(`${titulo} · Caramujo Records`) + '\n<body>\n' + topo + '\n<main>' +
     `<span class="k">${esc(kicker)}</span><h1>${esc(titulo)}</h1><p class="lede">${esc(texto)}</p>` +
-    (voltar ? `<p class="guarda"><a href="${esc(voltar)}">Voltar pro pedido</a></p>` : '') + ajuda + '</main>' + rodape + '\n</body></html>';
+    (voltar ? `<p class="guarda"><a href="${esc(voltar)}">Voltar pro pedido</a></p>` : '') + ajuda + '</main>' + rodapeP + '\n</body></html>';
 }

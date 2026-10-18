@@ -7,6 +7,7 @@
 // 60 s no isolate e 5 min na cópia da região. O painel derruba as duas quando muda
 // alguma coisa (esquecerPerfil).
 
+import { rodape, RODAPE_CSS } from './rodape.js';
 import { db } from './db.js';
 import { MIDIA, capaUrl, CAPA_VOLTA } from './midia.js';
 import { ICONES as ICONES_ABA, SELO_GRANDE } from './icones.js';
@@ -14,7 +15,7 @@ import { RODAPE_GENEROS, CSS_RODAPE_GENEROS } from './generos.js';
 import { PADRAO as NUM_PADRAO, deTexto as numDeTexto, limpar as numLimpar, curto, longo } from './numeros.js';
 import { CHAVE as MUS_CHAVE, deTexto as musDeTexto, separar, RECENTES_NO_PERFIL } from './musicas.js';
 import { LEVA_DE, deAttr } from './origem.js';
-import { CHAVE_GRAVOU, gravouDeTexto, gravouLimpar, montarGravou } from './gravou.js';
+import { CHAVE_GRAVOU, gravouDeTexto, gravouLimpar, montarGravou, imgPequena } from './gravou.js';
 import { fotoArtista } from './gravoupagina.js';
 import { topo, TOPO_PAGINA_CSS, TOPO_JS } from './topo.js';
 
@@ -254,7 +255,15 @@ export function linhaGravou(gv) {
   const de = deAttr('perfil-gravou');
   return `<section class="qg-ent" aria-labelledby="qgEntT"><div class="qg-ent-cab"><h3 id="qgEntT">Quem já gravou</h3><span class="mx-direita"><a class="qg-ver" href="/rideblan33/artistas"${de} data-rede="aba-gravou">Ver todos ›</a><span class="mx-setas" hidden><button type="button" id="qgAnt" aria-label="Artistas anteriores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><button type="button" id="qgProx" aria-label="Mais artistas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></span></span></div>` +
     `<div class="qg-tr-w"><div class="qg-tr" id="qgTr">${mostra.map((a) => `<a class="qg-c" href="/rideblan33/artistas#${esc(a.slug)}"${de} data-rede="aba-gravou-artista">${fotoArtista(a)}<b>${esc(a.nome)}</b></a>`).join('')}` +
-    `<a class="qg-c" href="/rideblan33/artistas"${de} data-rede="aba-gravou"><span class="qg-fim">${resto > 0 ? `+${resto}` : ''}<small>ver todos</small></span><b>Ver todos</b></a></div></div></section>`;
+    `<a class="qg-c qg-c-fim" href="/rideblan33/artistas"${de} data-rede="aba-gravou" aria-label="Ver todos os ${gv.artistas.length} artistas"><span class="qg-fim">${mosaicoGravou(lista, mostra)}<span class="qg-veu">${resto > 0 ? `+${resto}` : 'Todos'}</span></span><b>Ver todos</b><i class="qg-n">${gv.artistas.length} artistas</i></a></div></div></section>`;
+}
+
+// rodada R (18/10/2026): o "Ver todos" ganhou a cara do "Portfólio completo" das tapes: as fotos de
+// quem ainda não apareceu na fileira, 4 numa grade redonda, com o "+N" por cima
+export function mosaicoGravou(lista, mostra) {
+  const fora = lista.filter((a) => a.foto && !mostra.includes(a));
+  const fotos = fora.concat(mostra.filter((a) => a.foto).reverse()).slice(0, 4);
+  return `<span class="qg-mos" aria-hidden="true">${fotos.map((a) => `<img src="${esc(imgPequena(a.foto))}" alt="" loading="lazy" decoding="async" width="80" height="80">`).join('')}</span>`;
 }
 
 // 17/10/2026 (teste do Bruno): a lista Recentes saiu do perfil pra aba ficar mais enxuta; a página
@@ -608,20 +617,15 @@ a.mx-c .mx-img{transition:transform .35s ease}
 .qg-c img,.qg-c .qg-ini,.qg-fim{width:96px;height:96px;border-radius:50%;object-fit:cover;display:flex}
 .qg-c .qg-ini{align-items:center;justify-content:center;background:#1c1c1c;color:var(--apoio);font:800 22px var(--grot)}
 .qg-c b{display:block;margin-top:8px;font:600 12.5px var(--grot);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.qg-fim{align-items:center;justify-content:center;flex-direction:column;background:var(--branco);color:#000;font:800 20px/1 var(--grot)}
-.qg-fim small{font:700 9px var(--grot);letter-spacing:.14em;text-transform:uppercase;margin-top:4px}
+.qg-fim{position:relative;overflow:hidden;background:#000;border:1px solid #2c2c2c}
+.qg-mos{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:2px}
+.qg-c .qg-mos img{width:100%;height:100%;border-radius:0;object-fit:cover;display:block}
+.qg-veu{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.58);color:#fff;font:800 22px/1 var(--grot);letter-spacing:-.01em;transition:background .2s}
+.qg-c .qg-n{display:block;font-style:normal;font-size:11px;color:#9a9a9a;margin-top:2px}
 @media (min-width:900px){.qg-c{width:128px}.qg-c img,.qg-c .qg-ini,.qg-fim{width:128px;height:128px}.qg-tr{gap:22px}}
-@media (hover:hover){.qg-ver:hover{border-bottom-color:var(--branco)}.qg-c:hover img{opacity:.85}.qg-c:hover .qg-fim{background:#d9d9d9}}
-/* rodapé igual ao da vitrine (26/09/2026): selo, © e @rideblan33, mesmas letras e disposição */
-footer{padding:1.4rem 2.4rem calc(1.4rem + env(safe-area-inset-bottom,0px));background:var(--black);border-top:1px solid var(--wire);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
-footer img{height:30px;width:auto;display:block}
-footer p{margin:0;font-size:.57rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
-footer a.foot-perfil{border-bottom:1px solid var(--wire);transition:color .2s,border-color .2s}
-@media (hover:hover){footer a.foot-perfil:hover{color:var(--fire);border-bottom-color:var(--fire)}}
-@media (max-width:860px){footer{flex-direction:column;align-items:flex-start;padding:1.2rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom,0px))}footer p{font-size:.63rem}}
-@media (max-width:480px){footer{gap:.5rem}}
-${CSS_RODAPE_GENEROS}
-body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
+@media (hover:hover){.qg-ver:hover{border-bottom-color:var(--branco)}.qg-c:hover img{opacity:.85}.qg-c:hover .qg-veu{background:rgba(0,0,0,.38)}}
+/* rodapé único (rodada R): _lib/rodape.js, o mesmo da vitrine em todas as páginas */
+${RODAPE_CSS}
 @media (max-width:1100px){.grade{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:820px){
   .terra{padding-top:20px}
@@ -724,12 +728,7 @@ ${grade(tapes, idNova, idEmAlta)}
   </div></div>
 ${comMusicas ? '  </div>\n' : ''}</main>
 
-<footer>
-  ${RODAPE_GENEROS}
-  <a href="/"${deAttr('perfil')} aria-label="Caramujo Records"><img loading="lazy" width="400" height="400" src="/assets/brand/selo-creme.svg" alt="Caramujo Records"></a>
-  <p>© 2026 Caramujo Records — São Carlos, SP</p>
-  <p><a class="foot-perfil" href="/rideblan33">@rideblan33</a> · Todos os direitos reservados</p>
-</footer>
+${rodape('perfil')}
 <script>
 (function(){
   // visitas e cliques do perfil pro analytics do painel. Desde 10/10/2026 vai junto um
@@ -969,10 +968,11 @@ ${comMusicas ? '  </div>\n' : ''}</main>
     marca();
     var calmo=false; try{ calmo=matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
     if(calmo||!('IntersectionObserver' in window)) return;
+    var mexeu=false; ['pointerdown','wheel','touchstart','keydown'].forEach(function(t){ tr.addEventListener(t,function(){ mexeu=true; },{passive:true,once:true}); });
     var io=new IntersectionObserver(function(es){
       if(!es[0].isIntersecting) return; io.disconnect();
       if(tr.scrollLeft>4||tr.scrollWidth-tr.clientWidth<40) return;
-      setTimeout(function(){ tr.scrollTo({left:72,behavior:'smooth'}); setTimeout(function(){ if(tr.scrollLeft<=80) tr.scrollTo({left:0,behavior:'smooth'}); },650); },350);
+      setTimeout(function(){ if(mexeu) return; var sn=tr.style.scrollSnapType; tr.style.scrollSnapType='none'; tr.scrollTo({left:72,behavior:'smooth'}); setTimeout(function(){ if(!mexeu) tr.scrollTo({left:0,behavior:'smooth'}); setTimeout(function(){ tr.style.scrollSnapType=sn; },700); },650); },350);
     },{threshold:0.6});
     io.observe(tr);
   })();

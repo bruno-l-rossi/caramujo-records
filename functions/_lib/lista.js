@@ -154,14 +154,19 @@ export function textoCupom({ cupom, valeAte: ate, token }) {
 // 12/10/2026: o 1º cadastro do Bruno não recebeu o e-mail e não havia como saber por quê.
 // Agora o envio espera a resposta do Resend e guarda o resultado (meta 'lista-envio', os
 // últimos 10) pro painel mostrar: saiu, ou o erro que o Resend devolveu.
-export const REENVIO_MIN = 10;   // o mesmo e-mail recebe o cupom de novo no máximo a cada 10 min
+// rodada R (18/10/2026): 2 min entre um envio e outro (era 10). A página da tape mostra a contagem
+// no botão Reenviar com o mesmo tempo, então ninguém fica clicando à toa.
+export const REENVIO_S = 120;
 
-export async function podeReenviar(d, email) {
+// segundos que faltam pro mesmo e-mail poder receber o cupom de novo (0 = pode)
+export async function esperaReenvio(d, email) {
   const r = await d.prepare("SELECT valor FROM meta WHERE chave = 'lista-envio'").first().catch(() => null);
   let l = []; try { l = JSON.parse((r && r.valor) || '[]'); } catch (_) { l = []; }
   const ult = l.find((x) => x.email === email && x.ok);
-  return !ult || (Date.now() - Date.parse(ult.em)) > REENVIO_MIN * 60e3;
+  if (!ult) return 0;
+  return Math.max(0, Math.ceil(REENVIO_S - (Date.now() - Date.parse(ult.em)) / 1000));
 }
+export async function podeReenviar(d, email) { return (await esperaReenvio(d, email)) === 0; }
 
 async function guardarEnvio(d, item) {
   if (!d) return;

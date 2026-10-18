@@ -13,6 +13,7 @@
 // pacotes de 2 e 3 com o selo de % off, beat vendido com o preço riscado e "Podem te
 // interessar", e o texto do gênero sem "em São Carlos, SP".
 
+import { rodape, RODAPE_CSS } from './rodape.js';
 import { montarVitrine } from '../api/vitrine.js';
 import { lerEstatico } from './loja.js';
 import { tapesDoPerfil, SITE } from './perfil.js';
@@ -175,10 +176,9 @@ ${TOPO_CSS}.wrap{max-width:1120px;margin:0 auto;padding:0 2.4rem}
 .secao .cab{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:16px}
 .secao h2{font:500 2.2rem/1.1 var(--serif);color:var(--cream)}
 .secao .ver{font-size:.66rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--fire);white-space:nowrap}
-.rodape{margin-top:72px;padding:1.4rem 2.4rem;border-top:1px solid var(--wire);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
-.rodape img{opacity:.85}
-.rodape a{color:var(--read);text-decoration:underline;text-underline-offset:3px}
-${CSS_RODAPE_GENEROS}
+/* rodapé único (rodada R): _lib/rodape.js */
+footer.rod-cr{margin-top:72px}
+${RODAPE_CSS}
 .aviso{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:80;background:var(--bone);color:var(--black);font:500 .78rem var(--mono);padding:.7rem 1rem;transition:opacity .2s,transform .2s}
 .aviso.on{opacity:1;transform:translate(-50%,0)}
 body.tocando .aviso{bottom:96px}
@@ -291,7 +291,6 @@ body.tocando{padding-bottom:64px}
 
 ${TOPO_CSS_899}@media(max-width:860px){
 ${TOPO_CSS_CEL}  .wrap{padding:0 16px}
-  .rodape{flex-direction:column;align-items:flex-start;padding:1.4rem 16px}
   .beat{grid-template-columns:1fr;grid-template-areas:'capa' 'info' 'tape';row-gap:22px}
   .beat h1{font-size:2.9rem}
   .compra .linha{flex-direction:column;gap:12px}.compra .pacs{text-align:left}
@@ -313,7 +312,7 @@ ${TOPO_CSS_CEL}  .wrap{padding:0 16px}
 `;
 
 
-const RODAPE = `<footer class="rodape">${RODAPE_GENEROS}<img src="/assets/brand/selo-creme.svg" alt="" width="34" height="34" loading="lazy"><span>© 2026 Caramujo Records — São Carlos, SP</span><span><a href="/rideblan33">@rideblan33</a> · Todos os direitos reservados</span></footer>
+const RODAPE = `${rodape('pagina-beat')}
 <div class="aviso" role="status" aria-live="polite"></div>`;
 
 // capaP/capaG vêm prontas do R2 na lista da loja (10/10/2026); sem elas, a função

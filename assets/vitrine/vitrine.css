@@ -520,9 +520,8 @@ html { scroll-padding-top: var(--nav-h,54px); }
   .cart-btn{bottom:1rem;right:1rem;width:58px;height:58px;border-radius:50%;padding:0;justify-content:center;}
   .cart-btn .cart-label{display:none;}
   .cart-btn .cart-n{position:absolute;top:-5px;right:-5px;border:1px solid var(--ember);}
-  /* Respiro no fim das seções pro círculo não cobrir CTA */
-  #contact{padding-bottom:8rem;}
-  #services{padding-bottom:6rem;}
+  /* rodada R (18/10/2026): o respiro extra no fim de Serviços e Contato era pro círculo do carrinho,
+     que saiu na rodada Q (carrinho no topo); agora todas as seções têm o mesmo espaço no celular */
   /* Inputs com 16px: impede o zoom automático do iOS ao focar */
   input,select,textarea{font-size:16px!important;}
   /* Piso de legibilidade pra textos miúdos */
@@ -740,11 +739,12 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .studio-eu .eu-box{position:relative;width:100%;aspect-ratio:4/5;overflow:hidden;border:1px solid var(--wire);border-radius:4px;background:radial-gradient(ellipse 80% 60% at 60% 40%,rgba(185,143,94,.12),transparent 70%),var(--black);container-type:inline-size;}
 .studio-eu .eu-33{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);font-family:var(--serif);font-weight:600;font-size:96cqw;line-height:1;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1.3px rgba(185,143,94,.5);pointer-events:none;user-select:none;}
 .studio-eu .eu-box img{position:absolute;bottom:0;left:50%;transform:translateX(-50%);height:100%;width:auto;max-width:none;filter:drop-shadow(0 12px 24px rgba(0,0,0,.55));transition:transform .3s ease;}
-.studio-eu .eu-sel{position:absolute;left:10px;right:10px;bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:rgba(20,17,13,.92);border:1px solid var(--wire);transition:border-color .2s;}
-.studio-eu .eu-sel b{font-family:var(--serif);font-weight:600;font-size:1.25rem;line-height:1;color:var(--cream);white-space:nowrap;}
-.studio-eu .eu-sel i{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-style:normal;font-weight:700;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--fire);white-space:nowrap;}
+/* rodada R (18/10/2026): o "Portfólio" virou botão de verdade (mesma cara do Ouvir o catálogo) */
+.studio-eu .eu-sel{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:44px 12px 12px;background:linear-gradient(180deg,rgba(20,17,13,0),rgba(20,17,13,.88) 46%);}
+.studio-eu .eu-sel b{font-family:var(--serif);font-weight:600;font-size:1.4rem;line-height:1;color:var(--cream);white-space:nowrap;text-align:center;}
+.studio-eu .eu-sel i{display:block;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-style:normal;font-weight:700;font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--deep);background:var(--bone);padding:12px 10px;text-align:center;white-space:nowrap;transition:background .2s;}
 .studio-eu .eu-cap{margin-top:.6rem;letter-spacing:.1em;color:var(--fire);text-transform:uppercase;}
-.studio-eu:hover .eu-sel,.studio-eu:focus-visible .eu-sel{border-color:var(--clay);}
+.studio-eu:hover .eu-sel i,.studio-eu:focus-visible .eu-sel i{background:var(--clay);}
 .studio-eu:hover .eu-box img{transform:translateX(-50%) scale(1.02);}
 /* destaque do depoimento @sxnxstro */
 .testi{max-width:1180px;padding-top:2.2rem;}
@@ -771,9 +771,9 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
   .studio-strip{flex-wrap:nowrap;gap:1rem;max-width:1260px;}
   .studio-ph{flex-basis:0;flex-grow:1;min-width:0;}
   .studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb,.studio-ph .vid-thumb>img{height:auto;width:100%;}
-  .studio-eu .eu-sel{left:8px;right:8px;bottom:8px;padding:8px 10px;}
-  .studio-eu .eu-sel b{font-size:1.05rem;}
-  .studio-eu .eu-sel i{font-size:.52rem;letter-spacing:.16em;}
+  .studio-eu .eu-sel{padding:36px 10px 10px;gap:8px;}
+  .studio-eu .eu-sel b{font-size:1.15rem;}
+  .studio-eu .eu-sel i{font-size:.58rem;letter-spacing:.14em;padding:10px 6px;}
   .sp-0{flex-grow:.8;} .sp-2{flex-grow:.6957;} .sp-3{flex-grow:.5322;} .sp-4{flex-grow:.7826;}
 }
 
@@ -1496,9 +1496,14 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .qg-card{flex:none;width:112px;text-align:center;color:var(--bone);text-decoration:none;scroll-snap-align:start}
 .qg-card img,.qg-card .qg-ini,.qg-card .qg-mais{width:112px;height:112px;border-radius:50%;object-fit:cover;display:flex;align-items:center;justify-content:center;border:1px solid var(--wire);background:var(--earth)}
 .qg-card .qg-ini{color:var(--amber);font-size:1.4rem;font-weight:600}
-.qg-card .qg-mais{border:1px dashed var(--fire);background:transparent;color:var(--fire);font-size:.95rem;font-weight:600}
+.qg-card .qg-mais{position:relative;overflow:hidden;background:var(--black)}
+.qg-mos{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:2px}
+.qg-card .qg-mos img{width:100%;height:100%;border:0;border-radius:0;object-fit:cover;display:block}
+.qg-veu{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(20,17,13,.6);color:var(--cream);font-family:var(--serif);font-size:1.9rem;font-weight:600;line-height:1;transition:background .2s}
+.qg-card .qg-n{display:block;font-style:normal;font-size:.68rem;color:var(--dim);margin-top:2px}
+.qg-todos b{color:var(--fire)}
 .qg-card b{display:block;margin-top:10px;font-size:.74rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media (hover:hover){.qg-ver:hover{color:var(--cream);border-bottom-color:var(--cream)}.qg-card:hover b{color:var(--cream)}.qg-card:hover img{border-color:var(--fire)}}
+@media (hover:hover){.qg-ver:hover{color:var(--cream);border-bottom-color:var(--cream)}.qg-card:hover b{color:var(--cream)}.qg-card:hover img{border-color:var(--fire)}.qg-todos:hover .qg-mais{border-color:var(--fire)}.qg-todos:hover .qg-veu{background:rgba(20,17,13,.38)}}
 @media (min-width:900px){.qg-trilho{gap:26px}.qg-card{width:140px}.qg-card img,.qg-card .qg-ini,.qg-card .qg-mais{width:140px;height:140px}}
 
 /* hero com o logo (17/10/2026, rodada N): o nome é a letra do logo (SVG), no tamanho do título antigo */

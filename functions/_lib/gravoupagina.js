@@ -5,6 +5,7 @@
 // em _lib/gravou-lista.js. Nunca link de pasta privada: só Spotify e páginas do site.
 // Fora do ar: só quem está logado no painel vê (prévia, noindex).
 
+import { rodape, RODAPE_CSS } from './rodape.js';
 import { ICONES as ICONES_ABA } from './icones.js';
 import { RODAPE_GENEROS, CSS_RODAPE_GENEROS } from './generos.js';
 import { LEVA_DE, deAttr } from './origem.js';
@@ -143,16 +144,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
   .qg-grade{grid-template-columns:repeat(6,1fr);gap:30px 22px}.qg-aberto{grid-template-columns:180px 1fr;padding:22px;align-items:start}
   .qg-foto{grid-row:1/3}.qg-foto img,.qg-foto .qg-ini{width:180px;height:180px}.qg-fx{grid-column:2;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:24px}
   .qg-fx.curta li:nth-child(n+7){display:block}.qg-fx.curta li:nth-child(n+9){display:none}.qg-todas{grid-column:2}}
-footer{padding:1.4rem 2.4rem calc(1.4rem + env(safe-area-inset-bottom,0px));background:var(--black);border-top:1px solid var(--wire);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
-footer img{height:30px;width:auto;display:block}
-footer p{margin:0;font-size:.57rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);font-family:var(--sans)}
-footer a.foot-perfil{border-bottom:1px solid var(--wire);transition:color .2s,border-color .2s}
-@media (hover:hover){footer a.foot-perfil:hover{color:var(--fire);border-bottom-color:var(--fire)}}
-/* rodapé igual ao da vitrine (rodada N, 17/10/2026): gêneros em Cormorant e cor de leitura (antes saíam
-   na letra e no branco da página, porque faltavam as variáveis e as fontes da vitrine aqui) */
-${CSS_RODAPE_GENEROS}
-@media (max-width:860px){footer{flex-direction:column;align-items:flex-start;padding:1.2rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom,0px))}footer p{font-size:.63rem}}
-@media (max-width:480px){footer{gap:.5rem}}
+/* rodapé único (rodada R): _lib/rodape.js */
+${RODAPE_CSS}
 ${TOPO_PAGINA_CSS}
 </style>
 </head>
@@ -170,12 +163,7 @@ ${todos.map((a, i) => `    <li data-busca="${esc(a.nome.normalize('NFD').replace
   <p class="qg-nada" id="qgNada" hidden>Nenhum artista com esse nome.</p>
 </main>
 <script type="application/json" id="qgDados">${jsonSeguro(json)}</script>
-<footer>
-  ${RODAPE_GENEROS}
-  <a href="/"${deAttr('artistas')} aria-label="Caramujo Records"><img loading="lazy" width="400" height="400" src="/assets/brand/selo-creme.svg" alt="Caramujo Records"></a>
-  <p>© 2026 Caramujo Records — São Carlos, SP</p>
-  <p><a class="foot-perfil" href="/rideblan33"${deAttr('artistas')}>@rideblan33</a> · Todos os direitos reservados</p>
-</footer>
+${rodape('artistas')}
 <script>
 (function(){
   var D; try{ D=JSON.parse(document.getElementById('qgDados').textContent); }catch(e){ return; }
@@ -214,7 +202,8 @@ ${todos.map((a, i) => `    <li data-busca="${esc(a.nome.normalize('NFD').replace
     nada.hidden=vis>0;
   });
   var h=decodeURIComponent((location.hash||'').slice(1));
-  if(h){ for(var i=0;i<A.length;i++) if(A[i].s===h){ abrir(i,true); break; } }
+  // rodada R: o artista do #endereço abre no cartão de cima e a página fica no topo (antes descia até o cartão)
+  if(h){ for(var i=0;i<A.length;i++) if(A[i].s===h){ abrir(i,false); break; } try{ if('scrollRestoration' in history) history.scrollRestoration='manual'; }catch(_){} window.scrollTo(0,0); }
 })();
 </script>
 ${LEVA_DE}

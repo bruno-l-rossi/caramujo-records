@@ -37,7 +37,7 @@ export function origem(request) {
 // "Ver tudo"/"Portfólio completo" da pasta de artista, a página de erro e o story do
 // catálogo de capas. Todo o resto (vitrine, rodapé, @rideblan33 da pasta, story do
 // perfil, link enviado, bio, Instagram, Google, redes, direto) abre em Músicas.
-export const ABRE_TAPES = new Set(['pagina-beat', 'pagina-genero', 'tape', 'artista-mais', '404', 'story-catalogo']);
+export const ABRE_TAPES = new Set(['pagina-beat', 'pagina-genero', 'tape', 'artista-mais', '404', 'story-catalogo', 'sobre']);
 export const abaInicial = (de) => (ABRE_TAPES.has(de) ? 'tapes' : 'musicas');
 
 /* ---------- a lista ---------- */
