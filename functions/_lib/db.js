@@ -321,7 +321,13 @@ export const UMA_VEZ = [
   ['musicas-iniciais-2026-10-05', async (DB) => {
     await DB.prepare("INSERT OR IGNORE INTO meta (chave, valor) VALUES ('musicas', ?)")
       .bind(JSON.stringify({ noAr: false, lista: MUSICAS_INICIAIS })).run();
-  }]
+  }],
+  // 18/10/2026 (rodada Q): os beats de uma tape (perfil, página da tape) liam ~19 mil linhas por
+  // vez: o banco escolhia o índice (kind, ready) e varria todos os beats. Com (kind, ready, artist_id)
+  // a busca vai direto na tape e a contagem por tape do perfil lê só o índice.
+  ['idx-tracks-beat-tape-2026-10-18', 'CREATE INDEX IF NOT EXISTS tracks_beat_tape ON tracks (kind, ready, artist_id)'],
+  // e a estatística das tabelas refeita uma vez (a velha fazia o banco preferir varrer); se o D1 recusar, segue
+  ['analyze-2026-10-18', async (DB) => { try { await DB.prepare('ANALYZE').run(); } catch (_) { /* sem estatística nova: o INDEXED BY resolve */ } }],
 ];
 
 let ready = false;

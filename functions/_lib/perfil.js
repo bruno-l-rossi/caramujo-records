@@ -16,6 +16,7 @@ import { CHAVE as MUS_CHAVE, deTexto as musDeTexto, separar, RECENTES_NO_PERFIL 
 import { LEVA_DE, deAttr } from './origem.js';
 import { CHAVE_GRAVOU, gravouDeTexto, gravouLimpar, montarGravou } from './gravou.js';
 import { fotoArtista } from './gravoupagina.js';
+import { topo, TOPO_PAGINA_CSS, TOPO_JS } from './topo.js';
 
 const VALIDADE = 60 * 1000;
 const REGIAO = '/__cache/perfil-v3';
@@ -113,13 +114,16 @@ export async function lerPerfil(request, env) {
       WHERE a.tipo = 'tape' AND a.perfil = 1
       ORDER BY COALESCE(a.perfil_ordem, -1000000000 - a.id), a.id`
   ).all();
-  const pFaixas = d.prepare(
-    `SELECT id, title, dur, artist_id FROM tracks WHERE kind = 'beat' AND ready = 1 AND artist_id = (
+  // 18/10/2026 (rodada Q): INDEXED BY porque o banco chegou a varrer os beats todos aqui (~19 mil
+  // linhas por abertura, 341 mil num dia): com estatística velha ele achava a varredura mais barata.
+  // Sem o índice (banco que ainda não migrou), cai na mesma consulta sem a ordem do índice.
+  const sqlFaixas = (ix) => `SELECT id, title, dur, artist_id FROM tracks${ix} WHERE kind = 'beat' AND ready = 1 AND artist_id = (
        SELECT a.id FROM artists a WHERE a.tipo = 'tape' AND a.perfil = 1
-          AND EXISTS (SELECT 1 FROM tracks t WHERE t.artist_id = a.id AND t.kind = 'beat' AND t.ready = 1)
+          AND EXISTS (SELECT 1 FROM tracks t${ix} WHERE t.artist_id = a.id AND t.kind = 'beat' AND t.ready = 1)
         ORDER BY COALESCE(a.perfil_ordem, -1000000000 - a.id), a.id LIMIT 1)
-      ORDER BY CASE grp WHEN 'res' THEN 0 ELSE 1 END, src_modified DESC LIMIT 40`
-  ).all();
+      ORDER BY CASE grp WHEN 'res' THEN 0 ELSE 1 END, src_modified DESC LIMIT 40`;
+  const pFaixas = d.prepare(sqlFaixas(' INDEXED BY tracks_beat_tape')).all()
+    .catch((e) => (/no such index/i.test(String(e && e.message)) ? d.prepare(sqlFaixas('')).all() : Promise.reject(e)));
   const pMeta = lerMetaBruta(d);
   [pTapes, pFaixas, pMeta].forEach((p) => p.catch(() => {}));
   const { results } = await pTapes;
@@ -448,9 +452,9 @@ a:focus-visible{outline:2px solid var(--fire);outline-offset:3px}
   background:radial-gradient(ellipse 70% 55% at 72% 38%,rgba(185,143,94,.10),transparent 70%),var(--black)}
 .terra::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.10;mix-blend-mode:screen;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .95 0 0 0 0 .88 0 0 0 1.4 -.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-.topo{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:1180px;margin:0 auto;padding:26px 0 50px}
-.topo .logo{line-height:0}
-.topo .logo img{width:168px;height:auto}
+/* rodada Q (18/10/2026): o topo é o do site inteiro (topo.js, TOPO_PAGINA_CSS); o "Ouça" desceu pro bloco */
+.terra{padding-top:44px}
+.ouca-w{margin-top:22px}
 .ouca{display:inline-flex;align-items:center;gap:10px;height:44px;padding:0 20px 0 16px;border:1px solid var(--fire);border-radius:999px;background:var(--fire);color:var(--black);font:700 11px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:background .2s,border-color .2s}
 .ouca:hover{background:var(--amber);border-color:var(--amber)}
 .ouca svg{width:13px;height:13px;flex:none}
@@ -620,8 +624,8 @@ ${CSS_RODAPE_GENEROS}
 body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 @media (max-width:1100px){.grade{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:820px){
-  .topo{padding:16px 0 20px;gap:10px}
-  .topo .logo img{width:118px}
+  .terra{padding-top:20px}
+  .ouca-w{display:flex;justify-content:center}
   .ouca{height:38px;padding:0 13px 0 11px;font-size:9.5px;letter-spacing:.13em;gap:8px}
   .fixa b{font-size:20px}
   .fixa .ouca span{display:none}
@@ -644,7 +648,7 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
   .leg i{font:500 13px/1 var(--grot);font-style:normal;color:var(--meta)}
 }
 /* celular estreito (06/10/2026): "Ouça o último lançamento" cabe do lado do logo em 360px */
-@media (max-width:380px){.topo .logo img{width:104px}.topo .ouca{letter-spacing:.08em;padding:0 11px 0 10px;gap:6px}}
+@media (max-width:380px){.ouca-w .ouca{letter-spacing:.08em;padding:0 14px 0 12px;gap:8px}}
 /* celular: 3 capas por linha (26/09/2026) */
 @media (max-width:600px){
   .abas{gap:26px;margin-bottom:28px}
@@ -661,14 +665,13 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
   .pst svg{width:9px;height:9px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+${TOPO_PAGINA_CSS}
+.fixa{top:54px}
 </style>
 </head>
 <body>
+${topo('perfil', '', null, { ativo: '' })}
 <header class="terra">
-  <nav class="topo" aria-label="Caramujo Records">
-    <a class="logo" href="/"${deAttr('perfil')} aria-label="Caramujo Records, beats à venda"><img src="/assets/brand/caramujo-h.webp" srcset="/assets/brand/caramujo-h-244.webp 244w, /assets/brand/caramujo-h-366.webp 366w, /assets/brand/caramujo-h.webp 504w" sizes="(max-width:380px) 104px, (max-width:820px) 118px, 168px" alt="Caramujo Records" width="296" height="54"></a>
-    ${tocaAlgo ? `<button class="ouca" id="ouca" type="button" aria-pressed="false" aria-label="${rotOuca}">${ICONE_TOCA}${ICONE_PAUSA}<span>${rotOuca}</span></button>` : ''}
-  </nav>
   <section class="palco">
     <div class="texto">
       <p class="kicker">Caramujo Records</p>
@@ -682,6 +685,7 @@ body.com-player footer{padding-bottom:calc(110px + env(safe-area-inset-bottom,0p
         <a href="${REDES.instagram}" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram" data-rede="instagram">${ICONES.instagram}</a>
         <button class="comp" id="compartilhar" type="button" aria-label="Compartilhar perfil" title="Compartilhar">${ICONES.compartilhar}</button>
       </div>
+      ${tocaAlgo ? `<div class="ouca-w"><button class="ouca" id="ouca" type="button" aria-pressed="false" aria-label="${rotOuca}">${ICONE_TOCA}${ICONE_PAUSA}<span>${rotOuca}</span></button></div>` : ''}
     </div>
     <div class="foto" aria-hidden="true">
       <span class="num33">33</span>
@@ -1034,5 +1038,6 @@ ${comMusicas ? '  </div>\n' : ''}</main>
 })();
 </script>
 ${LEVA_DE}
+${TOPO_JS}
 </body></html>`;
 }

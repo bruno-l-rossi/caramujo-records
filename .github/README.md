@@ -91,6 +91,8 @@ scripts/                conversor do Drive e cálculo da onda de cada faixa
 
 **Ordem da vitrine (17/10/2026).** Padrão, Mais novos (a beat tape do beat na ordem do perfil: `nv` em `/api/vitrine`), BPM e Aleatória.
 
+**Topo único (18/10/2026, rodada Q).** Todas as páginas usam `functions/_lib/topo.js` (topo, Ajuda e o JS do menu). Páginas do servidor importam; `404.html` e a vitrine levam cópia gerada por `node testes/topo-estatico.mjs`. A consulta dos beats da tape do perfil usa `INDEXED BY tracks_beat_tape` (índice criado no `UMA_VEZ`).
+
 **Quem já gravou, rodada N (17/10/2026).** O @rideblan33 entrou em `ARTISTAS` (ordem por ouvintes, foto do Spotify) e o cartão dele traz toda faixa em que aparece como artista. Plays: o painel tem "Atualizar plays", que entrega o favorito "Plays Caramujo" (roda no Spotify logado do Bruno, lê o número de cada faixa e volta pra `/painel#gravou&plays=...`); a op `gravou-plays` guarda na meta (`plays`, `playsEm`) e esses números valem no lugar dos da lista. O hero da vitrine usa o logo vetorizado (`assets/brand/caramujo-wordmark.svg`).
 
 **Quem já gravou, rodada M (17/10/2026).** LD38 e Thiago S King juntam os perfis repetidos (64 artistas); cada faixa da lista guarda plays, data e a capa do Spotify (`[id, nome, álbum, [artistas], plays, 'AAAA-MM-DD', img]`), o que resolve as capas que faltavam; o cartão @rideblan33 abre a página com as faixas solo (fora dos números; a Nada de Novo Vol. I fica de fora); o painel tem a ordem manual (ops `gravou-ordem` e `gravou-ordem-modo`, meta `ordem`/`ordemManual`); o cupom da lista caiu pra 15% (`PCT` em `_lib/lista.js`).

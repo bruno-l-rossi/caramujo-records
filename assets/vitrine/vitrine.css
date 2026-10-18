@@ -1503,3 +1503,49 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 
 /* hero com o logo (17/10/2026, rodada N): o nome é a letra do logo (SVG), no tamanho do título antigo */
 .hero-title .hero-wm{display:block;width:4.55em;max-width:100%;height:auto}
+
+/* Quem já gravou na vitrine mostra que desliza (rodada Q, 18/10/2026), igual à fileira do perfil:
+   degradê na borda direita (some no fim), empurrãozinho quando aparece e setas no computador */
+.qg-dir{display:flex;align-items:center;gap:14px;flex:none}
+.qg-setas{display:flex;gap:6px}
+.qg-setas[hidden]{display:none}
+.qg-setas button{display:grid;place-items:center;width:34px;height:34px;padding:0;border:1px solid var(--wire);border-radius:50%;background:none;color:var(--bone);cursor:pointer;transition:border-color .2s,opacity .2s}
+.qg-setas button:disabled{opacity:.3;cursor:default}
+@media (hover:hover){.qg-setas button:not(:disabled):hover{border-color:var(--fire)}}
+@media (hover:none){.qg-setas{display:none}}
+.qg-tr-w{position:relative}
+.qg-tr-w::after{content:'';position:absolute;top:0;right:-2px;bottom:6px;width:56px;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,0),var(--dark));transition:opacity .25s}
+.qg-tr-w.fim::after{opacity:0}
+
+/*AJUDA-INICIO*/
+/* Ajuda no topo da vitrine (rodada Q, 18/10/2026): cópia do topo.js (node testes/topo-estatico.mjs) */
+.aj-folha,.aj-veu,.aj-bt{--black:#14110d;--clay:#A87B4A;--amber:#c3a074;--bone:#E8E0CF;--cream:#f2ecdf;--fire:#b98f5e;--dim:#6f6757;--wire:#332c22;--read:#b89e72;--serif:'Cormorant Garamond',Georgia,serif;--sans:'Helvetica Neue',Helvetica,Arial,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace}
+/* Ajuda (rodada Q) */
+.aj-bt,.topo .aj-bt{width:auto;gap:8px;padding:0 12px;height:36px;border:1px solid var(--wire);border-radius:999px;margin-right:6px;cursor:pointer;background:none}
+.aj-bt svg{width:18px;height:18px}
+.aj-bt span{font:700 .66rem var(--sans);letter-spacing:.18em;text-transform:uppercase}
+.aj-bt:hover,.topo .aj-bt:hover{border-color:var(--fire)}
+.aj-veu{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.55)}
+.aj-folha{position:fixed;z-index:61;top:54px;right:2.4rem;width:400px;max-height:calc(100vh - 70px);overflow-y:auto;background:#1b1712;border:1px solid var(--wire);border-top:0;padding:20px 20px 22px;box-shadow:0 20px 40px rgba(0,0,0,.6);color:var(--bone);font-family:var(--sans);text-align:left}
+.aj-veu[hidden],.aj-folha[hidden]{display:none}
+.aj-folha h2{margin:0 40px 6px 0;font:500 1.7rem/1.1 var(--serif);color:var(--cream);letter-spacing:0;text-transform:none}
+.aj-x{position:absolute;top:12px;right:10px;width:40px;height:40px;border:0;background:none;color:var(--read);font-size:1.6rem;line-height:1;cursor:pointer}
+.aj-folha details{border-top:1px solid var(--wire);padding:12px 0}
+.aj-folha summary{display:flex;justify-content:space-between;gap:12px;cursor:pointer;list-style:none;font-size:.84rem;font-weight:600;color:var(--cream)}
+.aj-folha summary::-webkit-details-marker{display:none}
+.aj-folha summary::after{content:'+';color:var(--fire);font-weight:400}
+.aj-folha details[open] summary::after{content:'–'}
+.aj-folha details p{margin:8px 0 0;font-size:.8rem;line-height:1.6;color:var(--read)}
+.aj-dm{display:flex;align-items:center;gap:12px;min-height:52px;padding:0 16px;margin-top:14px;background:var(--cream);color:#14110d;font:700 .74rem var(--sans);letter-spacing:.16em;text-transform:uppercase;text-decoration:none}
+.aj-dm svg{width:18px;height:18px;flex:none}
+.aj-dm small{margin-left:auto;font:400 .68rem var(--mono);letter-spacing:0;text-transform:none;color:#5a4a36}
+.aj-dm:hover{background:#fff}
+.aj-pdf{display:inline-block;margin-top:14px;font-size:.76rem;color:var(--read);border-bottom:1px solid var(--wire);padding-bottom:2px;text-decoration:none}
+.menu-cel .mc-aj{color:var(--fire)}
+.aj-bt{display:flex;align-items:center;color:var(--bone)}
+.aj-folha{top:54px}
+.nav-links .so-cel{display:none}
+@media(max-width:600px){.nav-links .so-cel{display:block}.aj-bt{border:0;padding:0;width:44px;height:44px;margin:0;justify-content:center}.aj-bt span{display:none}.aj-bt svg{width:22px;height:22px}.aj-folha{left:0;right:0;width:auto;border-left:0;border-right:0}}
+.nav-cart{display:flex}#cartBtn.cart-btn{display:none}
+.nav-cart:not(.has-items) .cart-n{display:none}
+/*AJUDA-FIM*/

@@ -34,7 +34,7 @@
 <!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
      a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=5cfa3c8e49">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=955e93f810">
 
 <!-- ═══ EMAILJS (formulário de contato) ══════════════
   Chaves em emailjs.com: Account > Public Key, Email Services > Service ID,
@@ -81,10 +81,12 @@
     <li><a href="#services">Serviços</a></li>
     <li><a href="#estudio">Sobre nós</a></li>
     <li><a href="#contact">Contato</a></li>
+    <li class="so-cel"><a href="#ajuda" class="mc-aj js-ajuda" aria-controls="ajudaFolha">Ajuda</a></li>
+    <li class="so-cel"><a href="/rideblan33" data-de="menu">@rideblan33</a></li>
   </ul>
   <div class="nav-right">
+    <button class="aj-bt js-ajuda" type="button" aria-haspopup="dialog" aria-controls="ajudaFolha" aria-expanded="false" aria-label="Ajuda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M9.4 9.3a2.7 2.7 0 015.2 1c0 1.8-2.6 2.2-2.6 3.8"/><path d="M12 17.2h.01"/></svg><span>Ajuda</span></button>
     <a class="nav-eu" href="/rideblan33" data-de="anel" aria-label="Portfólio do @rideblan33" title="@rideblan33"><span class="anel"><img src="assets/perfil/rideblan33-camisa.webp" alt="" width="256" height="256"></span></a>
-    <a class="nav-ig" href="https://ig.me/m/rideblan33" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg></a>
     <button class="nav-cart" id="navCart" type="button" onclick="toggleCart()" aria-label="Abrir carrinho"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.4 11.5h11.2L21 7H6"/></svg><span class="cart-n" id="cartNTopo">0</span></button>
     <button class="nav-burger" id="navBurger" onclick="toggleMenu()" aria-label="Abrir menu"><span></span><span></span><span></span></button>
   </div>
@@ -256,18 +258,7 @@
     </div>
   </div>
 
-  <!-- Lista com cupom de 15% (11/10/2026, item 9; texto do Bruno; 25% → 15% em 17/10) -->
-  <div class="lista-box" id="listaBox">
-    <div class="lista-k">15% na primeira compra</div>
-    <h3 class="lista-t">Fique por dentro</h3>
-    <p class="lista-p">Cadastre-se para receber um cupom exclusivo de 15% em sua primeira compra e acompanhe lançamentos e promoções em primeira mão.</p>
-    <form class="lista-f" id="listaForm" novalidate>
-      <label class="lista-lbl" for="listaEmail">Seu e-mail</label>
-      <input class="lista-in" id="listaEmail" type="email" inputmode="email" autocomplete="email" placeholder="seu@email.com" enterkeyhint="send" maxlength="120" required>
-      <button class="lista-bt" id="listaBtn" type="submit">Quero o cupom</button>
-    </form>
-    <p class="lista-nota" id="listaNota">O cupom vale por 15 dias nos beats do catálogo. Dá pra sair da lista quando quiser.</p>
-  </div>
+  <!-- Lista com cupom (rodada Q, 18/10/2026): saiu da vitrine a pedido do Bruno; fica só na página das beat tapes (catalogo/app.html, #fique) -->
 
 </section>
 
@@ -329,6 +320,7 @@
 <div class="hr"></div>
 
 <!-- ═══ NO ESTÚDIO (placeholder: trocar por fotos/quote reais) ══ -->
+<!-- rodada Q (18/10/2026): o cartão do @rideblan33 abre o perfil já na aba Beat tapes (#tapes) -->
 <section id="estudio" class="s s-earth">
   <div class="s-head">
     <span class="s-kicker">Sobre nós</span>
@@ -338,7 +330,7 @@
   <div class="studio-carousel">
     <button class="studio-nav prev" type="button" onclick="studioScroll(-1)" aria-label="Anterior">‹</button>
   <div class="studio-strip">
-    <a class="studio-ph sp-0 studio-eu" href="/rideblan33" data-de="sobre" aria-label="Portfólio do @rideblan33">
+    <a class="studio-ph sp-0 studio-eu" href="/rideblan33#tapes" data-de="sobre" aria-label="Beat tapes do @rideblan33">
       <span class="eu-box"><span class="eu-33" aria-hidden="true">33</span><img src="assets/perfil/rideblan33-480.webp" alt="@rideblan33 de costas, com a camisa 33" loading="lazy" width="480" height="800"><span class="eu-sel"><b>@rideblan33</b><i>Portfólio →</i></span></span>
       <span class="eu-cap">Quem faz o som</span>
     </a>
@@ -648,7 +640,7 @@ const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':
 const FEATURED_OVERRIDE_ID=null;
 const FEATURED_OVERRIDE_ATE='';
 </script>
-<script src="/assets/vitrine/vitrine.js?v=71969433a2"></script>
+<script src="/assets/vitrine/vitrine.js?v=d194d8d7f5"></script>
 <!-- leva-de -->
 <script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
 (function(){
@@ -671,5 +663,11 @@ const FEATURED_OVERRIDE_ATE='';
 })();
 </script>
 <!-- /leva-de -->
+<!--AJUDA-INICIO--><div class="aj-veu js-aj-fecha" hidden></div><div class="aj-folha" id="ajudaFolha" role="dialog" aria-modal="true" aria-labelledby="ajT" hidden><button class="aj-x js-aj-fecha" type="button" aria-label="Fechar">×</button><h2 id="ajT">Ajuda</h2>
+<details open><summary>Como funciona a licença?</summary><p>Exclusiva: o beat é vendido uma vez só e sai da loja. Contrato no seu nome, com uso comercial liberado.</p></details>
+<details><summary>Quando eu recebo o beat?</summary><p>MP3 + WAV com entrega instantânea, pelo link do pedido.</p></details>
+<details><summary>Tem desconto no PIX?</summary><p>Tem: no PIX o total sai 5% mais barato.</p></details>
+<a class="aj-dm" href="https://ig.me/m/rideblan33" target="_blank" rel="noopener" data-rede="ajuda-direct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg><span>Fale conosco</span><small>Direct · @rideblan33</small></a>
+<a class="aj-pdf" href="/termos-de-licenca.pdf" target="_blank" rel="noopener">Termos da licença (PDF) ›</a></div><!--AJUDA-FIM-->
 </body>
 </html>

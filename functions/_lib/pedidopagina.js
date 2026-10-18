@@ -5,7 +5,7 @@
 
 import { ICONES } from './icones.js';
 import { capaUrl, CAPA_VOLTA } from './midia.js';
-import { topo as topoSite, TOPO_CSS, TOPO_CSS_899, TOPO_CSS_CEL } from './topo.js';
+import { topo as topoSite, TOPO_CSS, TOPO_CSS_899, TOPO_CSS_CEL, TOPO_JS } from './topo.js';
 import { LEVA_DE } from './origem.js';
 import { servicoDe } from './servicos.js';
 
@@ -145,11 +145,7 @@ ${CAPA_VOLTA}
 </head>`;
 }
 
-// menu do celular e número do carrinho, como nas páginas de beat
-const TOPO_JS = `<script>(function(){var $=function(s){return document.querySelector(s)};
-try{var c=JSON.parse(localStorage.getItem('caramujo_carrinho_v1')||'null');if(c&&c.itens&&c.itens.length&&Date.now()-(c.em||0)<7*864e5){var n=c.itens.reduce(function(s,x){return s+(x.qty||1)},0),b=$('.js-n');if(b){b.textContent=n;b.hidden=false}}}catch(_){}
-var mb=$('.js-menu'),mc=$('#menuCel');if(mb&&mc)mb.addEventListener('click',function(){var on=!mc.classList.contains('on');mc.classList.toggle('on',on);mb.setAttribute('aria-expanded',on?'true':'false')});
-var ms=$('.mc-sub>a');if(ms)ms.addEventListener('click',function(e){e.preventDefault();var li=ms.parentNode,on=!li.classList.contains('abre');li.classList.toggle('abre',on);ms.setAttribute('aria-expanded',on?'true':'false')});})();</script>`;
+// menu do celular, número do carrinho e Ajuda: TOPO_JS do topo.js (rodada Q)
 const topo = topoSite('pedido');
 const rodape = '<footer>© 2026 Caramujo Records · São Carlos, SP</footer>' + TOPO_JS + LEVA_DE;
 const ajuda = `<a class="ajuda" href="https://ig.me/m/rideblan33" rel="noopener">${IG}Dúvida? Chama no Direct</a>`;

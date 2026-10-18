@@ -7,6 +7,7 @@ import { gravouDeTexto, montarGravou, imgPequena } from './gravou.js';
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 export const MARCADOR = '<!--QUEM-GRAVOU-->';
 const MOSTRA = 12;
+// rodada Q (18/10/2026): a fileira mostra que desliza, como a do perfil (degradê, empurrãozinho, setas no computador; vitrine.js)
 
 // o pedaço da meta que a vitrine precisa (vai junto da lista de beats na cópia de 1 minuto)
 export function resumoVitrine(valor) {
@@ -29,8 +30,8 @@ export function secaoVitrine(r) {
   const resto = r.n - r.a.length;
   const mais = resto > 0 ? `<a class="qg-card qg-todos" href="/rideblan33/artistas" data-de="vitrine-gravou"><span class="qg-mais" aria-hidden="true">+${resto}</span><b>Ver todos</b></a>` : '';
   return `<section id="quemGravou" class="s s-earth qg-vit" aria-labelledby="qgTit">
-  <div class="s-head qg-head"><div><span class="s-kicker">Portfólio</span><h2 class="s-title" id="qgTit">Quem já <span class="r">gravou</span></h2></div><a class="qg-ver" href="/rideblan33/artistas" data-de="vitrine-gravou">Ver os ${r.n} ›</a></div>
-  <div class="qg-trilho">${cards}${mais}</div>
+  <div class="s-head qg-head"><div><span class="s-kicker">Portfólio</span><h2 class="s-title" id="qgTit">Quem já <span class="r">gravou</span></h2></div><span class="qg-dir"><a class="qg-ver" href="/rideblan33/artistas" data-de="vitrine-gravou">Ver os ${r.n} ›</a><span class="qg-setas" hidden><button type="button" id="qgvAnt" aria-label="Artistas anteriores"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><button type="button" id="qgvProx" aria-label="Mais artistas"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></span></span></div>
+  <div class="qg-tr-w"><div class="qg-trilho" id="qgvTr">${cards}${mais}</div></div>
 </section>
 <div class="hr"></div>`;
 }

@@ -336,3 +336,6 @@ O nome do hero é o logo: `assets/brand/caramujo-wordmark.svg`, a letra do `cara
 
 ## Ajuda na página do beat (17/10/2026, rodada O)
 Botão-pílula creme "AJUDA" fixo no canto de baixo à direita (46px, ícone de balão com ?), sobe 66px quando a barra do tocador aparece. Abre uma folha (celular: de baixo, largura toda; computador: 380px acima do botão) com título em Cormorant "Dúvida sobre o <beat>?", o texto "Dúvidas sobre licença, entrega, ajustes no beat, etc." e um botão só: "Direct no Instagram" (@rideblan33). Sem WhatsApp no site.
+
+## Topo único (18/10/2026, rodada Q, proposta A)
+O mesmo topo em todas as páginas públicas: logo caramujo-h à esquerda (vai pra vitrine), no computador o menu do meio (BEATS ▾, SERVIÇOS, SOBRE NÓS, CONTATO; Helvetica 700 .76rem, espaçado .22em, cor --read, aceso em --fire) e à direita a pílula "? AJUDA" (borda --wire, 36px), o anel do @rideblan33 e o carrinho; no celular o "?" vira ícone e entra o ☰, que lista as seções, "Ajuda" (em --fire) e "@rideblan33". Barra de 54px, fundo rgba(5,4,3,.97), borda de baixo --wire. A Ajuda abre uma folha (computador: 400px à direita, embaixo do topo; celular: largura toda) com título "Ajuda" em Cormorant, 3 perguntas que abrem (licença, entrega, PIX), o botão creme "FALE CONOSCO" (Direct · @rideblan33) e o link dos termos. Código: functions/_lib/topo.js.

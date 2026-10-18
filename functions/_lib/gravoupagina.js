@@ -10,6 +10,7 @@ import { RODAPE_GENEROS, CSS_RODAPE_GENEROS } from './generos.js';
 import { LEVA_DE, deAttr } from './origem.js';
 import { imgPequena } from './gravou.js';
 import { CAPA_VOLTA } from './midia.js';
+import { topo, TOPO_PAGINA_CSS, TOPO_JS } from './topo.js';
 
 const SITE = 'https://caramujorecords.com.br';
 const SPOTIFY_EU = 'https://open.spotify.com/artist/15K9QWM2Q6Zyxb6RsAn9RZ';
@@ -93,11 +94,10 @@ body{margin:0;color:var(--branco);font-family:var(--grot);-webkit-font-smoothing
 a{color:inherit;text-decoration:none}
 a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--fire);outline-offset:3px}
 .so-leitor{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.topo{display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:1180px;margin:0 auto;padding:22px 16px 18px;padding-top:calc(22px + env(safe-area-inset-top,0px))}
-.topo .logo{line-height:0}
-.topo .logo img{width:132px;height:auto}
-.volta{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid #333;border-radius:999px;font:600 13.5px var(--grot);color:var(--branco);white-space:nowrap}
-.volta:hover{border-color:var(--branco)}
+/* rodada Q (18/10/2026): o topo é o do site inteiro (topo.js); a pílula @rideblan33 virou o caminho */
+.qg-mig{display:flex;align-items:center;gap:10px;margin-bottom:10px;font:600 12px var(--grot);letter-spacing:.16em;text-transform:uppercase;color:var(--meta)}
+.qg-mig a{color:var(--branco);border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:1px}
+.qg-mig a:hover{border-bottom-color:var(--branco)}
 .previa{max-width:1180px;margin:0 auto 10px;padding:0 16px;font:500 13px/1.5 var(--grot);color:#e0b155}
 .qg{max-width:1180px;margin:0 auto;padding:6px 16px 64px}
 .qg .k{font:700 11px var(--grot);letter-spacing:.24em;text-transform:uppercase;color:var(--meta)}
@@ -139,7 +139,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .qg-nada{color:var(--meta);font-size:14px;margin:8px 0 0}
 .qg-nada[hidden]{display:none}
 @media(min-width:600px){.qg-grade{grid-template-columns:repeat(4,1fr);gap:26px 18px}}
-@media(min-width:900px){.topo .logo img{width:168px}.qg{padding-top:20px}.qg h1{font-size:56px}.qg-topo{display:grid;grid-template-columns:1fr 420px;align-items:end;gap:30px}
+@media(min-width:900px){.qg{padding-top:20px}.qg h1{font-size:56px}.qg-topo{display:grid;grid-template-columns:1fr 420px;align-items:end;gap:30px}
   .qg-grade{grid-template-columns:repeat(6,1fr);gap:30px 22px}.qg-aberto{grid-template-columns:180px 1fr;padding:22px;align-items:start}
   .qg-foto{grid-row:1/3}.qg-foto img,.qg-foto .qg-ini{width:180px;height:180px}.qg-fx{grid-column:2;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:24px}
   .qg-fx.curta li:nth-child(n+7){display:block}.qg-fx.curta li:nth-child(n+9){display:none}.qg-todas{grid-column:2}}
@@ -153,16 +153,14 @@ footer a.foot-perfil{border-bottom:1px solid var(--wire);transition:color .2s,bo
 ${CSS_RODAPE_GENEROS}
 @media (max-width:860px){footer{flex-direction:column;align-items:flex-start;padding:1.2rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom,0px))}footer p{font-size:.63rem}}
 @media (max-width:480px){footer{gap:.5rem}}
+${TOPO_PAGINA_CSS}
 </style>
 </head>
 <body>
 ${CAPA_VOLTA}
-<nav class="topo" aria-label="Caramujo Records">
-  <a class="logo" href="/"${deAttr('artistas')} aria-label="Caramujo Records, beats à venda"><img src="/assets/brand/caramujo-h.webp" srcset="/assets/brand/caramujo-h-244.webp 244w, /assets/brand/caramujo-h-366.webp 366w, /assets/brand/caramujo-h.webp 504w" sizes="(max-width:899px) 132px, 168px" alt="Caramujo Records" width="296" height="54"></a>
-  <a class="volta" href="/rideblan33"${deAttr('artistas')}>@rideblan33</a>
-</nav>
+${topo('artistas', '', null, { ativo: '' })}
 ${previa ? '<p class="previa">Prévia: só você vê esta página, porque está logado no painel. Ela aparece pra todo mundo quando você ligar "No ar" em Perfil &gt; Quem já gravou.</p>\n' : ''}<main class="qg">
-  <div class="qg-topo"><div><div class="k">Portfólio do @rideblan33</div><h1>Quem já gravou</h1><p class="sub">${n} artistas cantaram em ${nFaixas} músicas produzidas pelo @rideblan33.</p></div>
+  <div class="qg-topo"><div><nav class="qg-mig" aria-label="Você está em"><a href="/rideblan33"${deAttr('artistas')}>@rideblan33</a><span aria-hidden="true">/</span><span aria-current="page">Quem já gravou</span></nav><h1>Quem já gravou</h1><p class="sub">${n} artistas cantaram em ${nFaixas} músicas produzidas pelo @rideblan33.</p></div>
   <label class="qg-busca">${ICONE_BUSCA}<span class="so-leitor">Buscar artista</span><input id="qgBusca" type="search" placeholder="Buscar artista" autocomplete="off" enterkeyhint="search"></label></div>
   ${primeiro ? `<section class="qg-aberto" id="qgAberto" aria-live="polite" aria-labelledby="qgNome">${cartao(primeiro, faixas)}</section>` : ''}
   <div class="qg-cab"><b>Todos</b><span>${n} artistas</span></div>
@@ -220,5 +218,6 @@ ${todos.map((a, i) => `    <li data-busca="${esc(a.nome.normalize('NFD').replace
 })();
 </script>
 ${LEVA_DE}
+${TOPO_JS}
 </body></html>`;
 }
