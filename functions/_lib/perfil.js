@@ -248,9 +248,9 @@ export function linhaGravou(gv) {
   const mostra = lista.filter((a) => a.foto).concat(lista.filter((a) => !a.foto)).slice(0, 20);   // até 20 (pedido do Bruno, rodada O)
   const resto = gv.artistas.length - mostra.length;
   const de = deAttr('perfil-gravou');
-  return `<section class="qg-ent" aria-labelledby="qgEntT"><div class="qg-ent-cab"><h3 id="qgEntT">Quem já gravou</h3><a class="qg-ver" href="/rideblan33/artistas"${de} data-rede="aba-gravou">Ver todos ›</a></div>` +
-    `<div class="qg-tr">${mostra.map((a) => `<a class="qg-c" href="/rideblan33/artistas#${esc(a.slug)}"${de} data-rede="aba-gravou-artista">${fotoArtista(a)}<b>${esc(a.nome)}</b></a>`).join('')}` +
-    `<a class="qg-c" href="/rideblan33/artistas"${de} data-rede="aba-gravou"><span class="qg-fim">${resto > 0 ? `+${resto}` : ''}<small>ver todos</small></span><b>Ver todos</b></a></div></section>`;
+  return `<section class="qg-ent" aria-labelledby="qgEntT"><div class="qg-ent-cab"><h3 id="qgEntT">Quem já gravou</h3><span class="mx-direita"><a class="qg-ver" href="/rideblan33/artistas"${de} data-rede="aba-gravou">Ver todos ›</a><span class="mx-setas" hidden><button type="button" id="qgAnt" aria-label="Artistas anteriores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><button type="button" id="qgProx" aria-label="Mais artistas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></span></span></div>` +
+    `<div class="qg-tr-w"><div class="qg-tr" id="qgTr">${mostra.map((a) => `<a class="qg-c" href="/rideblan33/artistas#${esc(a.slug)}"${de} data-rede="aba-gravou-artista">${fotoArtista(a)}<b>${esc(a.nome)}</b></a>`).join('')}` +
+    `<a class="qg-c" href="/rideblan33/artistas"${de} data-rede="aba-gravou"><span class="qg-fim">${resto > 0 ? `+${resto}` : ''}<small>ver todos</small></span><b>Ver todos</b></a></div></div></section>`;
 }
 
 // 17/10/2026 (teste do Bruno): a lista Recentes saiu do perfil pra aba ficar mais enxuta; a página
@@ -593,6 +593,13 @@ a.mx-c .mx-img{transition:transform .35s ease}
 .qg-ver{font:600 13.5px var(--grot);color:var(--branco);white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.4);padding-bottom:2px;transition:border-color .2s}
 .qg-tr{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin:0 -2px;-webkit-overflow-scrolling:touch}
 .qg-tr::-webkit-scrollbar{display:none}
+/* rodada P (18/10/2026): dá pra ver que desliza. Celular: as fotos somem num degradê na borda direita
+   (some quando chega no fim) e a fileira dá um empurrãozinho quando aparece. Computador: setas no título,
+   iguais às dos Destaques. */
+.qg-tr-w{position:relative}
+.qg-tr-w::after{content:'';position:absolute;top:0;right:-2px;bottom:4px;width:56px;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,0),var(--preto));transition:opacity .25s}
+.qg-tr-w.fim::after{opacity:0}
+.qg-ent .mx-direita{display:flex;align-items:center;gap:14px}
 .qg-c{flex:none;width:96px;text-align:center;color:var(--branco)}
 .qg-c img,.qg-c .qg-ini,.qg-fim{width:96px;height:96px;border-radius:50%;object-fit:cover;display:flex}
 .qg-c .qg-ini{align-items:center;justify-content:center;background:#1c1c1c;color:var(--apoio);font:800 22px var(--grot)}
@@ -940,6 +947,31 @@ ${comMusicas ? '  </div>\n' : ''}</main>
     sProx.addEventListener('click',function(){ trilho.scrollBy({left:trilho.clientWidth,behavior:'smooth'}); });
     setas();
   }
+  // Quem já gravou (rodada P): setas no computador, degradê na borda e o empurrãozinho que mostra que desliza
+  (function(){
+    var tr=document.getElementById('qgTr'), ant=document.getElementById('qgAnt'), prox=document.getElementById('qgProx');
+    if(!tr||!ant) return;
+    var w=tr.parentNode;
+    function marca(){
+      var sobra=tr.scrollWidth-tr.clientWidth;
+      ant.parentNode.hidden=!(sobra>4);
+      ant.disabled=tr.scrollLeft<4; prox.disabled=tr.scrollLeft>=sobra-4;
+      w.classList.toggle('fim',tr.scrollLeft>=sobra-4);
+    }
+    tr.addEventListener('scroll',marca,{passive:true});
+    window.addEventListener('resize',marca);
+    ant.addEventListener('click',function(){ tr.scrollBy({left:-tr.clientWidth*0.8,behavior:'smooth'}); });
+    prox.addEventListener('click',function(){ tr.scrollBy({left:tr.clientWidth*0.8,behavior:'smooth'}); });
+    marca();
+    var calmo=false; try{ calmo=matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+    if(calmo||!('IntersectionObserver' in window)) return;
+    var io=new IntersectionObserver(function(es){
+      if(!es[0].isIntersecting) return; io.disconnect();
+      if(tr.scrollLeft>4||tr.scrollWidth-tr.clientWidth<40) return;
+      setTimeout(function(){ tr.scrollTo({left:72,behavior:'smooth'}); setTimeout(function(){ if(tr.scrollLeft<=80) tr.scrollTo({left:0,behavior:'smooth'}); },650); },350);
+    },{threshold:0.6});
+    io.observe(tr);
+  })();
 
   // compartilhar o perfil (27/09/2026): a folha do story.js com as duas artes (Perfil e
   // Catálogo, só imagem) e o Enviar o link. O story.js desce quieto uns segundos depois.

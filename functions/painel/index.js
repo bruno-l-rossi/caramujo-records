@@ -1020,6 +1020,7 @@ function pagina() {
     var vit=!!VITRINE_ABA[vista];
     $('barra').hidden = !(vista==='artistas'||vista==='tapes');
     $('resumo').hidden = vista==='analytics';
+    var vcons=$('consumo'); if(vcons&&vista!=='hoje') vcons.remove();   // o contador de consumo é só do Hoje
     $('lista').hidden = vista==='analytics'||vit||vista==='musicas'||vista==='gravou'||vista==='comentarios';
     $('analytics').hidden = vista!=='analytics';
     $('vitrine').hidden = !vit;
@@ -1029,7 +1030,7 @@ function pagina() {
     pintarNav(); pintarSecoes();
     if(vista==='hoje'){
       pedirResumoFunil(); pedirConsumo(); pedirMusicas(); if(COMENTARIOS_LIGADOS) pedirComent(); pedirEntrega(); pedirLista(); pedirFila();
-      $('resumo').textContent=hojeData();
+      $('resumo').textContent=hojeData(); pintarConsumo();
       $('lista').innerHTML=''; $('lista').appendChild(hoje()); return;
     }
     if(vista==='pedidos'){ pedirEntrega(); $('resumo').textContent='pedidos com link, cupons e a lista de e-mails'; $('lista').innerHTML=''; $('lista').appendChild(paginaPedidos()); return; }
@@ -1192,11 +1193,14 @@ function pagina() {
   }
   function pintarConsumo(){
     var velho=$('consumo'); if(velho) velho.remove();
-    return;   // 12/10/2026: o consumo mora em Ajustes (e no Hoje, quando passa da metade)
+    // 18/10/2026 (rodada P, pedido do Bruno): o contador voltou pro Hoje, embaixo da data: leituras do
+    // banco no dia e a prateleira de arquivos (o detalhe segue em Ajustes e no toque)
+    if(vista!=='hoje'||!consumoHoje) return;
     var c=consumoHoje, pct=c.hoje/c.teto;
     var el=document.createElement('button');
     el.type='button'; el.id='consumo'; el.className='consumo'+(pct>=0.5?' alto':'');
-    el.textContent='Banco hoje: '+milhar(c.hoje)+' de '+milhar(c.teto)+' leituras'+(pct>=0.5?' · passou da metade':'');
+    el.textContent='Banco hoje: '+milhar(c.hoje)+' de '+milhar(c.teto)+' leituras'+(pct>=0.5?' · passou da metade':'')+
+      (prateleira!=null?' · Arquivos: '+gb(prateleira)+' de 8 GB':'');
     el.addEventListener('click',abrirConsumo);
     $('resumo').parentNode.insertBefore(el,$('resumo').nextSibling);
   }

@@ -26,7 +26,7 @@ const SETA = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke
 // foto redonda (ou as iniciais, quando o Spotify não tem imagem)
 export function fotoArtista(a, cls = '', grande = false) {
   return a.foto
-    ? `<img class="${cls}" src="${esc(grande ? a.foto : imgPequena(a.foto))}" alt="" loading="lazy" decoding="async" width="${grande ? 320 : 160}" height="${grande ? 320 : 160}">`
+    ? `<img class="${cls}" src="${esc(grande ? a.foto : imgPequena(a.foto))}" alt=""${grande ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async" width="${grande ? 320 : 160}" height="${grande ? 320 : 160}">`
     : `<span class="${cls} qg-ini" aria-hidden="true">${esc(iniciais(a.nome))}</span>`;
 }
 
