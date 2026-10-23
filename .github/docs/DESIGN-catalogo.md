@@ -151,10 +151,11 @@ o painel aperta sozinho. Sem recado, nada aparece.
 
 Só na pasta do artista. Tape e link avulso (`/f/`, `/p/`) ficam como estão.
 
-- **NOVA** e **VERSÃO NOVA**: pastilha creme `#E4DAC7` com texto preto (a mesma do DISPONÍVEL
-  da tape), antes da linha cinza. NOVA = a faixa não estava na última visita deste aparelho;
-  VERSÃO NOVA = o arquivo mudou. Vale a visita inteira e some na próxima. Primeira visita no
-  aparelho: só o que subiu nos últimos 7 dias, e nada quando seria a pasta toda.
+- **NOVO** e **VERSÃO NOVA**: pastilha creme `#E4DAC7` com texto preto (a mesma do DISPONÍVEL
+  da tape), antes da linha cinza. NOVO = a faixa não estava na última visita deste aparelho
+  (era "NOVA" até 23/10/2026); VERSÃO NOVA = o arquivo mudou (ou subiu arquivo novo com o mesmo
+  nome). Dura 3 visitas ou 14 dias. Primeira visita no aparelho: só o que subiu nos últimos 7
+  dias, e nada quando seria a pasta toda.
 - **APROVADA**: pastilha cinza translúcida com aro (a do VENDIDO), quando a versão atual da
   música foi aprovada. Arquivo novo derruba a aprovação.
 - A linha cinza ganha `· N comentários` no fim, em texto, sem ícone.

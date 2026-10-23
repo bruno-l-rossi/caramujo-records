@@ -182,7 +182,8 @@ ${rodape('artistas')}
       '<div class="qg-bts"><a class="cheio" href="https://open.spotify.com/artist/'+esc(a.id)+'" target="_blank" rel="noopener" data-rede="gravou-spotify">'+SP+'<span>Spotify</span></a></div></div>'+
       '<ul class="qg-fx'+(a.fx.length>6?' curta':'')+'">'+a.fx.map(function(id){var f=F[id];if(!f)return '';return '<li><a href="https://open.spotify.com/track/'+esc(f.id)+'" target="_blank" rel="noopener" data-rede="gravou-faixa" aria-label="Ouvir '+esc(f.nome)+' no Spotify">'+(f.capa?'<img src="'+esc(peq(f.capa))+'" alt="" loading="lazy" width="48" height="48">':'<span class="qg-sem" aria-hidden="true"></span>')+'<div><b>'+esc(f.nome)+'</b><small>'+esc(f.com.join(', '))+'</small></div><i>'+SETA+'</i></a></li>';}).join('')+'</ul>'+(a.fx.length>6?'<button class="qg-todas" type="button" data-todas>Ver as '+a.fx.length+' músicas</button>':'');
     [].forEach.call(grade.querySelectorAll('button[data-i]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.i===i));});
-    if(rolar){ try{ab.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){ab.scrollIntoView();} }
+    // rodada S (23/10/2026): tocar num artista leva pro topo da página (antes parava no cartão, um pouco abaixo)
+    if(rolar){ try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){window.scrollTo(0,0);} }
   }
   if(ab) ab.addEventListener('click',function(e){
     var b=e.target.closest&&e.target.closest('[data-todas]'); if(!b) return;

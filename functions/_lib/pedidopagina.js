@@ -147,7 +147,7 @@ ${CAPA_VOLTA}
 }
 
 // menu do celular, número do carrinho e Ajuda: TOPO_JS do topo.js (rodada Q)
-const topo = topoSite('pedido');
+const topo = topoSite('pedido', '', null, { ativo: '' });
 const rodapeP = rodape('pedido') + TOPO_JS + LEVA_DE;   // rodada R: o rodapé de todas as páginas
 const ajuda = `<a class="ajuda" href="https://ig.me/m/rideblan33" rel="noopener">${IG}Dúvida? Chama no Direct</a>`;
 

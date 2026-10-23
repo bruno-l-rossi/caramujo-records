@@ -161,7 +161,7 @@ Só essas duas. Nunca mais de uma de cada.
 ## O @rideblan33 na vitrine (desde 27/09/2026)
 
 - Anel de story no topo: a camisa 33 (`assets/perfil/rideblan33-camisa.webp`) numa bolinha
-  de 34px com anel em degradê fire → amber → clay. No computador fica do lado do Instagram;
+  de 32px (era 34 até 23/10/2026) com anel em degradê fire → amber → clay. No computador fica do lado do Instagram;
   no celular é o único ícone do topo (o Instagram sai, segue no Contato).
   Leva pro `/rideblan33?de=anel`.
 - 1º card do carrossel do Sobre nós: fundo preto, "33" gigante só no contorno, a foto
@@ -338,4 +338,4 @@ O nome do hero é o logo: `assets/brand/caramujo-wordmark.svg`, a letra do `cara
 Botão-pílula creme "AJUDA" fixo no canto de baixo à direita (46px, ícone de balão com ?), sobe 66px quando a barra do tocador aparece. Abre uma folha (celular: de baixo, largura toda; computador: 380px acima do botão) com título em Cormorant "Dúvida sobre o <beat>?", o texto "Dúvidas sobre licença, entrega, ajustes no beat, etc." e um botão só: "Direct no Instagram" (@rideblan33). Sem WhatsApp no site.
 
 ## Topo único (18/10/2026, rodada Q, proposta A)
-O mesmo topo em todas as páginas públicas: logo caramujo-h à esquerda (vai pra vitrine), no computador o menu do meio (BEATS ▾, SERVIÇOS, SOBRE NÓS, CONTATO; Helvetica 700 .76rem, espaçado .22em, cor --read, aceso em --fire) e à direita a pílula "? AJUDA" (borda --wire, 36px), o anel do @rideblan33 e o carrinho; no celular o "?" vira ícone e entra o ☰, que lista as seções, "Ajuda" (em --fire) e "@rideblan33". Barra de 54px, fundo rgba(5,4,3,.97), borda de baixo --wire. A Ajuda abre uma folha (computador: 400px à direita, embaixo do topo; celular: largura toda) com título "Ajuda" em Cormorant, 3 perguntas que abrem (licença, entrega, PIX), o botão creme "FALE CONOSCO" (Direct · @rideblan33) e o link dos termos. Código: functions/_lib/topo.js.
+O mesmo topo em todas as páginas públicas: logo caramujo-h à esquerda (vai pra vitrine), no computador o menu do meio (BEATS ▾, SERVIÇOS, SOBRE NÓS, CONTATO; Helvetica 700 .76rem, espaçado .22em, cor --read, aceso em --fire) e à direita a pílula "? AJUDA" (borda --wire, 36px), o anel do @rideblan33 e o carrinho; no celular o "?" vira ícone e entra o ☰, que lista as seções, "Ajuda" (em --fire) e "@rideblan33". Barra de 54px, fundo rgba(5,4,3,.97), borda de baixo --wire. Medidas iguais em todas as páginas, vitrine inclusive (23/10/2026): margem de 2.4rem no computador e 1rem/.7rem no celular, links com 1rem de cada lado, 14px entre Ajuda, anel e carrinho no computador e 2px no celular, anel de 32px com o degradê de story (fire → amber → clay), ☰ a partir de 860px. O teste61 mede. A Ajuda abre uma folha (computador: 400px à direita, embaixo do topo; celular: largura toda) com título "Ajuda" em Cormorant, 3 perguntas que abrem (licença, entrega, PIX), o botão creme "FALE CONOSCO" (Direct · @rideblan33) e o link dos termos. Código: functions/_lib/topo.js.

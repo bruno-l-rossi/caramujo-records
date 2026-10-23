@@ -782,7 +782,7 @@ __META__
   function seloPasta(t){
     if(!PASTA) return '';
     if(t.kind==='son' && aprovacaoDe(t)) return '<span class="selo aprovada">APROVADA</span>';
-    if(NOVAS[t.id]==='nova') return '<span class="selo nova">NOVA</span>';
+    if(NOVAS[t.id]==='nova') return '<span class="selo nova">NOVO</span>';
     if(NOVAS[t.id]==='versao') return '<span class="selo nova versao">VERSÃO NOVA</span>';
     return '';
   }

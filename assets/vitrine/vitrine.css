@@ -720,7 +720,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .nav-burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
 .nav-burger.open span:nth-child(2){opacity:0;}
 .nav-burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
-@media(max-width:600px){
+@media(max-width:860px){
   .nav-burger{display:flex;}
   /* celular (27/09/2026): no topo fica só o anel do @rideblan33; o Instagram segue no Contato */
   .nav-ig{display:none;}
@@ -1308,7 +1308,7 @@ a.pe-info{color:inherit;text-decoration:none;-webkit-tap-highlight-color:transpa
 a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .nav-links li.tem-sub{position:relative}
 .sub-gen{display:none;position:absolute;top:100%;left:0;min-width:340px;background:rgba(5,4,3,.98);border:1px solid var(--wire);border-top:0;padding:14px 20px 16px;z-index:6001}
-@media(min-width:601px) and (hover:hover) and (pointer:fine){.tem-sub:hover>.sub-gen,.tem-sub:focus-within>.sub-gen{display:block}}
+@media(min-width:861px) and (hover:hover) and (pointer:fine){.tem-sub:hover>.sub-gen,.tem-sub:focus-within>.sub-gen{display:block}}
 .nav-links .sub-gen a{display:block;height:auto;line-height:1.2;padding:7px 0;font:500 1.05rem var(--serif);letter-spacing:0;text-transform:none;}
 .nav-links .sub-gen a:hover{color:var(--fire);background:none}
 .nav-links .sub-gen a.sg-todos{font:700 .66rem var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--bone);padding:4px 0 12px;margin-bottom:8px;border-bottom:1px solid var(--wire)}
@@ -1317,7 +1317,7 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 /* celular (04/10/2026, opção A do Bruno): BEATS no ☰ vira acordeão; "Todos os beats" em destaque
    e os gêneros em duas colunas com quantos estão à venda (o número só aparece aqui) */
 .sub-gen a i{display:none}
-@media(max-width:600px){
+@media(max-width:860px){
   .nav-links.open{overflow-y:auto;overscroll-behavior:contain}
   .nav-links li.tem-sub{position:static}
   .nav-links li.tem-sub>a{position:relative}
@@ -1521,6 +1521,14 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .qg-tr-w{position:relative}
 .qg-tr-w::after{content:'';position:absolute;top:0;right:-2px;bottom:6px;width:56px;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,0),var(--dark));transition:opacity .25s}
 .qg-tr-w.fim::after{opacity:0}
+/* setas no celular (rodada S, 23/10/2026): as mesmas do "Por dentro do estúdio", no meio das fotos */
+.qgv-nav{display:none}
+@media(max-width:760px){
+  .qgv-nav{display:flex;align-items:center;justify-content:center;position:absolute;top:56px;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:rgba(20,17,13,.82);border:1px solid var(--clay);color:var(--cream);font-size:1.35rem;line-height:1;cursor:pointer;z-index:3;padding:0}
+  .qgv-nav.prev{left:2px}
+  .qgv-nav.next{right:2px}
+  .qgv-nav[hidden]{display:none}
+}
 
 /*AJUDA-INICIO*/
 /* Ajuda no topo da vitrine (rodada Q, 18/10/2026): cópia do topo.js (node testes/topo-estatico.mjs) */
@@ -1550,7 +1558,21 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .aj-bt{display:flex;align-items:center;color:var(--bone)}
 .aj-folha{top:54px}
 .nav-links .so-cel{display:none}
-@media(max-width:600px){.nav-links .so-cel{display:block}.aj-bt{border:0;padding:0;width:44px;height:44px;margin:0;justify-content:center}.aj-bt span{display:none}.aj-bt svg{width:22px;height:22px}.aj-folha{left:0;right:0;width:auto;border-left:0;border-right:0}}
+@media(max-width:860px){.nav-links .so-cel{display:block}.aj-bt{border:0;padding:0;width:44px;height:44px;margin:0;justify-content:center}.aj-bt span{display:none}.aj-bt svg{width:22px;height:22px}.aj-folha{left:0;right:0;width:auto;border-left:0;border-right:0}}
 .nav-cart{display:flex}#cartBtn.cart-btn{display:none}
 .nav-cart:not(.has-items) .cart-n{display:none}
 /*AJUDA-FIM*/
+/* TOPO IGUAL AO DAS OUTRAS PÁGINAS (rodada S, 23/10/2026): as medidas do _lib/topo.js na barra da
+   vitrine (margens, espaço entre os ícones, tamanho do anel, recuo dos links) e o ☰ a partir de 860px,
+   como nas outras páginas. O anel de story (degradê) passa a ser o de todas. */
+.nav-links a{padding:0 1rem}
+.nav-right{gap:14px}
+.nav-eu{width:32px;height:32px}
+.nav-eu .anel{width:32px;height:32px}
+.nav-burger span{height:1.6px}
+.nav-burger.open span:nth-child(1){transform:translateY(6.6px) rotate(45deg)}
+.nav-burger.open span:nth-child(3){transform:translateY(-6.6px) rotate(-45deg)}
+@media(max-width:860px){
+  nav{padding:0 .7rem 0 1rem}
+  .nav-right{gap:2px}
+}

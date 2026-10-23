@@ -1785,7 +1785,7 @@ try{
 function toggleMenu(){var b=document.getElementById('navBurger');var l=document.querySelector('.nav-links');if(!b||!l)return;var open=l.classList.toggle('open');b.classList.toggle('open',open);}
 document.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener('click',function(e){
   // celular: BEATS abre e fecha os gêneros (acordeão, 04/10/2026) em vez de descer pra lista
-  if(a.parentNode.classList.contains('tem-sub')&&window.matchMedia&&matchMedia('(max-width:600px)').matches){ e.preventDefault(); var li=a.parentNode, on=!li.classList.contains('abre'); li.classList.toggle('abre',on); a.setAttribute('aria-expanded',on?'true':'false'); return; }
+  if(a.parentNode.classList.contains('tem-sub')&&window.matchMedia&&matchMedia('(max-width:860px)').matches){ e.preventDefault(); var li=a.parentNode, on=!li.classList.contains('abre'); li.classList.toggle('abre',on); a.setAttribute('aria-expanded',on?'true':'false'); return; }
   var l=document.querySelector('.nav-links');var b=document.getElementById('navBurger');if(l)l.classList.remove('open');if(b)b.classList.remove('open');});});
 // quantos à venda: no total ("Todos os beats") e por gênero, pelo slug das pílulas
 (function(){ try{
@@ -2675,7 +2675,11 @@ try{(function(){
   var tr=document.getElementById('qgvTr'), ant=document.getElementById('qgvAnt'), prox=document.getElementById('qgvProx');
   if(!tr||!ant||!prox) return;
   var w=tr.parentNode;
-  function marca(){ var sobra=tr.scrollWidth-tr.clientWidth; ant.parentNode.hidden=!(sobra>4); ant.disabled=tr.scrollLeft<4; prox.disabled=tr.scrollLeft>=sobra-4; w.classList.toggle('fim',tr.scrollLeft>=sobra-4); }
+  var antC=document.getElementById('qgvAntCel'), proxC=document.getElementById('qgvProxCel');
+  function marca(){ var sobra=tr.scrollWidth-tr.clientWidth; ant.parentNode.hidden=!(sobra>4); ant.disabled=tr.scrollLeft<4; prox.disabled=tr.scrollLeft>=sobra-4; w.classList.toggle('fim',tr.scrollLeft>=sobra-4);
+    // setas do celular (rodada S): a da esquerda só depois de andar, a da direita some no fim
+    if(antC) antC.hidden=!(sobra>4)||tr.scrollLeft<4; if(proxC) proxC.hidden=!(sobra>4)||tr.scrollLeft>=sobra-4; }
+  [[antC,-1],[proxC,1]].forEach(function(p){ if(p[0]) p[0].addEventListener('click',function(){ tr.scrollBy({left:p[1]*tr.clientWidth*0.8,behavior:'smooth'}); }); });
   tr.addEventListener('scroll',marca,{passive:true}); window.addEventListener('resize',marca);
   ant.addEventListener('click',function(){ tr.scrollBy({left:-tr.clientWidth*0.8,behavior:'smooth'}); });
   prox.addEventListener('click',function(){ tr.scrollBy({left:tr.clientWidth*0.8,behavior:'smooth'}); });

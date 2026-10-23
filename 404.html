@@ -69,8 +69,9 @@ a.btn{font-family:'Cormorant Garamond',serif;letter-spacing:.1em;
 .topo .sub-gen a.sg-todos{font:700 .66rem var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--bone);padding:4px 0 12px;margin-bottom:8px;border-bottom:1px solid var(--wire)}
 .topo .sub-gen a.sg-todos:hover{color:var(--fire)}
 .sg-lista{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
-.anel{width:32px;height:32px;border-radius:50%;border:1px solid var(--clay);overflow:hidden}
-.anel img{width:100%;height:100%;object-fit:cover}
+.anel{width:32px;height:32px;border-radius:50%;padding:2px;background:conic-gradient(from 200deg,var(--fire),var(--amber,#c3a074),var(--clay),var(--fire));transition:transform .15s}
+.anel img{width:100%;height:100%;border-radius:50%;border:2px solid #050403;object-fit:cover}
+.anel:hover,.anel:focus-visible{transform:scale(1.06)}
 .ico-btn{position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--bone)}
 .ico-btn svg{width:22px;height:22px}
 .ico-btn:hover{color:var(--fire)}
