@@ -87,6 +87,13 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.7rem;line-height:1;color
 @media (prefers-reduced-motion:reduce){.espera i{animation:none}}
 .ajuda{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:2.6rem;min-height:50px;border:1px solid var(--wire);font-size:.66rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);text-decoration:none}
 .ajuda svg{width:16px;height:16px}
+/* "Problema com o download?" (rodada S, 23/10/2026): código do pedido pra copiar + Direct */
+.prob{margin-top:2.6rem;padding:16px;border:1px solid var(--wire)}
+.prob h2{font-size:.84rem;font-weight:600;color:var(--cream)}
+.prob p{margin:6px 0 14px;font-size:.8rem;line-height:1.6;color:var(--read)}
+.prob .cod{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-bottom:8px}
+.prob code{display:flex;align-items:center;min-height:46px;padding:0 14px;border:1px dashed var(--clay);font-family:var(--mono);font-size:.92rem;letter-spacing:.08em;color:var(--cream)}
+.prob button.b{cursor:pointer;font-family:inherit}
 /* serviços (12/10/2026): o passo a passo, o formulário do envio e a entrega */
 .st{padding:18px 16px;border:1px solid var(--wire);background:var(--deep)}
 .st+.st{margin-top:10px}
@@ -203,8 +210,20 @@ export function paginaPedido(p, faixas = new Map()) {
     if (!beats.length) html += `<div class="contrato"><div><b>Contrato do pedido</b><small>no nome de ${esc(p.nome || quem || 'quem comprou')} · ${esc(dataCurta(p.criado_em))}</small></div><a href="${base}/contrato" download>Baixar</a></div>`;
     html += FORM_JS;
   }
-  html += ajuda + '</main>' + rodapeP + '\n</body></html>';
+  // rodada S (23/10/2026): com arquivo pra baixar (beat na hora ou serviço entregue), o fim da página é
+  // "Problema com o download?" com o código do pedido pra copiar e o Direct; sem arquivo, o "Dúvida?" de antes
+  const temDownload = beats.some((b) => b.faixa && b.id != null) || servicos.some((it) => it.entrega && it.entrega.link);
+  html += (temDownload ? problemaDownload(p) : ajuda) + '</main>' + rodapeP + '\n</body></html>';
   return html;
+}
+
+function problemaDownload(p) {
+  const cod = numero(p);
+  return `<section class="prob" id="problema" aria-labelledby="probT"><h2 id="probT">Problema com o download?</h2>` +
+    `<p>Não baixou, travou no meio ou o arquivo não abre? Chama no Direct e manda o código do pedido.</p>` +
+    `<div class="cod"><code>${esc(cod)}</code><button class="b" type="button" data-copia="${esc(cod)}">Copiar</button></div>` +
+    `<a class="b cheio" href="https://ig.me/m/rideblan33" target="_blank" rel="noopener">${IG}Chamar no Direct</a></section>` +
+    `<script>(function(){var b=document.querySelector('[data-copia]');if(!b)return;b.addEventListener('click',function(){var t=b.getAttribute('data-copia');function ok(){b.textContent='Copiado';setTimeout(function(){b.textContent='Copiar'},2000)}try{navigator.clipboard.writeText(t).then(ok,function(){})}catch(e){}});})();</script>`;
 }
 
 // Um serviço do pedido: passo a passo, formulário (até o envio), o que foi mandado e a entrega

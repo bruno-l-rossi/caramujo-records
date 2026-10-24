@@ -100,11 +100,13 @@ export async function onRequestGet({ params, request, env }) {
   // guardada do perfil: nenhuma consulta a mais na maioria das aberturas. Falhou =
   // a página abre sem o bloco. A pasta só aponta pras tapes (públicas); nada da
   // pasta vai pra fora.
-  let mais = null, totalPerfil = 0;
+  let mais = null, totalPerfil = 0, lanc = null;
   {
     try {
       const todas = await pPerfil;     // null = falhou: cai no catch e a página abre sem o bloco
       totalPerfil = todas.length;
+      // o lançamento de agora (1ª tape do perfil): a caixa da lista volta quando ele muda (rodada S)
+      lanc = todas[0] ? todas[0].slug : null;
       // 5 tapes + o card do portfólio completo (26/09/2026)
       mais = todas.filter((t) => t.id !== artist.id).slice(0, 5)
         // endereço limpo; o app.html põe data-de="mais" no card (_lib/origem.js, 08/10/2026)
@@ -152,7 +154,7 @@ export async function onRequestGet({ params, request, env }) {
       tracks,
       // o @rideblan33 vira o chip do perfil nas tapes E nas pastas de artista (26/09/2026)
       perfil: '/rideblan33',
-      mais, totalPerfil,
+      mais, totalPerfil, lanc,
       // comentários no tempo da faixa (10/10/2026): só pasta de artista
       ...(tape || !COMENTARIOS.ligado ? {} : { comentarios: true, coment: praPagina(doComentario && doComentario.results, tracks) }),
       ...(MIDIA ? { midia: MIDIA } : {})

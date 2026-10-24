@@ -119,8 +119,8 @@ const SCHEMA = [
      mexido_em TEXT,
      removido_em TEXT
    )`,
-  // "Tirar do site" no painel (24/09/2026): some da vitrine, guarda o histórico
-  `ALTER TABLE beats ADD COLUMN removido_em TEXT`,
+  // "Tirar do site" no painel (24/09/2026): removido_em. O ALTER que acrescentava a coluna saiu em 23/10/2026
+  // (rodada S): o banco do site já tem e o CREATE acima já nasce com ela; a vaga foi pro lanc da lista.
   `CREATE INDEX IF NOT EXISTS beats_ordem ON beats (ordem)`,
   `CREATE TABLE IF NOT EXISTS cupons (
      codigo TEXT PRIMARY KEY,
@@ -206,7 +206,9 @@ const SCHEMA = [
   // Lista de e-mails com cupom de 15% (11/10/2026; era 25% até 17/10): quem se cadastra ganha um cupom só dele
   // (na tabela cupons, uso único). O cupom da lista vale só pros beats do catálogo e até vale_ate:
   // lerCupom junta as duas tabelas (sem ALTER nos cupons: o deploy segue abaixo de 50 consultas)
-  `CREATE TABLE IF NOT EXISTS lista ( email TEXT PRIMARY KEY, origem TEXT, cupom TEXT, vale_ate TEXT, token TEXT UNIQUE, ip TEXT, criado_em TEXT NOT NULL, saiu_em TEXT )`
+  `CREATE TABLE IF NOT EXISTS lista ( email TEXT PRIMARY KEY, origem TEXT, cupom TEXT, vale_ate TEXT, token TEXT UNIQUE, ip TEXT, criado_em TEXT NOT NULL, saiu_em TEXT )`,
+  // rodada S (23/10/2026): o lançamento (slug da 1ª beat tape do perfil) em que a pessoa pegou o cupom
+  `ALTER TABLE lista ADD COLUMN lanc TEXT`
 ];
 
 // Versão do esquema: muda sozinha quando a lista acima muda. Com ela gravada na
@@ -328,6 +330,12 @@ export const UMA_VEZ = [
   ['idx-tracks-beat-tape-2026-10-18', 'CREATE INDEX IF NOT EXISTS tracks_beat_tape ON tracks (kind, ready, artist_id)'],
   // e a estatística das tabelas refeita uma vez (a velha fazia o banco preferir varrer); se o D1 recusar, segue
   ['analyze-2026-10-18', async (DB) => { try { await DB.prepare('ANALYZE').run(); } catch (_) { /* sem estatística nova: o INDEXED BY resolve */ } }],
+  // rodada S (23/10/2026): quem já estava na lista fica no lançamento de agora (a 1ª beat tape do perfil);
+  // a próxima tape que entrar no topo do perfil libera um cupom novo pra todo mundo
+  ['lista-lanc-2026-10-23',
+    `UPDATE lista SET lanc = (SELECT a.slug FROM artists a WHERE a.tipo = 'tape' AND a.perfil = 1
+        AND EXISTS (SELECT 1 FROM tracks t WHERE t.artist_id = a.id AND t.kind = 'beat' AND t.ready = 1)
+        ORDER BY COALESCE(a.perfil_ordem, -1000000000 - a.id), a.id LIMIT 1) WHERE lanc IS NULL`],
 ];
 
 let ready = false;

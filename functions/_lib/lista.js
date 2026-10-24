@@ -3,6 +3,9 @@
 // 15 dias. O cupom mora na tabela cupons e a pessoa (com o prazo do cupom) na tabela lista.
 // Mesmo e-mail de novo: nada de cupom novo (reenvia o mesmo, se ainda vale). Sair da lista: o
 // link do e-mail (/api/lista?sair=<token>).
+// Rodada S (23/10/2026, pedido do Bruno): cada beat tape nova é um lançamento (lanc = slug da 1ª tape do
+// perfil). Quem já está na lista e se cadastra de novo num lançamento novo ganha um cupom novo (o velho,
+// se não foi usado, é pausado: sem a ligação com a lista ele valeria no carrinho todo e sem prazo).
 
 import { now } from './db.js';
 import { hojeSP } from './loja.js';
@@ -44,15 +47,28 @@ export async function ipDe(request, segredo = '') {
   return [...new Uint8Array(h)].slice(0, 8).map((x) => x.toString(16).padStart(2, '0')).join('');
 }
 
-// { status: 'novo' | 'ja' | 'volta' | 'sem-cupom', email, cupom, valeAte, token } ou { erro, http }
-export async function entrar(d, { email, origem, ip }) {
+// { status: 'novo' | 'ja' | 'volta' | 'sem-cupom', email, cupom, valeAte, token, lanc, relanc } ou { erro, http }
+const lancLimpo = (v) => (/^[a-z0-9-]{1,60}$/.test(String(v || '')) ? String(v) : null);
+
+// lanc = o lançamento de agora (slug da 1ª beat tape do perfil); sem ele, igual a antes
+export async function entrar(d, { email, origem, ip, lanc }) {
   const e = emailLimpo(email);
   if (!e) return { erro: 'Esse e-mail não parece certo. Confere e tenta de novo.', http: 400 };
-  const ja = await d.prepare('SELECT l.email, l.cupom, l.token, l.saiu_em, l.vale_ate, c.usos, c.ativo FROM lista l LEFT JOIN cupons c ON c.codigo = l.cupom WHERE l.email = ?').bind(e).first();
+  const ja = await d.prepare('SELECT l.email, l.cupom, l.token, l.saiu_em, l.vale_ate, l.lanc, c.usos, c.ativo FROM lista l LEFT JOIN cupons c ON c.codigo = l.cupom WHERE l.email = ?').bind(e).first();
+  const agora = lancLimpo(lanc);
+  if (ja && agora && ja.lanc !== agora) {
+    // lançamento novo: cupom novo no lugar do velho (o velho, se não foi usado, é pausado)
+    const cupom = await cupomNovo(d);
+    if (!cupom) return { erro: 'Não deu pra gerar o cupom agora. Tenta de novo em instantes.', http: 503 };
+    const ate = valeAte();
+    if (ja.cupom && !Number(ja.usos || 0)) await d.prepare('UPDATE cupons SET ativo = 0 WHERE codigo = ?').bind(ja.cupom).run();
+    await d.prepare('UPDATE lista SET cupom = ?, vale_ate = ?, lanc = ?, saiu_em = NULL WHERE email = ?').bind(cupom, ate, agora, e).run();
+    return { status: 'novo', email: e, cupom, valeAte: ate, token: ja.token, lanc: agora, relanc: true };
+  }
   if (ja) {
     if (ja.saiu_em) await d.prepare('UPDATE lista SET saiu_em = NULL WHERE email = ?').bind(e).run();
     const vale = ja.cupom && ja.ativo && !Number(ja.usos || 0) && (!ja.vale_ate || hojeSP() <= ja.vale_ate);
-    return { status: vale ? (ja.saiu_em ? 'volta' : 'ja') : 'sem-cupom', email: e, cupom: vale ? ja.cupom : null, valeAte: vale ? ja.vale_ate : null, token: ja.token };
+    return { status: vale ? (ja.saiu_em ? 'volta' : 'ja') : 'sem-cupom', email: e, cupom: vale ? ja.cupom : null, valeAte: vale ? ja.vale_ate : null, token: ja.token, lanc: ja.lanc || agora };
   }
   if (ip) {
     const desde = new Date(Date.now() - 3600e3).toISOString();
@@ -60,19 +76,23 @@ export async function entrar(d, { email, origem, ip }) {
     if (r && Number(r.n) >= POR_HORA) return { erro: 'Muitos cadastros daqui agora. Tenta de novo daqui a pouco.', http: 429 };
   }
   const ate = valeAte();
-  let cupom = null;
-  for (let i = 0; i < 5 && !cupom; i++) {
+  const cupom = await cupomNovo(d);
+  if (!cupom) return { erro: 'Não deu pra gerar o cupom agora. Tenta de novo em instantes.', http: 503 };
+  const token = tokenNovo();
+  await d.prepare('INSERT INTO lista (email, origem, cupom, vale_ate, token, ip, criado_em, lanc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(e, origemLimpa(origem), cupom, ate, token, ip, now(), lancLimpo(lanc)).run();
+  return { status: 'novo', email: e, cupom, valeAte: ate, token, lanc: lancLimpo(lanc) };
+}
+
+async function cupomNovo(d) {
+  for (let i = 0; i < 5; i++) {
     const c = 'LISTA-' + aleatorio(4);
     const r = await d.prepare(
       'INSERT OR IGNORE INTO cupons (codigo, pct, preco_fixo, max_usos, usos, ativo, criado_em) VALUES (?, ?, NULL, 1, 0, 1, ?)'
     ).bind(c, PCT, now()).run();
-    if (Number((r && r.meta && r.meta.changes) || 0) > 0) cupom = c;
+    if (Number((r && r.meta && r.meta.changes) || 0) > 0) return c;
   }
-  if (!cupom) return { erro: 'Não deu pra gerar o cupom agora. Tenta de novo em instantes.', http: 503 };
-  const token = tokenNovo();
-  await d.prepare('INSERT INTO lista (email, origem, cupom, vale_ate, token, ip, criado_em) VALUES (?, ?, ?, ?, ?, ?, ?)')
-    .bind(e, origemLimpa(origem), cupom, ate, token, ip, now()).run();
-  return { status: 'novo', email: e, cupom, valeAte: ate, token };
+  return null;
 }
 
 export async function sair(d, token) {
@@ -105,7 +125,9 @@ export async function painelLista(d) {
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 // O e-mail com o cupom (o desenho do mockup 9-email, aprovado com o texto novo)
-export function htmlCupom({ cupom, valeAte: ate, token }) {
+// relanc (rodada S): cupom de uma beat tape nova pra quem já estava na lista
+const ABRE = (relanc) => (relanc ? 'Saiu beat tape nova na Caramujo. Esse é o seu cupom novo pros beats do catálogo:' : 'Valeu por entrar na lista da Caramujo. Esse é o cupom da sua primeira compra:');
+export function htmlCupom({ cupom, valeAte: ate, token, relanc }) {
   const sairUrl = `${SITE}/api/lista?sair=${token}`;
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Seu cupom de ${PCT}%</title></head>
 <body style="margin:0;padding:0;background:#14110d;">
@@ -119,7 +141,7 @@ export function htmlCupom({ cupom, valeAte: ate, token }) {
   </td><td align="right" valign="top" style="width:72px;"><img src="${SITE}/assets/brand/selo-email.png" width="60" height="60" alt="Caramujo Records" style="display:block;border:0;"/></td></tr></table>
 </td></tr>
 <tr><td style="padding:30px 36px 8px;">
-  <p style="font-family:Georgia,'Times New Roman',serif;font-size:15px;color:#b89e72;line-height:1.8;margin:0 0 22px;">Valeu por entrar na lista da Caramujo. Esse é o cupom da sua primeira compra:</p>
+  <p style="font-family:Georgia,'Times New Roman',serif;font-size:15px;color:#b89e72;line-height:1.8;margin:0 0 22px;">${ABRE(relanc)}</p>
   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px dashed #b98f5e;"><tr><td align="center" style="padding:22px 12px;">
     <div style="font-family:'Courier New',Courier,monospace;font-size:26px;letter-spacing:0.25em;color:#f2ecdf;">${esc(cupom)}</div>
     <div style="font-family:'Courier New',Courier,monospace;font-size:11px;color:#b89e72;margin-top:10px;">${PCT}% nos beats do catálogo · vale até ${dataBR(ate)}</div>
@@ -135,11 +157,11 @@ export function htmlCupom({ cupom, valeAte: ate, token }) {
 }
 
 // Texto puro junto do HTML: e-mail só com HTML tem mais chance de cair no spam
-export function textoCupom({ cupom, valeAte: ate, token }) {
+export function textoCupom({ cupom, valeAte: ate, token, relanc }) {
   return [
     `Seu cupom de ${PCT}% chegou.`,
     '',
-    'Valeu por entrar na lista da Caramujo. Esse é o cupom da sua primeira compra:',
+    ABRE(relanc),
     '',
     `   ${cupom}`,
     `   ${PCT}% nos beats do catálogo · vale até ${dataBR(ate)}`,
@@ -184,7 +206,7 @@ export async function lerEnvios(d) {
 }
 
 // { ok, erro } — erro em português pro painel
-export async function enviarCupom(env, { email, cupom, valeAte: ate, token }, d = null) {
+export async function enviarCupom(env, { email, cupom, valeAte: ate, token, relanc }, d = null) {
   const em = new Date().toISOString();
   const chave = env.RESEND_API_KEY;
   if (!chave) {
@@ -200,9 +222,9 @@ export async function enviarCupom(env, { email, cupom, valeAte: ate, token }, d 
       headers: { Authorization: `Bearer ${chave}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: `Caramujo Records <${de}>`, to: [email], reply_to: de,
-        subject: `Seu cupom de ${PCT}% chegou · Caramujo Records`,
-        html: htmlCupom({ cupom, valeAte: ate, token }),
-        text: textoCupom({ cupom, valeAte: ate, token }),
+        subject: relanc ? `Beat tape nova e um cupom de ${PCT}% · Caramujo Records` : `Seu cupom de ${PCT}% chegou · Caramujo Records`,
+        html: htmlCupom({ cupom, valeAte: ate, token, relanc }),
+        text: textoCupom({ cupom, valeAte: ate, token, relanc }),
         headers: { 'List-Unsubscribe': `<${SITE}/api/lista?sair=${token}>` }
       })
     });

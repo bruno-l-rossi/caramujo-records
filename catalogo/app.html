@@ -1976,7 +1976,7 @@ __META__
      Mesmo servidor da vitrine (/api/lista); este navegador lembra do cadastro (caramujo_lista_v1). */
   (function(){
     var box=$('fique'); if(!box || !CAT.artist.tape || CAT.preview) return;
-    var CH='caramujo_lista_v1', form=$('fqForm'), inp=$('fqEmail'), bt=$('fqBt'), nota=$('fqN'), p=$('fqP'), tit=$('fqTit');
+    var CH='caramujo_lista_v1', SS='cr_fq_sessao', LANC=CAT.lanc||null, form=$('fqForm'), inp=$('fqEmail'), bt=$('fqBt'), nota=$('fqN'), p=$('fqP'), tit=$('fqTit');
     box.hidden=false;
     // rodada R: linha de lembrete (cupom e prazo) + Reenviar com contagem
     function hoje(){ try{ return new Date().toLocaleDateString('sv',{timeZone:'America/Sao_Paulo'}); }catch(_){ return new Date().toISOString().slice(0,10); } }
@@ -2019,7 +2019,8 @@ __META__
             else { nota.textContent=msg; nota.classList.add('erro'); }
             return;
           }
-          var g={email:email,status:x.j.status,enviado:x.j.enviado,valeAte:x.j.valeAte||null,pct:x.j.pct||15,prox:Date.now()+(+x.j.espera||0)*1000,at:Date.now()};
+          var g={email:email,status:x.j.status,enviado:x.j.enviado,valeAte:x.j.valeAte||null,pct:x.j.pct||15,prox:Date.now()+(+x.j.espera||0)*1000,at:Date.now(),lanc:x.j.lanc||LANC};
+          try{ sessionStorage.setItem(SS,'1'); }catch(_){}
           guardar(g); pronto(g);
         })
         .catch(function(){
@@ -2028,7 +2029,22 @@ __META__
           else { nota.textContent='Sem conexão agora. Tenta de novo em instantes.'; nota.classList.add('erro'); }
         });
     }
-    try{ var g=JSON.parse(localStorage.getItem(CH)||'null'); if(g&&g.email) pronto(g); }catch(_){}
+    // Rodada S (23/10/2026, pedido do Bruno): depois que o cupom saiu (ou venceu) a caixa some. A linha do
+    // cupom só aparece na visita em que a pessoa se cadastrou, ou enquanto o e-mail não sai. Beat tape nova
+    // (a 1ª do perfil mudou, CAT.lanc) = a caixa volta com o e-mail preenchido e o servidor manda um cupom novo.
+    var g0=null; try{ g0=JSON.parse(localStorage.getItem(CH)||'null'); }catch(_){}
+    if(g0&&g0.email){
+      if(!g0.lanc&&LANC){ g0.lanc=LANC; guardar(g0); }   // cadastro de antes: conta como deste lançamento
+      if(!LANC||g0.lanc===LANC){
+        var v0=g0.valeAte||(g0.at?new Date(g0.at+15*864e5).toLocaleDateString('sv',{timeZone:'America/Sao_Paulo'}):''), sem0=g0.status==='sem-cupom'||(v0&&v0<hoje());
+        var nesta=false; try{ nesta=sessionStorage.getItem(SS)==='1'; }catch(_){}
+        if(nesta||(g0.enviado===false&&!sem0)) pronto(g0); else box.hidden=true;
+      } else {
+        var k0=box.querySelector('.fq-k'); if(k0) k0.textContent='Beat tape nova · cupom novo';
+        tit.textContent='Saiu beat tape nova'; p.textContent='Pega um cupom novo de 15% pros beats do catálogo. Ele chega no seu e-mail e vale 15 dias.';
+        inp.value=g0.email; bt.textContent='Quero o cupom novo';
+      }
+    }
     form.addEventListener('submit',function(e){
       e.preventDefault();
       var email=(inp.value||'').trim();
