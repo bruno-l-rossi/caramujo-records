@@ -76,6 +76,11 @@ export async function onRequestGet({ params, request, env }) {
       if (t.kind !== 'beat') continue;
       const b = achar(mapa, t);
       if (!b) continue;
+      // casado com a vitrine (24/10/2026): nome, BPM e tom vêm de lá; mexeu na vitrine, a tape acompanha
+      t.naLoja = 1;
+      if (b.name) t.title = b.name;
+      if (b.bpm) t.bpm = b.bpm;
+      if (b.key) t.key = b.key;
       // o gênero só existe na loja: beat da tape com par lá leva o gênero pro compartilhar
       // (beat sem par fica sem, nunca adivinhado)
       if (b.generoLabel) t.genero = b.generoLabel;
@@ -87,7 +92,7 @@ export async function onRequestGet({ params, request, env }) {
   }
   // ajustes do painel por cima (depois do par com a vitrine, que casa pelo BPM do arquivo)
   let tracksPagina = tracks;
-  if (artist.tipo === 'tape') tracksPagina = aplicarNaTape(tracks, daTape(await pAjuste, artist.id));
+  if (artist.tipo === 'tape') tracksPagina = aplicarNaTape(tracks, daTape(await pAjuste, artist.id)).map(({ naLoja, ...x }) => x);
   // rodada R (18/10/2026): pasta de artista sem capa nenhuma usa a foto do artista no Spotify
   // (Quem já gravou); quem já tem imagem (subida pelo artista ou no Drive) fica com a dele
   let fotoPadrao = null;

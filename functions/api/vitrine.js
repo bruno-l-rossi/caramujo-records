@@ -4,7 +4,7 @@
 
 import { db, json } from '../_lib/db.js';
 import { vitrine } from '../_lib/vitrine.js';
-import { mesma, limpo } from '../_lib/casar.js';
+import { mesma, limpo, tituloCasa } from '../_lib/casar.js';
 import { somUrl, capaUrl } from '../_lib/midia.js';
 
 const VALIDADE = 5 * 60 * 1000;
@@ -118,7 +118,7 @@ async function montar(request, env) {
   const tapes = [...new Map((results || []).filter((x) => x.tipo === 'tape').map((x) => [x.aid, x])).values()].sort(tapeMaisNova);
   const posDaTape = new Map(tapes.map((x, i) => [x.aid, i]));
   const dados = beats.map((b) => {
-    const candidatos = (porTitulo.get(limpo(b.name)) || []).filter((x) => mesma(b, x)).sort(tapeMaisNova);
+    const candidatos = (porTitulo.get(tituloCasa(b)) || []).filter((x) => mesma(b, x)).sort(tapeMaisNova);
     // A capa do beat é a arte da BEAT TAPE onde ele está, que é arte do Bruno.
     // Capa de pasta de artista é foto do artista, não do beat: essa não serve.
     const comCapa = candidatos.find((x) => x.tipo === 'tape' && x.cover_key) || null;

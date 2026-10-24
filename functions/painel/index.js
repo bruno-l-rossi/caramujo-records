@@ -1549,7 +1549,7 @@ function pagina() {
         : '')+
       (a.tipo==='tape'
         ? '<div class="bloco"><div class="rot">BEATS DA TAPE</div>'+
-          '<div class="sw"><span><b>Ordem, gênero, BPM e esconder</b><small>muda a página da tape; o gênero de beat que está na vitrine muda lá também</small></span>'+
+          '<div class="sw"><span><b>Ordem, gênero, BPM e esconder</b><small>muda a página da tape; gênero e BPM de beat que está na vitrine mudam lá também</small></span>'+
           '<button class="pill" data-act="beats" type="button">Organizar</button></div></div>'
         : '')+
       '<div class="bloco"><div class="rot">DESCRIÇÃO DO CATÁLOGO</div>'+
@@ -1708,7 +1708,7 @@ function pagina() {
           '<div><label>Gênero</label><select><option value="">'+(b.naLoja?'(o da vitrine)':'sem gênero')+'</option>'+G.map(function(g){ return '<option value="'+g[0]+'"'+(g[0]===b.genero?' selected':'')+'>'+esc(g[1])+'</option>'; }).join('')+'</select></div>'+
           '<div><label>BPM</label><input type="number" inputmode="numeric" min="40" max="300" value="'+(b.bpm||'')+'"></div>'+
           '<button class="pill solid" type="button">Salvar</button>'+
-          '<small>'+(b.naLoja?'Está na vitrine: o gênero muda lá também. O BPM muda só na tape.':'Não está na vitrine: muda só na tape.')+(b.bpmMexido&&b.bpmArquivo?' BPM do arquivo: '+b.bpmArquivo+'.':'')+'</small>'+
+          '<small>'+(b.naLoja?'Está na vitrine: muda lá e aqui (é o mesmo beat).':'Não está na vitrine: muda só na tape.')+(b.bpmMexido&&b.bpmArquivo?' BPM do arquivo: '+b.bpmArquivo+'.':'')+'</small>'+
         '</div>';
       var sm=li.querySelector('.pf-txt small'), olho=li.querySelector('.tb-olho'), nome=li.querySelector('.tb-nome'), ed=li.querySelector('.tb-ed');
       function pinta(){ sm.textContent=ficha(); olho.innerHTML=b.oculto?OLHO_X:OLHO; olho.setAttribute('aria-pressed',b.oculto?'true':'false'); olho.setAttribute('aria-label',(b.oculto?'Mostrar ':'Esconder ')+b.title+' na página da tape'); li.classList.toggle('oculto',!!b.oculto); }

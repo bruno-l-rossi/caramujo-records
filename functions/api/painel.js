@@ -4,7 +4,7 @@
 import { resumoOrigem } from '../_lib/vendasorigem.js';
 import { db, json, TETO_LEITURA } from '../_lib/db.js';
 import { autenticado } from '../_lib/sessao.js';
-import { mesma, mesmoTom, limpo } from '../_lib/casar.js';
+import { mesma, mesmoTom, limpo, tituloCasa, casaAntes } from '../_lib/casar.js';
 import { vitrine, indexar, achar, esquecerVitrine } from '../_lib/vitrine.js';
 import { lerBeats, lerDestaque, lerEstatico, esquecerLoja } from '../_lib/loja.js';
 import { slug } from '../_lib/casar.js';
@@ -118,7 +118,11 @@ export async function onRequest({ request, env }) {
     if (r.status === 200) { await esquecerLoja(request); await esquecerPerfil(request); }
     return r;
   }
-  if (op === 'venda') return venda(d, body);
+  if (op === 'venda') {
+    const r = await venda(d, body, request, env);
+    if (r.vitrine) { await esquecerLoja(request); await esquecerVitrine(request); await esquecerApiVitrine(request); await esquecerPerfil(request); }
+    return r.resposta;
+  }
   if (/^musicas?-/.test(op)) {
     const r = await musicasAcao(op, d, env, body, somUrl);
     if (r) {
@@ -310,7 +314,7 @@ async function relatorio(d, request, env) {
   const semAudio = [];
   for (const b of beats) {
     if (b.removido) continue;               // fora do site: áudio não importa
-    const candidatos = porTitulo.get(limpo(b.name)) || [];
+    const candidatos = porTitulo.get(tituloCasa(b)) || [];
     if (candidatos.some((f) => f.ready === 1 && mesma(b, f))) continue;
 
     const faltaConverter = candidatos.find((f) => mesma(b, f));
@@ -401,13 +405,22 @@ async function relatorio(d, request, env) {
 }
 
 // Marca na mão o que o cruzamento não resolveu. Vence a pasta e não volta atrás.
-async function venda(d, body) {
+async function venda(d, body, request, env) {
   const valor = body.valor === 'disponivel' || body.valor === 'vendido' ? body.valor : null;
-  if (!valor) return json({ erro: 'valor invalido' }, 400);   // pedido torto não apaga pastilha
+  if (!valor) return { resposta: json({ erro: 'valor invalido' }, 400) };   // pedido torto não apaga pastilha
   const ids = Array.isArray(body.ids) ? body.ids.filter(Boolean).slice(0, 200) : [];
   const tapeId = Number(body.tapeId) || 0;
 
-  if (!ids.length && !tapeId) return json({ erro: 'sem faixa' }, 400);
+  if (!ids.length && !tapeId) return { resposta: json({ erro: 'sem faixa' }, 400) };
+  // 24/10/2026: vendido na tape vale pra vitrine também (o beat casado lá vira vendido). Disponível na tape não
+  // põe à venda na vitrine: desfazer vendido lá é só com confirmação, no painel Vitrine.
+  let marcadas = [];
+  if (valor === 'vendido') {
+    const q = tapeId
+      ? d.prepare("SELECT id, title, bpm, mkey AS key FROM tracks WHERE artist_id = ? AND kind = 'beat' AND tag IS NULL AND venda_manual IS NULL").bind(tapeId)
+      : d.prepare(`SELECT id, title, bpm, mkey AS key FROM tracks WHERE id IN (${ids.map(() => '?').join(', ')})`).bind(...ids);
+    marcadas = (await q.all()).results || [];
+  }
 
   if (tapeId) {
     // a tape inteira, só o que ainda está sem resposta (mesma conta da lista)
@@ -421,7 +434,18 @@ async function venda(d, body) {
       `UPDATE tracks SET venda_manual = ?, tag = ?, revisar = NULL WHERE id IN (${vagas})`
     ).bind(valor, valor, ...ids).run();
   }
-  return json({ ok: true });
+  let naVitrine = 0;
+  if (marcadas.length) {
+    const mapa = indexar(await vitrine(request, env).catch(() => []));
+    const quando = new Date().toISOString();
+    for (const t of marcadas) {
+      const b = achar(mapa, t);
+      if (!b || b.sold) continue;
+      await d.prepare("UPDATE beats SET sold = 1, sold_at = ?, sold_por = 'painel', unsold_at = NULL, mexido_em = ? WHERE id = ? AND sold = 0").bind(quando, quando, b.id).run();
+      naVitrine++;
+    }
+  }
+  return { resposta: json({ ok: true, vitrine: naVitrine }), vitrine: naVitrine > 0 };
 }
 
 // Perfil do @rideblan33 (26/09/2026): mostrar/esconder a tape e subir pro topo.
@@ -1018,7 +1042,7 @@ async function publicarVarios(d, itens, request, env) {
     x.id = x.volta;
     lote.push(d.prepare(
       `UPDATE beats SET name = ?, bpm = ?, mkey = ?, genre = ?, ordem = ?, track_id = COALESCE(?, track_id),
-              removido_em = NULL, mexido_em = ? WHERE id = ?`
+              removido_em = NULL, mexido_em = ?, casa = NULL WHERE id = ?`
     ).bind(x.f.name, x.f.bpm, x.f.key, x.f.genre, x.ordem, x.track, quando, x.id));
   }
   await d.batch(lote);
@@ -1095,8 +1119,11 @@ const LOJA_POST = {
     if (!b) return json({ erro: 'beat não encontrado' }, 404);
     const f = fichaValida(body, await contextoFicha(d, request, env), b.id);
     if (f.erro) return json({ erro: f.erro }, 400);
-    await d.prepare('UPDATE beats SET name = ?, bpm = ?, mkey = ?, genre = ?, mexido_em = ? WHERE id = ?')
-      .bind(f.name, f.bpm, f.key, f.genre, new Date().toISOString(), b.id).run();
+    // mudou nome/BPM/tom: a 1ª vez guarda os de antes em casa (o beat segue casado com o arquivo: áudio,
+    // beat tape, Fila; 24/10/2026)
+    const mudouIdent = f.name !== b.name || Number(f.bpm || 0) !== Number(b.bpm || 0) || String(f.key || '') !== String(b.mkey || '');
+    await d.prepare('UPDATE beats SET name = ?, bpm = ?, mkey = ?, genre = ?, mexido_em = ?, casa = COALESCE(casa, ?) WHERE id = ?')
+      .bind(f.name, f.bpm, f.key, f.genre, new Date().toISOString(), mudouIdent ? casaAntes(b) : null, b.id).run();
     return json({ ok: true, name: f.name });
   },
 
@@ -1119,7 +1146,15 @@ const LOJA_POST = {
     const quando = new Date().toISOString();
     await d.prepare('UPDATE beats SET sold = 0, sold_at = NULL, sold_por = NULL, unsold_at = ?, mexido_em = ? WHERE id = ?')
       .bind(quando, quando, b.id).run();
-    return json({ ok: true });
+    // 24/10/2026: a beat tape acompanha. Faixa de tape casada que estava marcada vendida volta a disponível
+    // (pasta de artista fica como está).
+    const { results: fx } = await d.prepare(
+      "SELECT t.id, t.title, t.bpm, t.mkey AS key FROM tracks t JOIN artists a ON a.id = t.artist_id WHERE a.tipo = 'tape' AND t.kind = 'beat' AND (t.tag = 'vendido' OR t.venda_manual = 'vendido')"
+    ).all();
+    const alvo = { name: b.name, title: b.name, bpm: b.bpm, key: b.mkey, casa: b.casa };
+    const voltam = (fx || []).filter((t) => mesma(alvo, t)).map((t) => t.id);
+    if (voltam.length) await d.prepare(`UPDATE tracks SET venda_manual = 'disponivel', tag = 'disponivel', revisar = NULL WHERE id IN (${voltam.map(() => '?').join(', ')})`).bind(...voltam).run();
+    return json({ ok: true, tape: voltam.length });
   },
 
   async 'beat-topo'(d, body) {
@@ -1196,7 +1231,7 @@ async function beatsDaTape(d, request, env, id) {
   const mapa = indexar(await vitrine(request, env).catch(() => []));
   const beats = (results || []).map((t) => {
     const b = achar(mapa, { title: t.title, bpm: t.bpm, key: t.mkey });
-    return { id: t.id, title: t.title, bpm: t.bpm || null, key: t.mkey || '', mod: t.src_modified || '', vendido: b ? !!b.sold : t.tag === 'vendido', loja: b ? { id: b.id, genero: b.genre || null } : null };
+    return { id: t.id, title: t.title, bpm: t.bpm || null, key: t.mkey || '', mod: t.src_modified || '', vendido: b ? !!b.sold : t.tag === 'vendido', loja: b ? { id: b.id, genero: b.genre || null, name: b.name, bpm: b.bpm || null, key: b.key || '' } : null };
   });
   return { tape: a, beats };
 }
@@ -1205,10 +1240,11 @@ async function tapeBeats(d, request, env, id) {
   const r = await beatsDaTape(d, request, env, id);
   if (!r) return json({ erro: 'tape não encontrada' }, 404);
   const aj = daTape(await lerAjuste(d), r.tape.id), x = new Set(aj.x), pos = new Map(aj.o.map((k, i) => [k, i]));
+  // casado com a vitrine (24/10/2026): mostra o da vitrine (nome, BPM, tom, gênero); o resto, o ajuste da tape
   const beats = r.beats.map((b) => ({
-    id: b.id, title: b.title, key: b.key, vendido: b.vendido, naLoja: !!b.loja,
-    bpm: aj.b[b.id] || b.bpm, bpmArquivo: b.bpm, bpmMexido: !!aj.b[b.id],
-    genero: aj.g[b.id] || (b.loja && b.loja.genero) || null, oculto: x.has(b.id),
+    id: b.id, title: b.loja ? b.loja.name : b.title, key: b.loja ? b.loja.key || b.key : b.key, vendido: b.vendido, naLoja: !!b.loja,
+    bpm: b.loja ? b.loja.bpm || b.bpm : aj.b[b.id] || b.bpm, bpmArquivo: b.bpm, bpmMexido: !b.loja && !!aj.b[b.id],
+    genero: b.loja ? b.loja.genero : aj.g[b.id] || null, oculto: x.has(b.id),
     ord: pos.has(b.id) ? pos.get(b.id) : null, mod: b.mod
   }));
   // a mesma ordem da página: sem posição (subiu depois) primeiro, do mais novo; depois a ordem salva
@@ -1236,27 +1272,35 @@ async function tapeBeat(d, request, env, body) {
   const aj = await lerAjuste(d), t = daTape(aj, r.tape.id);
   const g = { ...t.g }, bp = { ...t.b };
   let x = t.x.filter((k) => r.beats.some((z) => z.id === k));   // escondido que saiu do Drive deixa de contar
-  let loja = false;
+  let loja = false, novoBpm = null, novoGen = null;
   if ('oculto' in body) x = body.oculto ? [...new Set([...x, b.id])] : x.filter((k) => k !== b.id);
-  if ('bpm' in body) {
-    if (body.bpm === null || body.bpm === '') delete bp[b.id];
-    else {
-      const n = Math.round(Number(body.bpm));
-      if (!(n >= 40 && n <= 300)) return { erro: 'BPM entre 40 e 300' };
-      if (n === b.bpm) delete bp[b.id]; else bp[b.id] = n;
-    }
+  if ('bpm' in body && !(body.bpm === null || body.bpm === '')) {
+    const n = Math.round(Number(body.bpm));
+    if (!(n >= 40 && n <= 300)) return { erro: 'BPM entre 40 e 300' };
+    novoBpm = n;
   }
   if ('genero' in body) {
-    const s = String(body.genero || '');
-    if (s && !GENEROS.some(([k]) => k === s)) return { erro: 'gênero desconhecido' };
-    if (!s) delete g[b.id]; else g[b.id] = s;
-    // beat que está na vitrine: o gênero é dela, muda lá também (página do beat, filtros, gênero)
-    if (s && b.loja && b.loja.genero !== s) {
-      await d.prepare('UPDATE beats SET genre = ?, mexido_em = ? WHERE id = ?').bind(s, new Date().toISOString(), b.loja.id).run();
+    novoGen = String(body.genero || '');
+    if (novoGen && !GENEROS.some(([k]) => k === novoGen)) return { erro: 'gênero desconhecido' };
+  }
+  if (b.loja) {
+    // casado com a vitrine (24/10/2026): gênero e BPM moram lá. Muda lá (a tape mostra o da vitrine) e,
+    // se o BPM mudou, guarda a identidade de antes pra seguir casado com o arquivo (áudio, tape, Fila).
+    const row = await d.prepare('SELECT id, name, bpm, mkey, genre, casa FROM beats WHERE id = ?').bind(b.loja.id).first();
+    const quando = new Date().toISOString();
+    if (row && novoGen && novoGen !== row.genre) { await d.prepare('UPDATE beats SET genre = ?, mexido_em = ? WHERE id = ?').bind(novoGen, quando, row.id).run(); loja = true; }
+    if (row && novoBpm && novoBpm !== Number(row.bpm || 0)) {
+      await d.prepare('UPDATE beats SET bpm = ?, mexido_em = ?, casa = COALESCE(casa, ?) WHERE id = ?').bind(novoBpm, quando, casaAntes(row), row.id).run();
       loja = true;
     }
+    delete g[b.id]; delete bp[b.id];
+  } else {
+    if ('bpm' in body) { if (novoBpm && novoBpm !== b.bpm) bp[b.id] = novoBpm; else delete bp[b.id]; }
+    if ('genero' in body) { if (novoGen) g[b.id] = novoGen; else delete g[b.id]; }
   }
   aj[String(r.tape.id)] = { ...t, x, g, b: bp };
   await salvarAjuste(d, aj);
-  return { ok: true, loja, oculto: x.includes(b.id), bpm: bp[b.id] || b.bpm, genero: g[b.id] || (b.loja && b.loja.genero) || null };
+  const bpm = b.loja ? (novoBpm || b.loja.bpm || b.bpm) : (bp[b.id] || b.bpm);
+  const genero = b.loja ? (novoGen || b.loja.genero) : (g[b.id] || null);
+  return { ok: true, loja, oculto: x.includes(b.id), bpm, genero };
 }

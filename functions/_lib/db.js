@@ -50,10 +50,10 @@ const SCHEMA = [
      venda_manual TEXT,
      seen_at TEXT
    )`,
-  `ALTER TABLE tracks ADD COLUMN revisar TEXT`,
+  // ALTER de revisar e venda_manual saíram em 24/10/2026: o CREATE acima já nasce com as duas e o banco do
+  // site já tem (a vaga foi pra beats.casa)
   // bitrate do MP3 guardado. NULL = 192k antigo; o conversor refaz em 128k (25/09/2026)
   `ALTER TABLE tracks ADD COLUMN mp3_kbps INTEGER`,
-  `ALTER TABLE tracks ADD COLUMN venda_manual TEXT`,
   `CREATE INDEX IF NOT EXISTS tracks_artist ON tracks (artist_id)`,
   `CREATE TABLE IF NOT EXISTS links (
      code TEXT PRIMARY KEY,
@@ -119,6 +119,8 @@ const SCHEMA = [
      mexido_em TEXT,
      removido_em TEXT
    )`,
+  // Identidade pra casar com o arquivo (24/10/2026): nome/BPM/tom de antes da 1ª edição no painel (_lib/casar.js chaveCasa)
+  `ALTER TABLE beats ADD COLUMN casa TEXT`,
   // "Tirar do site" no painel (24/09/2026): removido_em. O ALTER que acrescentava a coluna saiu em 23/10/2026
   // (rodada S): o banco do site já tem e o CREATE acima já nasce com ela; a vaga foi pro lanc da lista.
   `CREATE INDEX IF NOT EXISTS beats_ordem ON beats (ordem)`,

@@ -42,7 +42,21 @@ export function mesmoTom(a, b) {
   return true;
 }
 
+// Identidade do beat pra casar com o arquivo (24/10/2026): beat da vitrine editado no painel (nome, BPM ou
+// tom) guarda em `casa` {t, b, k} o nome/BPM/tom de antes da 1ª edição. Casar usa a identidade; a tela usa o
+// atual. Assim mexer na vitrine não tira o áudio do beat nem o desliga da beat tape (e vice-versa).
+export function chaveCasa(x) {
+  let c = x && x.casa;
+  if (typeof c === 'string') { try { c = JSON.parse(c); } catch (_) { c = null; } }
+  if (c && c.t) return { title: c.t, bpm: c.b == null ? null : c.b, key: c.k || '' };
+  return { title: x.title != null ? x.title : x.name, bpm: x.bpm, key: x.key };
+}
+export const tituloCasa = (x) => limpo(chaveCasa(x).title);
+// casa pra gravar antes de mudar nome/BPM/tom de um beat da vitrine (linha do banco: name, bpm, mkey)
+export const casaAntes = (row) => JSON.stringify({ t: row.name, b: row.bpm == null ? null : row.bpm, k: row.mkey || '' });
+
 export function mesma(a, b) {
+  a = chaveCasa(a); b = chaveCasa(b);
   if (limpo(a.title) !== limpo(b.title)) return false;
   // 1 BPM de folga: exportação com casa decimal arredonda diferente
   if (a.bpm && b.bpm && Math.abs(Number(a.bpm) - Number(b.bpm)) > 1) return false;

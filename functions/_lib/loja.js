@@ -102,7 +102,7 @@ export async function lerEstatico(request, env) {
 // Os beats do site, na ordem da lista. Tirado do site (removido_em) fica de fora.
 export async function lerBeats(d) {
   const { results } = await d.prepare(
-    `SELECT id, name, bpm, mkey AS key, genre, sold, sold_at, sold_por, unsold_at, ordem, track_id
+    `SELECT id, name, bpm, mkey AS key, genre, sold, sold_at, sold_por, unsold_at, ordem, track_id, casa
        FROM beats WHERE removido_em IS NULL ORDER BY ordem, id`
   ).all();
   return (results || []).map((b) => ({ ...b, sold: b.sold ? 1 : 0 }));

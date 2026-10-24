@@ -4,7 +4,7 @@
 
 import { chavesGuardadas } from '../_lib/gravou.js';
 import { db, now, slugify, code, json } from '../_lib/db.js';
-import { mesma, limpo } from '../_lib/casar.js';   // o cruzamento mora lá, um só pro site inteiro
+import { mesma, limpo, tituloCasa } from '../_lib/casar.js';   // o cruzamento mora lá, um só pro site inteiro
 import { vitrine } from '../_lib/vitrine.js';
 
 // Teto de segurança da prateleira. O plano gratuito do R2 vai até 10 GB;
@@ -300,7 +300,7 @@ async function faltando(d, request, env) {
   }
 
   const faltam = beats
-    .filter((b) => !(porTitulo.get(limpo(b.name)) || []).some((f) => mesma(b, f)))
+    .filter((b) => !(porTitulo.get(tituloCasa(b)) || []).some((f) => mesma(b, f)))
     .map((b) => ({ title: b.name, bpm: b.bpm, key: b.key }));
 
   // o que a prateleira interna já guardou: entra no plano de novo, senão o done apaga

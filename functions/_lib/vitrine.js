@@ -4,7 +4,7 @@
 // Serve o botão de carrinho do catálogo, a pastilha de vendido das tapes, o
 // relatório do painel e a /api/vitrine.
 
-import { mesma, limpo, slug } from './casar.js';
+import { mesma, limpo, slug, tituloCasa } from './casar.js';
 import { db } from './db.js';
 import { lerEstatico } from './loja.js';
 
@@ -54,7 +54,7 @@ export async function vitrine(request, env) {
     // Beat tirado do site some da vitrine, MENOS se foi vendido: aí ele continua
     // aqui pra tape seguir com pastilha de vendido e a Fila não oferecer de novo.
     const { results } = await d.prepare(
-      `SELECT id, name, bpm, mkey AS key, genre, sold, removido_em FROM beats
+      `SELECT id, name, bpm, mkey AS key, genre, sold, removido_em, casa FROM beats
         WHERE removido_em IS NULL OR sold = 1 ORDER BY ordem, id`
     ).all();
     const linhas = results || [];
@@ -73,6 +73,7 @@ export async function vitrine(request, env) {
       genre: b.genre,
       generoLabel: rotulos[b.genre] || b.genre || '',
       sold: !!b.sold,
+      ...(b.casa ? { casa: b.casa } : {}),
       ...(b.removido_em ? { removido: true } : {})
     }));
     if (beats.length) { cache = { at: Date.now(), beats }; await guardarRegiao(request, cache); }
@@ -87,7 +88,7 @@ export async function vitrine(request, env) {
 export function indexar(beats) {
   const mapa = new Map();
   for (const b of beats) {
-    const k = limpo(b.name);
+    const k = tituloCasa(b);
     if (!mapa.has(k)) mapa.set(k, []);
     mapa.get(k).push(b);
   }

@@ -4,8 +4,10 @@
 // nova (o deploy segue abaixo de 50 consultas) e o perfil lê junto das outras chaves dele.
 //   { "<id da tape>": { o: [ids na ordem], x: [ids escondidos], g: { id: 'trap' }, b: { id: 140 } } }
 // - Ordem: beat que não está na lista (subiu depois) vem primeiro, do mais novo pro mais antigo.
-// - Gênero: só na tape. Beat com par na vitrine muda também na vitrine (o gênero é dela; o painel faz).
-// - BPM: só na tape (a vitrine e a conversão casam o beat pelo BPM do arquivo; mexer lá desfaz o par).
+// - Beat casado com a vitrine (24/10/2026): gênero e BPM moram na vitrine; o painel grava lá e a tape mostra
+//   o da vitrine (nome, BPM, tom, gênero, vendido). O casamento usa a identidade guardada (casar.js chaveCasa),
+//   então mexer não desliga o beat da tape.
+// - Beat que não está na vitrine: gênero e BPM ficam aqui, só na tape.
 // - Escondido: some da página da tape, da contagem e do "Ouça a última beat tape" do perfil.
 import { GENEROS } from './generos.js';
 
@@ -54,8 +56,10 @@ export function aplicarNaTape(tracks, t) {
   return tracks.filter((f) => !(f.kind === 'beat' && escondido.has(f.id))).map((f) => {
     if (f.kind !== 'beat') return f;
     const n = { ...f };
-    if (t.b[f.id]) n.bpm = t.b[f.id];
-    if (t.g[f.id]) n.genero = ROTULO_GENERO[t.g[f.id]];
+    // beat casado com a vitrine segue a vitrine (gênero e BPM se mudam lá); o ajuste só vale pro que não está lá
+    if (!f.naLoja && t.b[f.id]) n.bpm = t.b[f.id];
+    if (!f.naLoja && t.g[f.id]) n.genero = ROTULO_GENERO[t.g[f.id]];
+    delete n.naLoja;
     if (pos.has(f.id)) n.ord = pos.get(f.id);
     return n;
   });
