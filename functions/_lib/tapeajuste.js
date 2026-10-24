@@ -49,6 +49,18 @@ export async function salvarAjuste(d, aj) {
   await d.prepare('INSERT OR REPLACE INTO meta (chave, valor) VALUES (?, ?)').bind(CHAVE_AJUSTE, JSON.stringify(ajusteDeTexto(aj))).run();
 }
 
+// A ordem que a página da tape mostra (a mesma do app.html): beat sem posição (subiu depois) primeiro, do mais
+// novo pro mais antigo, depois a ordem salva. beats = [{ id, mod }]. Devolve os ids.
+export function ordemDaTape(beats, t) {
+  const pos = new Map(((t && t.o) || []).map((k, i) => [k, i]));
+  return [...beats].sort((p, q) => {
+    const a = pos.has(p.id), b = pos.has(q.id);
+    if (a && b) return pos.get(p.id) - pos.get(q.id);
+    if (a !== b) return a ? 1 : -1;
+    return (p.mod || '') < (q.mod || '') ? 1 : (p.mod || '') > (q.mod || '') ? -1 : 0;
+  }).map((b) => b.id);
+}
+
 // Página da tape: tira os escondidos, troca BPM/gênero e numera a ordem (t.ord; o app.html ordena por ela)
 export function aplicarNaTape(tracks, t) {
   if (!t || vazia(t)) return tracks;

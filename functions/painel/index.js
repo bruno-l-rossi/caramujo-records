@@ -1682,7 +1682,7 @@ function pagina() {
   function abrirBeatsTape(a){
     var c=$('card');
     c.innerHTML='<div class="cab">'+capaMini(a)+'<div class="cab-txt"><h2>'+esc(a.name)+'</h2><div class="end">beats da tape</div></div></div>'+
-      '<p class="pf-dica">Segura a alça e arrasta pra mudar a ordem (salva sozinho). Toca no nome pra ajustar gênero e BPM. O olho esconde o beat da página da tape.</p>'+
+      '<p class="pf-dica">Segura a alça e arrasta pra mudar a ordem (salva sozinho; os beats que estão na vitrine seguem a mesma ordem lá). Toca no nome pra ajustar gênero e BPM. O olho esconde o beat da página da tape.</p>'+
       '<ol class="pf-lista tb-lista" id="tbLista"><li><span class="pf-txt"><small>carregando…</small></span></li></ol>'+
       '<div class="acoes"><button class="pill" data-volta type="button">Voltar</button><button class="pill" data-close type="button">Fechar</button></div>';
     $('veil').hidden=false;
@@ -1745,7 +1745,7 @@ function pagina() {
     clearTimeout(salvarTbT);
     salvarTbT=setTimeout(function(){
       var ids=[].slice.call($('tbLista').children).map(function(li){ return li.dataset.id; }).filter(Boolean);
-      acao('tape-ordem',{id:a.id,ids:ids}).then(function(j){ flash(j.ok?'Ordem da tape salva.':(j.erro||'Não consegui salvar a ordem.')); });
+      acao('tape-ordem',{id:a.id,ids:ids}).then(function(j){ flash(j.ok?(j.vitrine?'Ordem salva na tape e na vitrine.':'Ordem da tape salva.'):(j.erro||'Não consegui salvar a ordem.')); });
     },600);
   }
   function sw(campo,titulo,desc,valor){

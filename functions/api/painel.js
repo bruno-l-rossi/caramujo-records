@@ -20,7 +20,7 @@ import { avisarEntrega } from '../_lib/servicoemails.js';
 import { painelLista } from '../_lib/lista.js';
 import { varrer as varrerGravou, painelGravou } from '../_lib/gravou.js';
 import { CHAVE as MUS_CHAVE, deTexto as musDeTexto } from '../_lib/musicas.js';
-import { lerAjuste, salvarAjuste, daTape } from '../_lib/tapeajuste.js';
+import { lerAjuste, salvarAjuste, daTape, ordemDaTape } from '../_lib/tapeajuste.js';
 import { GENEROS } from '../_lib/generos.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
@@ -1065,6 +1065,7 @@ const LOJA_POST = {
   async 'beat-publicar'(d, body, request, env) {
     const [r] = await publicarVarios(d, [body], request, env);
     if (!r.ok) return json({ erro: r.erro }, 400);
+    if (body.track_id) { try { await ordemDasTapesPublicadas(d, request, env, [body.track_id]); } catch (_) { /* fica no topo */ } }
     return json({ ok: true, id: r.id, name: r.name, voltou: r.voltou });
   },
 
@@ -1073,7 +1074,10 @@ const LOJA_POST = {
     const itens = Array.isArray(body.itens) ? body.itens.slice(0, 60) : [];
     if (!itens.length) return json({ erro: 'nada marcado' }, 400);
     const resultados = await publicarVarios(d, itens, request, env);
-    return json({ ok: true, resultados, publicados: resultados.filter((r) => r.ok).length });
+    // lançamento novo: os beats entram na vitrine na ordem da beat tape (24/10/2026)
+    let ordenados = 0;
+    if (resultados.some((r) => r.ok)) { try { ordenados = await ordemDasTapesPublicadas(d, request, env, itens.map((it) => it && it.track_id)); } catch (_) { ordenados = 0; } }
+    return json({ ok: true, resultados, publicados: resultados.filter((r) => r.ok).length, ordenados });
   },
 
   // Tira da lista do site sem vender. O histórico fica; se o beat estiver disponível
@@ -1248,7 +1252,8 @@ async function tapeBeats(d, request, env, id) {
     ord: pos.has(b.id) ? pos.get(b.id) : null, mod: b.mod
   }));
   // a mesma ordem da página: sem posição (subiu depois) primeiro, do mais novo; depois a ordem salva
-  beats.sort((p, q) => (p.ord != null) - (q.ord != null) || (p.ord != null ? p.ord - q.ord : (p.mod < q.mod ? 1 : -1)));
+  const ordem = ordemDaTape(beats, aj), lugar = new Map(ordem.map((k, i) => [k, i]));
+  beats.sort((p, q) => lugar.get(p.id) - lugar.get(q.id));
   return json({ ok: true, tape: r.tape, beats: beats.map(({ ord, mod, ...b }) => b), generos: GENEROS });
 }
 
@@ -1261,7 +1266,43 @@ async function tapeOrdem(d, request, env, body) {
   const aj = await lerAjuste(d), t = daTape(aj, r.tape.id);
   aj[String(r.tape.id)] = { ...t, o: lista };
   await salvarAjuste(d, aj);
-  return { ok: true, n: lista.length };
+  const naVitrine = await ordemNaVitrine(d, request, env, r.tape.id, r);
+  return { ok: true, n: lista.length, vitrine: naVitrine, loja: naVitrine > 0 };
+}
+
+// A vitrine segue a ordem da beat tape (24/10/2026, pedido do Bruno): os beats da tape que estão na vitrine
+// trocam de lugar ENTRE SI, ocupando as mesmas posições que já tinham. Lançamento novo (beats juntos no topo)
+// fica exatamente na ordem da tape; beats de outras tapes não saem do lugar. Devolve quantos mudaram.
+export async function ordemNaVitrine(d, request, env, tapeId, pronto = null) {
+  const r = pronto || await beatsDaTape(d, request, env, tapeId);
+  if (!r) return 0;
+  const ids = ordemDaTape(r.beats, daTape(await lerAjuste(d), r.tape.id));
+  const por = new Map(r.beats.map((b) => [b.id, b]));
+  const lojaIds = [];
+  for (const id of ids) { const b = por.get(id); if (b && b.loja && !lojaIds.includes(b.loja.id)) lojaIds.push(b.loja.id); }
+  if (lojaIds.length < 2) return 0;
+  const { results } = await d.prepare(`SELECT id, ordem FROM beats WHERE id IN (${lojaIds.map(() => '?').join(', ')})`).bind(...lojaIds).all();
+  const atual = new Map((results || []).map((x) => [x.id, Number(x.ordem)]));
+  const vivos = lojaIds.filter((id) => atual.has(id));
+  const lugares = vivos.map((id) => atual.get(id)).sort((a, b) => a - b);
+  const muda = vivos.map((id, i) => [id, lugares[i]]).filter(([id, o]) => atual.get(id) !== o);
+  if (!muda.length) return 0;
+  await d.prepare('UPDATE beats SET ordem = CASE id ' + muda.map(() => 'WHEN ? THEN ?').join(' ') + ' END, mexido_em = ? WHERE id IN (' + muda.map(() => '?').join(', ') + ')')
+    .bind(...muda.flatMap(([id, o]) => [id, o]), new Date().toISOString(), ...muda.map(([id]) => id)).run();
+  return muda.length;
+}
+
+// Depois de publicar da Fila: cada tape dos beats publicados põe os seus na ordem dela (lançamento novo)
+async function ordemDasTapesPublicadas(d, request, env, trackIds) {
+  const ids = [...new Set((trackIds || []).filter(Boolean).map(String))].slice(0, 60);
+  if (!ids.length) return 0;
+  await esquecerVitrine(request);   // os beats que acabaram de entrar precisam estar na lista lida
+  const { results } = await d.prepare(
+    `SELECT DISTINCT t.artist_id AS id FROM tracks t JOIN artists a ON a.id = t.artist_id WHERE a.tipo = 'tape' AND t.id IN (${ids.map(() => '?').join(', ')})`
+  ).bind(...ids).all();
+  let n = 0;
+  for (const x of (results || []).slice(0, 5)) n += await ordemNaVitrine(d, request, env, x.id);
+  return n;
 }
 
 async function tapeBeat(d, request, env, body) {
