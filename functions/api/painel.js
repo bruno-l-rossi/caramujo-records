@@ -20,6 +20,8 @@ import { avisarEntrega } from '../_lib/servicoemails.js';
 import { painelLista } from '../_lib/lista.js';
 import { varrer as varrerGravou, painelGravou } from '../_lib/gravou.js';
 import { CHAVE as MUS_CHAVE, deTexto as musDeTexto } from '../_lib/musicas.js';
+import { lerAjuste, salvarAjuste, daTape } from '../_lib/tapeajuste.js';
+import { GENEROS } from '../_lib/generos.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
 
@@ -37,6 +39,8 @@ export async function onRequest({ request, env }) {
   if (op === 'andamento') return andamento(d);
   if (op === 'consumo') return consumo(d);
   if (op === 'eventos') return eventos(d, url.searchParams.get('id'), url.searchParams.get('p'));
+  // beats de uma tape: ordem, gênero, BPM e escondidos (24/10/2026)
+  if (op === 'tape-beats' && request.method !== 'POST') return tapeBeats(d, request, env, url.searchParams.get('id'));
   if (op === 'perfil-resumo') return perfilResumo(d);
   if (op === 'revisar') return revisar(d);
   if (op === 'vitrine') return relatorio(d, request, env);
@@ -57,7 +61,7 @@ export async function onRequest({ request, env }) {
   // Entrega na hora dos beats (10/10/2026): a chave e os últimos pedidos com link
   if (op === 'entrega' && request.method !== 'POST') return json({ ok: true, ligada: await entregaLigada(d), pedidos: await ultimosPedidos(d), origens: await resumoOrigem(d).catch(() => null) });
   // lista de e-mails com cupom (11/10/2026): quantos, quantos usaram o cupom, os e-mails pra copiar
-  if (op === 'lista' && request.method !== 'POST') return json({ ok: true, ...(await painelLista(d)) });
+  if (op === 'lista' && request.method !== 'POST') return json({ ok: true, ...(await painelLista(d, env)) });
   // Quem já gravou (16/10/2026): só lê e responde (não guarda nada). Varre as músicas da aba
   // Músicas do perfil nas páginas públicas do Spotify: é o teste de verdade, de dentro da Cloudflare.
   if (op === 'gravou-teste') {
@@ -101,6 +105,14 @@ export async function onRequest({ request, env }) {
   if (op === 'descricao') return descricao(d, body);
   if (op === 'perfil') { const r = await perfilMostrar(d, body); await esquecerPerfil(request); return r; }
   if (op === 'perfil-ordem') { const r = await perfilOrdem(d, body); await esquecerPerfil(request); return r; }
+  if (op === 'tape-ordem' || op === 'tape-beat') {
+    const r = await (op === 'tape-ordem' ? tapeOrdem : tapeBeat)(d, request, env, body);
+    if (r.ok) {
+      await esquecerPerfil(request);
+      if (r.loja) { await esquecerLoja(request); await esquecerVitrine(request); await esquecerApiVitrine(request); }
+    }
+    return json(r.ok ? r : { erro: r.erro }, r.ok ? 200 : r.status || 400);
+  }
   if (op === 'numeros') {
     const r = await numerosSalvar(d, body);
     if (r.status === 200) { await esquecerLoja(request); await esquecerPerfil(request); }
@@ -1171,3 +1183,80 @@ const LOJA_POST = {
     return json({ ok: true });
   }
 };
+
+// ---------- Beats da tape (24/10/2026): ordem, gênero, BPM e escondidos, por cima do que veio do Drive ----------
+async function beatsDaTape(d, request, env, id) {
+  const n = Number(id);
+  if (!Number.isInteger(n) || n <= 0) return null;
+  const a = await d.prepare("SELECT id, name FROM artists WHERE id = ? AND tipo = 'tape'").bind(n).first();
+  if (!a) return null;
+  const { results } = await d.prepare(
+    "SELECT id, title, bpm, mkey, tag, src_modified FROM tracks WHERE kind = 'beat' AND ready = 1 AND artist_id = ?"
+  ).bind(n).all();
+  const mapa = indexar(await vitrine(request, env).catch(() => []));
+  const beats = (results || []).map((t) => {
+    const b = achar(mapa, { title: t.title, bpm: t.bpm, key: t.mkey });
+    return { id: t.id, title: t.title, bpm: t.bpm || null, key: t.mkey || '', mod: t.src_modified || '', vendido: b ? !!b.sold : t.tag === 'vendido', loja: b ? { id: b.id, genero: b.genre || null } : null };
+  });
+  return { tape: a, beats };
+}
+
+async function tapeBeats(d, request, env, id) {
+  const r = await beatsDaTape(d, request, env, id);
+  if (!r) return json({ erro: 'tape não encontrada' }, 404);
+  const aj = daTape(await lerAjuste(d), r.tape.id), x = new Set(aj.x), pos = new Map(aj.o.map((k, i) => [k, i]));
+  const beats = r.beats.map((b) => ({
+    id: b.id, title: b.title, key: b.key, vendido: b.vendido, naLoja: !!b.loja,
+    bpm: aj.b[b.id] || b.bpm, bpmArquivo: b.bpm, bpmMexido: !!aj.b[b.id],
+    genero: aj.g[b.id] || (b.loja && b.loja.genero) || null, oculto: x.has(b.id),
+    ord: pos.has(b.id) ? pos.get(b.id) : null, mod: b.mod
+  }));
+  // a mesma ordem da página: sem posição (subiu depois) primeiro, do mais novo; depois a ordem salva
+  beats.sort((p, q) => (p.ord != null) - (q.ord != null) || (p.ord != null ? p.ord - q.ord : (p.mod < q.mod ? 1 : -1)));
+  return json({ ok: true, tape: r.tape, beats: beats.map(({ ord, mod, ...b }) => b), generos: GENEROS });
+}
+
+async function tapeOrdem(d, request, env, body) {
+  const r = await beatsDaTape(d, request, env, body && body.id);
+  if (!r) return { erro: 'tape não encontrada', status: 404 };
+  const existe = new Set(r.beats.map((b) => b.id));
+  const lista = Array.isArray(body.ids) ? [...new Set(body.ids.map(String))] : [];
+  if (!lista.length || lista.some((k) => !existe.has(k))) return { erro: 'a lista da tape mudou: abre de novo' };
+  const aj = await lerAjuste(d), t = daTape(aj, r.tape.id);
+  aj[String(r.tape.id)] = { ...t, o: lista };
+  await salvarAjuste(d, aj);
+  return { ok: true, n: lista.length };
+}
+
+async function tapeBeat(d, request, env, body) {
+  const r = await beatsDaTape(d, request, env, body && body.id);
+  if (!r) return { erro: 'tape não encontrada', status: 404 };
+  const b = r.beats.find((x) => x.id === String(body.faixa || ''));
+  if (!b) return { erro: 'beat não está nessa tape', status: 404 };
+  const aj = await lerAjuste(d), t = daTape(aj, r.tape.id);
+  const g = { ...t.g }, bp = { ...t.b };
+  let x = t.x.filter((k) => r.beats.some((z) => z.id === k));   // escondido que saiu do Drive deixa de contar
+  let loja = false;
+  if ('oculto' in body) x = body.oculto ? [...new Set([...x, b.id])] : x.filter((k) => k !== b.id);
+  if ('bpm' in body) {
+    if (body.bpm === null || body.bpm === '') delete bp[b.id];
+    else {
+      const n = Math.round(Number(body.bpm));
+      if (!(n >= 40 && n <= 300)) return { erro: 'BPM entre 40 e 300' };
+      if (n === b.bpm) delete bp[b.id]; else bp[b.id] = n;
+    }
+  }
+  if ('genero' in body) {
+    const s = String(body.genero || '');
+    if (s && !GENEROS.some(([k]) => k === s)) return { erro: 'gênero desconhecido' };
+    if (!s) delete g[b.id]; else g[b.id] = s;
+    // beat que está na vitrine: o gênero é dela, muda lá também (página do beat, filtros, gênero)
+    if (s && b.loja && b.loja.genero !== s) {
+      await d.prepare('UPDATE beats SET genre = ?, mexido_em = ? WHERE id = ?').bind(s, new Date().toISOString(), b.loja.id).run();
+      loja = true;
+    }
+  }
+  aj[String(r.tape.id)] = { ...t, x, g, b: bp };
+  await salvarAjuste(d, aj);
+  return { ok: true, loja, oculto: x.includes(b.id), bpm: bp[b.id] || b.bpm, genero: g[b.id] || (b.loja && b.loja.genero) || null };
+}

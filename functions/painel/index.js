@@ -160,6 +160,19 @@ ${ICONES}
   .pf-alca:hover{color:#fff;background:#1a1a1a}
   .pf-alca:active{cursor:grabbing}
   .pf-fora li .pill{padding:8px 12px;font-size:13px}
+  /* beats da tape (24/10/2026): ordem, gênero, BPM e escondidos */
+  .tb-lista li{flex-wrap:wrap}
+  .tb-lista li.oculto .pf-txt b{color:var(--ink4);text-decoration:line-through}
+  .tb-nome{flex:1;min-width:0;display:block;text-align:left;background:none;border:0;padding:6px 0;color:inherit;font:inherit;cursor:pointer}
+  .tb-olho{width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;background:none;border:0;color:#8a8a8a;cursor:pointer;border-radius:8px}
+  .tb-olho:hover{color:#fff;background:#1a1a1a}
+  .tb-olho[aria-pressed="true"]{color:#e0a96d}
+  .tb-ed{flex-basis:100%;display:grid;grid-template-columns:minmax(0,1fr) 96px auto;gap:8px;align-items:end;padding:4px 0 10px 36px}
+  .tb-ed[hidden]{display:none}
+  .tb-ed label{display:block;font-size:11px;color:var(--ink4);margin-bottom:4px}
+  .tb-ed select,.tb-ed input{width:100%;height:44px;border-radius:10px;border:1px solid #2a2a2a;background:#0f0f0f;color:#fff;padding:0 10px;font:inherit;font-size:16px}
+  .tb-ed .pill{height:44px}
+  .tb-ed small{grid-column:1/-1;font-size:12px;color:var(--ink4)}
   .rot{font-size:11px;letter-spacing:.2em;color:var(--ink4);margin-bottom:10px}
   .desc{width:100%;min-height:104px;resize:vertical;background:var(--campo);border:1px solid var(--borda);
     border-radius:12px;padding:12px 14px;font-size:14.5px;line-height:1.5;outline:none;
@@ -621,6 +634,7 @@ function pagina() {
     if(revisarErro) add(linhaAcao(svg('catalogo'),'Não consegui conferir os pendentes','a lista de revisão das beat tapes não respondeu · toca pra tentar de novo',function(){ carregar(true); }));
     if(revisar.length) add(linhaAcao(svg('catalogo'),revisar.length+(revisar.length===1?' beat pra revisar':' beats pra revisar'),'nas beat tapes: marcar disponível ou vendido',function(){ irPara('tapes'); }));
     var env=lista&&lista.envios&&lista.envios[0];
+    if(env&&env.ok&&(env.status==='bounced'||env.status==='complained')) add(linhaAcao('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></svg>',env.status==='bounced'?'E-mail do cupom voltou':'E-mail do cupom marcado como spam','pra '+esc(env.email)+' · ver na Lista',function(){ irPara('lista'); }));
     if(env&&!env.ok) add(linhaAcao('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></svg>','E-mail do cupom não saiu','pra '+esc(env.email)+' · ver o motivo',function(){ irPara('lista'); }));
     if(COMENTARIOS_LIGADOS&&comentResumo&&comentResumo.abertos) add(linhaAcao('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H9l-5 4z"/></svg>',comentResumo.abertos+(comentResumo.abertos===1?' comentário aberto':' comentários abertos'),'nas pastas dos artistas',function(){ irPara('comentarios'); }));
     if(consumoHoje&&consumoHoje.hoje/consumoHoje.teto>=0.5) add(linhaAcao(svg('ajustes'),'Banco passou da metade hoje',milhar(consumoHoje.hoje)+' de '+milhar(consumoHoje.teto)+' leituras · zera às 21h',abrirConsumo));
@@ -737,7 +751,7 @@ function pagina() {
       }).join(''):'<p>Ninguém ainda.</p>')+'</div>'+
       '<div class="bloco"><div class="rot">E-MAILS DO CUPOM</div>'+((l.envios||[]).length?l.envios.map(function(u){
         var d=new Date(u.em), hh=isNaN(d)?'':' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
-        return '<div class="ev"><span>'+dm(u.em)+hh+'</span><span style="min-width:0">'+esc(u.email)+' · '+(u.ok?'saiu':'<em>não saiu</em> ('+esc(u.erro||'erro')+')')+'</span></div>';
+        return '<div class="ev"><span>'+dm(u.em)+hh+'</span><span style="min-width:0">'+esc(u.email)+' · '+situEnvio(u)+'</span></div>';
       }).join(''):'<p>Nenhum envio registrado ainda (o registro começou em 12/10).</p>')+'</div>';
     var cp=box.querySelector('#liCopia');
     if(cp) cp.addEventListener('click',function(){
@@ -822,6 +836,12 @@ function pagina() {
     var out=[];
     ((entrega&&entrega.pedidos)||[]).forEach(function(p){ (p.servicos||[]).forEach(function(sv){ if(!sv.entrega) out.push({p:p,s:sv}); }); });
     return out;
+  }
+  // 24/10/2026: o que o Resend diz depois de aceitar (conferido ao abrir a Lista)
+  function situEnvio(u){
+    if(!u.ok) return '<em>não saiu</em> ('+esc(u.erro||'erro')+')';
+    var m={delivered:'entregue',opened:'entregue · abriu',clicked:'entregue · clicou',bounced:'<em>voltou</em> (o endereço recusou)',complained:'<em>marcado como spam</em>',delivery_delayed:'<em>atrasado</em> (o e-mail dela ainda não aceitou)',sent:'saiu · esperando a entrega'};
+    return u.status?(m[u.status]||esc(u.status)):(u.id?'saiu · conferindo':'saiu (sem rastreio)');
   }
   function dm(iso){ var d=new Date(iso); return isNaN(d)?'':('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2); }
   function listaServicos(){
@@ -928,7 +948,7 @@ function pagina() {
         }).join('')+'</div>':'<p style="margin-top:6px">Ninguém ainda.</p>')+'</div>'+
         '<div class="bloco"><div class="rot">E-MAILS DO CUPOM</div>'+((l.envios||[]).length?'<div style="margin-top:6px">'+l.envios.map(function(u){
           var d=new Date(u.em), dd=isNaN(d)?'':('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
-          return '<div class="ev"><span>'+dd+'</span><span style="min-width:0">'+esc(u.email)+' · '+(u.ok?'saiu':'<em>não saiu</em> ('+esc(u.erro||'erro')+')')+'</span></div>';
+          return '<div class="ev"><span>'+dd+'</span><span style="min-width:0">'+esc(u.email)+' · '+situEnvio(u)+'</span></div>';
         }).join('')+'</div>':'<p style="margin-top:6px">Nenhum envio registrado ainda (o registro começou em 12/10).</p>')+'</div>'+
         '<div class="acoes"><button type="button" class="pill" data-close>Fechar</button></div>';
       card.querySelector('[data-close]').addEventListener('click',fechar);
@@ -1413,7 +1433,8 @@ function pagina() {
   }
   // Arrastar suave: a tape pega segue o dedo (sem pular de linha em linha) e as outras
   // deslizam pro lugar novo (FLIP: mede antes, troca no DOM, anima a diferença).
-  function ligarOrdem(ol){
+  function ligarOrdem(ol,renum,salvar){
+    renum=renum||renumera; salvar=salvar||salvarOrdem;
     var pego=null, card=$('card'), dy=0, DUR=180;
     function topoLayout(li){ return ol.getBoundingClientRect().top + li.offsetTop; }
     function desliza(mudar){
@@ -1427,7 +1448,7 @@ function pagina() {
         li.getBoundingClientRect();
         li.style.transition='transform '+DUR+'ms cubic-bezier(.2,.7,.3,1)'; li.style.transform='';
       });
-      renumera();
+      renum();
     }
     function segue(y){ if(pego) pego.style.transform='translateY('+(y-dy-topoLayout(pego))+'px)'; }
     ol.addEventListener('pointerdown',function(e){
@@ -1459,7 +1480,7 @@ function pagina() {
       li.style.transform='';
       li.classList.remove('pego');
       setTimeout(function(){ li.style.transition=''; }, DUR+20);
-      salvarOrdem();
+      salvar();
     }
     ol.addEventListener('pointerup',solta); ol.addEventListener('pointercancel',solta);
     // teclado: alça focada + seta pra cima/baixo
@@ -1472,7 +1493,7 @@ function pagina() {
         if(e.key==='ArrowUp' && li.previousElementSibling) ol.insertBefore(li,li.previousElementSibling);
         if(e.key==='ArrowDown' && li.nextElementSibling) ol.insertBefore(li.nextElementSibling,li);
       });
-      pego=null; h.focus(); salvarOrdem();
+      pego=null; h.focus(); salvar();
     });
   }
 
@@ -1525,6 +1546,11 @@ function pagina() {
         ? '<div class="bloco"><div class="rot">PERFIL @RIDEBLAN33</div>'+
           sw('perfil','Mostrar no perfil','a capa aparece em caramujorecords.com.br/rideblan33',a.perfil!==0)+
           '<div class="sw"><span><b id="perfilPos">'+esc(posicaoPerfil(a))+'</b><small>a ordem muda em <b>@rideblan33</b>, no topo da lista das tapes</small></span></div></div>'
+        : '')+
+      (a.tipo==='tape'
+        ? '<div class="bloco"><div class="rot">BEATS DA TAPE</div>'+
+          '<div class="sw"><span><b>Ordem, gênero, BPM e esconder</b><small>muda a página da tape; o gênero de beat que está na vitrine muda lá também</small></span>'+
+          '<button class="pill" data-act="beats" type="button">Organizar</button></div></div>'
         : '')+
       '<div class="bloco"><div class="rot">DESCRIÇÃO DO CATÁLOGO</div>'+
         '<label for="desc" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Descrição</label>'+
@@ -1586,6 +1612,7 @@ function pagina() {
       });
     });
     c.querySelector('[data-act=abrir]').addEventListener('click',function(){window.open(link(a),'_blank','noopener')});
+    var orgB=c.querySelector('[data-act=beats]'); if(orgB) orgB.addEventListener('click',function(){ abrirBeatsTape(a); });
     c.querySelector('[data-act=sync]').addEventListener('click',function(e){
       var b=e.currentTarget;b.disabled=true;b.textContent='Mandando…';
       acao('sync',{artista:a.name}).then(function(j){
@@ -1647,6 +1674,79 @@ function pagina() {
       });
     });
     puxar();
+  }
+  // Beats da tape (24/10/2026): arrastar pela alça (salva sozinho), tocar no nome abre gênero e BPM,
+  // o olho esconde da página da tape. Tudo fica na meta 'tapes-ajuste' (a conversão do Drive não apaga).
+  var OLHO='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var OLHO_X='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A9.8 9.8 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4.2M6.6 6.6C3.9 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 004.4-1"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
+  function abrirBeatsTape(a){
+    var c=$('card');
+    c.innerHTML='<div class="cab">'+capaMini(a)+'<div class="cab-txt"><h2>'+esc(a.name)+'</h2><div class="end">beats da tape</div></div></div>'+
+      '<p class="pf-dica">Segura a alça e arrasta pra mudar a ordem (salva sozinho). Toca no nome pra ajustar gênero e BPM. O olho esconde o beat da página da tape.</p>'+
+      '<ol class="pf-lista tb-lista" id="tbLista"><li><span class="pf-txt"><small>carregando…</small></span></li></ol>'+
+      '<div class="acoes"><button class="pill" data-volta type="button">Voltar</button><button class="pill" data-close type="button">Fechar</button></div>';
+    $('veil').hidden=false;
+    c.querySelector('[data-close]').addEventListener('click',fechar);
+    c.querySelector('[data-volta]').addEventListener('click',function(){ abrir(a); });
+    fetch('/api/painel?op=tape-beats&id='+a.id).then(function(r){return r.json()}).then(function(j){
+      if(!j.ok){ $('tbLista').innerHTML='<li><span class="pf-txt"><small>'+esc(j.erro||'Não consegui abrir.')+'</small></span></li>'; return; }
+      pintarBeatsTape(a,j);
+    }).catch(function(){ $('tbLista').innerHTML='<li><span class="pf-txt"><small>Sem conexão agora.</small></span></li>'; });
+  }
+  function pintarBeatsTape(a,j){
+    var ol=$('tbLista'), G=j.generos||[], rot={}; G.forEach(function(g){ rot[g[0]]=g[1]; });
+    ol.innerHTML='';
+    if(!j.beats.length){ ol.innerHTML='<li><span class="pf-txt"><small>Nenhum beat pronto nessa tape.</small></span></li>'; return; }
+    j.beats.forEach(function(b){
+      var li=document.createElement('li'); li.dataset.id=b.id;
+      function ficha(){ return [b.genero?rot[b.genero]||b.genero:'sem gênero', b.bpm?b.bpm+' BPM':'sem BPM', b.key].filter(Boolean).join(' · ')+(b.vendido?' · vendido':'')+(b.oculto?' · escondido':''); }
+      li.innerHTML='<span class="pf-n"></span>'+
+        '<button class="tb-nome" type="button" aria-expanded="false"><span class="pf-txt"><b>'+esc(b.title)+'</b><small></small></span></button>'+
+        '<button class="tb-olho" type="button" aria-label="Esconder '+esc(b.title)+' da página da tape"></button>'+
+        '<button class="pf-alca" type="button" aria-label="Mover '+esc(b.title)+' (setas pra cima e pra baixo)">'+ALCA+'</button>'+
+        '<div class="tb-ed" hidden>'+
+          '<div><label>Gênero</label><select><option value="">'+(b.naLoja?'(o da vitrine)':'sem gênero')+'</option>'+G.map(function(g){ return '<option value="'+g[0]+'"'+(g[0]===b.genero?' selected':'')+'>'+esc(g[1])+'</option>'; }).join('')+'</select></div>'+
+          '<div><label>BPM</label><input type="number" inputmode="numeric" min="40" max="300" value="'+(b.bpm||'')+'"></div>'+
+          '<button class="pill solid" type="button">Salvar</button>'+
+          '<small>'+(b.naLoja?'Está na vitrine: o gênero muda lá também. O BPM muda só na tape.':'Não está na vitrine: muda só na tape.')+(b.bpmMexido&&b.bpmArquivo?' BPM do arquivo: '+b.bpmArquivo+'.':'')+'</small>'+
+        '</div>';
+      var sm=li.querySelector('.pf-txt small'), olho=li.querySelector('.tb-olho'), nome=li.querySelector('.tb-nome'), ed=li.querySelector('.tb-ed');
+      function pinta(){ sm.textContent=ficha(); olho.innerHTML=b.oculto?OLHO_X:OLHO; olho.setAttribute('aria-pressed',b.oculto?'true':'false'); olho.setAttribute('aria-label',(b.oculto?'Mostrar ':'Esconder ')+b.title+' na página da tape'); li.classList.toggle('oculto',!!b.oculto); }
+      pinta();
+      nome.addEventListener('click',function(){ ed.hidden=!ed.hidden; nome.setAttribute('aria-expanded',ed.hidden?'false':'true'); });
+      olho.addEventListener('click',function(){
+        olho.disabled=true;
+        acao('tape-beat',{id:a.id,faixa:b.id,oculto:!b.oculto}).then(function(r){
+          olho.disabled=false;
+          if(!r.ok){ flash(r.erro||'Não consegui mudar.'); return; }
+          b.oculto=r.oculto; pinta(); flash(b.oculto?'Escondido da tape.':'Volta a aparecer na tape.');
+        });
+      });
+      var bt=ed.querySelector('.pill'), sel=ed.querySelector('select'), inp=ed.querySelector('input');
+      bt.addEventListener('click',function(){
+        var corpo={id:a.id,faixa:b.id,genero:sel.value,bpm:inp.value===''?null:Number(inp.value)};
+        if(corpo.bpm!=null&&!(corpo.bpm>=40&&corpo.bpm<=300)){ flash('BPM entre 40 e 300.'); inp.focus(); return; }
+        bt.disabled=true; bt.textContent='Salvando…';
+        acao('tape-beat',corpo).then(function(r){
+          bt.disabled=false; bt.textContent='Salvar';
+          if(!r.ok){ flash(r.erro||'Não consegui salvar.'); return; }
+          b.genero=r.genero; b.bpm=r.bpm; pinta(); ed.hidden=true; nome.setAttribute('aria-expanded','false');
+          flash(r.loja?'Salvo na tape e na vitrine.':'Salvo na tape.');
+        });
+      });
+      ol.appendChild(li);
+    });
+    renumTb();
+    ligarOrdem(ol,renumTb,function(){ salvarOrdemTb(a); });
+  }
+  function renumTb(){ [].slice.call($('tbLista').children).forEach(function(li,i){ var n=li.querySelector('.pf-n'); if(n) n.textContent=(i+1); }); }
+  var salvarTbT=null;
+  function salvarOrdemTb(a){
+    clearTimeout(salvarTbT);
+    salvarTbT=setTimeout(function(){
+      var ids=[].slice.call($('tbLista').children).map(function(li){ return li.dataset.id; }).filter(Boolean);
+      acao('tape-ordem',{id:a.id,ids:ids}).then(function(j){ flash(j.ok?'Ordem da tape salva.':(j.erro||'Não consegui salvar a ordem.')); });
+    },600);
   }
   function sw(campo,titulo,desc,valor){
     return '<div class="sw"><span><b>'+titulo+'</b><small>'+desc+'</small></span>'+

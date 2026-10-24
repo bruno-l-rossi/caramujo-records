@@ -105,8 +105,8 @@ export async function sair(d, token) {
 }
 
 // painel: quantos, quantos usaram o cupom e os e-mails (pra copiar)
-export async function painelLista(d) {
-  const envios = await lerEnvios(d);
+export async function painelLista(d, env = null) {
+  const envios = env ? await conferirEnvios(env, d) : await lerEnvios(d);
   const { results } = await d.prepare(
     'SELECT l.email, l.origem, l.criado_em, l.saiu_em, c.usos FROM lista l LEFT JOIN cupons c ON c.codigo = l.cupom ORDER BY l.criado_em DESC LIMIT 2000'
   ).all();
@@ -215,7 +215,7 @@ export async function enviarCupom(env, { email, cupom, valeAte: ate, token, rela
     return { ok: false };
   }
   const de = env.NOTIFY_FROM || 'rideblan33@caramujorecords.com.br';
-  let ok = false, erro = '';
+  let ok = false, erro = '', idResend = null;
   try {
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -225,10 +225,12 @@ export async function enviarCupom(env, { email, cupom, valeAte: ate, token, rela
         subject: relanc ? `Beat tape nova e um cupom de ${PCT}% · Caramujo Records` : `Seu cupom de ${PCT}% chegou · Caramujo Records`,
         html: htmlCupom({ cupom, valeAte: ate, token, relanc }),
         text: textoCupom({ cupom, valeAte: ate, token, relanc }),
-        headers: { 'List-Unsubscribe': `<${SITE}/api/lista?sair=${token}>` }
+        // 24/10/2026: sair com um toque no Gmail/Apple Mail (o POST cai no /api/lista?sair=)
+        headers: { 'List-Unsubscribe': `<${SITE}/api/lista?sair=${token}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' }
       })
     });
     ok = r.ok;
+    if (ok) { try { const j = await r.json(); if (j && /^[a-zA-Z0-9-]{8,64}$/.test(String(j.id || ''))) idResend = j.id; } catch (_) { /* sem id: fica sem rastreio */ } }
     if (!ok) {
       const corpo = await r.text().catch(() => '');
       let msg = corpo; try { const j = JSON.parse(corpo); msg = j.message || j.error || corpo; } catch (_) { /* texto mesmo */ }
@@ -239,6 +241,33 @@ export async function enviarCupom(env, { email, cupom, valeAte: ate, token, rela
     erro = 'sem resposta do Resend: ' + String((e && e.message) || e).slice(0, 120);
     console.error('[lista]', erro);
   }
-  await guardarEnvio(d, ok ? { email, em, ok: true } : { email, em, ok: false, erro });
+  await guardarEnvio(d, ok ? { email, em, ok: true, ...(idResend ? { id: idResend } : {}) } : { email, em, ok: false, erro });
   return { ok, erro };
+}
+
+// 24/10/2026: "saiu" = o Resend aceitou, não que chegou. Com o id do envio, o painel pergunta ao Resend
+// o que aconteceu depois (entregue, voltou, marcado como spam, atrasado). Só os da última semana que
+// ainda não têm resposta final; até 10 por abertura do painel.
+const FINAIS = new Set(['delivered', 'opened', 'clicked', 'bounced', 'complained']);
+export async function conferirEnvios(env, d) {
+  const lista = await lerEnvios(d);
+  const chave = env && env.RESEND_API_KEY;
+  if (!chave || !lista.length) return lista;
+  const semana = Date.now() - 7 * 864e5;
+  const abertos = lista.filter((x) => x.ok && x.id && !FINAIS.has(x.status) && Date.parse(x.em) > semana).slice(0, 10);
+  if (!abertos.length) return lista;
+  let mudou = false;
+  await Promise.all(abertos.map(async (x) => {
+    try {
+      const r = await fetch('https://api.resend.com/emails/' + encodeURIComponent(x.id), { headers: { Authorization: `Bearer ${chave}` } });
+      if (!r.ok) return;
+      const j = await r.json();
+      const ev = String((j && j.last_event) || '');
+      if (ev && ev !== x.status) { x.status = ev; mudou = true; }
+    } catch (_) { /* tenta na próxima abertura */ }
+  }));
+  if (mudou) {
+    try { await d.prepare("INSERT OR REPLACE INTO meta (chave, valor) VALUES ('lista-envio', ?)").bind(JSON.stringify(lista.slice(0, 10))).run(); } catch (_) { /* mostra mesmo assim */ }
+  }
+  return lista;
 }

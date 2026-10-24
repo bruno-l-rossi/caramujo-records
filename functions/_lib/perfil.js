@@ -7,6 +7,7 @@
 // 60 s no isolate e 5 min na cópia da região. O painel derruba as duas quando muda
 // alguma coisa (esquecerPerfil).
 
+import { CHAVE_AJUSTE, ajusteDeTexto, daTape } from './tapeajuste.js';
 import { rodape, RODAPE_CSS } from './rodape.js';
 import { db } from './db.js';
 import { MIDIA, capaUrl, CAPA_VOLTA } from './midia.js';
@@ -54,7 +55,7 @@ export function escolherEmAlta(ranking, nova) {
 async function lerMetaBruta(d) {
   try {
     const { results } = await d.prepare(
-      `SELECT chave, valor FROM meta WHERE chave IN ('${EM_ALTA_CHAVE}', 'numeros', '${MUS_CHAVE}', '${CHAVE_GRAVOU}')`
+      `SELECT chave, valor FROM meta WHERE chave IN ('${EM_ALTA_CHAVE}', 'numeros', '${MUS_CHAVE}', '${CHAVE_GRAVOU}', '${CHAVE_AJUSTE}')`
     ).all();
     return results || [];
   } catch (_) { return null; }
@@ -128,6 +129,10 @@ export async function lerPerfil(request, env) {
   const pMeta = lerMetaBruta(d);
   [pTapes, pFaixas, pMeta].forEach((p) => p.catch(() => {}));
   const { results } = await pTapes;
+  // beats escondidos no painel (24/10/2026) saem da contagem e do "Ouça a última beat tape"
+  let ajuste = {};
+  try { const lm = await pMeta; const r = (lm || []).find((x) => x.chave === CHAVE_AJUSTE); ajuste = r ? ajusteDeTexto(r.valor) : {}; } catch (_) { ajuste = {}; }
+  for (const r of results || []) { const x = daTape(ajuste, r.id).x.length; if (x) r.n = Math.max(0, r.n - x); }
   const tapes = (results || []).filter((r) => r.n > 0).map((r) => ({
     id: r.id, name: r.name, slug: r.slug, code: r.code,
     capa: r.cover_key || null, n: r.n
@@ -136,7 +141,8 @@ export async function lerPerfil(request, env) {
   if (tapes.length) {
     const { results: f } = await pFaixas;
     // a consulta acha a 1ª tape sozinha; confere se é a mesma da lista
-    faixas = (f || []).filter((x) => x.artist_id === tapes[0].id).map((x) => ({ id: x.id, t: x.title, d: x.dur || 0 }));
+    const fora = new Set(daTape(ajuste, tapes[0].id).x);
+    faixas = (f || []).filter((x) => x.artist_id === tapes[0].id && !fora.has(x.id)).map((x) => ({ id: x.id, t: x.title, d: x.dur || 0 }));
   }
   const nova = tapes.length ? tapes[0].id : null;
   const meta = await lerMetaPerfil(d, nova, await pMeta);

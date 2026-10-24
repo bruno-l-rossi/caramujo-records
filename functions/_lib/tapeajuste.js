@@ -1,0 +1,62 @@
+// Ajustes dos beats dentro de uma beat tape (24/10/2026, pedido do Bruno): ordem, gênero, BPM e beats
+// escondidos, feitos no painel (Catálogo > Beat tapes > a tape > "Beats da tape").
+// Tudo numa linha da meta ('tapes-ajuste'), por tape: a conversão do Drive não apaga, nenhuma coluna
+// nova (o deploy segue abaixo de 50 consultas) e o perfil lê junto das outras chaves dele.
+//   { "<id da tape>": { o: [ids na ordem], x: [ids escondidos], g: { id: 'trap' }, b: { id: 140 } } }
+// - Ordem: beat que não está na lista (subiu depois) vem primeiro, do mais novo pro mais antigo.
+// - Gênero: só na tape. Beat com par na vitrine muda também na vitrine (o gênero é dela; o painel faz).
+// - BPM: só na tape (a vitrine e a conversão casam o beat pelo BPM do arquivo; mexer lá desfaz o par).
+// - Escondido: some da página da tape, da contagem e do "Ouça a última beat tape" do perfil.
+import { GENEROS } from './generos.js';
+
+export const CHAVE_AJUSTE = 'tapes-ajuste';
+const RE_ID = /^[A-Za-z0-9_-]{6,80}$/;
+const GEN = new Set(GENEROS.map(([s]) => s));
+export const ROTULO_GENERO = Object.fromEntries(GENEROS);
+
+const ids = (l) => (Array.isArray(l) ? [...new Set(l.map(String).filter((x) => RE_ID.test(x)))].slice(0, 400) : []);
+function umaTape(v) {
+  const o = ids(v && v.o), x = ids(v && v.x);
+  const g = {}, b = {};
+  for (const [k, s] of Object.entries((v && v.g) || {})) if (RE_ID.test(k) && GEN.has(s)) g[k] = s;
+  for (const [k, n] of Object.entries((v && v.b) || {})) { const z = Math.round(Number(n)); if (RE_ID.test(k) && z >= 40 && z <= 300) b[k] = z; }
+  return { o, x, g, b };
+}
+const vazia = (t) => !t.o.length && !t.x.length && !Object.keys(t.g).length && !Object.keys(t.b).length;
+
+export function ajusteDeTexto(txt) {
+  let v = {};
+  try { v = typeof txt === 'string' ? JSON.parse(txt || '{}') : txt || {}; } catch (_) { v = {}; }
+  const out = {};
+  for (const [k, t] of Object.entries(v || {})) {
+    if (!/^\d{1,9}$/.test(k)) continue;
+    const u = umaTape(t);
+    if (!vazia(u)) out[k] = u;
+  }
+  return out;
+}
+export const daTape = (aj, id) => (aj && aj[String(id)]) || { o: [], x: [], g: {}, b: {} };
+
+export async function lerAjuste(d) {
+  try {
+    const r = await d.prepare('SELECT valor FROM meta WHERE chave = ?').bind(CHAVE_AJUSTE).first();
+    return ajusteDeTexto(r && r.valor);
+  } catch (_) { return {}; }
+}
+export async function salvarAjuste(d, aj) {
+  await d.prepare('INSERT OR REPLACE INTO meta (chave, valor) VALUES (?, ?)').bind(CHAVE_AJUSTE, JSON.stringify(ajusteDeTexto(aj))).run();
+}
+
+// Página da tape: tira os escondidos, troca BPM/gênero e numera a ordem (t.ord; o app.html ordena por ela)
+export function aplicarNaTape(tracks, t) {
+  if (!t || vazia(t)) return tracks;
+  const escondido = new Set(t.x), pos = new Map(t.o.map((id, i) => [id, i]));
+  return tracks.filter((f) => !(f.kind === 'beat' && escondido.has(f.id))).map((f) => {
+    if (f.kind !== 'beat') return f;
+    const n = { ...f };
+    if (t.b[f.id]) n.bpm = t.b[f.id];
+    if (t.g[f.id]) n.genero = ROTULO_GENERO[t.g[f.id]];
+    if (pos.has(f.id)) n.ord = pos.get(f.id);
+    return n;
+  });
+}

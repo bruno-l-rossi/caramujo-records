@@ -837,6 +837,10 @@ __META__
     else if(sort==='bpm') src.sort(function(a,b){return (a.bpm||0)-(b.bpm||0)});
     else src.sort(function(a,b){
       if(ORDER[a.grp]!==ORDER[b.grp]) return ORDER[a.grp]-ORDER[b.grp];
+      // ordem do painel (24/10/2026): beat que subiu depois (sem posição) vem antes, do mais novo
+      var oa=a.ord!=null, ob=b.ord!=null;
+      if(oa&&ob) return a.ord-b.ord;
+      if(oa!==ob) return oa?1:-1;
       return (a.mod||'')<(b.mod||'')?1:-1;
     });
     return src;
@@ -2029,16 +2033,18 @@ __META__
           else { nota.textContent='Sem conexão agora. Tenta de novo em instantes.'; nota.classList.add('erro'); }
         });
     }
-    // Rodada S (23/10/2026, pedido do Bruno): depois que o cupom saiu (ou venceu) a caixa some. A linha do
-    // cupom só aparece na visita em que a pessoa se cadastrou, ou enquanto o e-mail não sai. Beat tape nova
+    // Rodada S (23-24/10/2026, pedido do Bruno): a linha do cupom fica enquanto ele vale; vencido ou usado,
+    // a caixa some (na visita do cadastro aparece sempre, com o resultado). Beat tape nova
     // (a 1ª do perfil mudou, CAT.lanc) = a caixa volta com o e-mail preenchido e o servidor manda um cupom novo.
     var g0=null; try{ g0=JSON.parse(localStorage.getItem(CH)||'null'); }catch(_){}
     if(g0&&g0.email){
       if(!g0.lanc&&LANC){ g0.lanc=LANC; guardar(g0); }   // cadastro de antes: conta como deste lançamento
       if(!LANC||g0.lanc===LANC){
         var v0=g0.valeAte||(g0.at?new Date(g0.at+15*864e5).toLocaleDateString('sv',{timeZone:'America/Sao_Paulo'}):''), sem0=g0.status==='sem-cupom'||(v0&&v0<hoje());
+        // 24/10/2026 (Bruno): a linha do cupom fica enquanto ele vale; usado (a compra marca neste aparelho)
+        // ou vencido, a caixa some até a próxima beat tape
         var nesta=false; try{ nesta=sessionStorage.getItem(SS)==='1'; }catch(_){}
-        if(nesta||(g0.enviado===false&&!sem0)) pronto(g0); else box.hidden=true;
+        if(!sem0||nesta) pronto(g0); else box.hidden=true;
       } else {
         var k0=box.querySelector('.fq-k'); if(k0) k0.textContent='Beat tape nova · cupom novo';
         tit.textContent='Saiu beat tape nova'; p.textContent='Pega um cupom novo de 15% pros beats do catálogo. Ele chega no seu e-mail e vale 15 dias.';

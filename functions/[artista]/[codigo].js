@@ -10,6 +10,7 @@ import { MIDIA } from '../_lib/midia.js';
 import { slug as slugDe } from '../_lib/casar.js';
 import { SQL_PASTA, praPagina, COMENTARIOS } from '../_lib/comentarios.js';
 import { CHAVE_GRAVOU, fotoDaPasta } from '../_lib/gravou.js';
+import { lerAjuste, daTape, aplicarNaTape } from '../_lib/tapeajuste.js';
 
 // caminhos do site que não são artista
 const RESERVADO = new Set(['api', 'audio', 'assets', 'docs', 'previews', 'functions',
@@ -36,6 +37,8 @@ export async function onRequestGet({ params, request, env }) {
   // banco depois das consultas da página.
   const pVitrine = vitrine(request, env).catch(() => []);
   const pPerfil = tapesDoPerfil(request, env).catch(() => null);
+  // ordem, gênero, BPM e beats escondidos que o Bruno acertou no painel (24/10/2026; só vale pra tape)
+  const pAjuste = lerAjuste(d);
   // os comentários da pasta (10/10/2026) vêm na mesma leva: tape e código errado = lista vazia
   const [artist, faixasDoBanco, doComentario] = await Promise.all([
     d.prepare('SELECT * FROM artists WHERE slug = ?').bind(slug).first(),
@@ -82,6 +85,9 @@ export async function onRequestGet({ params, request, env }) {
       if (!artist.dl_beats && t.tag === 'disponivel') t.buy = b.slug;
     }
   }
+  // ajustes do painel por cima (depois do par com a vitrine, que casa pelo BPM do arquivo)
+  let tracksPagina = tracks;
+  if (artist.tipo === 'tape') tracksPagina = aplicarNaTape(tracks, daTape(await pAjuste, artist.id));
   // rodada R (18/10/2026): pasta de artista sem capa nenhuma usa a foto do artista no Spotify
   // (Quem já gravou); quem já tem imagem (subida pelo artista ou no Drive) fica com a dele
   let fotoPadrao = null;
@@ -118,7 +124,7 @@ export async function onRequestGet({ params, request, env }) {
   // o beat no formato do /b/ ("NOME · @rideblan33" + ficha). O Google segue vendo a tape
   // (canonical sem o ?faixa) e a página abre já na faixa.
   const pedida = tape ? String(url.searchParams.get('faixa') || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 80) : '';
-  const fx = pedida ? tracks.find((t) => t.kind === 'beat' && slugDe(t.title) === pedida) : null;
+  const fx = pedida ? tracksPagina.find((t) => t.kind === 'beat' && slugDe(t.title) === pedida) : null;
   const fichaFx = fx ? [fx.genero, fx.bpm ? fx.bpm + ' BPM' : '', fx.key].filter(Boolean).join(' · ') : '';
 
   return pagina(request, env, {
@@ -126,7 +132,7 @@ export async function onRequestGet({ params, request, env }) {
     indexar: tape,
     // texto do Google montado dos dados da tape (gêneros da loja, BPM, à venda; 10/10/2026)
     descricaoGoogle: tape
-      ? textoGoogleTape(artist.name, tracks, { preco: await precoDoBeat(request, env), gratis: !!artist.dl_beats })
+      ? textoGoogleTape(artist.name, tracksPagina, { preco: await precoDoBeat(request, env), gratis: !!artist.dl_beats })
       : null,
     // textos da prévia no Direct/WhatsApp (formato do Bruno, 25/09/2026)
     titulo: fx ? `${String(fx.title).toLocaleUpperCase('pt-BR')} · @rideblan33`
@@ -151,7 +157,7 @@ export async function onRequestGet({ params, request, env }) {
       code: artist.code,
       owner: false,
       perm: { beats: !!artist.dl_beats, sons: !!artist.dl_sons },
-      tracks,
+      tracks: tracksPagina,
       // o @rideblan33 vira o chip do perfil nas tapes E nas pastas de artista (26/09/2026)
       perfil: '/rideblan33',
       mais, totalPerfil, lanc,

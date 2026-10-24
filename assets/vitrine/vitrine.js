@@ -2374,6 +2374,9 @@ try{
    quem paga o PIX no app do banco e volta com a página recarregada. */
 (function(){
   var CHAVE='caramujo_pedido_v1', VALE=2*3600e3, link=null, tudo=false, nBeats=1, tipo=null;
+  // cupom da lista usado (24/10/2026): compra confirmada com cupom LISTA- marca o cadastro deste aparelho
+  // como "sem cupom" e a caixa da lista na página da tape some até a próxima beat tape
+  var cupomLista=null;
   var $=function(i){ return document.getElementById(i); };
   var f=window.fetch;
   if(typeof f!=='function'||typeof window.showPixConfirmed!=='function') return;
@@ -2382,7 +2385,7 @@ try{
     try{
       if(String(u&&u.url||u).indexOf('/api/create-payment')>-1){
         link=null; tudo=false; tipo=null; tirar();
-        try{ var corpo=JSON.parse((arguments[1]&&arguments[1].body)||'{}'); nBeats=(corpo.items||[]).filter(function(i){ return i&&i.type==='Beat'; }).length||1; }catch(_){ nBeats=1; }
+        try{ var corpo=JSON.parse((arguments[1]&&arguments[1].body)||'{}'); nBeats=(corpo.items||[]).filter(function(i){ return i&&i.type==='Beat'; }).length||1; var cc=corpo.couponCode; cupomLista=(cc&&/^LISTA-/i.test(cc))?String(cc).toUpperCase():null; }catch(_){ nBeats=1; }
         try{ localStorage.removeItem(CHAVE); }catch(_){}
         p.then(function(r){
           return r.clone().json().then(function(d){
@@ -2439,6 +2442,7 @@ try{
   window.showPixConfirmed=function(){
     var r=orig.apply(this,arguments);
     try{ mostrar(0); }catch(_){}
+    try{ if(cupomLista){ var g=JSON.parse(localStorage.getItem('caramujo_lista_v1')||'null'); if(g&&g.email){ g.status='sem-cupom'; g.usou=cupomLista; localStorage.setItem('caramujo_lista_v1',JSON.stringify(g)); } } }catch(_){}
     return r;
   };
 })();

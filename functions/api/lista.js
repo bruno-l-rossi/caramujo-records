@@ -8,6 +8,9 @@ import { tapesDoPerfil } from '../_lib/perfil.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
+  // 24/10/2026: o "Cancelar inscrição" do Gmail/Apple Mail manda um POST no link do List-Unsubscribe
+  const sairTk = new URL(request.url).searchParams.get('sair');
+  if (sairTk) { let ok = false; try { ok = await sair(await db(env), sairTk); } catch (_) { ok = false; } return json({ ok }, ok ? 200 : 404); }
   const txt = await request.text().catch(() => '');
   if (!txt || txt.length > 1000) return json({ erro: 'pedido torto' }, 400);
   let b = null;
