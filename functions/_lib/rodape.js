@@ -33,6 +33,7 @@ export function rodape(de = '') {
   return `<footer class="rod-cr">
   ${RODAPE_GENEROS}
   <a href="/"${de ? deAttr(de) : ''} aria-label="Caramujo Records"><img loading="lazy" width="400" height="400" src="/assets/brand/selo-creme.svg" alt="Caramujo Records"></a>
+  <p><a class="foot-perfil" href="mailto:contato@caramujorecords.com.br">contato@caramujorecords.com.br</a></p>
   <p>© 2026 Caramujo Records — São Carlos, SP</p>
   <p><a class="foot-perfil" href="/rideblan33">@rideblan33</a> · Todos os direitos reservados</p>
 </footer>`;

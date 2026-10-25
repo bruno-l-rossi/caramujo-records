@@ -19,6 +19,8 @@ import { LEVA_DE, deAttr } from './origem.js';
 import { CHAVE_GRAVOU, gravouDeTexto, gravouLimpar, montarGravou, imgPequena } from './gravou.js';
 import { fotoArtista } from './gravoupagina.js';
 import { topo, TOPO_PAGINA_CSS, TOPO_JS } from './topo.js';
+// as fotos de "Por dentro do estúdio" (25/10/2026: saíram da vitrine e moram no cartão "Quer um som assim?")
+const FOTOS_ESTUDIO = [['/assets/studio-hero.jpg', 'Onde tudo acontece'], ['/assets/sessao-poster.jpg', 'Sessão de estúdio'], ['/assets/depo-fab-poster.jpg', 'Colaboração fatal, o retorno do Fab'], ['/assets/depo-candy.jpg', 'Parcerias de destaque, o direct do Candy']];
 
 const VALIDADE = 60 * 1000;
 const REGIAO = '/__cache/perfil-v3';
@@ -297,7 +299,9 @@ export function abaMusicas(mus, { previa = false, gravou = null } = {}) {
   // 4b (11/10/2026, opção A do Bruno, sem o texto): quem ouviu as músicas e quer um som assim vai
   // direto pros serviços da vitrine
   // 12/10/2026: opção D (cartão com a foto do estúdio), kicker "Caramujo Records"
-  const som = `<div class="mx-som"><span class="mx-som-k">Caramujo Records</span><p>Quer um som assim?</p><div><a class="cheio" href="/#services"${deAttr('perfil-musicas')} data-rede="servico-mix">Mix &amp; Master</a><a href="/#services"${deAttr('perfil-musicas')} data-rede="servico-beat">Beat personalizado</a></div></div>`;
+  // 25/10/2026 (de-para final, item 7, opção B): o cartão ganha as fotos do estúdio (saíram da vitrine), deslizando no
+  // fundo com pontinhos; o texto deixa o dedo passar pra galeria e só os botões pegam o toque
+  const som = `<div class="mx-som"><div class="mx-gal" id="mxGal">${FOTOS_ESTUDIO.map(([f, t], i) => `<img src="${f}" alt="${t}" width="768" height="960"${i ? ' loading="lazy"' : ''}>`).join('')}</div><span class="mx-pts" aria-hidden="true">${FOTOS_ESTUDIO.map((_, i) => `<i${i ? '' : ' class="on"'}></i>`).join('')}</span><p>Quer um som assim?</p><div class="mx-bts"><a class="cheio" href="/#services"${deAttr('perfil-musicas')} data-rede="servico-mix">Mix &amp; Master</a><a href="/#services"${deAttr('perfil-musicas')} data-rede="servico-beat">Beat personalizado</a></div></div>`;
   h += recentes.length
     ? `<section class="mx-sec" aria-labelledby="mxRec"><div class="cab"><h3 id="mxRec">${destaques.length ? 'Recentes' : 'Músicas'}</h3><span>mais novas primeiro</span></div>` +
       `<ul class="mx-lista">${recentes.map((m, k) => linhaRecente(m, destaques.length + k, vaga)).join('')}</ul>${todas}${som}</section>`
@@ -591,14 +595,22 @@ a.mx-c .mx-img{transition:transform .35s ease}
 .mx-data{margin-right:6px;font:400 12px/1 var(--mono);color:#6a6a6a;white-space:nowrap}
 .mx-row .mx-play,.mx-vaga{width:38px;height:38px;flex:none}
 /* a chamada pro portfólio inteiro no Spotify, no fim das recentes */
-.mx-som{margin-top:26px;overflow:hidden;border-radius:16px;padding:120px 18px 18px;background:linear-gradient(180deg,rgba(0,0,0,.05) 0%,rgba(0,0,0,.85) 62%,#000 100%),url(/assets/studio-hero.jpg) center 30%/cover}
-.mx-som-k{display:block;font:600 11px/1 var(--grot);letter-spacing:.2em;text-transform:uppercase;color:#cfcfcf}
-.mx-som p{font:800 28px/1.1 var(--grot);color:var(--branco);margin:8px 0 16px;letter-spacing:-.01em}
-.mx-som div{display:flex;flex-wrap:wrap;gap:10px}
+.mx-som{position:relative;margin-top:26px;overflow:hidden;border-radius:16px;padding:150px 18px 18px;background:#000}
+.mx-gal{position:absolute;inset:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
+.mx-gal::-webkit-scrollbar{display:none}
+.mx-gal img{flex:0 0 100%;width:100%;height:100%;object-fit:cover;object-position:center 30%;scroll-snap-align:start}
+.mx-som::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.85) 62%,#000 100%);pointer-events:none}
+.mx-pts{position:absolute;top:14px;right:14px;z-index:2;display:flex;gap:5px;pointer-events:none}
+.mx-pts i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);transition:background .2s}
+.mx-pts i.on{background:#fff}
+.mx-som p,.mx-som .mx-bts{position:relative;z-index:2;pointer-events:none}
+.mx-som p{font:800 28px/1.1 var(--grot);color:var(--branco);margin:0 0 16px;letter-spacing:-.01em}
+.mx-som .mx-bts{display:flex;flex-wrap:wrap;gap:10px}
+.mx-som .mx-bts a{pointer-events:auto}
 .mx-som a{flex:1 1 150px;display:flex;align-items:center;justify-content:center;min-height:48px;padding:0 18px;border:1px solid rgba(255,255,255,.5);border-radius:999px;background:rgba(0,0,0,.35);font:700 12px/1.2 var(--grot);letter-spacing:.16em;text-transform:uppercase;color:var(--branco);text-align:center;transition:border-color .2s,background .2s}
 .mx-som a.cheio{background:var(--branco);border-color:var(--branco);color:#000}
 @media (hover:hover){.mx-som a:hover{border-color:var(--branco)}.mx-som a.cheio:hover{background:#d9d9d9;border-color:#d9d9d9}}
-@media (min-width:900px){.mx-som{padding-top:150px}}
+@media (min-width:900px){.mx-som{padding-top:190px}}
 .qg-ent{margin-top:22px;padding-top:18px;border-top:1px solid var(--div);color:var(--branco)}
 .qg-ent-cab{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
 .qg-ent-cab h3{margin:0;font:700 20px/1.2 var(--grot)}
@@ -673,7 +685,6 @@ ${topo('perfil', '', null, { ativo: 'estudio' })}
 <header class="terra">
   <section class="palco">
     <div class="texto">
-      <p class="kicker">Caramujo Records</p>
       <h1>@rideblan33</h1>
       <p class="bio">Produtor &amp; beatmaker.<br>33 memórias distantes.</p>
       <p class="numeros"><span><b>${num.artistas}+</b> artistas</span> · <span><b>${num.faixas}+</b> faixas</span> · <span><b>${curto(num.streams)}</b> de streams</span></p>
@@ -1019,6 +1030,9 @@ ${rodape('perfil')}
       if(aberta()){ try{ window.CaramujoStory.fechar(); }catch(e){} }
     });
   }
+  // os pontinhos da galeria do "Quer um som assim?" (25/10/2026)
+  var gal=document.getElementById('mxGal');
+  if(gal){ var pts=gal.parentNode.querySelectorAll('.mx-pts i'); gal.addEventListener('scroll',function(){ var k=Math.round(gal.scrollLeft/Math.max(1,gal.clientWidth)); for(var i=0;i<pts.length;i++) pts[i].classList.toggle('on',i===k); },{passive:true}); }
 })();
 </script>
 ${LEVA_DE}

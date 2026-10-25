@@ -246,51 +246,6 @@ nav{
 .snail-svg.br{bottom:3rem;right:3rem;transform:scaleX(-1);}
 .snail-svg.tr{top:3rem;right:3rem;}
 
-/* ═══ CONTACT ════════════════════════════ */
-.contact-wrap{display:grid;grid-template-columns:1fr 1.1fr;gap:4rem;align-items:start;}
-.c-desc{max-width:340px;margin-top:1.5rem;}
-.c-links{display:flex;flex-direction:column;gap:.55rem;margin-top:2rem;}
-.c-link{
-  display:flex;align-items:center;gap:.9rem;
-  text-decoration:none;font-size:.76rem;
-  padding:.7rem 1rem;border:1px solid var(--wire);
-  transition:all .14s;font-family:'IBM Plex Mono',monospace;
-}
-.c-link:hover{border-color:var(--ember);color:var(--bone);background:var(--mole);}
-.c-ico{
-  width:26px;height:26px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:.65rem;flex-shrink:0;
-}
-
-.cf{border:1px solid var(--wire);display:flex;flex-direction:column;}
-.cf-f{border-bottom:1px solid var(--wire);display:flex;flex-direction:column;}
-.cf-f:last-child{border-bottom:none;}
-.cf-lbl{
-  font-size:.57rem;font-weight:700;
-  letter-spacing:.22em;text-transform:uppercase;
-  color:var(--clay);padding:.6rem 1.2rem 0;
-}
-.cf-f input,.cf-f textarea,.cf-f select{
-  background:transparent;border:none;outline:none;
-  color:var(--bone);font-family:'IBM Plex Mono',monospace;
-  font-size:.82rem;padding:.3rem 1.2rem .8rem;
-  resize:none;appearance:none;transition:background .12s;
-}
-.cf-f:focus-within{background:var(--mole);}
-/* Seta no select (appearance:none tinha removido; sem ela ninguém sabe que é dropdown) */
-.cf-f select{
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M1 1l4 4 4-4' stroke='%23a87b4a' stroke-width='1.5' fill='none'/></svg>");
-  background-repeat:no-repeat;background-position:right 1.2rem center;padding-right:2.6rem;cursor:pointer;
-}
-.cf-sub{
-  font-size:1rem;
-  letter-spacing:.15em;text-transform:uppercase;
-  padding:1rem;border:none;
-  cursor:pointer;transition:background .14s;
-}
-.cf-sub:hover{background:var(--fire);}
-
 /* FOOTER */
 footer{
   padding:1.4rem 2.4rem;background:var(--black);
@@ -446,7 +401,6 @@ html, body {
 html { scroll-padding-top: var(--nav-h,54px); }
 /* a última seção + rodapé ocupam no mínimo uma tela: senão, no computador, o
    "Contato" não tinha página embaixo pra subir até o menu e parava 129px abaixo */
-#contact { min-height: calc(100vh - var(--nav-h,54px) - var(--rodape-h,0px)); }
 * { max-width: 100%; }
 
 /* Hero title: allow wrapping on small screens */
@@ -484,8 +438,6 @@ html { scroll-padding-top: var(--nav-h,54px); }
 
 
   /* Contact */
-  .contact-wrap{grid-template-columns:1fr;gap:2.5rem;}
-  .c-desc{max-width:100%;}
 
   /* Footer */
   footer{flex-direction:column;align-items:flex-start;padding:1.2rem;}
@@ -503,7 +455,7 @@ html { scroll-padding-top: var(--nav-h,54px); }
   /* Piso de legibilidade pra textos miúdos */
   .ci-t,.cp-upsell-tag,.s-kicker{font-size:.66rem;}
   footer p{font-size:.63rem;}
-  .mp-lbl,.cf-lbl{font-size:.66rem;}
+  .mp-lbl{font-size:.66rem;}
 
   /* MP checkout modal */
   .mp-modal-inner{min-height:100dvh;}
@@ -571,9 +523,6 @@ body{cursor:auto;}
 /* selo de desconto do Mix + Master (12/10/2026: tinha saído junto com o CSS dos pacotes) */
 
 /* contato serif */
-.c-desc{font-family:var(--serif);font-style:italic;font-size:clamp(1.3rem,2.2vw,1.7rem);line-height:1.45;color:var(--amber);}
-.cf-sub{background:var(--bone)!important;color:var(--deep);font-family:var(--sans);}
-.cf-sub:hover{background:var(--clay)!important;}
 
 /* ═══ v2 — prova social, licença, vendidos, motion ═══ */
 .hero-proof{display:flex;flex-wrap:wrap;gap:.4rem 1.6rem;margin:0 0 2.4rem;font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--read);}
@@ -620,12 +569,6 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .hw-add{width:100%;justify-content:center;font-size:.76rem;}
 
 /* ═══ NOVO: NO ESTÚDIO ═══ */
-.studio-strip{grid-template-columns:repeat(4,1fr);margin:0 auto;}
-.studio-ph{justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.08em;color:var(--dim);text-align:center;padding:.5rem;}
-.testi{margin:2rem auto 0;text-align:center;border-top:1px solid var(--wire);padding-top:1.6rem;}
-.testi-q{font-family:'Cormorant Garamond',serif;font-style:italic;}
-.testi-who{font-family:'IBM Plex Mono',monospace;letter-spacing:.12em;margin-top:.8rem;text-transform:uppercase;}
-@media(max-width:760px){.studio-strip{grid-template-columns:1fr 1fr;}}
 
 /* ═══ NOVO: BARRA TOCANDO AGORA ═══ */
 .np-bar{position:fixed;display:flex;flex-direction:column;align-items:stretch;padding:.6rem .9rem;transition:transform .3s cubic-bezier(.4,0,.2,1);}
@@ -679,13 +622,6 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
   .hero-lede{margin-bottom:1.5rem;}
 }
 
-/* v13: setas do carrossel do estúdio (só mobile) */
-.studio-carousel{position:relative;}
-@media(max-width:760px){
-  .studio-nav{display:flex;align-items:center;justify-content:center;position:absolute;top:140px;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:rgba(20,17,13,.82);border:1px solid var(--clay);color:var(--cream);font-size:1.35rem;line-height:1;cursor:pointer;z-index:3;padding:0;}
-  .studio-nav.prev{left:2px;}
-  .studio-nav.next{right:2px;}
-}
 .nav-burger{display:none;background:none;border:none;cursor:pointer;width:44px;height:44px;flex-direction:column;justify-content:center;align-items:center;gap:5px;padding:0;flex-shrink:0;}
 .nav-burger span{display:block;width:22px;height:2px;background:var(--bone);transition:transform .22s,opacity .2s;}
 .nav-burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
@@ -700,69 +636,6 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
   .nav-links.open{max-height:82vh;border-bottom:1px solid var(--wire);}
   .nav-links>li>a{width:100%;border-bottom:1px solid var(--wire);padding:0 1.4rem!important;font-size:.74rem!important;justify-content:flex-start;}
 }
-/* ── NOVO v5: mídia real do Sobre nós — altura igual, largura variável, sem bordas laterais + legenda ── */
-.studio-strip{display:flex;justify-content:center;align-items:flex-start;max-width:1120px;}
-.studio-ph{padding:0;border:none;background:none;display:flex;flex-direction:column;align-items:center;aspect-ratio:auto;}
-.studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb>img{border:1px solid var(--wire);border-radius:4px;background:var(--black);}
-.studio-ph figcaption{margin-top:.6rem;letter-spacing:.1em;text-transform:uppercase;}
-/* 1º card do carrossel (27/09/2026): o @rideblan33, abre o portfólio */
-.studio-eu{text-decoration:none;}
-.studio-eu .eu-box{position:relative;width:100%;aspect-ratio:4/5;overflow:hidden;border:1px solid var(--wire);border-radius:4px;background:radial-gradient(ellipse 80% 60% at 60% 40%,rgba(185,143,94,.12),transparent 70%),var(--black);container-type:inline-size;}
-.studio-eu .eu-33{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);font-family:var(--serif);font-weight:600;font-size:96cqw;line-height:1;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1.3px rgba(185,143,94,.5);pointer-events:none;user-select:none;}
-.studio-eu .eu-box img{position:absolute;bottom:0;left:50%;transform:translateX(-50%);height:100%;width:auto;max-width:none;filter:drop-shadow(0 12px 24px rgba(0,0,0,.55));transition:transform .3s ease;}
-/* rodada R (18/10/2026): o "Portfólio" virou botão de verdade (mesma cara do Ouvir o catálogo) */
-.studio-eu .eu-sel{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:44px 12px 12px;background:linear-gradient(180deg,rgba(20,17,13,0),rgba(20,17,13,.88) 46%);}
-.studio-eu .eu-sel b{font-family:var(--serif);font-weight:600;font-size:1.4rem;line-height:1;color:var(--cream);white-space:nowrap;text-align:center;}
-.studio-eu .eu-sel i{display:block;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-style:normal;font-weight:700;font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--deep);background:var(--bone);padding:12px 10px;text-align:center;white-space:nowrap;transition:background .2s;}
-.studio-eu .eu-cap{margin-top:.6rem;letter-spacing:.1em;color:var(--fire);text-transform:uppercase;}
-.studio-eu:hover .eu-sel i,.studio-eu:focus-visible .eu-sel i{background:var(--clay);}
-.studio-eu:hover .eu-box img{transform:translateX(-50%) scale(1.02);}
-/* destaque do depoimento @sxnxstro */
-.testi{max-width:1180px;padding-top:2.2rem;}
-.testi-q{font-size:clamp(1.4rem,2.5vw,1.85rem);line-height:1.3;}
-.testi-who{color:var(--amber);font-size:.72rem;}
-
-/* ── NOVO v6: quote em 1 linha, play badge, lightbox, carrossel mobile, FAB Instagram ── */
-@media(min-width:761px){.testi-q{white-space:nowrap;}}
-
-.studio-ph{cursor:zoom-in;outline-offset:3px;}
-.vid-thumb{position:relative;display:flex;line-height:0;}
-.play-badge{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:66px;height:66px;border-radius:50%;background:rgba(8,6,4,.55);border:2px solid var(--bone);color:var(--bone);display:flex;align-items:center;justify-content:center;font-size:1.4rem;padding-left:5px;pointer-events:none;transition:transform .16s,background .16s;box-shadow:0 4px 18px rgba(0,0,0,.5);}
-.studio-vid:hover .play-badge,.studio-vid:focus .play-badge{background:var(--ember);transform:translate(-50%,-50%) scale(1.08);}
-
-.lb{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(8,6,4,.94);padding:5vh 4vw;cursor:zoom-out;}
-.lb.on{display:flex;}
-.lb-inner{max-width:96vw;max-height:90vh;display:flex;align-items:center;justify-content:center;cursor:auto;}
-.lb-inner>img,.lb-inner>video{max-width:96vw;max-height:90vh;width:auto;height:auto;display:block;border:1px solid var(--wire);border-radius:4px;box-shadow:0 20px 60px rgba(0,0,0,.6);}
-.lb-x{position:absolute;top:16px;right:18px;width:46px;height:46px;border:1px solid var(--wire);background:rgba(0,0,0,.55);color:var(--bone);font-size:1.05rem;border-radius:50%;cursor:pointer;z-index:2;}
-.lb-x:hover{background:var(--ember);}
-
-/* desktop: 4 mídias na MESMA linha, altura igual, largura proporcional ao aspect-ratio */
-@media(min-width:761px){
-  .studio-strip{flex-wrap:nowrap;gap:1rem;max-width:1260px;}
-  .studio-ph{flex-basis:0;flex-grow:1;min-width:0;}
-  .studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb,.studio-ph .vid-thumb>img{height:auto;width:100%;}
-  .studio-eu .eu-sel{padding:36px 10px 10px;gap:8px;}
-  .studio-eu .eu-sel b{font-size:1.15rem;}
-  .studio-eu .eu-sel i{font-size:.58rem;letter-spacing:.14em;padding:10px 6px;}
-  .sp-0{flex-grow:.8;} .sp-2{flex-grow:.6957;} .sp-3{flex-grow:.5322;} .sp-4{flex-grow:.7826;}
-}
-
-@media(max-width:760px){
-  .studio-strip{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:.9rem;padding:0 9vw .4rem;justify-content:flex-start;scrollbar-width:none;}
-  .studio-strip::-webkit-scrollbar{display:none;}
-  /* celular (27/09/2026): todos os cards com a MESMA altura e largura pela proporção de
-     cada mídia, igual ao computador. Nada corta nem estica (proporção = a do arquivo). */
-  .studio-strip{--sh:min(82vw,400px);}
-  .studio-ph{scroll-snap-align:center;flex:0 0 auto;width:min-content;max-width:none;}
-  .studio-ph>img,.studio-ph>video,.studio-ph .vid-thumb,.studio-ph .vid-thumb>img{height:var(--sh);width:auto;max-width:none;max-height:none;object-fit:cover;}
-  .sp-1>img{aspect-ratio:1;}
-  .sp-2 .vid-thumb,.sp-2 .vid-thumb>img{aspect-ratio:.6957;}
-  .sp-3>img{aspect-ratio:.5322;}
-  .sp-4>video{aspect-ratio:.7826;}
-  .studio-eu .eu-box{height:var(--sh);width:auto;}
-}
-
 /* ══ NOVO v18 — player do Drive (sai o SoundCloud) ═══════════════════
    Linha do beat: número/play, capa da beat tape, nome, ficha e preço.
    Barra do pé: tempo, seek, capa, nome, transporte, volume e preço. */
@@ -1239,7 +1112,7 @@ body.vol-aberto .cart-btn{transform:translateY(-76px)}
       ampliada não arrasta mais a página que está atrás (no celular arrastava).
    2) No celular o menu de cima perde o desfoque do fundo: com o fundo 97%
       opaco ele não aparecia, e custava processamento a cada quadro da rolagem. */
-.cp-body,.mp-modal-inner,.lb{overscroll-behavior:contain}
+.cp-body,.mp-modal-inner{overscroll-behavior:contain}
 @media(max-width:860px){ nav{backdrop-filter:none;-webkit-backdrop-filter:none} }
 /* hero no notebook (03/10/2026, opção B do Bruno): entre 901 e 1500px de largura o card do
    Beat em destaque cobria o fim do "Caramujo". Só nessa faixa o título encolhe um pouco e o
@@ -1587,3 +1460,18 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .mp-sos{margin:1.3rem 0 0;padding-top:1rem;border-top:1px solid var(--wire);font-size:.74rem;color:var(--read);text-align:center}
 .mp-sos a{color:var(--bone);font-weight:700;text-decoration:underline;text-underline-offset:3px}
 #mpModal:has(#mpStep3[style*="block"]):has(#mpPixConfirmed[style*="block"]) .mp-sos{display:none}
+/* 5 (25/10/2026): depoimento embaixo do Quem já gravou e o "Quem faz o som" num cartão, com o anel de story do topo */
+.qg-depo{margin:1.8rem 0 0;padding:0}
+.qg-depo p{margin:0;font:italic 500 1.2rem/1.4 var(--serif);color:var(--bone)}
+.qg-depo cite{display:block;margin-top:6px;font:400 .66rem 'IBM Plex Mono',monospace;font-style:normal;letter-spacing:.14em;text-transform:uppercase;color:var(--label)}
+#estudio{padding-top:3.4rem;padding-bottom:4rem}
+.eu-card{display:grid;grid-template-columns:96px minmax(0,1fr);gap:18px;align-items:center;max-width:760px;padding:18px;border:1px solid var(--wire);background:var(--black);text-decoration:none;color:var(--bone)}
+.eu-anel{width:92px;height:92px;border-radius:50%;padding:3px;background:conic-gradient(from 200deg,var(--fire),var(--amber),var(--clay),var(--fire));transition:transform .15s}
+.eu-anel img{display:block;width:100%;height:100%;border-radius:50%;border:3px solid var(--black);object-fit:cover}
+.eu-k{display:block;font:700 .6rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--label)}
+.eu-tx b{display:block;margin:6px 0;font:500 1.7rem/1 var(--serif);color:var(--cream)}
+.eu-p{display:block;margin:0 0 12px;font-size:.8rem;line-height:1.5;color:var(--read)}
+.eu-cta{display:inline-flex;font:700 .62rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--cream);border:1px solid var(--clay);border-radius:999px;padding:9px 14px;transition:background .15s,color .15s,border-color .15s}
+.eu-card:hover .eu-anel,.eu-card:focus-visible .eu-anel{transform:scale(1.04)}
+.eu-card:hover .eu-cta,.eu-card:focus-visible .eu-cta{background:var(--bone);border-color:var(--bone);color:var(--black)}
+@media(min-width:900px){.eu-card{grid-template-columns:120px minmax(0,1fr);padding:22px 26px}.eu-anel{width:116px;height:116px}}

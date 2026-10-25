@@ -23,6 +23,8 @@ export function resumoVitrine(valor) {
 
 const ini = (n) => String(n || '').replace(/^@/, '').split(/[\s_.-]+/).filter(Boolean).map((p) => p[0]).join('').slice(0, 2).toUpperCase() || '?';
 
+// 25/10/2026 (de-para final, item 5): o depoimento do @sxnxstro mora aqui, embaixo da fileira (saiu do estúdio)
+const DEPO = '<blockquote class="qg-depo"><p>"Rideblan, que isso? Mão de ouro pra fazer esse instrumental incrível."</p><cite>@sxnxstro</cite></blockquote>';
 export function secaoVitrine(r) {
   if (!r || !r.a || !r.a.length) return '';
   const cards = r.a.map((a) => `<a class="qg-card" href="/rideblan33/artistas#${esc(a.s)}" data-de="vitrine-gravou">${a.f
@@ -37,6 +39,7 @@ export function secaoVitrine(r) {
   return `<section id="quemGravou" class="s s-earth qg-vit" aria-labelledby="qgTit">
   <div class="s-head qg-head"><div><span class="s-kicker">Portfólio</span><h2 class="s-title" id="qgTit">Quem já <span class="r">gravou</span></h2></div><span class="qg-dir"><a class="qg-ver" href="/rideblan33/artistas" data-de="vitrine-gravou">Ver os ${r.n} ›</a><span class="qg-setas" hidden><button type="button" id="qgvAnt" aria-label="Artistas anteriores"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><button type="button" id="qgvProx" aria-label="Mais artistas"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></span></span></div>
   <div class="qg-tr-w"><div class="qg-trilho" id="qgvTr">${cards}${mais}</div><button class="qgv-nav prev" type="button" id="qgvAntCel" aria-label="Artistas anteriores" hidden>‹</button><button class="qgv-nav next" type="button" id="qgvProxCel" aria-label="Mais artistas" hidden>›</button></div>
+  ${DEPO}
 </section>
 <div class="hr"></div>`;
 }

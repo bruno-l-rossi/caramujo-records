@@ -34,35 +34,8 @@
 <!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
      a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=81b9283545">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=83b6e7ec7b">
 
-<!-- ═══ EMAILJS (formulário de contato) ══════════════
-  Chaves em emailjs.com: Account > Public Key, Email Services > Service ID,
-  Email Templates > Template ID. Variáveis do template: {{from_name}},
-  {{from_email}}, {{subject}}, {{message}}.
-  O script só baixa quando a pessoa mexe no formulário: antes ele vinha
-  síncrono no <head> e segurava a primeira pintura do site inteiro.
-════════════════════════════════════════════════════ -->
-<script>
-  const EMAILJS_PUBLIC_KEY  = 'TECsmRQF1iQ0I0YdY';
-  const EMAILJS_SERVICE_ID  = 'service_lsk2azj';
-  const EMAILJS_TEMPLATE_ID = 'template_5ps4hob';
-  let emailjsPronto=null;
-  function carregarEmailJS(){
-    if(!emailjsPronto) emailjsPronto=new Promise(function(ok,falha){
-      var s=document.createElement('script');
-      s.src='https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
-      s.onload=function(){ try{ emailjs.init({publicKey:EMAILJS_PUBLIC_KEY}); ok(); }catch(e){ emailjsPronto=null; falha(e); } };
-      s.onerror=function(){ emailjsPronto=null; falha(new Error('EmailJS nao carregou')); };
-      document.head.appendChild(s);
-    });
-    return emailjsPronto;
-  }
-  // tocou num campo do contato: já vai buscando, pra estar pronto no ENVIAR
-  document.addEventListener('focusin',function(e){
-    if(e.target&&/^cf[A-Z]/.test(e.target.id||'')) carregarEmailJS().catch(function(){});
-  });
-</script>
 
 <link rel="canonical" href="https://caramujorecords.com.br"/>
 <script type="application/ld+json">
@@ -285,113 +258,20 @@
 
 <div class="hr"></div>
 
-<!-- ═══ NO ESTÚDIO (placeholder: trocar por fotos/quote reais) ══ -->
-<!-- rodada R (18/10/2026): o cartão do @rideblan33 abre o perfil no topo, já na aba Beat tapes (a origem "sobre" escolhe a aba no servidor) -->
+<!-- 25/10/2026 (de-para final, item 5): o "Por dentro do estúdio" virou um cartão (as fotos foram pro perfil).
+     Botão escolhido pelo Bruno: a foto com o anel de story do topo e "Ver portfólio". Abre o perfil (origem "sobre"). -->
 <section id="estudio" class="s s-earth">
-  <div class="s-head">
-    <span class="s-kicker">Sobre nós</span>
-    <h2 class="s-title">Por dentro do <span class="r">estúdio</span></h2>
-    <p class="s-sub">Desde 2018 no corre, fazendo a cena girar e deixando rastros.</p>
-  </div>
-  <div class="studio-carousel">
-    <button class="studio-nav prev" type="button" onclick="studioScroll(-1)" aria-label="Anterior">‹</button>
-  <div class="studio-strip">
-    <a class="studio-ph sp-0 studio-eu" href="/rideblan33" data-de="sobre" aria-label="Beat tapes do @rideblan33">
-      <span class="eu-box"><span class="eu-33" aria-hidden="true">33</span><img src="assets/perfil/rideblan33-480.webp" alt="@rideblan33 de costas, com a camisa 33" loading="lazy" width="480" height="800"><span class="eu-sel"><b>@rideblan33</b><i>Ver portfólio →</i></span></span>
-      <span class="eu-cap">Quem faz o som</span>
-    </a>
-    <figure class="studio-ph sp-1" tabindex="0" role="button" aria-label="Ampliar foto do estúdio" onclick="openLB('img','assets/studio-hero.jpg')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLB('img','assets/studio-hero.jpg');}">
-      <img src="assets/studio-hero.jpg" alt="rideblan no estúdio, produzindo no FL Studio" loading="lazy" decoding="async" width="768" height="768">
-      <figcaption>Onde tudo acontece</figcaption>
-    </figure>
-    <figure class="studio-ph studio-vid sp-2" tabindex="0" role="button" aria-label="Assistir retorno do Fab" onclick="openLB('video-audio','assets/depo-fab.mp4')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLB('video-audio','assets/depo-fab.mp4');}">
-      <div class="vid-thumb">
-        <img src="assets/depo-fab-poster.jpg" alt="Retorno do Fab pelo WhatsApp" loading="lazy" decoding="async" width="576" height="828">
-        <span class="play-badge" aria-hidden="true">▶</span>
-      </div>
-      <figcaption>Colaboração fatal</figcaption>
-    </figure>
-    <figure class="studio-ph sp-3" tabindex="0" role="button" aria-label="Ampliar direct do Candy" onclick="openLB('img','assets/depo-candy.jpg')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLB('img','assets/depo-candy.jpg');}">
-      <img src="assets/depo-candy.jpg" alt="Depoimento de Candyboi sobre a mixagem" loading="lazy" decoding="async" width="720" height="1353">
-      <figcaption>Parcerias de destaque</figcaption>
-    </figure>
-    <figure class="studio-ph sp-4" tabindex="0" role="button" aria-label="Ampliar sessão ao vivo" onclick="openLB('video-loop','assets/sessao.mp4')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLB('video-loop','assets/sessao.mp4');}">
-      <video data-loop loop muted playsinline preload="none" poster="assets/sessao-poster.jpg">
-        <source src="assets/sessao.mp4" type="video/mp4">
-      </video>
-      <figcaption>Sessão de studio</figcaption>
-    </figure>
-  </div>
-    <button class="studio-nav next" type="button" onclick="studioScroll(1)" aria-label="Próxima">›</button>
-  </div>
-  <div class="testi">
-    <p class="testi-q">"Rideblan, que isso? Mão de ouro pra fazer esse instrumental incrível."</p>
-    <p class="testi-who">@sxnxstro</p>
-  </div>
+  <a class="eu-card" href="/rideblan33" data-de="sobre"><span class="eu-anel"><img src="assets/perfil/rideblan33-avatar.webp" alt="" width="200" height="200" loading="lazy"></span><span class="eu-tx"><span class="eu-k">Quem faz o som</span><b>@rideblan33</b><span class="eu-p">Fotos do estúdio, quem já gravou e as beat tapes.</span><span class="eu-cta">Ver portfólio</span></span></a>
 </section>
 
-<div class="hr"></div>
 
-<!-- ═══ CONTACT ══════════════════════════════════════ -->
-<section id="contact" class="s s-dark">
-  <div class="s-head">
-    <span class="s-kicker">Contato</span>
-    <h2 class="s-title">Fale <span class="r">com a gente</span></h2>
-  </div>
-
-  <div class="contact-wrap">
-    <div class="rv">
-      <p class="c-desc">
-        A Caramujo nasceu pra abrir portas pra artistas locais.<br/>Trabalhe conosco.
-      </p>
-      <div class="c-links">
-        <a class="c-link" href="https://ig.me/m/rideblan33" target="_blank" rel="noopener" style="color:var(--bone);border-color:var(--clay);">
-          <span class="c-ico" style="background:var(--earth);color:var(--amber);">▲</span> Chamar no Direct — @rideblan33 <span style="margin-left:auto;color:var(--fire);font-size:.6rem;letter-spacing:.1em;">RESPOSTA MAIS RÁPIDA</span>
-        </a>
-        <a class="c-link" href="mailto:contato@caramujorecords.com.br" style="color:var(--bone);">
-          <span class="c-ico" style="background:var(--earth);color:var(--amber);">@</span> contato@caramujorecords.com.br
-        </a>
-      </div>
-    </div>
-
-    <div class="rv">
-      <div class="cf">
-        <div class="cf-f">
-          <label class="cf-lbl" for="cfName">Nome artístico</label>
-          <input id="cfName" type="text" placeholder="Como você se chama?" autocomplete="nickname"/>
-        </div>
-        <div class="cf-f">
-          <label class="cf-lbl" for="cfEmail">Email</label>
-          <input id="cfEmail" type="email" placeholder="seu@email.com" autocomplete="email" inputmode="email"/>
-        </div>
-        <div class="cf-f">
-          <label class="cf-lbl" for="cfSubject">Assunto</label>
-          <select id="cfSubject">
-            <option>Compra de beat</option>
-            <option>Pack de beats</option>
-            <option>Beat exclusivo sob encomenda</option>
-            <option>Mixagem</option>
-            <option>Masterização</option>
-            <option>Mix + Master</option>
-            <option>Outro</option>
-          </select>
-        </div>
-        <div class="cf-f">
-          <label class="cf-lbl" for="cfMessage">Mensagem</label>
-          <textarea id="cfMessage" rows="4" placeholder="Fala sobre o seu projeto..."></textarea>
-        </div>
-        <div id="cfStatus" style="font-size:.68rem;min-height:1rem;margin-bottom:.5rem;letter-spacing:.05em;"></div>
-        <button class="cf-sub" onclick="sendForm(this)">ENVIAR MENSAGEM →</button>
-      </div>
-    </div>
-  </div>
-</section>
 </main>
 
 <!-- FOOTER -->
 <footer>
   <div class="foot-generos" role="navigation" aria-label="Beats por gênero"><span class="fg-k">Beats por gênero</span><a href="/beats/trap">Trap</a><a href="/beats/boom-bap">Boom Bap</a><a href="/beats/plug">Plug</a><a href="/beats/hood-trap">Hood Trap</a><a href="/beats/experimental">Experimental</a><a href="/beats/hard">Hard</a><a href="/beats/detroit">Detroit</a><a href="/beats/drumless">Drumless</a><a href="/beats/funk">Funk</a><a href="/beats/pluggnb">Pluggnb</a><a href="/beats/bounce">Bounce</a><a href="/beats/no-melody">No Melody</a><a href="/beats/drill">Drill</a></div>
   <img loading="lazy" width="400" height="400" src="assets/brand/selo-creme.svg" alt="Caramujo Records"/>
+  <p><a class="foot-perfil" href="mailto:contato@caramujorecords.com.br">contato@caramujorecords.com.br</a></p>
   <p>© 2026 Caramujo Records — São Carlos, SP</p>
   <p><a class="foot-perfil" href="/rideblan33">@rideblan33</a> · Todos os direitos reservados</p>
 </footer>
@@ -583,11 +463,6 @@
 </div>
 
 
-<!-- ═══ Lightbox (ampliar mídia do estúdio) + FAB Instagram ═══ -->
-<div id="mediaLB" class="lb" role="dialog" aria-modal="true" aria-label="Mídia ampliada" aria-hidden="true">
-  <button class="lb-x" type="button" aria-label="Fechar" onclick="closeLB()">✕</button>
-  <div class="lb-inner" id="lbInner"></div>
-</div>
 
 <script>
 /* O que o servidor lê e escreve a cada visita (functions/index.js e _lib/loja.js): a lista de
@@ -608,7 +483,7 @@ const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':
 const FEATURED_OVERRIDE_ID=null;
 const FEATURED_OVERRIDE_ATE='';
 </script>
-<script src="/assets/vitrine/vitrine.js?v=a2432c5544"></script>
+<script src="/assets/vitrine/vitrine.js?v=9106f6cc67"></script>
 <!-- leva-de -->
 <script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
 (function(){

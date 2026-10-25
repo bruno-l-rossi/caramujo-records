@@ -1169,53 +1169,6 @@ function backToStep1(){
   btn.disabled=false;btn.textContent='CONTINUAR → PAGAMENTO';
 }
 
-function sendForm(btn){
-  const name    = document.getElementById('cfName').value.trim();
-  const email   = document.getElementById('cfEmail').value.trim();
-  const subject = document.getElementById('cfSubject').value;
-  const message = document.getElementById('cfMessage').value.trim();
-  const status  = document.getElementById('cfStatus');
-
-  if(!name || !email || !message){
-    status.className='msg-err';
-    status.textContent='Preencha nome, email e mensagem antes de enviar.';
-    return;
-  }
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-    status.className='msg-err';
-    status.textContent='Email inválido.';
-    return;
-  }
-
-  btn.disabled=true; btn.textContent='ENVIANDO...';
-  status.className=''; status.textContent='';
-
-  carregarEmailJS().then(()=>emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-    from_name:  name,
-    from_email: email,
-    subject:    subject,
-    message:    message,
-  })).then(()=>{
-    btn.disabled=false; btn.textContent='ENVIAR MENSAGEM →';
-    status.className='msg-ok';
-    status.textContent='✓ Mensagem enviada! Fique atento no seu e-mail pois em breve retornaremos seu contato.';
-    document.getElementById('cfName').value='';
-    document.getElementById('cfEmail').value='';
-    document.getElementById('cfMessage').value='';
-    document.getElementById('cfSubject').selectedIndex=0;
-    setTimeout(()=>{status.textContent='';},12000);
-  }).catch((err)=>{
-    btn.disabled=false; btn.textContent='ENVIAR MENSAGEM →';
-    status.className='msg-err';
-    // Se as chaves ainda são placeholder, mostra instrução útil
-    if(EMAILJS_PUBLIC_KEY==='SEU_PUBLIC_KEY_AQUI'){
-      status.textContent='Configure o EmailJS no código (ver comentários no <head>).';
-    } else {
-      status.textContent='Erro ao enviar. Tente pelo email direto: contato@caramujorecords.com.br';
-    }
-    console.error('EmailJS error:', err);
-  });
-}
 
 /* ── TOAST & MODAL ERROR ─────────────────────────── */
 function showToast(msg, duration=3500) {
@@ -1622,27 +1575,7 @@ try{
     ligarSeek($('hwSeek'));
   }
 
-  // O loop mudo da sessão só baixa e roda quando aparece na tela, e para
-  // quando sai. Antes ele baixava 143 KB no load, lá do fim da página.
-  function initStudioVideos(){
-    var vs=document.querySelectorAll('#estudio video[data-loop]');
-    if(!vs.length) return;
-    var quieto=false;
-    try{ quieto=matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(_){}
-    if(quieto) return;                        // fica o poster parado
-    function roda(v){ var p=v.play(); if(p&&p.catch) p.catch(nada); }
-    // navegador sem IntersectionObserver: volta o autoplay de antes
-    if(!('IntersectionObserver' in window)){ vs.forEach(function(v){ v.preload='auto'; v.autoplay=true; try{ v.load(); }catch(_){} }); return; }
-    var io=new IntersectionObserver(function(ents){
-      ents.forEach(function(en){ if(en.isIntersecting) roda(en.target); else if(!en.target.paused) en.target.pause(); });
-    },{rootMargin:'200px 0px',threshold:0.01});
-    vs.forEach(function(v){ io.observe(v); });
-  }
 
-  window.studioScroll=function(dir){var st=document.querySelector('.studio-strip');if(!st)return;var it=st.querySelector('.studio-ph');var w=it?it.getBoundingClientRect().width+16:st.clientWidth*0.8;st.scrollBy({left:dir*w,behavior:'smooth'});};
-  (function(){var st=document.querySelector('.studio-strip');if(!st||!('IntersectionObserver'in window))return;var figs=st.querySelectorAll('.studio-ph');if(figs.length<2)return;var first=figs[0],last=figs[figs.length-1];var pv=document.querySelector('.studio-nav.prev'),nx=document.querySelector('.studio-nav.next');var io=new IntersectionObserver(function(ents){ents.forEach(function(en){if(en.target===first&&pv)pv.style.display=en.isIntersecting?'none':'';if(en.target===last&&nx)nx.style.display=en.isIntersecting?'none':'';});},{root:st,threshold:0.6});io.observe(first);io.observe(last);})();
-
-  /* ── a lista de beats com o endereço do MP3 ── */
   // Plano B (26/09/2026): a última lista boa fica guardada no navegador. Se a
   // API falhar (bug num deploy, banco fora do ar, limite do dia), quem já
   // visitou continua ouvindo com essa cópia. Quem nunca visitou vê o aviso.
@@ -1771,7 +1704,6 @@ try{
     document.body.classList.toggle('sem-volume',!volumeMexe());
     renderFeatured();
     initHero();
-    initStudioVideos();
     ligarSeek($('npSeek'));
     if($('npPlay')) $('npPlay').innerHTML=ICO_P;
     if(window.__LOJA_FORA) avisoForaDoAr();
@@ -2052,40 +1984,6 @@ try{
 }catch(e){ setTimeout(function(){ throw e; }); }
 
 /* ─────────────────────────────────────────────────────────────── */
-try{
-(function(){
-  window.openLB=function(kind,src){
-    var lb=document.getElementById('mediaLB'), inner=document.getElementById('lbInner');
-    if(!lb||!inner)return;
-    inner.innerHTML='';
-    if(kind==='img'){
-      var im=document.createElement('img'); im.src=src; im.alt=''; inner.appendChild(im);
-    } else {
-      var v=document.createElement('video'); v.src=src; v.setAttribute('playsinline',''); v.playsInline=true; v.controls=true; v.autoplay=true;
-      if(kind==='video-loop'){ v.loop=true; v.muted=true; }
-      else {
-        try{ window.pausarBeat(); }catch(_){}
-      }
-      inner.appendChild(v);
-      try{ v.play(); }catch(_){}
-    }
-    lb.classList.add('on'); lb.setAttribute('aria-hidden','false');
-    document.body.style.overflow='hidden';
-  };
-  window.closeLB=function(){
-    var lb=document.getElementById('mediaLB'), inner=document.getElementById('lbInner');
-    if(!lb||!inner)return;
-    var vid=inner.querySelector('video'); if(vid){ try{vid.pause();}catch(_){} }
-    inner.innerHTML='';
-    lb.classList.remove('on'); lb.setAttribute('aria-hidden','true');
-    document.body.style.overflow='';
-    try{ window.retomarBeat(); }catch(_){}
-  };
-  var lb=document.getElementById('mediaLB');
-  if(lb) lb.addEventListener('click',function(e){ if(e.target===lb) window.closeLB(); });
-  document.addEventListener('keydown',function(e){ if(e.key==='Escape') window.closeLB(); });
-})();
-}catch(e){ setTimeout(function(){ throw e; }); }
 
 /* ─────────────────────────────────────────────────────────────── */
 try{
@@ -2536,7 +2434,6 @@ try{
   var folhas=[
     { aberta:function(){ var v=document.querySelector('.cs-veu'); return !!(v&&!v.hidden); },
       fechar:function(){ try{ window.CaramujoStory.fechar(); }catch(_){} } },
-    { aberta:function(){ return tem('mediaLB','on'); }, fechar:function(){ closeLB(); } },
     { aberta:function(){ return tem('mpModal','open'); }, fechar:function(){ closeCheckout(); },
       segura:function(){ var p=$('mpPixPending'); return !!(p&&p.style.display==='block'); } },
     { aberta:function(){ return tem('cartPanel','open'); }, fechar:function(){ closeAll(); } },
