@@ -1921,6 +1921,42 @@ try{
 
 /* ─────────────────────────────────────────────────────────────── */
 try{
+/* ── CUPOM QUE VEM DO E-MAIL (25/10/2026) ─────────────────────────
+   O botão do e-mail da lista leva ?cupom=LISTA-XXXX (e-mail não roda botão de copiar). A vitrine guarda o
+   código (7 dias) e aplica pelo applyCoupon de sempre quando o carrinho tem beat; antes disso, o código já
+   fica escrito no campo de cupom. Inválido ou vencido: esquece. Nada do carrinho é reescrito. */
+(function(){
+  var K='cr_cupom_email', pend=null, tentando=false, veio=/[?&]cupom=/.test(location.search);
+  try{
+    var q=(new URLSearchParams(location.search).get('cupom')||'').trim().toUpperCase();
+    if(/^[A-Z0-9-]{3,30}$/.test(q)){ localStorage.setItem(K,JSON.stringify({c:q,em:Date.now()})); pend=q; }
+    // o código sai da barra de endereço (quem copiar o link não leva o cupom); o ?de= fica pro funil
+    if(/[?&]cupom=/.test(location.search)&&history.replaceState){ var u=new URLSearchParams(location.search); u.delete('cupom'); var r=u.toString(); history.replaceState(null,'',location.pathname+(r?'?'+r:'')+location.hash); }
+    else { var g=JSON.parse(localStorage.getItem(K)||'null'); if(g&&g.c&&Date.now()-g.em<7*864e5) pend=g.c; else localStorage.removeItem(K); }
+  }catch(_){}
+  if(!pend) return;
+  function esquece(){ pend=null; try{ localStorage.removeItem(K); }catch(_){} }
+  function tenta(){
+    if(!pend||tentando||typeof applyCoupon!=='function') return;
+    var inp=document.getElementById('cpCouponInput'); if(inp&&!inp.value) inp.value=pend;
+    if(typeof activeCoupon!=='undefined'&&activeCoupon){ if(activeCoupon.code===pend) esquece(); return; }
+    if(!cart.some(function(x){ return x.type==='Beat'; })) return;
+    tentando=true;
+    Promise.resolve(applyCoupon()).then(function(){ tentando=false; esquece(); },function(){ tentando=false; });
+  }
+  var uc=window.updateCart;
+  if(typeof uc==='function') window.updateCart=function(){ var r=uc.apply(this,arguments); setTimeout(tenta,0); return r; };
+  function chegou(){
+    var inp=document.getElementById('cpCouponInput'); if(inp&&!inp.value) inp.value=pend;
+    if(veio&&typeof showToast==='function') showToast('Cupom '+pend+' guardado: ele entra no carrinho quando você escolher um beat.');
+    tenta();
+  }
+  if(document.readyState!=='loading') setTimeout(chegou,300); else document.addEventListener('DOMContentLoaded',function(){ setTimeout(chegou,300); });
+})();
+}catch(e){ setTimeout(function(){ throw e; }); }
+
+/* ─────────────────────────────────────────────────────────────── */
+try{
 /* ── DEEP-LINK POR BEAT (#beat=slug e #add=slug) ──────────────────
    Abre o site direto num beat: acha pelo nome, mostra, rola e toca.
    #add faz o mesmo e ainda joga o beat no carrinho, já aberto: é o link

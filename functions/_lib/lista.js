@@ -127,6 +127,9 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 // O e-mail com o cupom (o desenho do mockup 9-email, aprovado com o texto novo)
 // relanc (rodada S): cupom de uma beat tape nova pra quem já estava na lista
 const ABRE = (relanc) => (relanc ? 'Saiu beat tape nova na Caramujo. Esse é o seu cupom novo pros beats do catálogo:' : 'Valeu por entrar na lista da Caramujo. Esse é o cupom da sua primeira compra:');
+// 25/10/2026: e-mail não roda botão de copiar (o Gmail e os outros cortam script), então o botão leva o cupom
+// no link: a vitrine guarda e aplica sozinha quando a pessoa põe um beat no carrinho ("CUPOM QUE VEM DO E-MAIL")
+export const linkCupom = (cupom) => `${SITE}/?de=lista&cupom=${encodeURIComponent(String(cupom || ''))}#beats`;
 export function htmlCupom({ cupom, valeAte: ate, token, relanc }) {
   const sairUrl = `${SITE}/api/lista?sair=${token}`;
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Seu cupom de ${PCT}%</title></head>
@@ -146,8 +149,8 @@ export function htmlCupom({ cupom, valeAte: ate, token, relanc }) {
     <div style="font-family:'Courier New',Courier,monospace;font-size:26px;letter-spacing:0.25em;color:#f2ecdf;">${esc(cupom)}</div>
     <div style="font-family:'Courier New',Courier,monospace;font-size:11px;color:#b89e72;margin-top:10px;">${PCT}% nos beats do catálogo · vale até ${dataBR(ate)}</div>
   </td></tr></table>
-  <table cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 26px;"><tr><td style="background:#E8E0CF;"><a href="${SITE}/?de=lista#beats" style="display:inline-block;padding:14px 22px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;font-weight:bold;letter-spacing:0.2em;color:#14110d;text-decoration:none;text-transform:uppercase;">Escolher meu beat &rarr;</a></td></tr></table>
-  <p style="font-family:Georgia,'Times New Roman',serif;font-size:13px;color:#b89e72;line-height:1.8;margin:0 0 30px;">É só colar o código no carrinho, no campo de cupom.</p>
+  <table cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 26px;"><tr><td style="background:#E8E0CF;"><a href="${linkCupom(cupom)}" style="display:inline-block;padding:14px 22px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;font-weight:bold;letter-spacing:0.2em;color:#14110d;text-decoration:none;text-transform:uppercase;">Usar o cupom no site &rarr;</a></td></tr></table>
+  <p style="font-family:Georgia,'Times New Roman',serif;font-size:13px;color:#b89e72;line-height:1.8;margin:0 0 30px;">O botão já leva o cupom pro carrinho: é só escolher o beat. Se preferir, copie o código acima e cole no campo de cupom.</p>
 </td></tr>
 <tr><td style="padding:18px 36px;border-top:1px solid #332c22;">
   <div style="font-family:'Courier New',Courier,monospace;font-size:10px;line-height:1.7;color:#6f6757;">Você recebeu esse e-mail porque entrou na lista em caramujorecords.com.br. <a href="${sairUrl}" style="color:#9e7c48;">Sair da lista</a></div>
@@ -166,8 +169,8 @@ export function textoCupom({ cupom, valeAte: ate, token, relanc }) {
     `   ${cupom}`,
     `   ${PCT}% nos beats do catálogo · vale até ${dataBR(ate)}`,
     '',
-    `Escolher meu beat: ${SITE}/?de=lista#beats`,
-    'É só colar o código no carrinho, no campo de cupom.',
+    `Usar o cupom no site (ele já entra no carrinho): ${linkCupom(cupom)}`,
+    'Ou copie o código e cole no carrinho, no campo de cupom.',
     '',
     `Sair da lista: ${SITE}/api/lista?sair=${token}`
   ].join('\n');

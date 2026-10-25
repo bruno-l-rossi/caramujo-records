@@ -1886,7 +1886,7 @@ __META__
       var b=document.createElement('b');
       if(semCupom){ b.textContent='Você está na lista.'; tx.appendChild(b); tx.appendChild(document.createTextNode(' O cupom desse e-mail já foi usado ou venceu. As próximas beat tapes seguem chegando por lá.')); usar.hidden=true; }
       else if(falhou){ b.textContent='Você entrou na lista.'; tx.appendChild(b); tx.appendChild(document.createTextNode(' Só que o e-mail com o cupom não saiu agora. Toca em reenviar.')); usar.hidden=true; }
-      else { b.textContent='Seu cupom de '+pct+'% vale até '+br(vale)+'.'; tx.appendChild(b); tx.appendChild(document.createTextNode(' Tá no seu e-mail (no Gmail, olha a aba Promoções) e vale nos beats do catálogo.')); }
+      else { b.textContent='Seu cupom de '+pct+'% vale até '+br(vale)+'.'; tx.appendChild(b); tx.appendChild(document.createTextNode(' Tá no seu e-mail (olha o spam também) e vale nos beats do catálogo.')); }
       if(!email) return;
       pe.appendChild(document.createTextNode(email));
       if(semCupom) return;
