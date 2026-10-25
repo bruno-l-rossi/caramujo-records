@@ -8,7 +8,6 @@ import { vitrine, indexar, achar } from '../_lib/vitrine.js';
 import { tapesDoPerfil } from '../_lib/perfil.js';
 import { MIDIA } from '../_lib/midia.js';
 import { slug as slugDe } from '../_lib/casar.js';
-import { SQL_PASTA, praPagina, COMENTARIOS } from '../_lib/comentarios.js';
 import { CHAVE_GRAVOU, fotoDaPasta } from '../_lib/gravou.js';
 import { lerAjuste, daTape, aplicarNaTape } from '../_lib/tapeajuste.js';
 
@@ -39,15 +38,13 @@ export async function onRequestGet({ params, request, env }) {
   const pPerfil = tapesDoPerfil(request, env).catch(() => null);
   // ordem, gênero, BPM e beats escondidos que o Bruno acertou no painel (24/10/2026; só vale pra tape)
   const pAjuste = lerAjuste(d);
-  // os comentários da pasta (10/10/2026) vêm na mesma leva: tape e código errado = lista vazia
-  const [artist, faixasDoBanco, doComentario] = await Promise.all([
+  // (os comentários das pastas, desligados desde 11/10/2026, saíram do código em 25/10/2026)
+  const [artist, faixasDoBanco] = await Promise.all([
     d.prepare('SELECT * FROM artists WHERE slug = ?').bind(slug).first(),
     d.prepare(
       `SELECT * FROM tracks WHERE ready = 1 AND artist_id =
          (SELECT id FROM artists WHERE slug = ? AND code = ? AND tipo != 'vitrine')`
-    ).bind(slug, codigo).all(),
-    // desligados (11/10/2026): nem consulta o banco
-    COMENTARIOS.ligado ? d.prepare(SQL_PASTA).bind(slug, codigo).all().catch(() => ({ results: [] })) : null
+    ).bind(slug, codigo).all()
   ]);
 
   // a prateleira interna da vitrine não é catálogo de ninguém: não abre página
@@ -87,7 +84,7 @@ export async function onRequestGet({ params, request, env }) {
       // o beat existe na loja: o nome na barra do player leva pra página dele (04/10/2026)
       if (b.slug) t.pagina = b.slug;
       if (b.sold) { t.tag = 'vendido'; continue; }
-      if (!artist.dl_beats && t.tag === 'disponivel') t.buy = b.slug;
+      if (!artist.dl_beats && t.tag === 'disponivel') { t.buy = b.slug; t.bid = b.id; }   // bid: comprar sem sair da tape (25/10)
     }
   }
   // ajustes do painel por cima (depois do par com a vitrine, que casa pelo BPM do arquivo)
@@ -166,8 +163,6 @@ export async function onRequestGet({ params, request, env }) {
       // o @rideblan33 vira o chip do perfil nas tapes E nas pastas de artista (26/09/2026)
       perfil: '/rideblan33',
       mais, totalPerfil, lanc,
-      // comentários no tempo da faixa (10/10/2026): só pasta de artista
-      ...(tape || !COMENTARIOS.ligado ? {} : { comentarios: true, coment: praPagina(doComentario && doComentario.results, tracks) }),
       ...(MIDIA ? { midia: MIDIA } : {})
     }
   });

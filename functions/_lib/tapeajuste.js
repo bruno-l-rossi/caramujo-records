@@ -10,6 +10,7 @@
 // - Beat que não está na vitrine: gênero e BPM ficam aqui, só na tape.
 // - Escondido: some da página da tape, da contagem e do "Ouça a última beat tape" do perfil.
 import { GENEROS } from './generos.js';
+import { mesma, tituloCasa, limpo } from './casar.js';
 
 export const CHAVE_AJUSTE = 'tapes-ajuste';
 const RE_ID = /^[A-Za-z0-9_-]{6,80}$/;
@@ -75,4 +76,45 @@ export function aplicarNaTape(tracks, t) {
     if (pos.has(f.id)) n.ord = pos.get(f.id);
     return n;
   });
+}
+
+// A vitrine segue a ordem da beat tape (24/10/2026): os beats da tape que estão na vitrine trocam de lugar
+// ENTRE SI, nas posições (beats.ordem) que já ocupavam; os de outras tapes não saem do lugar.
+// beats = [{ id, mod, loja: { id } | null }]; t = o ajuste da tape (daTape). Devolve quantos mudaram.
+export async function reordenarNaVitrine(d, beats, t) {
+  const ids = ordemDaTape(beats, t);
+  const por = new Map(beats.map((b) => [b.id, b]));
+  const lojaIds = [];
+  for (const id of ids) { const b = por.get(id); if (b && b.loja && !lojaIds.includes(b.loja.id)) lojaIds.push(b.loja.id); }
+  if (lojaIds.length < 2) return 0;
+  const { results } = await d.prepare(`SELECT id, ordem FROM beats WHERE id IN (${lojaIds.map(() => '?').join(', ')})`).bind(...lojaIds).all();
+  const atual = new Map((results || []).map((x) => [x.id, Number(x.ordem)]));
+  const vivos = lojaIds.filter((id) => atual.has(id));
+  const lugares = vivos.map((id) => atual.get(id)).sort((a, b) => a - b);
+  const muda = vivos.map((id, i) => [id, lugares[i]]).filter(([id, o]) => atual.get(id) !== o);
+  if (!muda.length) return 0;
+  await d.prepare('UPDATE beats SET ordem = CASE id ' + muda.map(() => 'WHEN ? THEN ?').join(' ') + ' END, mexido_em = ? WHERE id IN (' + muda.map(() => '?').join(', ') + ')')
+    .bind(...muda.flatMap(([id, o]) => [id, o]), new Date().toISOString(), ...muda.map(([id]) => id)).run();
+  return muda.length;
+}
+
+// A mesma coisa direto no banco, sem a cópia da vitrine (pros ajustes de uma vez só do db.js).
+// nome = o nome da beat tape como está no Drive. Devolve quantos beats mudaram de lugar.
+export async function reordenarTapePeloNome(DB, nome) {
+  const a = await DB.prepare("SELECT id FROM artists WHERE tipo = 'tape' AND LOWER(TRIM(name)) = LOWER(TRIM(?)) ORDER BY id DESC LIMIT 1").bind(String(nome)).first();
+  if (!a) return 0;
+  const { results: faixas } = await DB.prepare(
+    "SELECT id, title, bpm, mkey, src_modified FROM tracks WHERE kind = 'beat' AND ready = 1 AND artist_id = ?"
+  ).bind(a.id).all();
+  const { results: loja } = await DB.prepare('SELECT id, name, bpm, mkey AS key, casa FROM beats WHERE removido_em IS NULL').all();
+  const mapa = new Map();
+  for (const b of loja || []) { const x = { ...b, title: b.name }; if (!x.casa) delete x.casa; const k = tituloCasa(x); if (!mapa.has(k)) mapa.set(k, []); mapa.get(k).push(x); }
+  const beats = (faixas || []).map((f) => {
+    const faixa = { title: f.title, bpm: f.bpm, key: f.mkey };
+    const b = (mapa.get(limpo(f.title)) || []).find((x) => mesma(x, faixa));
+    return { id: f.id, mod: f.src_modified || '', loja: b ? { id: b.id } : null };
+  });
+  let aj = {};
+  try { const r = await DB.prepare("SELECT valor FROM meta WHERE chave = ?").bind(CHAVE_AJUSTE).first(); aj = ajusteDeTexto(r && r.valor); } catch (_) { aj = {}; }
+  return reordenarNaVitrine(DB, beats, daTape(aj, a.id));
 }

@@ -139,7 +139,7 @@
       lista('destaque', dados.destaques, true) + '</div>';
     h += '<div class="mu-sec"><div class="mu-sec-topo"><b>Recentes · ' + dados.recentes.length + '</b>' +
       '<div class="mu-ordem" role="group" aria-label="Ordem das recentes"><button type="button" data-ordem="data" aria-pressed="' + !manual + '">Por lançamento</button><button type="button" data-ordem="manual" aria-pressed="' + manual + '">Na minha ordem</button></div></div>' +
-      '<p class="mu-dica">' + (dados.destaques.length && dados.recentesNoPerfil === false ? 'Fora do perfil por enquanto (teste de 17/10): só os destaques aparecem, e quem quer ver tudo vai pra página de artistas. As recentes ficam guardadas aqui. ' : '') + (manual ? 'Segura a alça e arrasta. Salva sozinho. Música nova entra em 1º.' : 'A mais nova primeiro, pela data de lançamento.') + '</p>' +
+      '<p class="mu-dica">' + (dados.destaques.length ? 'Ficam fora do perfil (só os destaques aparecem lá); quem quer ver tudo vai pra página de artistas. ' : '') + (manual ? 'Segura a alça e arrasta. Salva sozinho. Música nova entra em 1º.' : 'A mais nova primeiro, pela data de lançamento.') + '</p>' +
       lista('recente', dados.recentes, manual) + '</div>';
     raiz.innerHTML = h;
 

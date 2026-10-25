@@ -3,6 +3,7 @@
 
 import { chave } from './casar.js';
 import { INICIAIS as MUSICAS_INICIAIS } from './musicas.js';
+import { reordenarTapePeloNome } from './tapeajuste.js';
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS artists (
@@ -165,28 +166,8 @@ const SCHEMA = [
   // visitas do perfil (kind = 'perfil', artist_id vazio): o painel pergunta a última e
   // as do mês/ano sem varrer a tabela
   `CREATE INDEX IF NOT EXISTS events_kind_at ON events (kind, at)`,
-  // Comentários das pastas de artista (10/10/2026, _lib/comentarios.js): o artista comenta
-  // num segundo da faixa (seg; NULL = a faixa toda) ou aprova a versão de uma música
-  // (tipo 'aprovou'); o Bruno responde (autor 'bruno', resposta_de) e marca como feito.
-  // versao = tracks.src_modified na hora: arquivo novo deixa o comentário como de uma
-  // versão anterior e a aprovação vencida. quem = número do aparelho (só ele apaga).
-  `CREATE TABLE IF NOT EXISTS comentarios (
-     id INTEGER PRIMARY KEY AUTOINCREMENT,
-     artist_id INTEGER NOT NULL,
-     track_id TEXT NOT NULL,
-     titulo TEXT,
-     versao TEXT,
-     seg INTEGER,
-     texto TEXT NOT NULL,
-     tipo TEXT NOT NULL DEFAULT 'nota',
-     autor TEXT NOT NULL DEFAULT 'artista',
-     nome TEXT,
-     quem TEXT,
-     resposta_de INTEGER,
-     feito_em TEXT,
-     at TEXT NOT NULL
-   )`,
-  `CREATE INDEX IF NOT EXISTS comentarios_artista ON comentarios (artist_id, at)`,
+  // (a tabela comentarios das pastas, 10/10/2026, saiu do esquema em 25/10/2026 junto com o código;
+  //  a que já existe no banco fica parada, sem ninguém ler)
   // Entrega na hora dos beats (10/10/2026, _lib/pedidos.js): o link /pedido/<token> com WAV,
   // MP3 e contrato. pagamento = id do Mercado Pago (UNIQUE já indexa; pedido de teste = NULL).
   // status 'pendente' | 'pago' | 'teste'. itens = JSON dos beats (com a faixa) e serviços.
@@ -338,6 +319,14 @@ export const UMA_VEZ = [
     `UPDATE lista SET lanc = (SELECT a.slug FROM artists a WHERE a.tipo = 'tape' AND a.perfil = 1
         AND EXISTS (SELECT 1 FROM tracks t WHERE t.artist_id = a.id AND t.kind = 'beat' AND t.ready = 1)
         ORDER BY COALESCE(a.perfil_ordem, -1000000000 - a.id), a.id LIMIT 1) WHERE lanc IS NULL`],
+  // 25/10/2026 (pedido do Bruno): a beat tape 13131313 já estava na vitrine antes da vitrine seguir a ordem
+  // da tape; aqui os beats dela ficam uma vez na ordem da página da tape (depois, o painel mantém sozinho)
+  ['ordem-13131313-2026-10-25', async (DB) => { await reordenarTapePeloNome(DB, '13131313'); }],
+  // e o REAL vira o beat em destaque do hero, sem prazo (o painel troca quando quiser; vendido, volta o rodízio)
+  ['destaque-real-2026-10-25', async (DB) => {
+    const b = await DB.prepare("SELECT id FROM beats WHERE UPPER(TRIM(name)) = 'REAL' AND sold = 0 AND removido_em IS NULL ORDER BY id DESC LIMIT 1").first();
+    if (b) await DB.prepare("INSERT OR REPLACE INTO meta (chave, valor) VALUES ('destaque', ?)").bind(JSON.stringify({ id: b.id, ate: '' })).run();
+  }],
 ];
 
 let ready = false;

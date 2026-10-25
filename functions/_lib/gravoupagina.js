@@ -151,7 +151,7 @@ ${TOPO_PAGINA_CSS}
 </head>
 <body>
 ${CAPA_VOLTA}
-${topo('artistas', '', null, { ativo: '' })}
+${topo('artistas', '', null, { ativo: 'estudio' })}
 ${previa ? '<p class="previa">Prévia: só você vê esta página, porque está logado no painel. Ela aparece pra todo mundo quando você ligar "No ar" em Perfil &gt; Quem já gravou.</p>\n' : ''}<main class="qg">
   <div class="qg-topo"><div><nav class="qg-mig" aria-label="Você está em"><a href="/rideblan33"${deAttr('artistas')}>@rideblan33</a><span aria-hidden="true">/</span><span aria-current="page">Quem já gravou</span></nav><h1>Quem já gravou</h1><p class="sub">${n} artistas cantaram em ${nFaixas} músicas produzidas pelo @rideblan33.</p></div>
   <label class="qg-busca">${ICONE_BUSCA}<span class="so-leitor">Buscar artista</span><input id="qgBusca" type="search" placeholder="Buscar artista" autocomplete="off" enterkeyhint="search"></label></div>

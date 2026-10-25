@@ -14,7 +14,7 @@ import { MIDIA, capaUrl, CAPA_VOLTA } from './midia.js';
 import { ICONES as ICONES_ABA, SELO_GRANDE } from './icones.js';
 import { RODAPE_GENEROS, CSS_RODAPE_GENEROS } from './generos.js';
 import { PADRAO as NUM_PADRAO, deTexto as numDeTexto, limpar as numLimpar, curto, longo } from './numeros.js';
-import { CHAVE as MUS_CHAVE, deTexto as musDeTexto, separar, RECENTES_NO_PERFIL } from './musicas.js';
+import { CHAVE as MUS_CHAVE, deTexto as musDeTexto, separar } from './musicas.js';
 import { LEVA_DE, deAttr } from './origem.js';
 import { CHAVE_GRAVOU, gravouDeTexto, gravouLimpar, montarGravou, imgPequena } from './gravou.js';
 import { fotoArtista } from './gravoupagina.js';
@@ -272,14 +272,13 @@ export function mosaicoGravou(lista, mostra) {
   return `<span class="qg-mos" aria-hidden="true">${fotos.map((a) => `<img src="${esc(imgPequena(a.foto))}" alt="" loading="lazy" decoding="async" width="80" height="80">`).join('')}</span>`;
 }
 
-// 17/10/2026 (teste do Bruno): a lista Recentes saiu do perfil pra aba ficar mais enxuta; a página
-// de artistas (Quem já gravou) faz o papel de "ver tudo". Os dados seguem no painel: a chave é
-// RECENTES_NO_PERFIL em _lib/musicas.js. Sem nenhum destaque, as recentes aparecem (senão a aba fica vazia).
-// (globalThis.__CR_RECENTES só nos testes antigos, que conferem a lista com as recentes)
-const mostrarRecentes = () => (typeof globalThis.__CR_RECENTES === 'boolean' ? globalThis.__CR_RECENTES : RECENTES_NO_PERFIL);
+// A lista Recentes saiu do perfil (teste de 17/10/2026, confirmado em 25/10/2026: a chave
+// RECENTES_NO_PERFIL foi apagada). A página de artistas faz o papel de "ver tudo"; os dados seguem
+// no painel. Sem nenhum destaque, as recentes aparecem (senão a aba fica vazia).
+// (globalThis.__CR_RECENTES = true só nos testes antigos, que conferem o desenho da lista)
 function separarNaPagina(mus) {
   const { destaques, recentes } = separar(mus);
-  return mostrarRecentes() || !destaques.length ? { destaques, recentes } : { destaques, recentes: [] };
+  return globalThis.__CR_RECENTES === true || !destaques.length ? { destaques, recentes } : { destaques, recentes: [] };
 }
 
 export function abaMusicas(mus, { previa = false, gravou = null } = {}) {
@@ -347,12 +346,11 @@ function jsonMusicas(mus) {
 // ícones: um lugar só, em _lib/icones.js (04/10/2026); o nome FAVICON fica pra quem já usa
 export const FAVICON = ICONES_ABA;
 
-// barraFixa: a barra fina com a foto e o @ que aparece presa no topo quando a pessoa
-// desce pras capas (o Bruno decide se fica; 26/09/2026).
+// (a barra fixa com a foto e o @, desligada desde 26/09/2026, saiu do código em 25/10/2026)
 // aba: em que aba o bloco preto abre ('musicas' ou 'tapes'; vem da origem, _lib/musicas.js).
 // previa: a aba Músicas fora do ar aparece mesmo assim (quem está logado no painel).
 // previaGravou: a linha "Quem já gravou" aparece mesmo fora do ar (quem está logado no painel).
-export function paginaPerfil(dados, { url, barraFixa = true, aba = 'musicas', previa = false, previaGravou = false } = {}) {
+export function paginaPerfil(dados, { url, aba = 'musicas', previa = false, previaGravou = false } = {}) {
   const tapes = Array.isArray(dados) ? dados : dados.tapes;
   const faixas = Array.isArray(dados) ? [] : (dados.faixas || []);
   const idNova = !Array.isArray(dados) && dados.nova != null ? dados.nova : (tapes.length ? tapes[0].id : null);
@@ -498,11 +496,6 @@ a:focus-visible{outline:2px solid var(--fire);outline-offset:3px}
 .tocando .barra{position:absolute;left:12px;right:12px;bottom:0;height:2px;background:rgba(242,236,223,.12);border-radius:2px;overflow:hidden}
 .tocando .barra i{display:block;height:100%;width:0;background:var(--fire)}
 /* barra que acompanha (aparece depois do topo) */
-.fixa{position:fixed;left:0;right:0;top:0;z-index:25;display:flex;align-items:center;gap:12px;padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:rgba(20,17,13,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--wire);transform:translateY(-110%);transition:transform .25s ease}
-.fixa.on{transform:none}
-.fixa img{border-radius:50%}
-.fixa b{flex:1;min-width:0;font:600 22px/1 var(--serif);color:var(--cream)}
-.fixa .ouca{height:36px;padding:0 14px 0 12px;font-size:10px}
 .palco{position:relative;z-index:1;max-width:1180px;margin:0 auto;min-height:520px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:end;border:1px solid var(--wire);background:linear-gradient(180deg,var(--dark),var(--deep))}
 .texto{padding:56px 0 56px 56px;align-self:center}
 .kicker{font:700 11px/1 var(--sans);letter-spacing:.28em;text-transform:uppercase;color:var(--label);margin:0 0 22px}
@@ -637,9 +630,6 @@ ${RODAPE_CSS}
   .terra{padding-top:20px}
   .ouca-w{display:flex;justify-content:center}
   .ouca{height:38px;padding:0 13px 0 11px;font-size:9.5px;letter-spacing:.13em;gap:8px}
-  .fixa b{font-size:20px}
-  .fixa .ouca span{display:none}
-  .fixa .ouca{width:36px;padding:0;justify-content:center}
   .terra{padding-bottom:40px}
   .palco{grid-template-columns:1fr;min-height:0;margin-top:44px}
   .foto{order:-1;min-height:330px}
@@ -676,11 +666,10 @@ ${RODAPE_CSS}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 ${TOPO_PAGINA_CSS}
-.fixa{top:54px}
 </style>
 </head>
 <body>
-${topo('perfil', '', null, { ativo: '' })}
+${topo('perfil', '', null, { ativo: 'estudio' })}
 <header class="terra">
   <section class="palco">
     <div class="texto">
@@ -703,7 +692,6 @@ ${topo('perfil', '', null, { ativo: '' })}
     </div>
   </section>
 </header>
-${barraFixa ? `<div class="fixa" id="fixa" aria-hidden="true"><img src="/assets/perfil/rideblan33-avatar.webp" alt="" width="34" height="34"><b>@rideblan33</b>${tocaAlgo ? `<button class="ouca" type="button" data-ouca aria-pressed="false" tabindex="-1">${ICONE_TOCA}${ICONE_PAUSA}<span>${rotOuca}</span></button>` : ''}</div>` : ''}
 ${tocaAlgo ? `<div class="tocando" id="tocando" hidden>
   <a class="t-link" id="tLink"${deAttr('perfil')} href="${esc(tocador ? tocador.tape.url : tocaveis[0].url)}" aria-label="${tocador ? `Abrir a tape ${esc(tocador.tape.name)}` : `Abrir ${esc(tocaveis[0].n)} no Spotify`}"></a>
   <span class="t-capa"><img src="${esc(tocador ? tocador.tape.capa : tocaveis[0].capa)}" alt="" width="44" height="44"></span>
@@ -1009,16 +997,6 @@ ${rodape('perfil')}
       }).catch(function(){ avisar('Não carregou. Tenta de novo.'); });
     });
     (window.requestIdleCallback||function(f){ setTimeout(f,1) })(function(){ setTimeout(function(){ storyJs().catch(function(){}); },4000); });
-  }
-
-  // barra que acompanha: aparece quando o topo sai da tela
-  var fixa=document.getElementById('fixa'), palco=document.querySelector('.palco');
-  if(fixa && palco && 'IntersectionObserver' in window){
-    new IntersectionObserver(function(l){
-      var on=!l[0].isIntersecting && l[0].boundingClientRect.top<0;
-      fixa.classList.toggle('on',on); fixa.setAttribute('aria-hidden',on?'false':'true');
-      fixa.querySelectorAll('button').forEach(function(b){ b.tabIndex=on?0:-1; });
-    }).observe(palco);
   }
 
   // voltar do celular fecha a folha de compartilhar (03/10/2026), em vez de sair do perfil.

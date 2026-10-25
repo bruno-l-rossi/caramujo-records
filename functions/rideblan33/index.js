@@ -12,10 +12,6 @@ import { lerPerfil, paginaPerfil } from '../_lib/perfil.js';
 import { origem, abaInicial } from '../_lib/musicas.js';
 import { autenticado } from '../_lib/sessao.js';
 
-// A barra fina com a foto e o @ que aparece presa no topo ao descer pras capas.
-// Desligar = false (decisão do Bruno depois de ver com e sem).
-const BARRA_FIXA = false;   // 26/09/2026: o Bruno escolheu SEM a barra
-
 export async function onRequestGet({ request, env }) {
   const dados = await lerPerfil(request, env);
   const m = dados.musicas;
@@ -25,7 +21,7 @@ export async function onRequestGet({ request, env }) {
   const logado = querPrevia ? await autenticado(request, env) : false;
   const previa = !!(temMus && !m.noAr && logado);
   const previaGravou = !!(logado && dados.gravou && !dados.gravou.noAr);
-  const html = paginaPerfil(dados, { url: request.url, barraFixa: BARRA_FIXA, aba: abaInicial(origem(request)), previa, previaGravou });
+  const html = paginaPerfil(dados, { url: request.url, aba: abaInicial(origem(request)), previa, previaGravou });
   return new Response(html, {
     headers: {
       'content-type': 'text/html; charset=utf-8',

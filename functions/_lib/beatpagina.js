@@ -332,7 +332,7 @@ function linha(b, i, de, preco) {
   const n = String(i + 1).padStart(2, '0');
   const acao = b.sold
     ? '<span class="vendido">Vendido</span>'
-    : `<a class="preco js-add" data-bid="${b.id}" href="${linkAdd(b)}"${deAttr(de)} aria-label="Pôr ${esc(b.name)} no carrinho, ${real(preco)}">${ICO.cart}<span>R$${preco}</span></a>`;
+    : `<a class="preco js-add" data-bid="${b.id}" data-preco="${preco}" href="${linkAdd(b)}"${deAttr(de)} aria-label="Pôr ${esc(b.name)} no carrinho, ${real(preco)}">${ICO.cart}<span>R$${preco}</span></a>`;
   return `<li class="item${b.sold ? ' fora' : ''}" data-bid="${b.id}" data-bpm="${Number(b.bpm) || 0}" data-ordem="${i}">
 <button class="num js-tocar" type="button" data-bid="${b.id}" aria-label="Tocar ${esc(b.name)}"${b.mp3 ? '' : ' disabled'}><i>${n}</i>${PLAYPAUSE}</button>
 ${capinha(b)}
@@ -459,7 +459,7 @@ export function paginaBeat(b, loja) {
     ? `<div class="compra"><div class="linha"><div class="valor"><s>${real(preco)}</s><small>Vendido · licença exclusiva</small></div></div></div>
 <div class="dono"><p>Esse beat já tem dono.</p><span>A licença é exclusiva: quando alguém compra, o beat sai da loja. Os de baixo estão à venda.</span></div>`
     : `<div class="compra"><div class="linha"><div class="valor">${real(preco)}<small>Licença exclusiva</small></div>${pacotesTexto(pk)}</div>
-<a class="btn js-add" data-bid="${b.id}" href="${linkAdd(b)}"${deAttr(de)}>${ICO.cart}<span>Adicionar ao carrinho</span></a>
+<a class="btn js-add" data-bid="${b.id}" data-preco="${preco}" href="${linkAdd(b)}"${deAttr(de)}>${ICO.cart}<span>Adicionar ao carrinho</span></a>
 <ul class="inclui"><li><b>Só seu:</b> depois da compra o beat sai da loja</li><li><b>Contrato no seu nome</b>, com uso comercial liberado</li><li><b>MP3 + WAV</b>, entrega instantânea</li></ul></div>`;
 
   const capaG = b.capa
@@ -647,7 +647,8 @@ const JS = `(function(){
     var envia=function(corpo){ var txt=JSON.stringify(corpo); try{ if(navigator.sendBeacon&&navigator.sendBeacon('/api/funil',txt)) return; fetch('/api/funil',{method:'POST',body:txt,keepalive:true}).catch(nada); }catch(_){} };
     funil=function(etapa,beatId){
       var n=Number(beatId);
-      if(etapa==='toque'){ if(!(n>0)||ss('cr_b_toque_'+n)) return; ss('cr_b_toque_'+n,'1'); envia({s:sid,e:'toque',a:aparelho,o:origem,b:n}); return; }
+      // por beat: toque (tocou) e adicao (pôs no carrinho aqui mesmo, 25/10/2026); as chaves são as da vitrine
+      if(etapa==='toque'||etapa==='adicao'){ if(!(n>0)||ss('cr_b_'+etapa+'_'+n)) return; ss('cr_b_'+etapa+'_'+n,'1'); envia({s:sid,e:etapa,a:aparelho,o:origem,b:n}); return; }
       if(ss('cr_f_'+etapa)) return; ss('cr_f_'+etapa,'1');
       var corpo={s:sid,e:etapa,a:aparelho,o:origem}; if(n>0) corpo.b=n; envia(corpo);
     };
@@ -656,21 +657,45 @@ const JS = `(function(){
   try{ if(/[?&]de=/.test(location.search)&&history.replaceState) history.replaceState(null,'',location.pathname+location.hash); }catch(_){}
 
   /* o carrinho guardado da vitrine: número no topo e "No carrinho" nos beats que já estão lá */
-  try{
-    var c=JSON.parse(localStorage.getItem('caramujo_carrinho_v1')||'null');
-    if(c && c.itens && c.itens.length && Date.now()-(c.em||0)<7*864e5){
-      var n=c.itens.reduce(function(s,x){ return s+(x.qty||1); },0), bn=$('.js-n');
-      if(bn){ bn.textContent=n; bn.hidden=false; }
-      var dentro={}; c.itens.forEach(function(x){ if(x.beatId&&!x.stems) dentro[x.beatId]=1; });
-      $$('.js-add').forEach(function(a){
-        if(!dentro[a.getAttribute('data-bid')]) return;
-        a.classList.add('no-carrinho');
-        a.setAttribute('href',a.getAttribute('href').replace(/#add=.*$/,'#carrinho'));
-        var t=a.querySelector('span'); if(t) t.textContent=a.classList.contains('btn')?'No carrinho · ver carrinho':'No carrinho';
-        a.setAttribute('aria-label','Já está no carrinho: abrir o carrinho');
-      });
-    }
-  }catch(_){}
+  var CARR='caramujo_carrinho_v1';
+  function lerCarrinho(){
+    try{ var c=JSON.parse(localStorage.getItem(CARR)||'null'); if(c && Array.isArray(c.itens) && Date.now()-(c.em||0)<7*864e5) return c; }catch(_){}
+    return null;
+  }
+  function pintarCarrinho(){
+    var c=lerCarrinho(); if(!c || !c.itens.length) return;
+    var n=c.itens.reduce(function(s,x){ return s+(x.qty||1); },0), bn=$('.js-n');
+    if(bn){ bn.textContent=n; bn.hidden=false; }
+    var dentro={}; c.itens.forEach(function(x){ if(x.beatId&&!x.stems) dentro[x.beatId]=1; });
+    $$('.js-add').forEach(function(a){
+      if(!dentro[a.getAttribute('data-bid')] || a.classList.contains('no-carrinho')) return;
+      a.classList.add('no-carrinho');
+      a.setAttribute('href',a.getAttribute('href').replace(/#add=.*$/,'#carrinho'));
+      var t=a.querySelector('span'); if(t) t.textContent=a.classList.contains('btn')?'No carrinho · ver carrinho':'No carrinho';
+      a.setAttribute('aria-label','Já está no carrinho: abrir o carrinho');
+    });
+  }
+  try{ pintarCarrinho(); }catch(_){}
+  /* Comprar sem sair da página (25/10/2026, de-para final, item 3): o botão grava o beat no carrinho
+     guardado (o mesmo que a vitrine restaura, conferindo preço e vendido) e a pessoa segue aqui.
+     Já no carrinho, o link abre o carrinho na vitrine. Sem localStorage, o link de sempre (/#add=). */
+  document.addEventListener('click',function(e){
+    var a=e.target.closest&&e.target.closest('.js-add'); if(!a || a.classList.contains('no-carrinho')) return;
+    if(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
+    var bid=Number(a.getAttribute('data-bid')), preco=Number(a.getAttribute('data-preco'))||119; if(!bid) return;
+    try{
+      var c=lerCarrinho()||{ em:0, itens:[] };
+      if(!c.itens.some(function(x){ return Number(x.beatId)===bid && !x.stems; }))
+        c.itens.push({ id:Date.now(), beatId:bid, name:'', price:preco, orig:preco, type:'Beat', stems:false });
+      c.em=Date.now();
+      localStorage.setItem(CARR, JSON.stringify(c));
+      if(JSON.parse(localStorage.getItem(CARR)||'null').itens.length!==c.itens.length) return;
+    }catch(_){ return; }
+    e.preventDefault();
+    funil('carrinho',bid); funil('adicao',bid);   // o funil conta aqui, como a vitrine contava ao receber o #add=
+    pintarCarrinho();
+    var bn=$('.js-n'); if(bn){ bn.classList.remove('pulou'); void bn.offsetWidth; bn.classList.add('pulou'); }
+  });
 
   /* menu do celular */
   // (rodada Q) o menu do celular, o acordeão do BEATS e a Ajuda são do TOPO_JS (topo.js)

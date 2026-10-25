@@ -2650,6 +2650,9 @@ try{
     var gv=$('genVal'), gb=$('genBtn');
     if(gv) gv.textContent = curFilt==='todos' ? 'Todos' : ((typeof GENRE_LABELS==='object'&&GENRE_LABELS[curFilt])||curFilt);
     if(gb) gb.classList.toggle('ativo',curFilt!=='todos');
+    // 25/10/2026 (de-para final, item 2): sem escolha, o celular mostra "Gênero"/"Ordem" no botão (CSS .padrao)
+    if(gb) gb.classList.toggle('padrao',curFilt==='todos');
+    var ob=$('ordBtn'); if(ob) ob.classList.toggle('padrao',!sortMode||sortMode==='padrao');
     var ov=$('ordVal'); if(ov) ov.textContent = ({aleatorio:'Aleatória',novos:'Mais novos',bpm:'BPM'})[sortMode] || 'Padrão';
     document.querySelectorAll('#ordMenu .mn-o').forEach(function(o){ o.classList.toggle('on',o.getAttribute('data-ordem')===sortMode); });
     var fa=$('filtAvail'); if(fa) fa.setAttribute('aria-checked',showAvailOnly?'true':'false');

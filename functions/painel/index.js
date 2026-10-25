@@ -3,7 +3,6 @@
 
 import { COOKIE, DIAS, assinar, igual, autenticado, cookieEu } from '../_lib/sessao.js';
 import { ICONES } from '../_lib/icones.js';
-import { COMENTARIOS } from '../_lib/comentarios.js';
 
 /* ---------- entrada ---------- */
 
@@ -75,7 +74,7 @@ ${ICONES}
   .sub{font-size:14px;color:var(--ink4)}
   .barra{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
   .barra .pill{flex:0 0 auto}
-  .barra[hidden],#resumo[hidden],#lista[hidden],#analytics[hidden],#vitrine[hidden],#musicas[hidden],#gravou[hidden],#comentarios[hidden]{display:none}
+  .barra[hidden],#resumo[hidden],#lista[hidden],#analytics[hidden],#vitrine[hidden],#musicas[hidden],#gravou[hidden]{display:none}
   @media (max-width:560px){
     /* 16/10/2026 (rodada K): busca na linha toda e os dois botões dividindo a de baixo
        (antes o 1º ficava solto no meio, com um buraco à esquerda) */
@@ -401,13 +400,11 @@ function pagina() {
   <div id="vitrine" hidden></div>
   <div id="musicas" hidden></div>
   <div id="gravou" hidden></div>
-  <div id="comentarios" hidden></div>
 </div>
 <script src="/assets/painel/analytics.js?v=2026-10-16a" defer></script>
 <script src="/assets/painel/vitrine.js?v=2026-10-16a" defer></script>
-<script src="/assets/painel/musicas.js?v=2026-10-17a" defer></script>
+<script src="/assets/painel/musicas.js?v=2026-10-25a" defer></script>
 <script src="/assets/painel/gravou.js?v=2026-10-18a" defer></script>
-<script src="/assets/painel/comentarios.js?v=2026-10-10a" defer></script>
 
 <nav class="nav-p" id="navP" aria-label="Seções do painel"></nav>
 <div class="veil" id="veil" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
@@ -416,10 +413,9 @@ function pagina() {
 <script>
 (function(){
   var $=function(i){return document.getElementById(i)};
-  var COMENTARIOS_LIGADOS=${COMENTARIOS.ligado ? 'true' : 'false'};   // 11/10/2026: desligados (_lib/comentarios.js)
   var artistas=[], tapes=[], revisar=[], revisarErro=false, vista='hoje', filtro='', ordem='atividade', perfilVisto=null;
   var lojaResumo=null, lojaPedida=false, consumoHoje=null, consumoPedido=false, numerosSite=null, numerosPedido=false;
-  var musicasResumo=null, musicasPedido=false, comentResumo=null, comentPedido=false, entrega=null, entregaPedida=false;
+  var musicasResumo=null, musicasPedido=false, entrega=null, entregaPedida=false;
   var ordemDe={artistas:'atividade',tapes:'modificado'};
   var ORDENS={modificado:'Modificação', atividade:'Atividade', az:'A a Z', faixas:'Mais faixas', perfil:'Ordem do perfil'};
   // Perfil do @rideblan33 (26/09/2026): a mesma conta da página (tape sem ordem = nova = topo)
@@ -505,7 +501,7 @@ function pagina() {
     });
   }
 
-  var TITULOS={hoje:'Hoje',pedidos:'Vendas',cupons:'Vendas',lista:'Vendas',vitrine:'Catálogo',fila:'Catálogo',tapes:'Catálogo',artistas:'Catálogo',perfil:'Perfil',musicas:'Músicas do perfil',gravou:'Quem já gravou',analytics:'Números',ajustes:'Ajustes',comentarios:'Comentários'};
+  var TITULOS={hoje:'Hoje',pedidos:'Vendas',cupons:'Vendas',lista:'Vendas',vitrine:'Catálogo',fila:'Catálogo',tapes:'Catálogo',artistas:'Catálogo',perfil:'Perfil',musicas:'Músicas do perfil',gravou:'Quem já gravou',analytics:'Números',ajustes:'Ajustes'};
   var VITRINE_ABA={vitrine:'beats',fila:'fila',cupons:'cupons'};
   /* Voltar (16/10/2026): o histórico do navegador segue o caminho Hoje > seção > parte. Numa
      parte (Músicas, Cupons, Fila…), voltar cai na página da seção (Perfil, Vendas, Catálogo…);
@@ -540,7 +536,7 @@ function pagina() {
   function irPara(v,semHistorico){
     if(v==='home') v='hoje';
     if(!TITULOS[v]) v='hoje';
-    if(v==='hoje'){ lojaPedida=false; consumoPedido=false; numerosPedido=false; musicasPedido=false; comentPedido=false; entregaPedida=false; listaPedida=false; filaPedida=false; }   // volta com os números novos
+    if(v==='hoje'){ lojaPedida=false; consumoPedido=false; numerosPedido=false; musicasPedido=false; entregaPedida=false; listaPedida=false; filaPedida=false; }   // volta com os números novos
     // o endereço guarda a seção (recarregar volta pra ela); Hoje = /painel
     if(!semHistorico && v!==vista){ try{ historico(v); }catch(_){ } }
     vista=v; filtro=''; $('q').value='';
@@ -564,7 +560,7 @@ function pagina() {
     site:'<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v6H4V6h6"/>'
   };
   function svg(k,t){ return '<svg width="'+(t||20)+'" height="'+(t||20)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+IC[k]+'</svg>'; }
-  var GRUPO={hoje:'hoje',pedidos:'vendas',cupons:'vendas',lista:'vendas',vitrine:'catalogo',fila:'catalogo',tapes:'catalogo',artistas:'catalogo',perfil:'perfil',musicas:'perfil',gravou:'perfil',analytics:'numeros',ajustes:'ajustes',comentarios:'hoje'};
+  var GRUPO={hoje:'hoje',pedidos:'vendas',cupons:'vendas',lista:'vendas',vitrine:'catalogo',fila:'catalogo',tapes:'catalogo',artistas:'catalogo',perfil:'perfil',musicas:'perfil',gravou:'perfil',analytics:'numeros',ajustes:'ajustes'};
   var ENTRADA={hoje:'hoje',vendas:'pedidos',catalogo:'vitrine',perfil:'perfil',numeros:'analytics',ajustes:'ajustes'};
   var SUB={vendas:[['pedidos','Pedidos'],['cupons','Cupons'],['lista','Lista']],catalogo:[['vitrine','Vitrine'],['fila','Fila'],['tapes','Beat tapes'],['artistas','Artistas']]};
   var NAV=[['hoje','Hoje'],['vendas','Vendas'],['catalogo','Catálogo'],['perfil','Perfil'],['numeros','Números']];
@@ -636,7 +632,6 @@ function pagina() {
     var env=lista&&lista.envios&&lista.envios[0];
     if(env&&env.ok&&(env.status==='bounced'||env.status==='complained')) add(linhaAcao('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></svg>',env.status==='bounced'?'E-mail do cupom voltou':'E-mail do cupom marcado como spam','pra '+esc(env.email)+' · ver na Lista',function(){ irPara('lista'); }));
     if(env&&!env.ok) add(linhaAcao('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></svg>','E-mail do cupom não saiu','pra '+esc(env.email)+' · ver o motivo',function(){ irPara('lista'); }));
-    if(COMENTARIOS_LIGADOS&&comentResumo&&comentResumo.abertos) add(linhaAcao('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H9l-5 4z"/></svg>',comentResumo.abertos+(comentResumo.abertos===1?' comentário aberto':' comentários abertos'),'nas pastas dos artistas',function(){ irPara('comentarios'); }));
     if(consumoHoje&&consumoHoje.hoje/consumoHoje.teto>=0.5) add(linhaAcao(svg('ajustes'),'Banco passou da metade hoje',milhar(consumoHoje.hoje)+' de '+milhar(consumoHoje.teto)+' leituras · zera às 21h',abrirConsumo));
     if(!n){ var v=document.createElement('p'); v.className='nada'; v.textContent=(entrega&&funilResumo)?'Nada pendente agora.':'conferindo…'; box.appendChild(v); }
     rot('ÚLTIMOS 7 DIAS');
@@ -781,7 +776,6 @@ function pagina() {
         '<button type="button" class="toggle" id="ajEntrega" aria-pressed="'+lig+'" aria-label="Entrega na hora"'+(entrega?'':' disabled')+'><i></i></button></div>'+
       '<div class="sw"><div><b>Músicas no perfil</b><small>'+(mus?(mus.noAr?'No ar: a aba Músicas aparece pra todo mundo.':'Fora do ar: a prévia aparece só pra quem entra no painel.'):'carregando…')+'</small></div>'+
         '<button type="button" class="toggle" id="ajMusicas" aria-pressed="'+!!(mus&&mus.noAr)+'" aria-label="Músicas no perfil"'+(mus?'':' disabled')+'><i></i></button></div>'+
-      '<div class="sw"><div><b>Comentários nas pastas</b><small>'+(COMENTARIOS_LIGADOS?'Ligados.':'Desligados desde 11/10/2026. Pra religar, é comigo (muda no código).')+'</small></div></div>'+
       '<div class="rot" style="margin-top:26px">CONSUMO HOJE</div>'+
       '<button type="button" class="sw sw-b" id="ajBanco"><div style="flex:1"><b>Banco</b><small>'+(c?milhar(c.hoje)+' de '+milhar(c.teto)+' leituras · zera às 21h':'carregando…')+'</small><div class="barra-c"><i style="width:'+pct+'%"></i></div></div><span class="seta" aria-hidden="true">›</span></button>'+
       '<div class="sw"><div style="flex:1"><b>Prateleira de arquivos</b><small>'+(prateleira!=null?gb(prateleira)+' de 8 GB':'carregando…')+'</small><div class="barra-c"><i style="width:'+(prateleira!=null?Math.min(100,Math.round(prateleira/(8*1073741824)*100)):0)+'%"></i></div></div></div>';
@@ -961,20 +955,6 @@ function pagina() {
     $('veil').hidden=false; pinta();
     fetch('/api/painel?op=lista').then(function(r){return r.json()}).then(function(j){ if(j&&j.ok){ lista=j; if(!$('veil').hidden) pinta(); } }).catch(function(){});
   }
-  function textoComent(){
-    var r=comentResumo;
-    if(!r) return 'o que os artistas comentaram no tempo das faixas';
-    if(!r.total) return 'nenhum comentário ainda';
-    return (r.abertos?'<em>'+r.abertos+(r.abertos===1?' aberto':' abertos')+'</em>':'nada aberto')+(r.ultimo?' · último '+tempo(r.ultimo).replace(/^aberto /,''):'');
-  }
-  function pedirComent(){
-    if(comentPedido) return; comentPedido=true;
-    fetch('/api/painel?op=comentarios-resumo').then(function(r){return r.json()}).then(function(j){
-      if(!j||!j.ok) return;
-      comentResumo=j;
-      refazer(['hoje']);
-    }).catch(function(){});
-  }
   function textoMusicas(){
     var r=musicasResumo;
     if(!r) return 'destaques, recentes e o trecho de cada uma';
@@ -1041,15 +1021,14 @@ function pagina() {
     $('barra').hidden = !(vista==='artistas'||vista==='tapes');
     $('resumo').hidden = vista==='analytics';
     var vcons=$('consumo'); if(vcons&&vista!=='hoje') vcons.remove();   // o contador de consumo é só do Hoje
-    $('lista').hidden = vista==='analytics'||vit||vista==='musicas'||vista==='gravou'||vista==='comentarios';
+    $('lista').hidden = vista==='analytics'||vit||vista==='musicas'||vista==='gravou';
     $('analytics').hidden = vista!=='analytics';
     $('vitrine').hidden = !vit;
     $('musicas').hidden = vista!=='musicas';
     $('gravou').hidden = vista!=='gravou';
-    $('comentarios').hidden = vista!=='comentarios';
     pintarNav(); pintarSecoes();
     if(vista==='hoje'){
-      pedirResumoFunil(); pedirConsumo(); pedirMusicas(); if(COMENTARIOS_LIGADOS) pedirComent(); pedirEntrega(); pedirLista(); pedirFila();
+      pedirResumoFunil(); pedirConsumo(); pedirMusicas(); pedirEntrega(); pedirLista(); pedirFila();
       $('resumo').textContent=hojeData(); pintarConsumo();
       $('lista').innerHTML=''; $('lista').appendChild(hoje()); return;
     }
@@ -1057,14 +1036,6 @@ function pagina() {
     if(vista==='lista'){ pedirLista(); $('resumo').textContent='pedidos com link, cupons e a lista de e-mails'; $('lista').innerHTML=''; $('lista').appendChild(paginaLista()); return; }
     if(vista==='perfil'){ pedirMusicas(); pedirNumeros(); $('resumo').textContent='o que aparece em /rideblan33'; $('lista').innerHTML=''; $('lista').appendChild(paginaPerfil()); return; }
     if(vista==='ajustes'){ pedirEntrega(); pedirMusicas(); pedirConsumo(); $('resumo').textContent='chaves do site e o consumo do plano grátis'; $('lista').innerHTML=''; $('lista').appendChild(paginaAjustes()); return; }
-    if(vista==='comentarios'){
-      if(!$('comentarios').dataset.montado && window.CaramujoComentarios){
-        $('comentarios').dataset.montado='1';
-        window.CaramujoComentarios.abrir($('comentarios'));
-      } else if(window.CaramujoComentarios) window.CaramujoComentarios.carregar();
-      if(!window.CaramujoComentarios) $('comentarios').innerHTML='<div class="vazio">carregando…</div>';
-      return;
-    }
     if(vista==='musicas'){
       // monta uma vez só; depois só redesenha (a lista de artistas recarrega sozinha)
       if(!$('musicas').dataset.montado && window.CaramujoMusicas){
@@ -1823,7 +1794,7 @@ function pagina() {
   }
 
   carregar();
-  // /painel#<seção> abre direto nela (o e-mail de comentário usa #comentarios); as telas que
+  // /painel#<seção> abre direto nela; as telas que
   // vêm de arquivo à parte (defer) esperam o arquivo chegar
   (function(){
     // volta do atalho "Plays Caramujo" (rodada N): #gravou&plays=<id>:<n>,... (o gravou.js guarda)
@@ -1831,7 +1802,7 @@ function pagina() {
     var h=hh[0];
     if(!h||!TITULOS[h]){ iniciarHistorico('hoje'); desenhar(); return; }
     iniciarHistorico(h);
-    var precisa={comentarios:'CaramujoComentarios',musicas:'CaramujoMusicas',gravou:'CaramujoGravou',analytics:'CaramujoAnalytics',vitrine:'CaramujoVitrine',fila:'CaramujoVitrine',cupons:'CaramujoVitrine'}[h];
+    var precisa={musicas:'CaramujoMusicas',gravou:'CaramujoGravou',analytics:'CaramujoAnalytics',vitrine:'CaramujoVitrine',fila:'CaramujoVitrine',cupons:'CaramujoVitrine'}[h];
     var tenta=0;
     (function vai(){ if(!precisa||window[precisa]||tenta++>40){ irPara(h,true); return; } setTimeout(vai,50); })();
   })();

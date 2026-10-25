@@ -13,14 +13,13 @@ import { esquecerApiVitrine } from './vitrine.js';
 import { esquecerPerfil } from '../_lib/perfil.js';
 import { PADRAO as NUM_PADRAO, deTexto as numDeTexto } from '../_lib/numeros.js';
 import { painelLer as musicasLer, painelAcao as musicasAcao } from '../_lib/musicas.js';
-import { painelLer as comentariosLer, painelResumo as comentariosResumo, painelAcao as comentarioAcao } from '../_lib/comentarios.js';
 import { somUrl } from '../_lib/midia.js';
 import { entregaLigada, ligarEntrega, pedidoDeTeste, pedidoDeTesteServico, ultimosPedidos, salvarEntrega } from '../_lib/pedidos.js';
 import { avisarEntrega } from '../_lib/servicoemails.js';
 import { painelLista } from '../_lib/lista.js';
 import { varrer as varrerGravou, painelGravou } from '../_lib/gravou.js';
 import { CHAVE as MUS_CHAVE, deTexto as musDeTexto } from '../_lib/musicas.js';
-import { lerAjuste, salvarAjuste, daTape, ordemDaTape } from '../_lib/tapeajuste.js';
+import { lerAjuste, salvarAjuste, daTape, ordemDaTape, reordenarNaVitrine } from '../_lib/tapeajuste.js';
 import { GENEROS } from '../_lib/generos.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
@@ -55,9 +54,6 @@ export async function onRequest({ request, env }) {
     if (r.mudou) await esquecerPerfil(request);
     return json(r.corpo);
   }
-  // Comentários das pastas (10/10/2026): a lista inteira e o resumo da home
-  if (op === 'comentarios' && request.method !== 'POST') return json(await comentariosLer(d));
-  if (op === 'comentarios-resumo') return json(await comentariosResumo(d));
   // Entrega na hora dos beats (10/10/2026): a chave e os últimos pedidos com link
   if (op === 'entrega' && request.method !== 'POST') return json({ ok: true, ligada: await entregaLigada(d), pedidos: await ultimosPedidos(d), origens: await resumoOrigem(d).catch(() => null) });
   // lista de e-mails com cupom (11/10/2026): quantos, quantos usaram o cupom, os e-mails pra copiar
@@ -96,10 +92,6 @@ export async function onRequest({ request, env }) {
     let avisou = false;
     if (body.link && r.pedido.status !== 'teste') avisou = await avisarEntrega(env, r.pedido, r.pedido.itens[k], k).catch(() => false);
     return json({ ok: true, avisou, pedidos: await ultimosPedidos(d) });
-  }
-  if (/^comentario-/.test(op)) {
-    const r = await comentarioAcao(op, d, body);
-    return json(r.corpo, r.status);
   }
   if (op === 'perm') return perm(d, body);
   if (op === 'descricao') return descricao(d, body);
@@ -1276,20 +1268,7 @@ async function tapeOrdem(d, request, env, body) {
 export async function ordemNaVitrine(d, request, env, tapeId, pronto = null) {
   const r = pronto || await beatsDaTape(d, request, env, tapeId);
   if (!r) return 0;
-  const ids = ordemDaTape(r.beats, daTape(await lerAjuste(d), r.tape.id));
-  const por = new Map(r.beats.map((b) => [b.id, b]));
-  const lojaIds = [];
-  for (const id of ids) { const b = por.get(id); if (b && b.loja && !lojaIds.includes(b.loja.id)) lojaIds.push(b.loja.id); }
-  if (lojaIds.length < 2) return 0;
-  const { results } = await d.prepare(`SELECT id, ordem FROM beats WHERE id IN (${lojaIds.map(() => '?').join(', ')})`).bind(...lojaIds).all();
-  const atual = new Map((results || []).map((x) => [x.id, Number(x.ordem)]));
-  const vivos = lojaIds.filter((id) => atual.has(id));
-  const lugares = vivos.map((id) => atual.get(id)).sort((a, b) => a - b);
-  const muda = vivos.map((id, i) => [id, lugares[i]]).filter(([id, o]) => atual.get(id) !== o);
-  if (!muda.length) return 0;
-  await d.prepare('UPDATE beats SET ordem = CASE id ' + muda.map(() => 'WHEN ? THEN ?').join(' ') + ' END, mexido_em = ? WHERE id IN (' + muda.map(() => '?').join(', ') + ')')
-    .bind(...muda.flatMap(([id, o]) => [id, o]), new Date().toISOString(), ...muda.map(([id]) => id)).run();
-  return muda.length;
+  return reordenarNaVitrine(d, r.beats, daTape(await lerAjuste(d), r.tape.id));
 }
 
 // Depois de publicar da Fila: cada tape dos beats publicados põe os seus na ordem dela (lançamento novo)

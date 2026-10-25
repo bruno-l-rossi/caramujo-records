@@ -196,7 +196,6 @@ nav{
 .pg-btn:hover:not(:disabled){background:var(--ember);border-color:var(--ember);color:var(--cream);}
 .pg-btn:disabled{opacity:.3;cursor:default;}
 
-.pg-search{display:flex;align-items:center;gap:.4rem;flex:1;min-width:210px;}
 .pg-search-input{background:var(--mole);border:1px solid var(--clay);color:var(--cream);font-family:'IBM Plex Mono',monospace;font-size:.8rem;padding:.55rem .9rem;outline:none;transition:border-color .14s,box-shadow .14s;width:100%;max-width:none;}
 .pg-search-input::placeholder{color:var(--read);}
 .pg-search-input:focus{border-color:var(--fire);box-shadow:0 0 0 1px var(--fire);}
@@ -236,27 +235,7 @@ nav{
 
 
 
-/* ═══ SERVICES ═══════════════════════════ */
-.svcs{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border:1px solid var(--wire);}
-.svc{
-  padding:2.3rem 1.8rem;border-right:1px solid var(--wire);border-bottom:1px solid var(--wire);
-  transition:background .14s;
-  display:flex;flex-direction:column;
-}
-.svc:nth-child(2n){border-right:none;}
-.svc:nth-last-child(-n+2){border-bottom:none;}
-.svc:hover{background:var(--mole);}
-.svc-n{
-  font-family:'Cormorant Garamond',sans-serif;font-size:2.8rem;
-  color:var(--wire);line-height:1;margin-bottom:.9rem;transition:color .18s;
-}
-.svc:hover .svc-n{color:var(--ember);}
-.svc-name{font-size:1.15rem;color:var(--cream);margin-bottom:.45rem;}
-.svc-desc{font-size:.74rem;color:var(--read);line-height:1.75;margin-bottom:1.1rem;flex:1;}
-.svc-price{
-  font-size:.7rem;font-weight:700;
-  letter-spacing:.2em;text-transform:uppercase;color:var(--fire);
-}
+/* ═══ SERVICES: em linhas desde 25/10/2026 (bloco DE-PARA FINAL, no fim) ═══ */
 
 /* SNAIL SVG DECORATIONS scattered in sections */
 .snail-svg{
@@ -503,9 +482,6 @@ html { scroll-padding-top: var(--nav-h,54px); }
   
   
 
-  /* Services */
-  .svcs{grid-template-columns:1fr;}
-  .svc{border-right:none;}
 
   /* Contact */
   .contact-wrap{grid-template-columns:1fr;gap:2.5rem;}
@@ -592,9 +568,7 @@ body{cursor:auto;}
 .s-kicker{color:var(--clay)!important;letter-spacing:.28em;}
 
 /* pacotes / serviços */
-.svc-name{font-family:var(--serif);font-weight:600;text-transform:none;}
 /* selo de desconto do Mix + Master (12/10/2026: tinha saído junto com o CSS dos pacotes) */
-.disc-pill{display:inline-block;background:var(--fire);color:var(--black);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.1em;padding:.2rem .5rem;vertical-align:middle;margin-left:.4rem;box-shadow:0 2px 10px rgba(185,143,94,.4);}
 
 /* contato serif */
 .c-desc{font-family:var(--serif);font-style:italic;font-size:clamp(1.3rem,2.2vw,1.7rem);line-height:1.45;color:var(--amber);}
@@ -676,9 +650,6 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 
 /* ═══ AJUSTES v4 (mobile + refinamentos) ═══ */
 
-.svc-flag{display:inline-block;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.58rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;padding:0;margin-left:.55rem;vertical-align:middle;}
-.svc-flag-fire{color:var(--fire);}
-.svc-flag-amber{color:var(--amber);}
 
 @media(max-width:600px){
   .nav-links{scrollbar-width:none;-webkit-overflow-scrolling:touch;}
@@ -1576,3 +1547,43 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
   nav{padding:0 .7rem 0 1rem}
   .nav-right{gap:2px}
 }
+
+/* ═══ DE-PARA FINAL (25/10/2026) ═══════════════════════════════════════════════
+   2: no celular o botão do gênero e o da ordem dizem "Gênero"/"Ordem" até a pessoa escolher
+   (pintarBarra liga a classe .padrao); no computador o rótulo pequeno já diz. */
+@media(max-width:860px){
+  .nb-sel.padrao small{display:inline;font-size:inherit;font-weight:inherit;color:inherit;letter-spacing:inherit}
+  .nb-sel.padrao>span{display:none}
+}
+/* 4: serviços em linhas (nome, uma frase, preço, +); 2 colunas no computador.
+   "Mais pedido" é texto acima do nome; o desconto do Mix + Master é um selo cheio no preço. */
+.sv-lista{list-style:none;margin:0;padding:0;border-top:1px solid var(--wire)}
+.sv-l{display:grid;grid-template-columns:28px minmax(0,1fr) auto 44px;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--wire)}
+.sv-n{font:400 .7rem 'IBM Plex Mono',monospace;color:var(--dim)}
+.sv-t b{display:block;font:500 1.35rem/1.15 var(--serif);color:var(--cream)}
+.sv-k{display:block;margin-bottom:4px;font:700 .56rem 'Helvetica Neue',Helvetica,Arial,sans-serif;font-style:normal;letter-spacing:.18em;text-transform:uppercase;color:var(--amber)}
+.sv-t small{display:block;margin-top:4px;font-size:.78rem;line-height:1.4;color:var(--read)}
+.sv-p{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right}
+.sv-v{font:400 .82rem 'IBM Plex Mono',monospace;color:var(--fire);white-space:nowrap}
+.sv-v s{color:var(--dim);margin-right:2px}
+.sv-p small{font-size:.62rem;letter-spacing:.04em;color:var(--dim)}
+.sv-off{display:inline-block;padding:3px 6px;background:var(--fire);color:var(--black);font:700 .56rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}
+.sv-bt{width:44px;height:44px;border-radius:50%;border:1px solid var(--clay);background:none;color:var(--cream);font-size:1.4rem;line-height:1;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.sv-bt:hover,.sv-bt:active{background:var(--bone);border-color:var(--bone);color:var(--black)}
+.sv-pe{margin:1.4rem 0 0;font-size:.78rem;color:var(--read)}
+.sv-pe a{color:var(--fire);border-bottom:1px solid var(--fire);text-decoration:none}
+#services .s-head{margin-bottom:1.8rem}
+@media(min-width:900px){
+  .sv-lista{display:grid;grid-template-columns:1fr 1fr;column-gap:56px;border-top:0}
+  .sv-l{border-top:1px solid var(--wire);border-bottom:0}
+  .sv-lista .sv-l:nth-last-child(-n+2){border-bottom:1px solid var(--wire)}
+}
+/* 6: ☰ igual ao das outras páginas: itens em --bone, Ajuda em --fire */
+@media(max-width:860px){
+  .nav-links>li>a{color:var(--bone)}
+  .nav-links a.mc-aj{color:var(--fire)}
+}
+/* 8: "Travou no pagamento?" no pé do checkout; some no pedido confirmado */
+.mp-sos{margin:1.3rem 0 0;padding-top:1rem;border-top:1px solid var(--wire);font-size:.74rem;color:var(--read);text-align:center}
+.mp-sos a{color:var(--bone);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+#mpModal:has(#mpStep3[style*="block"]):has(#mpPixConfirmed[style*="block"]) .mp-sos{display:none}

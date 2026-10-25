@@ -67,6 +67,8 @@ export const TOPO_CSS = `/* topo igual ao da vitrine */
 .ico-btn:hover{color:var(--fire)}
 .ico-btn b{position:absolute;top:5px;right:0;font:400 .66rem/1.3 var(--mono);color:var(--black);background:var(--bone);padding:0 .28rem;min-width:16px;text-align:center}
 .ico-btn b[hidden]{display:none}
+.ico-btn b.pulou{animation:crPulou .5s ease}
+@keyframes crPulou{40%{transform:scale(1.45)}}
 .burger{display:none}
 .burger i{display:block;width:22px;height:1.6px;background:var(--bone);margin:5px 0}
 .menu-cel{display:none}
@@ -74,9 +76,16 @@ ${AJUDA_CSS}`;
 export const TOPO_CSS_899 = `@media(max-width:899px){.topo .logo img{width:122px;height:22px}}
 `;
 export const TOPO_CSS_CEL = `  .topo{padding:0 .7rem 0 1rem}.topo ul{display:none}.burger{display:flex}
-  .menu-cel{position:fixed;top:54px;left:0;right:0;z-index:49;background:rgba(5,4,3,.98);border-bottom:1px solid var(--wire);list-style:none;padding:6px 0}
+  .menu-cel{position:fixed;top:54px;left:0;right:0;z-index:49;background:rgba(5,4,3,.98);border-bottom:1px solid var(--wire);list-style:none;padding:0}
   .menu-cel.on{display:block}
   .menu-cel a{display:block;padding:14px 1rem;font-size:.8rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase}
+  /* 25/10/2026: o ☰ igual ao da vitrine: linha entre os itens, ~50 px cada, ✕ pra fechar */
+  .menu-cel>li{border-bottom:1px solid var(--wire)}.menu-cel>li:last-child{border-bottom:0}
+  .menu-cel>li>a{padding:17px 20px}
+  .burger span i{transition:transform .2s,opacity .2s}
+  .burger[aria-expanded="true"] span i:nth-child(1){transform:translateY(6.6px) rotate(45deg)}
+  .burger[aria-expanded="true"] span i:nth-child(2){opacity:0}
+  .burger[aria-expanded="true"] span i:nth-child(3){transform:translateY(-6.6px) rotate(-45deg)}
   .menu-cel a.ativo{color:var(--fire)}
   /* acordeão do BEATS (04/10/2026): "Todos os beats" em destaque + gêneros com quantos à venda */
   .menu-cel{max-height:calc(100vh - 54px);max-height:calc(100dvh - 54px);overflow-y:auto;overscroll-behavior:contain}
@@ -119,9 +128,11 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&fo&&!fo.hid
 })();</script>`;
 
 export function topo(de, genAtual = '', cont = null, { ativo = 'beats' } = {}) {
-  const links = [['/#beats', 'Beats', true], ['/#services', 'Serviços'], ['/#estudio', 'Sobre nós'], ['/#contact', 'Contato']];
-  const lis = links.map(([h, t, a]) => `<li><a href="${h}"${a ? ' class="ativo"' : ''}>${t}</a></li>`).join('');
-  const semAtivo = (x) => (ativo === 'beats' ? x : x.replace(/ class="ativo"/g, ''));
+  // 25/10/2026 (de-para final, item 6): Beats, Serviços e Estúdio (o perfil). Sobre nós e Contato saíram;
+  // o @rideblan33 do ☰ também (Estúdio vai pro mesmo lugar). No perfil e no Quem já gravou, Estúdio acende.
+  const links = [['/#beats', 'Beats', true], ['/#services', 'Serviços'], ['/rideblan33', 'Estúdio', false, true]];
+  const lis = links.map(([h, t, a, est]) => `<li><a href="${h}"${a ? ' class="ativo"' : est && ativo === 'estudio' ? ' class="ativo" aria-current="page"' : ''}${est ? deAttr(de) : ''}>${t}</a></li>`).join('');
+  const semAtivo = (x) => (ativo === 'beats' ? x : x.replace(/ class="ativo"(?! aria-current)/g, ''));
   // celular (04/10/2026, opção A do Bruno): BEATS abre um acordeão com "Todos os beats" em
   // destaque e os gêneros em duas colunas, com quantos estão à venda
   const n = (x) => (x ? `<i>${x}</i>` : '');
@@ -139,6 +150,6 @@ export function topo(de, genAtual = '', cont = null, { ativo = 'beats' } = {}) {
 <button class="ico-btn burger js-menu" type="button" aria-label="Abrir o menu" aria-expanded="false" aria-controls="menuCel"><span><i></i><i></i><i></i></span></button>
 </div>
 </header>
-<ul class="menu-cel" id="menuCel">${semAtivo(lisCel)}<li><a href="#ajuda" class="mc-aj js-ajuda" aria-controls="ajudaFolha">Ajuda</a></li><li><a href="/rideblan33"${deAttr(de)}>@rideblan33</a></li></ul>
+<ul class="menu-cel" id="menuCel">${semAtivo(lisCel)}<li><a href="#ajuda" class="mc-aj js-ajuda" aria-controls="ajudaFolha">Ajuda</a></li></ul>
 ${AJUDA_HTML}`;
 }

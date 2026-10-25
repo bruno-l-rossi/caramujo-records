@@ -34,7 +34,7 @@
 <!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
      a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=2dbd421d76">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=81b9283545">
 
 <!-- ═══ EMAILJS (formulário de contato) ══════════════
   Chaves em emailjs.com: Account > Public Key, Email Services > Service ID,
@@ -79,10 +79,8 @@
   <ul class="nav-links">
     <li class="tem-sub"><a href="#beats" aria-haspopup="true">Beats</a><div class="sub-gen"><a class="sg-todos" href="#beats" onclick="return filtTodos()">Todos os beats</a><div class="sg-lista"><a href="/beats/trap">Trap</a><a href="/beats/boom-bap">Boom Bap</a><a href="/beats/plug">Plug</a><a href="/beats/hood-trap">Hood Trap</a><a href="/beats/experimental">Experimental</a><a href="/beats/hard">Hard</a><a href="/beats/detroit">Detroit</a><a href="/beats/drumless">Drumless</a><a href="/beats/funk">Funk</a><a href="/beats/pluggnb">Pluggnb</a><a href="/beats/bounce">Bounce</a><a href="/beats/no-melody">No Melody</a><a href="/beats/drill">Drill</a></div></div></li>
     <li><a href="#services">Serviços</a></li>
-    <li><a href="#estudio">Sobre nós</a></li>
-    <li><a href="#contact">Contato</a></li>
+    <li><a href="/rideblan33" data-de="menu">Estúdio</a></li>
     <li class="so-cel"><a href="#ajuda" class="mc-aj js-ajuda" aria-controls="ajudaFolha">Ajuda</a></li>
-    <li class="so-cel"><a href="/rideblan33" data-de="menu">@rideblan33</a></li>
   </ul>
   <div class="nav-right">
     <button class="aj-bt js-ajuda" type="button" aria-haspopup="dialog" aria-controls="ajudaFolha" aria-expanded="false" aria-label="Ajuda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M9.4 9.3a2.7 2.7 0 015.2 1c0 1.8-2.6 2.2-2.6 3.8"/><path d="M12 17.2h.01"/></svg><span>Ajuda</span></button>
@@ -168,11 +166,11 @@
     <span class="s-kicker">Catálogo · pronta entrega</span>
     <h2 class="s-title">Catálogo de <span class="r">beats</span></h2>
     <p class="s-sub">
-      Cada beat é vendido com <span class="lic-wrap"><button class="lic-toggle" onclick="toggleLic(event)">licença exclusiva&nbsp;ⓘ</button><span class="lic-box" id="licBox">
+      <!-- 25/10/2026 (de-para final, item 2): a explicação numa frase; o balão do ⓘ é o mesmo -->
+      Cada beat é vendido uma vez só, com <span class="lic-wrap"><button class="lic-toggle" onclick="toggleLic(event)">licença exclusiva&nbsp;ⓘ</button><span class="lic-box" id="licBox">
         O beat é seu, e só seu — nunca é revendido pra outra pessoa.
         Você recebe <strong>contrato digital no seu nome</strong>, com <strong>uso comercial liberado</strong>: streaming, shows, clipes e o que mais vier.
-      </span></span> — uma única venda por título, removido do catálogo após a compra.
-      Todos os beats são entregues em <strong>MP3 + WAV</strong>.
+      </span></span>. Chega em <strong>MP3 + WAV</strong> na hora.
     </p>
   </div>
 
@@ -183,7 +181,7 @@
     <label class="nb-busca" for="beatSearchTop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg><input class="pg-search-input" id="beatSearchTop" type="text" placeholder="Buscar beat pelo nome…" aria-label="Buscar beat pelo nome" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false" enterkeyhint="search"/></label>
     <button class="nb-ic lucky-btn" id="luckyBtn" type="button" onclick="feelingLucky()" aria-label="Estou com sorte: tocar um beat sorteado" title="Estou com sorte">✦</button>
     <div class="nb-dd" id="ddGenero">
-      <button class="nb-sel" id="genBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="genMenu" onclick="menuBarra('genero')"><small>Gênero</small><span id="genVal">Todos</span><i aria-hidden="true">▾</i></button>
+      <button class="nb-sel padrao" id="genBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="genMenu" onclick="menuBarra('genero')"><small>Gênero</small><span id="genVal">Todos</span><i aria-hidden="true">▾</i></button>
       <div class="mn mn-gen" id="genMenu" hidden>
         <div class="mn-t"><b>Gênero</b><button class="mn-x" type="button" onclick="fecharMenusBarra()" aria-label="Fechar">×</button></div>
         <div class="ftabs">
@@ -205,7 +203,7 @@
       </div>
     </div>
     <div class="nb-dd" id="ddOrdem">
-      <button class="nb-sel" id="ordBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="ordMenu" onclick="menuBarra('ordem')"><small>Ordem</small><span id="ordVal">Padrão</span><i aria-hidden="true">▾</i></button>
+      <button class="nb-sel padrao" id="ordBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="ordMenu" onclick="menuBarra('ordem')"><small>Ordem</small><span id="ordVal">Padrão</span><i aria-hidden="true">▾</i></button>
       <div class="mn mn-ord" id="ordMenu" hidden>
         <div class="mn-t"><b>Ordem</b><button class="mn-x" type="button" onclick="fecharMenusBarra()" aria-label="Fechar">×</button></div>
         <button class="mn-o on" type="button" data-ordem="padrao" onclick="ordemBarra('padrao')"><span>Padrão<small>a ordem do catálogo</small></span></button>
@@ -247,9 +245,6 @@
   </div>
   <div class="beat-cards" id="beatCards"></div>
   <div class="pagination" id="pagination">
-    <div class="pg-search">
-      <input class="pg-search-input" id="beatSearchBottom" type="text" placeholder="Buscar beat pelo nome…" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false" enterkeyhint="search"/>
-    </div>
     <div class="pagination-btns">
       <button class="pg-btn" id="pgPrev" onclick="changePage(-1)">←</button>
       <span class="pg-nums" id="pgNums"></span>
@@ -277,44 +272,15 @@
     <p class="s-sub">Do beat ao lançamento. Finalização profissional para artistas independentes.</p>
   </div>
 
-  <div class="svcs">
-    <!-- 01 Beat Personalizado — DESTAQUE (fundo ember) -->
-    <div class="svc rv" style="background:var(--earth);border-top:2px solid var(--fire);">
-      <div class="svc-n" style="color:var(--ember);">01</div>
-      <div class="svc-name" style="color:var(--cream);">Beat Personalizado <span class="svc-flag svc-flag-fire">Mais pedido</span></div>
-      <p class="svc-desc">Produção sob encomenda com base na referência de sua escolha. Produção do zero.</p>
-      <div class="svc-price" style="margin-bottom:1.2rem;color:var(--fire);">R$ 149 / beat</div>
-      <button class="btn btn-fire" style="width:100%;justify-content:center;font-size:.78rem;" onclick="addSvc('Beat Personalizado',149)">+ Carrinho</button>
-    </div>
-
-    <!-- 02 Mixagem -->
-    <div class="svc rv">
-      <div class="svc-n">02</div>
-      <div class="svc-name">Mixagem</div>
-      <p class="svc-desc">Balanceamento e processamento completo de todos os elementos.<br/>Clareza, presença e dinâmica para a sua voz sobre o beat.</p>
-      <div class="svc-price" style="margin-bottom:1.2rem;">R$ 149 / faixa</div>
-      <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:.8rem;" onclick="addSvc('Mixagem',149)">+ Carrinho</button>
-    </div>
-
-    <!-- 03 Masterização -->
-    <div class="svc rv">
-      <div class="svc-n">03</div>
-      <div class="svc-name">Masterização</div>
-      <p class="svc-desc">Loudness calibrado para Spotify e todas as demais plataformas digitais.<br/>Entregue em LUFS-compliant, pronto para distribuição.</p>
-      <div class="svc-price" style="margin-bottom:1.2rem;">R$ 79 / faixa</div>
-      <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:.8rem;" onclick="addSvc('Masterização',79)">+ Carrinho</button>
-    </div>
-
-    <!-- 04 Mix + Master — DESTAQUE (fundo amber sutil) -->
-    <div class="svc rv" style="background:var(--earth);border-top:2px solid var(--amber);position:relative;">
-      <!-- Mix R$149 + Master R$79 = R$228 → combo R$199 -->
-      <div class="svc-n" style="color:var(--amber);">04</div>
-      <div class="svc-name" style="color:var(--cream);">Mix + Master <span class="disc-pill">13% OFF</span> <span class="svc-flag svc-flag-amber">Mais popular</span></div>
-      <p class="svc-desc">Pacote completo: mixagem e masterização.<br/>Do vocal bruto à faixa finalizada e pronta para lançar.</p>
-      <div class="svc-price" style="margin-bottom:1.2rem;color:var(--amber);">R$ 199 / faixa</div>
-      <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:.8rem;border-color:var(--amber);color:var(--amber);" onmouseover="this.style.background='var(--amber)';this.style.color='var(--black)'" onmouseout="this.style.background='';this.style.color='var(--amber)'" onclick="addSvc('Mix + Master',199)">+ Carrinho</button>
-    </div>
-  </div>
+  <!-- 25/10/2026 (de-para final, item 4): os 4 serviços em linhas. O + chama o mesmo addSvc (o carrinho lê o preço daqui).
+       Selos diferentes: "Mais pedido" é texto acima do nome; o desconto do Mix + Master fica no preço (de R$ 228 por R$ 199). -->
+  <ul class="sv-lista">
+    <li class="sv-l"><span class="sv-n">01</span><div class="sv-t"><em class="sv-k">Mais pedido</em><b>Beat Personalizado</b><small>Do zero, a partir da sua referência.</small></div><span class="sv-p"><span class="sv-v">R$ 149</span><small>por beat</small></span><button class="sv-bt" type="button" onclick="addSvc('Beat Personalizado',149)" aria-label="Pôr Beat Personalizado no carrinho, R$ 149">+</button></li>
+    <li class="sv-l"><span class="sv-n">02</span><div class="sv-t"><b>Mixagem</b><small>Voz e beat equilibrados, com presença.</small></div><span class="sv-p"><span class="sv-v">R$ 149</span><small>por faixa</small></span><button class="sv-bt" type="button" onclick="addSvc('Mixagem',149)" aria-label="Pôr Mixagem no carrinho, R$ 149">+</button></li>
+    <li class="sv-l"><span class="sv-n">03</span><div class="sv-t"><b>Masterização</b><small>No volume certo pro Spotify e afins.</small></div><span class="sv-p"><span class="sv-v">R$ 79</span><small>por faixa</small></span><button class="sv-bt" type="button" onclick="addSvc('Masterização',79)" aria-label="Pôr Masterização no carrinho, R$ 79">+</button></li>
+    <li class="sv-l"><span class="sv-n">04</span><div class="sv-t"><b>Mix + Master</b><small>Da voz crua à faixa pronta pra lançar.</small></div><span class="sv-p"><span class="sv-off">13% off</span><span class="sv-v"><s>R$ 228</s> R$ 199</span><small>por faixa</small></span><button class="sv-bt" type="button" onclick="addSvc('Mix + Master',199)" aria-label="Pôr Mix + Master no carrinho, R$ 199">+</button></li>
+  </ul>
+  <p class="sv-pe">Dúvida antes de fechar? <a href="#ajuda" class="js-ajuda" aria-controls="ajudaFolha">Fale com a gente</a></p>
 </section>
 
 <div class="hr"></div>
@@ -611,6 +577,8 @@
       </div>
 
     </div>
+    <!-- 25/10/2026 (de-para final, item 8): saída pra quem travou, em todos os passos; some no pedido confirmado (só CSS) -->
+    <p class="mp-sos">Travou no pagamento? <a href="https://ig.me/m/rideblan33" target="_blank" rel="noopener">Chama no Direct</a></p>
   </div>
 </div>
 
@@ -640,7 +608,7 @@ const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':
 const FEATURED_OVERRIDE_ID=null;
 const FEATURED_OVERRIDE_ATE='';
 </script>
-<script src="/assets/vitrine/vitrine.js?v=f371b4ba50"></script>
+<script src="/assets/vitrine/vitrine.js?v=e1fd9b8df7"></script>
 <!-- leva-de -->
 <script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
 (function(){

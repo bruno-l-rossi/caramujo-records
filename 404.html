@@ -77,6 +77,8 @@ a.btn{font-family:'Cormorant Garamond',serif;letter-spacing:.1em;
 .ico-btn:hover{color:var(--fire)}
 .ico-btn b{position:absolute;top:5px;right:0;font:400 .66rem/1.3 var(--mono);color:var(--black);background:var(--bone);padding:0 .28rem;min-width:16px;text-align:center}
 .ico-btn b[hidden]{display:none}
+.ico-btn b.pulou{animation:crPulou .5s ease}
+@keyframes crPulou{40%{transform:scale(1.45)}}
 .burger{display:none}
 .burger i{display:block;width:22px;height:1.6px;background:var(--bone);margin:5px 0}
 .menu-cel{display:none}
@@ -105,9 +107,16 @@ a.btn{font-family:'Cormorant Garamond',serif;letter-spacing:.1em;
 @media(max-width:899px){.topo .logo img{width:122px;height:22px}}
 @media(max-width:860px){
   .topo{padding:0 .7rem 0 1rem}.topo ul{display:none}.burger{display:flex}
-  .menu-cel{position:fixed;top:54px;left:0;right:0;z-index:49;background:rgba(5,4,3,.98);border-bottom:1px solid var(--wire);list-style:none;padding:6px 0}
+  .menu-cel{position:fixed;top:54px;left:0;right:0;z-index:49;background:rgba(5,4,3,.98);border-bottom:1px solid var(--wire);list-style:none;padding:0}
   .menu-cel.on{display:block}
   .menu-cel a{display:block;padding:14px 1rem;font-size:.8rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase}
+  /* 25/10/2026: o ☰ igual ao da vitrine: linha entre os itens, ~50 px cada, ✕ pra fechar */
+  .menu-cel>li{border-bottom:1px solid var(--wire)}.menu-cel>li:last-child{border-bottom:0}
+  .menu-cel>li>a{padding:17px 20px}
+  .burger span i{transition:transform .2s,opacity .2s}
+  .burger[aria-expanded="true"] span i:nth-child(1){transform:translateY(6.6px) rotate(45deg)}
+  .burger[aria-expanded="true"] span i:nth-child(2){opacity:0}
+  .burger[aria-expanded="true"] span i:nth-child(3){transform:translateY(-6.6px) rotate(-45deg)}
   .menu-cel a.ativo{color:var(--fire)}
   /* acordeão do BEATS (04/10/2026): "Todos os beats" em destaque + gêneros com quantos à venda */
   .menu-cel{max-height:calc(100vh - 54px);max-height:calc(100dvh - 54px);overflow-y:auto;overscroll-behavior:contain}
@@ -135,7 +144,7 @@ body{padding-top:calc(54px + 2rem)}
 <body>
 <!--TOPO-INICIO--><header class="topo">
 <a class="logo" href="/" data-de="404" aria-label="Caramujo Records, página inicial"><img src="/assets/brand/caramujo-h.webp" srcset="/assets/brand/caramujo-h-244.webp 244w, /assets/brand/caramujo-h-366.webp 366w, /assets/brand/caramujo-h.webp 504w" sizes="(max-width:899px) 122px, 148px" alt="Caramujo Records" width="148" height="27"></a>
-<nav aria-label="Seções do site"><ul><li class="tem-sub"><a href="/#beats" aria-haspopup="true">Beats</a><div class="sub-gen"><a class="sg-todos" href="/#beats">Todos os beats</a><div class="sg-lista"><a href="/beats/trap">Trap</a><a href="/beats/boom-bap">Boom Bap</a><a href="/beats/plug">Plug</a><a href="/beats/hood-trap">Hood Trap</a><a href="/beats/experimental">Experimental</a><a href="/beats/hard">Hard</a><a href="/beats/detroit">Detroit</a><a href="/beats/drumless">Drumless</a><a href="/beats/funk">Funk</a><a href="/beats/pluggnb">Pluggnb</a><a href="/beats/bounce">Bounce</a><a href="/beats/no-melody">No Melody</a><a href="/beats/drill">Drill</a></div></div></li><li><a href="/#services">Serviços</a></li><li><a href="/#estudio">Sobre nós</a></li><li><a href="/#contact">Contato</a></li></ul></nav>
+<nav aria-label="Seções do site"><ul><li class="tem-sub"><a href="/#beats" aria-haspopup="true">Beats</a><div class="sub-gen"><a class="sg-todos" href="/#beats">Todos os beats</a><div class="sg-lista"><a href="/beats/trap">Trap</a><a href="/beats/boom-bap">Boom Bap</a><a href="/beats/plug">Plug</a><a href="/beats/hood-trap">Hood Trap</a><a href="/beats/experimental">Experimental</a><a href="/beats/hard">Hard</a><a href="/beats/detroit">Detroit</a><a href="/beats/drumless">Drumless</a><a href="/beats/funk">Funk</a><a href="/beats/pluggnb">Pluggnb</a><a href="/beats/bounce">Bounce</a><a href="/beats/no-melody">No Melody</a><a href="/beats/drill">Drill</a></div></div></li><li><a href="/#services">Serviços</a></li><li><a href="/rideblan33" data-de="404">Estúdio</a></li></ul></nav>
 <div class="dir">
 <button class="ico-btn aj-bt js-ajuda" type="button" aria-haspopup="dialog" aria-controls="ajudaFolha" aria-expanded="false" aria-label="Ajuda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M9.4 9.3a2.7 2.7 0 015.2 1c0 1.8-2.6 2.2-2.6 3.8"/><path d="M12 17.2h.01"/></svg><span>Ajuda</span></button>
 <a class="anel" href="/rideblan33" data-de="404" aria-label="Portfólio do @rideblan33"><img src="/assets/perfil/rideblan33-camisa.webp" alt="" width="128" height="128"></a>
@@ -143,7 +152,7 @@ body{padding-top:calc(54px + 2rem)}
 <button class="ico-btn burger js-menu" type="button" aria-label="Abrir o menu" aria-expanded="false" aria-controls="menuCel"><span><i></i><i></i><i></i></span></button>
 </div>
 </header>
-<ul class="menu-cel" id="menuCel"><li class="mc-sub"><a href="/#beats" aria-expanded="false" aria-controls="mcGen">Beats</a><div class="mc-gen" id="mcGen"><a class="mc-todos" href="/#beats" data-de="404"><span>Todos os beats</span></a><div class="mc-lista"><a href="/beats/trap">Trap</a><a href="/beats/boom-bap">Boom Bap</a><a href="/beats/plug">Plug</a><a href="/beats/hood-trap">Hood Trap</a><a href="/beats/experimental">Experimental</a><a href="/beats/hard">Hard</a><a href="/beats/detroit">Detroit</a><a href="/beats/drumless">Drumless</a><a href="/beats/funk">Funk</a><a href="/beats/pluggnb">Pluggnb</a><a href="/beats/bounce">Bounce</a><a href="/beats/no-melody">No Melody</a><a href="/beats/drill">Drill</a></div></div></li><li><a href="/#services">Serviços</a></li><li><a href="/#estudio">Sobre nós</a></li><li><a href="/#contact">Contato</a></li><li><a href="#ajuda" class="mc-aj js-ajuda" aria-controls="ajudaFolha">Ajuda</a></li><li><a href="/rideblan33" data-de="404">@rideblan33</a></li></ul>
+<ul class="menu-cel" id="menuCel"><li class="mc-sub"><a href="/#beats" aria-expanded="false" aria-controls="mcGen">Beats</a><div class="mc-gen" id="mcGen"><a class="mc-todos" href="/#beats" data-de="404"><span>Todos os beats</span></a><div class="mc-lista"><a href="/beats/trap">Trap</a><a href="/beats/boom-bap">Boom Bap</a><a href="/beats/plug">Plug</a><a href="/beats/hood-trap">Hood Trap</a><a href="/beats/experimental">Experimental</a><a href="/beats/hard">Hard</a><a href="/beats/detroit">Detroit</a><a href="/beats/drumless">Drumless</a><a href="/beats/funk">Funk</a><a href="/beats/pluggnb">Pluggnb</a><a href="/beats/bounce">Bounce</a><a href="/beats/no-melody">No Melody</a><a href="/beats/drill">Drill</a></div></div></li><li><a href="/#services">Serviços</a></li><li><a href="/rideblan33" data-de="404">Estúdio</a></li><li><a href="#ajuda" class="mc-aj js-ajuda" aria-controls="ajudaFolha">Ajuda</a></li></ul>
 <div class="aj-veu js-aj-fecha" hidden></div><div class="aj-folha" id="ajudaFolha" role="dialog" aria-modal="true" aria-labelledby="ajT" hidden><button class="aj-x js-aj-fecha" type="button" aria-label="Fechar">×</button><h2 id="ajT">Ajuda</h2>
 <details open><summary>Como funciona a licença?</summary><p>Exclusiva: o beat é vendido uma vez só e sai da loja. Contrato no seu nome, com uso comercial liberado.</p></details>
 <details><summary>Quando eu recebo o beat?</summary><p>MP3 + WAV com entrega instantânea, pelo link do pedido.</p></details>
