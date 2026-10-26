@@ -129,19 +129,30 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .qg-cab{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 14px}
 .qg-cab b{font:700 11px var(--grot);letter-spacing:.24em;text-transform:uppercase}
 .qg-cab span{font-size:13px;color:var(--meta)}
-.qg-grade{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:20px 12px}
+.qg-grade{position:relative;list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 10px}
 .qg-grade button{display:block;width:100%;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer;text-align:center}
 .qg-grade img,.qg-grade .qg-ini{display:flex;width:100%;height:auto;aspect-ratio:1;border-radius:50%;object-fit:cover}
-.qg-grade b{display:block;margin-top:8px;font:700 14px/1.25 var(--grot);overflow-wrap:anywhere}
-.qg-grade small{font-size:12px;color:var(--meta)}
+.qg-grade b{display:block;margin-top:7px;font:700 13px/1.25 var(--grot);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qg-grade small{font-size:11px;color:var(--meta)}
+/* 26/10/2026 (rodada W, corte 3): 4 por linha no celular e corte com degradê. Antes do script, o CSS já corta em 4 linhas
+   (16; 18 no computador, 3 linhas de 6); o script troca pelo .fora e o "Mostrar mais" abre mais um tanto igual. A busca procura nos 65. */
+.qg-grade.corta>li:nth-child(n+17),.qg-grade li.fora{display:none}
+.qg-grade.busca li.fora:not([hidden]){display:block}
+.qg-grade.cortada::after{content:'';position:absolute;left:0;right:0;bottom:0;height:150px;background:linear-gradient(180deg,rgba(0,0,0,0),var(--preto) 92%);pointer-events:none}
+.qg-grade.busca::after{display:none}
+.qg-mais{display:flex;justify-content:center;margin:-30px 0 8px;position:relative;z-index:2}
+.qg-mais[hidden]{display:none}
+.qg-mais button{min-height:46px;padding:0 22px;border:1px solid #3a3a3a;border-radius:999px;background:var(--preto);color:var(--branco);font:700 12px/1 var(--grot);letter-spacing:.16em;text-transform:uppercase;cursor:pointer}
+.qg-mais button span{color:var(--meta);font-weight:500;letter-spacing:.04em;text-transform:none}
+@media(hover:hover){.qg-mais button:hover{border-color:var(--branco)}}
 .qg-grade button[aria-pressed="true"] img,.qg-grade button[aria-pressed="true"] .qg-ini{outline:3px solid var(--branco);outline-offset:3px}
 .qg-grade li[hidden]{display:none}
 .qg-ini{align-items:center;justify-content:center;background:#1c1c1c;color:var(--apoio);font:800 22px var(--grot);letter-spacing:.02em}
 .qg-nada{color:var(--meta);font-size:14px;margin:8px 0 0}
 .qg-nada[hidden]{display:none}
-@media(min-width:600px){.qg-grade{grid-template-columns:repeat(4,1fr);gap:26px 18px}}
+@media(min-width:600px){.qg-grade{gap:26px 18px}.qg-grade b{font-size:14px;margin-top:8px}.qg-grade small{font-size:12px}}
 @media(min-width:900px){.qg{padding-top:20px}.qg h1{font-size:56px}.qg-topo{display:grid;grid-template-columns:1fr 420px;align-items:end;gap:30px}
-  .qg-grade{grid-template-columns:repeat(6,1fr);gap:30px 22px}.qg-aberto{grid-template-columns:180px 1fr;padding:22px;align-items:start}
+  .qg-grade{grid-template-columns:repeat(6,minmax(0,1fr));gap:30px 22px}.qg-grade.corta>li:nth-child(n+17){display:block}.qg-grade.corta>li:nth-child(n+19){display:none}.qg-aberto{grid-template-columns:180px 1fr;padding:22px;align-items:start}
   .qg-foto{grid-row:1/3}.qg-foto img,.qg-foto .qg-ini{width:180px;height:180px}.qg-fx{grid-column:2;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:24px}
   .qg-fx.curta li:nth-child(n+7){display:block}.qg-fx.curta li:nth-child(n+9){display:none}.qg-todas{grid-column:2}}
 /* rodapé único (rodada R): _lib/rodape.js */
@@ -157,9 +168,10 @@ ${previa ? '<p class="previa">Prévia: só você vê esta página, porque está 
   <label class="qg-busca">${ICONE_BUSCA}<span class="so-leitor">Buscar artista</span><input id="qgBusca" type="search" placeholder="Buscar artista" autocomplete="off" enterkeyhint="search"></label></div>
   ${primeiro ? `<section class="qg-aberto" id="qgAberto" aria-live="polite" aria-labelledby="qgNome">${cartao(primeiro, faixas)}</section>` : ''}
   <div class="qg-cab"><b>Todos</b><span>${n} artistas</span></div>
-  <ul class="qg-grade" id="qgGrade">
+  <ul class="qg-grade${n > 16 ? ' corta cortada' : ''}" id="qgGrade">
 ${todos.map((a, i) => `    <li data-busca="${esc(a.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase())}"><button type="button" data-i="${i}" aria-pressed="${i === 0}">${fotoArtista(a)}<b>${esc(a.nome)}</b><small>${nMus(a.faixas.length)}</small></button></li>`).join('\n')}
   </ul>
+  ${n > 16 ? '<div class="qg-mais" id="qgMais"><button type="button">Mostrar mais</button></div>' : ''}
   <p class="qg-nada" id="qgNada" hidden>Nenhum artista com esse nome.</p>
 </main>
 <script type="application/json" id="qgDados">${jsonSeguro(json)}</script>
@@ -201,7 +213,23 @@ ${rodape('artistas')}
     var q=busca.value.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().trim(), vis=0;
     [].forEach.call(grade.children,function(li){var ok=!q||li.dataset.busca.indexOf(q)>-1; li.hidden=!ok; if(ok)vis++;});
     nada.hidden=vis>0;
+    grade.classList.toggle('busca',!!q); if(mais) mais.hidden=!!q||lim>=grade.children.length;
   });
+  // corte com "Mostrar mais" (26/10/2026, rodada W): 4 linhas no celular (16), 3 de 6 no computador (18);
+  // cada toque abre mais um tanto igual; o artista do #endereço abre no cartão de cima, esteja onde estiver
+  var mais=document.getElementById('qgMais'), lim=0, passo=0;
+  function corta(){
+    var n=grade.children.length; grade.classList.remove('corta');
+    [].forEach.call(grade.children,function(li,k){ li.classList.toggle('fora',k>=lim); });
+    grade.classList.toggle('cortada',lim<n);
+    if(!mais) return;
+    var falta=n-lim; mais.hidden=falta<=0||grade.classList.contains('busca');
+    mais.firstChild.innerHTML='Mostrar mais '+Math.min(passo,falta)+' <span>· faltam '+falta+'</span>';
+  }
+  if(mais){
+    passo=window.matchMedia&&matchMedia('(min-width:900px)').matches?18:16; lim=passo; corta();
+    mais.firstChild.addEventListener('click',function(){ lim+=passo; corta(); manda('gravou-mais'); });
+  }
   var h=decodeURIComponent((location.hash||'').slice(1));
   // rodada R: o artista do #endereço abre no cartão de cima e a página fica no topo (antes descia até o cartão)
   if(h){ for(var i=0;i<A.length;i++) if(A[i].s===h){ abrir(i,false); break; } try{ if('scrollRestoration' in history) history.scrollRestoration='manual'; }catch(_){} window.scrollTo(0,0); }

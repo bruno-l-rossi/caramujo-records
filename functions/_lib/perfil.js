@@ -647,6 +647,18 @@ a.mx-c .mx-img{transition:transform .35s ease}
 /* rodapé único (rodada R): _lib/rodape.js, o mesmo da vitrine em todas as páginas */
 ${RODAPE_CSS}
 @media (max-width:1100px){.grade{grid-template-columns:repeat(4,minmax(0,1fr))}}
+/* 26/10/2026 (rodada W): beat tapes com corte e "Mostrar mais". O CSS já corta antes do script (12; 10 no computador
+   largo, 2 linhas de 5); o script troca pelo .fora e cada toque abre mais um tanto igual. As tapes cortadas seguem no HTML. */
+.grade{position:relative}
+.grade.corta>a:nth-child(n+13),.grade>a.fora{display:none}
+@media (min-width:1101px){.grade.corta>a:nth-child(n+11){display:none}}
+.grade.cortada::after{content:'';position:absolute;left:0;right:0;bottom:0;height:140px;background:linear-gradient(180deg,rgba(20,20,20,0),var(--folha) 92%);pointer-events:none}
+.t-mais{display:flex;justify-content:center;max-width:1180px;margin:-30px auto 0;position:relative;z-index:2}
+.t-mais[hidden]{display:none}
+.t-mais button{min-height:46px;padding:0 22px;border:1px solid #3a3a3a;border-radius:999px;background:var(--preto);color:var(--branco);font:700 12px/1 var(--grot);letter-spacing:.16em;text-transform:uppercase;cursor:pointer}
+.t-mais button span{color:var(--meta);font-weight:500;letter-spacing:.04em;text-transform:none}
+@media (hover:hover){.t-mais button:hover{border-color:var(--branco)}}
+@media (max-width:820px){.grade.cortada::after{background:linear-gradient(180deg,rgba(0,0,0,0),var(--preto) 92%)}}
 @media (max-width:820px){
   .terra{padding-top:20px}
   .ouca-w{display:flex;justify-content:center}
@@ -737,10 +749,10 @@ ${abaMus.html}
   </div>
   <div class="aba-corpo" id="pTapes" role="tabpanel" aria-labelledby="abaTapes"${abaIni === 'tapes' ? '' : ' hidden'}>
   <h2 class="so-leitor">Beat tapes</h2>` : `  <div class="cab"><h2>Beat tapes</h2><span>${tapes.length} ${tapes.length === 1 ? 'tape' : 'tapes'}</span></div>`}
-  <div class="moldura"><div class="grade">
+  <div class="moldura"><div class="grade${tapes.length > 12 ? ' corta cortada' : ''}" id="tGrade">
 ${grade(tapes, idNova, idEmAlta)}
   </div></div>
-${comMusicas ? '  </div>\n' : ''}${fimPerfil(gravou, comMusicas ? abaIni : 'tapes')}
+${tapes.length > 10 ? '  <div class="t-mais" id="tMais"><button type="button">Mostrar mais</button></div>\n' : ''}${comMusicas ? '  </div>\n' : ''}${fimPerfil(gravou, comMusicas ? abaIni : 'tapes')}
 </main>
 
 ${rodape('perfil')}
@@ -1042,6 +1054,19 @@ ${rodape('perfil')}
       if(aberta()){ try{ window.CaramujoStory.fechar(); }catch(e){} }
     });
   }
+  // beat tapes com corte e "Mostrar mais" (26/10/2026, rodada W): 12 no celular e no tablet, 10 no computador largo
+  (function(){
+    var g=document.getElementById('tGrade'), m=document.getElementById('tMais'); if(!g||!m) return;
+    var passo=window.matchMedia&&matchMedia('(min-width:1101px)').matches?10:12, lim=passo, n=g.children.length;
+    function corta(){
+      g.classList.remove('corta');
+      for(var k=0;k<n;k++) g.children[k].classList.toggle('fora',k>=lim);
+      var falta=n-lim; g.classList.toggle('cortada',falta>0); m.hidden=falta<=0;
+      m.firstChild.innerHTML='Mostrar mais '+Math.min(passo,falta)+' <span>· faltam '+falta+'</span>';
+    }
+    corta();
+    m.firstChild.addEventListener('click',function(){ lim+=passo; corta(); manda({kind:'perfil-rede',trackId:'tapes-mais',origem:de}); });
+  })();
   // os pontinhos da galeria do "Quer um som assim?" (25/10/2026)
   var gal=document.getElementById('mxGal');
   if(gal){ var pts=gal.parentNode.querySelectorAll('.mx-pts i'); gal.addEventListener('scroll',function(){ var k=Math.round(gal.scrollLeft/Math.max(1,gal.clientWidth)); for(var i=0;i<pts.length;i++) pts[i].classList.toggle('on',i===k); },{passive:true}); }

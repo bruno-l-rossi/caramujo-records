@@ -220,18 +220,18 @@ __META__
   .who .at-link svg{width:15px;height:15px;color:#b7b7b7;flex:none;transition:transform .2s}
   @media(hover:hover){.who .at-link:hover{text-decoration-color:#fff}.who .at-link:hover svg{transform:translateX(2px);color:#fff}}
   /* Fique por dentro (12/10/2026): a lista com cupom de 15% (era 25% até 17/10), só na página da tape */
-  .fique{margin:32px 0 42px;padding:22px 20px;border:1px solid #2a2a2a;border-radius:18px;background:#0b0b0b}
+  /* 26/10/2026 (rodada W, corte 2): caixa compacta (rótulo + e-mail e botão numa linha), no mesmo lugar do fim da tape */
+  .fique{margin:32px 0 42px;padding:14px;border:1px solid #2a2a2a;border-radius:14px;background:#0b0b0b}
   /* 12/10/2026: o mesmo espaço entre o fim dos beats e a caixa e entre a caixa e o "Mais de" */
   .fique:not([hidden])+.mais{margin-top:0;padding-top:0;border-top:0}
   .fq-k{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#9a9a9a}
-  .fique h3{margin:6px 0 8px;font-size:26px;font-weight:800;color:#fff;letter-spacing:-.01em}
-  .fique p{margin:0;font-size:15px;line-height:1.55;color:#b7b7b7}
-  .fq-f{display:flex;flex-direction:column;gap:10px;margin-top:16px}
-  .fq-in{width:100%;box-sizing:border-box;padding:15px 18px;border:1px solid #333;border-radius:999px;background:transparent;color:#fff;font:inherit;font-size:15px}
+  .fq-f{display:flex;gap:10px;margin-top:10px}
+  .fq-in{flex:1;min-width:0;width:100%;box-sizing:border-box;padding:11px 14px;border:1px solid #333;border-radius:999px;background:transparent;color:#fff;font:inherit;font-size:16px}
   .fq-in:focus{outline:none;border-color:#fff}
-  .fq-bt{width:100%;justify-content:center;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:13px;cursor:pointer}
+  .fique .fq-bt{flex:none;justify-content:center;padding:0 16px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:11px;white-space:nowrap;cursor:pointer}
   .fq-bt:disabled{opacity:.6;cursor:default}
-  .fq-n{margin-top:12px;font-size:12px;color:#777;line-height:1.5}
+  .fq-n{margin-top:8px;font-size:11.5px;color:#777;line-height:1.5}
+  .fq-n:empty{display:none}
   .fq-n.erro{color:#e0a96d}
   .fq-re{background:none;border:0;padding:0;font:inherit;color:#fff;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
   /* rodada R (18/10/2026): depois do cadastro a caixa vira uma linha (desenho B) com o lembrete do cupom (C):
@@ -560,15 +560,14 @@ __META__
       <div class="list" id="list"></div>
 
       <!-- Fique por dentro (12/10/2026): só na página de uma tape; o servidor (/api/lista) cria o cupom -->
+      <!-- 26/10/2026 (rodada W): compacta, sem título nem texto; o aviso (#fqN) só aparece com erro -->
       <section class="fique" id="fique" hidden aria-labelledby="fqTit">
-        <div class="fq-k">15% na primeira compra</div>
-        <h3 id="fqTit">Fique por dentro</h3>
-        <p id="fqP">Cadastre-se para receber um cupom exclusivo de 15% em sua primeira compra e ouvir as próximas beat tapes antes de todo mundo.</p>
+        <div class="fq-k" id="fqTit">15% na 1ª compra · cupom no e-mail</div>
         <form class="fq-f" id="fqForm" novalidate>
           <input class="fq-in" id="fqEmail" type="email" inputmode="email" autocomplete="email" placeholder="seu@email.com" aria-label="Seu e-mail" required>
           <button class="pill solid fq-bt" id="fqBt" type="submit">Quero o cupom</button>
         </form>
-        <div class="fq-n" id="fqN">O cupom vale 15 dias nos beats do catálogo. Dá pra sair quando quiser.</div>
+        <div class="fq-n" id="fqN" aria-live="polite"></div>
       </section>
 
       <!-- Mais do @rideblan33 (26/09/2026, tapes e pastas de artista): as outras tapes do perfil pra
@@ -1869,7 +1868,7 @@ __META__
      Mesmo servidor da vitrine (/api/lista); este navegador lembra do cadastro (caramujo_lista_v1). */
   (function(){
     var box=$('fique'); if(!box || !CAT.artist.tape || CAT.preview) return;
-    var CH='caramujo_lista_v1', SS='cr_fq_sessao', LANC=CAT.lanc||null, form=$('fqForm'), inp=$('fqEmail'), bt=$('fqBt'), nota=$('fqN'), p=$('fqP'), tit=$('fqTit');
+    var CH='caramujo_lista_v1', SS='cr_fq_sessao', LANC=CAT.lanc||null, form=$('fqForm'), inp=$('fqEmail'), bt=$('fqBt'), nota=$('fqN'), tit=$('fqTit');
     box.hidden=false;
     // rodada R: linha de lembrete (cupom e prazo) + Reenviar com contagem
     function hoje(){ try{ return new Date().toLocaleDateString('sv',{timeZone:'America/Sao_Paulo'}); }catch(_){ return new Date().toISOString().slice(0,10); } }
@@ -1879,17 +1878,18 @@ __META__
     function pronto(g){
       var email=g.email, vale=g.valeAte||(g.at?new Date(g.at+15*864e5).toLocaleDateString('sv',{timeZone:'America/Sao_Paulo'}):'');
       var semCupom=g.status==='sem-cupom'||(vale&&vale<hoje()), falhou=!semCupom&&g.enviado===false;
-      box.classList.add('fq-ok'); clearInterval(tique);
+      clearInterval(tique);
+      // 26/10/2026 (rodada W): cupom já usado ou vencido = a caixa some na hora (antes avisava na visita do cadastro)
+      if(semCupom){ box.hidden=true; return; }
+      box.classList.add('fq-ok');
       var pct=g.pct||15;
       box.innerHTML='<div class="fq-linha" role="status"><span class="ok'+(falhou?' av':'')+'" aria-hidden="true">'+(falhou?'!':'✓')+'</span><div class="fq-tx"></div><a class="fq-usar" href="/#beats" data-de="tape-cupom">Usar</a><div class="fq-pe"></div></div>';
       var tx=box.querySelector('.fq-tx'), usar=box.querySelector('.fq-usar'), pe=box.querySelector('.fq-pe');
       var b=document.createElement('b');
-      if(semCupom){ b.textContent='Você está na lista.'; tx.appendChild(b); tx.appendChild(document.createTextNode(' O cupom desse e-mail já foi usado ou venceu. As próximas beat tapes seguem chegando por lá.')); usar.hidden=true; }
-      else if(falhou){ b.textContent='Você entrou na lista.'; tx.appendChild(b); tx.appendChild(document.createTextNode(' Só que o e-mail com o cupom não saiu agora. Toca em reenviar.')); usar.hidden=true; }
-      else { b.textContent='Seu cupom de '+pct+'% vale até '+br(vale)+'.'; tx.appendChild(b); tx.appendChild(document.createTextNode(' Tá no seu e-mail (olha o spam também) e vale nos beats do catálogo.')); }
+      if(falhou){ b.textContent='Você entrou na lista.'; tx.appendChild(b); tx.appendChild(document.createTextNode(' Só que o e-mail com o cupom não saiu agora. Toca em reenviar.')); usar.hidden=true; }
+      else { b.textContent='Cupom de '+pct+'% até '+br(vale)+'.'; tx.appendChild(b); tx.appendChild(document.createTextNode(' Tá no seu e-mail.')); }
       if(!email) return;
       pe.appendChild(document.createTextNode(email));
-      if(semCupom) return;
       var re=document.createElement('button'); re.type='button'; re.className='fq-re';
       var sep=document.createElement('span'); sep.setAttribute('aria-hidden','true'); sep.textContent='·'; pe.appendChild(sep); pe.appendChild(re);
       function conta(){
@@ -1901,7 +1901,7 @@ __META__
       re.addEventListener('click',function(){ if(!re.disabled) enviar(email,re); });
     }
     function enviar(email,quem){
-      var b=quem||bt, rot=b.textContent; b.disabled=true; b.textContent='Enviando…'; nota.classList.remove('erro');
+      var b=quem||bt, rot=b.textContent; b.disabled=true; b.textContent='Enviando…'; nota.classList.remove('erro'); if(!quem) nota.textContent='';
       fetch('/api/lista',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:email,de:'tape'})})
         .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
         .then(function(x){
@@ -1932,12 +1932,10 @@ __META__
         var v0=g0.valeAte||(g0.at?new Date(g0.at+15*864e5).toLocaleDateString('sv',{timeZone:'America/Sao_Paulo'}):''), sem0=g0.status==='sem-cupom'||(v0&&v0<hoje());
         // 24/10/2026 (Bruno): a linha do cupom fica enquanto ele vale; usado (a compra marca neste aparelho)
         // ou vencido, a caixa some até a próxima beat tape
-        var nesta=false; try{ nesta=sessionStorage.getItem(SS)==='1'; }catch(_){}
-        if(!sem0||nesta) pronto(g0); else box.hidden=true;
+        if(!sem0) pronto(g0); else box.hidden=true;
       } else {
-        var k0=box.querySelector('.fq-k'); if(k0) k0.textContent='Beat tape nova · cupom novo';
-        tit.textContent='Saiu beat tape nova'; p.textContent='Pega um cupom novo de 15% pros beats do catálogo. Ele chega no seu e-mail e vale 15 dias.';
-        inp.value=g0.email; bt.textContent='Quero o cupom novo';
+        // 26/10/2026 (rodada W): igual à 1ª visita, sem o "na 1ª compra" (o e-mail já vem preenchido)
+        tit.textContent='15% · cupom no e-mail'; inp.value=g0.email;
       }
     }
     form.addEventListener('submit',function(e){
