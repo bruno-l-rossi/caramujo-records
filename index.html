@@ -34,7 +34,7 @@
 <!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
      a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=83b6e7ec7b">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=3554131500">
 
 
 <link rel="canonical" href="https://caramujorecords.com.br"/>
@@ -259,9 +259,11 @@
 <div class="hr"></div>
 
 <!-- 25/10/2026 (de-para final, item 5): o "Por dentro do estúdio" virou um cartão (as fotos foram pro perfil).
-     Botão escolhido pelo Bruno: a foto com o anel de story do topo e "Ver portfólio". Abre o perfil (origem "sobre"). -->
+     Botão escolhido pelo Bruno: a foto com o anel de story do topo e "Ver portfólio". Abre o perfil (origem "sobre").
+     26/10/2026 (rodada W, opção A): o cartão vira uma faixa da largura toda com a foto do estúdio. No computador a foto
+     ocupa a direita e some no preto pra esquerda; no celular fica em cima. A foto vem por último no HTML (posição pelo CSS). -->
 <section id="estudio" class="s s-earth">
-  <a class="eu-card" href="/rideblan33" data-de="sobre"><span class="eu-anel"><img src="assets/perfil/rideblan33-avatar.webp" alt="" width="200" height="200" loading="lazy"></span><span class="eu-tx"><span class="eu-k">Quem faz o som</span><b>@rideblan33</b><span class="eu-p">Fotos do estúdio, quem já gravou e as beat tapes.</span><span class="eu-cta">Ver portfólio</span></span></a>
+  <a class="eu-card" href="/rideblan33" data-de="sobre"><span class="eu-anel"><img src="assets/perfil/rideblan33-avatar.webp" alt="" width="200" height="200" loading="lazy"></span><span class="eu-tx"><span class="eu-k">Quem faz o som</span><b>@rideblan33</b><span class="eu-p">Produtor desde 2018 em São Carlos. Fotos do estúdio, quem já gravou e as beat tapes.</span><span class="eu-cta">Ver portfólio</span></span><span class="eu-foto" aria-hidden="true"><img src="assets/studio-hero.jpg" alt="" width="768" height="768" loading="lazy" decoding="async"></span></a>
 </section>
 
 
