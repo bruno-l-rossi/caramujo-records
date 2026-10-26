@@ -401,7 +401,7 @@ function pagina() {
   <div id="musicas" hidden></div>
   <div id="gravou" hidden></div>
 </div>
-<script src="/assets/painel/analytics.js?v=2026-10-16a" defer></script>
+<script src="/assets/painel/analytics.js?v=2026-10-26a" defer></script>
 <script src="/assets/painel/vitrine.js?v=2026-10-16a" defer></script>
 <script src="/assets/painel/musicas.js?v=2026-10-25a" defer></script>
 <script src="/assets/painel/gravou.js?v=2026-10-18a" defer></script>

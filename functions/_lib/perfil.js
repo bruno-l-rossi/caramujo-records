@@ -252,7 +252,7 @@ function linhaRecente(m, k, vaga) {
 // Linha "Quem já gravou" no fim da aba Músicas (16/10/2026, rodada K; entrou no lugar do
 // "Ouvir o portfólio completo", que o Bruno tirou: a página de artistas faz o mesmo papel).
 // Só aparece com a página no ar (ou na prévia de quem está logado).
-export function linhaGravou(gv) {
+export function linhaGravou(gv, origem = 'perfil-gravou') {
   if (!gv || !gv.artistas || !gv.artistas.length) return '';
   // Opção D (17/10/2026, rodada N): fileira de fotos grandes que desliza (até 20 artistas desde a rodada O); cada foto abre o artista na
   // página e o último cartão é o "Ver todos" (como na opção C). O próprio @rideblan33 fica fora da
@@ -260,7 +260,7 @@ export function linhaGravou(gv) {
   const lista = gv.artistas.filter((a) => !a.eu);
   const mostra = lista.filter((a) => a.foto).concat(lista.filter((a) => !a.foto)).slice(0, 20);   // até 20 (pedido do Bruno, rodada O)
   const resto = gv.artistas.length - mostra.length;
-  const de = deAttr('perfil-gravou');
+  const de = deAttr(origem) + ` data-de-musicas="${DE_FIM.musicas.gravou}" data-de-tapes="${DE_FIM.tapes.gravou}"`;
   return `<section class="qg-ent" aria-labelledby="qgEntT"><div class="qg-ent-cab"><h3 id="qgEntT">Quem já gravou</h3><span class="mx-direita"><a class="qg-ver" href="/rideblan33/artistas"${de} data-rede="aba-gravou">Ver todos ›</a><span class="mx-setas" hidden><button type="button" id="qgAnt" aria-label="Artistas anteriores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><button type="button" id="qgProx" aria-label="Mais artistas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></span></span></div>` +
     `<div class="qg-tr-w"><div class="qg-tr" id="qgTr">${mostra.map((a) => `<a class="qg-c" href="/rideblan33/artistas#${esc(a.slug)}"${de} data-rede="aba-gravou-artista">${fotoArtista(a)}<b>${esc(a.nome)}</b></a>`).join('')}` +
     `<a class="qg-c qg-c-fim" href="/rideblan33/artistas"${de} data-rede="aba-gravou" aria-label="Ver todos os ${gv.artistas.length} artistas"><span class="qg-fim">${mosaicoGravou(lista, mostra)}<span class="qg-veu">${resto > 0 ? `+${resto}` : 'Todos'}</span></span><b>Ver todos</b><i class="qg-n">${gv.artistas.length} artistas</i></a></div></div></section>`;
@@ -283,7 +283,7 @@ function separarNaPagina(mus) {
   return globalThis.__CR_RECENTES === true || !destaques.length ? { destaques, recentes } : { destaques, recentes: [] };
 }
 
-export function abaMusicas(mus, { previa = false, gravou = null } = {}) {
+export function abaMusicas(mus, { previa = false } = {}) {
   const { destaques, recentes } = separarNaPagina(mus);
   const n = destaques.length + recentes.length;
   let h = '';
@@ -294,19 +294,28 @@ export function abaMusicas(mus, { previa = false, gravou = null } = {}) {
       `<div class="mx-trilho" id="mxTrilho">${destaques.map((m, k) => cardDestaque(m, k)).join('')}</div></section>`;
   }
   const vaga = recentes.some(temAudio);
-  // 16/10/2026: o "Ouvir o portfólio completo" saiu (pedido do Bruno); no lugar, a linha Quem já gravou
-  const todas = linhaGravou(gravou);
-  // 4b (11/10/2026, opção A do Bruno, sem o texto): quem ouviu as músicas e quer um som assim vai
-  // direto pros serviços da vitrine
-  // 12/10/2026: opção D (cartão com a foto do estúdio), kicker "Caramujo Records"
-  // 25/10/2026 (de-para final, item 7, opção B): o cartão ganha as fotos do estúdio (saíram da vitrine), deslizando no
-  // fundo com pontinhos; o texto deixa o dedo passar pra galeria e só os botões pegam o toque
-  const som = `<div class="mx-som"><div class="mx-gal" id="mxGal">${FOTOS_ESTUDIO.map(([f, t], i) => `<img src="${f}" alt="${t}" width="768" height="960"${i ? ' loading="lazy"' : ''}>`).join('')}</div><span class="mx-pts" aria-hidden="true">${FOTOS_ESTUDIO.map((_, i) => `<i${i ? '' : ' class="on"'}></i>`).join('')}</span><p>Quer um som assim?</p><div class="mx-bts"><a class="cheio" href="/#services"${deAttr('perfil-musicas')} data-rede="servico-mix">Mix &amp; Master</a><a href="/#services"${deAttr('perfil-musicas')} data-rede="servico-beat">Beat personalizado</a></div></div>`;
-  h += recentes.length
-    ? `<section class="mx-sec" aria-labelledby="mxRec"><div class="cab"><h3 id="mxRec">${destaques.length ? 'Recentes' : 'Músicas'}</h3><span>mais novas primeiro</span></div>` +
-      `<ul class="mx-lista">${recentes.map((m, k) => linhaRecente(m, destaques.length + k, vaga)).join('')}</ul>${todas}${som}</section>`
-    : `<section class="mx-sec">${todas}${som}</section>`;
+  // 26/10/2026: o Quem já gravou e o "Quer um som assim?" saíram daqui e moram no fim do perfil,
+  // embaixo das duas abas (fimPerfil)
+  if (recentes.length) {
+    h += `<section class="mx-sec" aria-labelledby="mxRec"><div class="cab"><h3 id="mxRec">${destaques.length ? 'Recentes' : 'Músicas'}</h3><span>mais novas primeiro</span></div>` +
+      `<ul class="mx-lista">${recentes.map((m, k) => linhaRecente(m, destaques.length + k, vaga)).join('')}</ul></section>`;
+  }
   return { html: h, n };
+}
+
+// Fim do perfil (26/10/2026, pedido do Bruno): o Quem já gravou e o "Quer um som assim?" valem pras duas
+// abas. Antes moravam só no fim da aba Músicas; quem abria em Beat tapes (vindo do cartão da vitrine, de
+// uma tape, do Google) chegava no fim da grade sem eles. A origem dos cliques segue a aba aberta
+// (data-de-musicas / data-de-tapes; o script do perfil troca o data-de quando a aba muda).
+// 4b (11/10/2026): quem ouviu e quer um som assim vai direto pros serviços da vitrine.
+// 12/10/2026: opção D (cartão com a foto do estúdio). 25/10/2026 (de-para final, item 7, opção B): as
+// fotos do estúdio deslizam no fundo com pontinhos; o texto deixa o dedo passar pra galeria.
+export const DE_FIM = { musicas: { som: 'perfil-musicas', gravou: 'perfil-gravou' }, tapes: { som: 'perfil-tapes', gravou: 'perfil-gravou-tapes' } };
+export function fimPerfil(gravou, aba = 'musicas') {
+  const de = DE_FIM[aba] || DE_FIM.musicas;
+  const deSom = ` data-de="${de.som}" data-de-musicas="${DE_FIM.musicas.som}" data-de-tapes="${DE_FIM.tapes.som}"`;
+  const som = `<div class="mx-som"><div class="mx-gal" id="mxGal">${FOTOS_ESTUDIO.map(([f, t], i) => `<img src="${f}" alt="${t}" width="768" height="960"${i ? ' loading="lazy"' : ''}>`).join('')}</div><span class="mx-pts" aria-hidden="true">${FOTOS_ESTUDIO.map((_, i) => `<i${i ? '' : ' class="on"'}></i>`).join('')}</span><p>Quer um som assim?</p><div class="mx-bts"><a class="cheio" href="/#services"${deSom} data-rede="servico-mix">Mix &amp; Master</a><a href="/#services"${deSom} data-rede="servico-beat">Beat personalizado</a></div></div>`;
+  return `<section class="fim-perfil" id="fimPerfil" aria-label="Quem já gravou e serviços">${linhaGravou(gravou, de.gravou)}${som}</section>`;
 }
 
 // O que o mini player precisa pra tocar as músicas (inteiras), na ordem da página:
@@ -371,7 +380,7 @@ export function paginaPerfil(dados, { url, aba = 'musicas', previa = false, prev
   const comMusicas = !!(mus && (mus.noAr || previa));
   const gvMeta = !Array.isArray(dados) && dados.gravou ? dados.gravou : null;
   const gravou = gvMeta && (gvMeta.noAr || previaGravou) ? montarGravou(gvMeta) : null;
-  const abaMus = comMusicas ? abaMusicas(mus, { previa, gravou }) : null;
+  const abaMus = comMusicas ? abaMusicas(mus, { previa }) : null;
   const tocaveis = comMusicas ? musicasDoPerfil(mus) : [];
   const abaIni = comMusicas && aba === 'tapes' ? 'tapes' : 'musicas';
   const tocaAlgo = !!(tocador || tocaveis.length);
@@ -611,6 +620,7 @@ a.mx-c .mx-img{transition:transform .35s ease}
 .mx-som a.cheio{background:var(--branco);border-color:var(--branco);color:#000}
 @media (hover:hover){.mx-som a:hover{border-color:var(--branco)}.mx-som a.cheio:hover{background:#d9d9d9;border-color:#d9d9d9}}
 @media (min-width:900px){.mx-som{padding-top:190px}}
+.fim-perfil{max-width:1180px;margin:46px auto 0}
 .qg-ent{margin-top:22px;padding-top:18px;border-top:1px solid var(--div);color:var(--branco)}
 .qg-ent-cab{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
 .qg-ent-cab h3{margin:0;font:700 20px/1.2 var(--grot)}
@@ -731,7 +741,8 @@ ${abaMus.html}
   <div class="moldura"><div class="grade">
 ${grade(tapes, idNova, idEmAlta)}
   </div></div>
-${comMusicas ? '  </div>\n' : ''}</main>
+${comMusicas ? '  </div>\n' : ''}${fimPerfil(gravou, comMusicas ? abaIni : 'tapes')}
+</main>
 
 ${rodape('perfil')}
 <script>
@@ -935,6 +946,8 @@ ${rodape('perfil')}
     });
     try{ history.replaceState(history.state,'',location.pathname+location.search+'#'+qual); }catch(e){}
     if(conta) manda({kind:'perfil-rede',trackId:'aba-'+qual,origem:de});
+    // o fim do perfil (Quem já gravou e Quer um som assim?) conta de que aba veio o clique
+    document.querySelectorAll('#fimPerfil [data-de-'+qual+']').forEach(function(a){ a.setAttribute('data-de',a.getAttribute('data-de-'+qual)); try{ var u=new URL(a.getAttribute('href'),location.href); if(u.searchParams.has('de')){ u.searchParams.delete('de'); a.setAttribute('href',u.pathname+u.search+u.hash); } }catch(e){} });
     setas(); aoTrocarAba();
   }
   if(abas.length){

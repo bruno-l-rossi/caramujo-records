@@ -131,7 +131,9 @@
     'pagina-beat': 'Página de beat', 'pagina-genero': 'Página de gênero', artista: '@ da pasta de artista',
     'artista-mais': 'Ver tudo da pasta de artista', painel: 'Painel (você)',
     // 11/10/2026: caixa "Quer um som assim?" da aba Músicas, topo da página do pedido
-    'perfil-musicas': 'Quer um som assim? (aba Músicas)', 'perfil-gravou': 'Linha Quem já gravou (aba Músicas)', artistas: 'Página Quem já gravou', pedido: 'Página do pedido', vendido: 'Parecidos de um vendido (vitrine)', lista: 'E-mail da lista'
+    'perfil-musicas': 'Quer um som assim? (aba Músicas)', 'perfil-gravou': 'Linha Quem já gravou (aba Músicas)',
+    // 26/10/2026: o fim do perfil aparece nas duas abas
+    'perfil-tapes': 'Quer um som assim? (aba Beat tapes)', 'perfil-gravou-tapes': 'Linha Quem já gravou (aba Beat tapes)', artistas: 'Página Quem já gravou', pedido: 'Página do pedido', vendido: 'Parecidos de um vendido (vitrine)', lista: 'E-mail da lista'
   };
   var nomeOrigem = function (o) { return o.nome ? 'Tape: ' + o.nome : (ORIGEM[o.origem] || o.origem); };
 
