@@ -525,7 +525,6 @@ h1{font:600 clamp(56px,8.6vw,124px)/.9 var(--serif);color:var(--cream);margin:0;
 .aviso{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translate(-50%,8px);z-index:9500;max-width:calc(100% - 32px);padding:11px 16px;background:#1e1a12;border:1px solid var(--clay);font:400 12.5px/1.4 var(--mono);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
 .aviso.on{opacity:1;transform:translate(-50%,0)}
 .botoes svg{width:20px;height:20px}
-.botoes .casa{border-color:var(--fire)}
 .foto{position:relative;align-self:stretch;min-height:520px}
 .num33{position:absolute;right:-2%;top:50%;transform:translateY(-54%);font:600 clamp(260px,34vw,470px)/1 var(--serif);color:transparent;-webkit-text-stroke:1.5px rgba(185,143,94,.55);letter-spacing:-.04em;user-select:none;pointer-events:none}
 .foto img{position:absolute;bottom:-1px;left:50%;transform:translateX(-38%);height:105%;max-height:590px;width:auto;filter:drop-shadow(0 18px 30px rgba(0,0,0,.55))}
@@ -698,8 +697,8 @@ ${topo('perfil', '', null, { ativo: 'estudio' })}
       <h1>@rideblan33</h1>
       <p class="bio">Produtor &amp; beatmaker.<br>33 memórias distantes.</p>
       <p class="numeros"><span><b>${num.artistas}+</b> artistas</span> · <span><b>${num.faixas}+</b> faixas</span> · <span><b>${curto(num.streams)}</b> de streams</span></p>
+      <!-- 26/10/2026 (rodada W, corte 4): o botão do Caramujo saiu; os beats seguem no Beats do topo, no logo e no "Quer um som assim?" -->
       <div class="botoes">
-        <a class="casa" href="/#beats"${deAttr('perfil')} aria-label="Beats à venda na Caramujo Records" title="Beats à venda" data-rede="vitrine"><img src="/assets/brand/selo-creme.svg" alt="" width="26" height="26"></a>
         <a href="${REDES.spotify}" target="_blank" rel="noopener" aria-label="Spotify" title="Spotify" data-rede="spotify">${ICONES.spotify}</a>
         <a href="${REDES.youtube}" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube" data-rede="youtube">${ICONES.youtube}</a>
         <a href="${REDES.instagram}" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram" data-rede="instagram">${ICONES.instagram}</a>
