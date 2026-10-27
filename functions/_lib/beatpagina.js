@@ -108,6 +108,8 @@ export function parecidos(b, beats, n = 4) {
 
 /* ---------- pedaços de HTML ---------- */
 
+// rodada Y (27/10/2026): o ♡ do "Salvar pra depois" (o mesmo da vitrine)
+const SV_COR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3s-7.6-4.5-7.6-10.2A4.3 4.3 0 0112 7.5a4.3 4.3 0 017.6 2.6c0 5.7-7.6 10.2-7.6 10.2z"/></svg>';
 const ICO = {
   cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.4 11.5h11.2L21 7H6"/></svg>',
   ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
@@ -218,6 +220,14 @@ body.tocando .aviso{bottom:96px}
 .pacs{list-style:none;font:400 .72rem/1.9 var(--mono);color:var(--read);text-align:right}
 .pacs a{color:var(--fire);border-bottom:1px solid var(--clay)}
 .compra .btn{width:100%;margin-top:18px}
+.salvar{display:flex;align-items:stretch;margin-top:10px;border:1px solid var(--wire)}
+.salvar.on{border-color:var(--fire)}
+.salvar button{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 14px;background:none;border:0;color:var(--cream);font:700 .72rem var(--sans);letter-spacing:.18em;text-transform:uppercase;cursor:pointer}
+.salvar.on button{justify-content:flex-start}
+.salvar svg{width:18px;height:18px;flex:none;color:var(--fire)}
+.salvar a{display:flex;align-items:center;padding:0 16px;font-size:.8rem;color:var(--read);white-space:nowrap;border-left:1px solid var(--wire)}
+.salvar a:hover{color:var(--fire)}
+.salvar a[hidden],.salvar[hidden]{display:none}
 .inclui{list-style:none;margin-top:16px;display:grid;gap:7px}
 .inclui li{font-size:.8rem;color:var(--read);line-height:1.5;padding-left:20px;position:relative}
 .inclui li:before{content:'';position:absolute;left:2px;top:.55em;width:8px;height:4px;border-left:1.5px solid var(--fire);border-bottom:1.5px solid var(--fire);transform:rotate(-45deg)}
@@ -460,6 +470,7 @@ export function paginaBeat(b, loja) {
 <div class="dono"><p>Esse beat já tem dono.</p><span>A licença é exclusiva: quando alguém compra, o beat sai da loja. Os de baixo estão à venda.</span></div>`
     : `<div class="compra"><div class="linha"><div class="valor">${real(preco)}<small>Licença exclusiva</small></div>${pacotesTexto(pk)}</div>
 <a class="btn js-add" data-bid="${b.id}" data-preco="${preco}" href="${linkAdd(b)}"${deAttr(de)}>${ICO.cart}<span>Adicionar ao carrinho</span></a>
+<div class="salvar js-salvar-linha" data-sv="${b.id}"><button class="js-salvar" type="button" aria-pressed="false">${SV_COR}<span>Salvar pra depois</span></button><a href="/#salvos"${deAttr(de)} hidden>Ver salvos ›</a></div>
 <ul class="inclui"><li><b>Só seu:</b> depois da compra o beat sai da loja</li><li><b>Contrato no seu nome</b>, com uso comercial liberado</li><li><b>MP3 + WAV</b>, entrega instantânea</li></ul></div>`;
 
   const capaG = b.capa
@@ -695,6 +706,34 @@ const JS = `(function(){
     funil('carrinho',bid); funil('adicao',bid);   // o funil conta aqui, como a vitrine contava ao receber o #add=
     pintarCarrinho();
     var bn=$('.js-n'); if(bn){ bn.classList.remove('pulou'); void bn.offsetWidth; bn.classList.add('pulou'); }
+  });
+
+  /* Salvar pra depois (rodada Y, 27/10/2026): a mesma lista da vitrine (caramujo_salvos_v1, sem prazo).
+     "Ver salvos" abre a vitrine com o filtro dos salvos (/#salvos). Sem localStorage, o botão some. */
+  var SV='caramujo_salvos_v1';
+  var SV_COR='${SV_COR}';
+  var SV_CHEIO=SV_COR.replace('fill="none"','fill="currentColor"');
+  function svLer(){ try{ var o=JSON.parse(localStorage.getItem(SV)||'null'); return o&&Array.isArray(o.ids)?o.ids.map(Number).filter(function(n){return n>0;}):[]; }catch(_){ return []; } }
+  function svPinta(){
+    var ids=svLer();
+    $$('.js-salvar-linha').forEach(function(l){
+      var on=ids.indexOf(Number(l.getAttribute('data-sv')))>-1, bt=l.querySelector('button');
+      l.classList.toggle('on',on); bt.setAttribute('aria-pressed',on?'true':'false');
+      bt.innerHTML=(on?SV_CHEIO:SV_COR)+'<span>'+(on?'Salvo':'Salvar pra depois')+'</span>';
+      bt.setAttribute('aria-label',on?'Tirar dos salvos':'Salvar pra depois');
+      l.querySelector('a').hidden=!on;
+    });
+  }
+  try{ localStorage.setItem('cr_teste_sv','1'); localStorage.removeItem('cr_teste_sv'); svPinta(); }catch(_){ $$('.js-salvar-linha').forEach(function(l){ l.hidden=true; }); }
+  document.addEventListener('click',function(e){
+    var bt=e.target.closest&&e.target.closest('.js-salvar'); if(!bt) return;
+    var id=Number(bt.parentNode.getAttribute('data-sv')); if(!(id>0)) return;
+    try{
+      var ids=svLer(), i=ids.indexOf(id);
+      if(i>-1) ids.splice(i,1); else ids.unshift(id);
+      localStorage.setItem(SV,JSON.stringify({ ids:ids.slice(0,60), em:Date.now() }));
+    }catch(_){ return; }
+    svPinta();
   });
 
   /* menu do celular */

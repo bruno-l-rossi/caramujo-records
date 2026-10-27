@@ -14,12 +14,15 @@ const CARRINHO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 // número do carrinho e a Ajuda (uma vez só por página).
 export const DIRECT = 'https://ig.me/m/rideblan33';
 const ICO_AJUDA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M9.4 9.3a2.7 2.7 0 015.2 1c0 1.8-2.6 2.2-2.6 3.8"/><path d="M12 17.2h.01"/></svg>';
+// rodada Y (27/10/2026): "Comprou um beat e perdeu o link?" manda os links pro e-mail da compra (/api/recuperar)
+const ICO_MAIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg>';
 const ICO_IG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg>';
 // a folha da Ajuda (respostas com o que o site já promete; o resto vai pro Direct)
 export const AJUDA_HTML = `<div class="aj-veu js-aj-fecha" hidden></div><div class="aj-folha" id="ajudaFolha" role="dialog" aria-modal="true" aria-labelledby="ajT" hidden><button class="aj-x js-aj-fecha" type="button" aria-label="Fechar">×</button><h2 id="ajT">Ajuda</h2>
 <details open><summary>Como funciona a licença?</summary><p>Exclusiva: o beat é vendido uma vez só e sai da loja. Contrato no seu nome, com uso comercial liberado.</p></details>
 <details><summary>Quando eu recebo o beat?</summary><p>MP3 + WAV com entrega instantânea, pelo link do pedido.</p></details>
 <details><summary>Tem desconto no PIX?</summary><p>Tem: no PIX o total sai 5% mais barato.</p></details>
+<details class="aj-rec"><summary>Comprou um beat e perdeu o link?</summary><p>Digita o e-mail que você usou na compra. Os links de todos os pedidos chegam nesse mesmo e-mail.</p><form class="aj-form js-aj-rec" novalidate><input type="email" name="email" placeholder="seu@email.com" autocomplete="email" inputmode="email" enterkeyhint="send" aria-label="E-mail da compra" maxlength="120" required><button type="submit">${ICO_MAIL}<span>Mandar os links</span></button></form><p class="aj-msg" role="status" hidden></p></details>
 <a class="aj-dm" href="${DIRECT}" target="_blank" rel="noopener" data-rede="ajuda-direct">${ICO_IG}<span>Fale conosco</span><small>Direct · @rideblan33</small></a>
 <a class="aj-pdf" href="/termos-de-licenca.pdf" target="_blank" rel="noopener">Termos da licença (PDF) ›</a></div>`;
 export const AJUDA_CSS = `/* Ajuda (rodada Q) */
@@ -44,6 +47,15 @@ export const AJUDA_CSS = `/* Ajuda (rodada Q) */
 .aj-dm:hover{background:#fff}
 .aj-pdf{display:inline-block;margin-top:14px;font-size:.76rem;color:var(--read);border-bottom:1px solid var(--wire);padding-bottom:2px;text-decoration:none}
 .menu-cel .mc-aj{color:var(--fire)}
+.aj-form{margin:10px 0 0}
+.aj-form input{display:block;box-sizing:border-box;width:100%;height:46px;margin:0;padding:0 12px;background:#14110d;border:1px solid var(--clay);border-radius:0;color:var(--cream);font:400 16px var(--mono);outline:none;-webkit-appearance:none;appearance:none}
+.aj-form input:focus{border-color:var(--fire);box-shadow:0 0 0 1px var(--fire)}
+.aj-form button{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:46px;margin-top:8px;border:0;background:var(--cream);color:#14110d;font:700 .72rem var(--sans);letter-spacing:.18em;text-transform:uppercase;cursor:pointer}
+.aj-form button svg{width:17px;height:17px;flex:none}
+.aj-form button:disabled{opacity:.6;cursor:wait}
+.aj-folha .aj-msg{margin:10px 0 0;padding:10px 12px;border-left:2px solid var(--fire);background:rgba(185,143,94,.08);color:var(--bone)}
+.aj-folha .aj-msg.erro{border-left-color:#8C3B2E}
+.aj-folha .aj-msg[hidden]{display:none}
 `;
 export const TOPO_CSS = `/* topo igual ao da vitrine */
 .topo{position:sticky;top:0;z-index:50;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 2.4rem;background:rgba(5,4,3,.97);border-bottom:1px solid var(--wire)}
@@ -125,6 +137,9 @@ var ms=$('.mc-sub>a');if(ms)ms.addEventListener('click',function(e){e.preventDef
 var fo=null,veu=null,ab=null;function aj(on,de){fo=fo||$('#ajudaFolha');veu=veu||$('.aj-veu');if(!fo||!veu)return;fo.hidden=!on;veu.hidden=!on;[].forEach.call(document.querySelectorAll('.js-ajuda'),function(b){b.setAttribute('aria-expanded',on?'true':'false')});if(on){menu(false);ab=de||null;var x=fo.querySelector('.aj-x');if(x)x.focus()}else if(ab){ab.focus();ab=null}}
 document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('.js-ajuda,.js-aj-fecha');if(!t)return;e.preventDefault();if(t.classList.contains('js-ajuda')){var f=$('#ajudaFolha');aj(!!(f&&f.hidden),t)}else aj(false)});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&fo&&!fo.hidden)aj(false)});
+document.addEventListener('submit',function(e){var f=e.target;if(!f||!f.classList||!f.classList.contains('js-aj-rec'))return;e.preventDefault();var i=f.querySelector('input'),b=f.querySelector('button'),m=f.parentNode.querySelector('.aj-msg'),em=String(i.value||'').trim().toLowerCase();function diz(t,erro){m.textContent=t;m.classList.toggle('erro',!!erro);m.hidden=false}
+if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/.test(em)){diz('Esse e-mail não parece certo. Confere e tenta de novo.',1);i.focus();return}
+b.disabled=true;fetch('/api/recuperar',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:em})}).then(function(r){return r.json().catch(function(){return{}}).then(function(j){return{r:r,j:j}})}).then(function(x){b.disabled=false;if(x.r.ok){f.hidden=true;m.textContent='';m.appendChild(document.createTextNode('Pronto. Se tiver compra com '));var bb=document.createElement('b');bb.textContent=em;m.appendChild(bb);m.appendChild(document.createTextNode(', os links chegam em até 1 minuto. Olha o spam também.'));m.classList.remove('erro');m.hidden=false}else diz((x.j&&x.j.erro)||'Não deu pra mandar agora. Tenta de novo ou chama no Direct.',1)}).catch(function(){b.disabled=false;diz('Sem conexão agora. Tenta de novo em instantes.',1)})});
 })();</script>`;
 
 export function topo(de, genAtual = '', cont = null, { ativo = 'beats' } = {}) {

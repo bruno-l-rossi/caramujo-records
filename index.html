@@ -34,7 +34,7 @@
 <!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
      a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=3554131500">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=0159235d1d">
 
 
 <link rel="canonical" href="https://caramujorecords.com.br"/>
@@ -151,7 +151,7 @@
        No celular os menus sobem de baixo (folha); no computador descem do botão. Código: "BARRA DOS BEATS" no vitrine.js. -->
   <div class="nbar" id="nbar">
   <div class="nb">
-    <label class="nb-busca" for="beatSearchTop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg><input class="pg-search-input" id="beatSearchTop" type="text" placeholder="Buscar beat pelo nome…" aria-label="Buscar beat pelo nome" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false" enterkeyhint="search"/></label>
+    <label class="nb-busca" for="beatSearchTop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg><input class="pg-search-input" id="beatSearchTop" type="text" placeholder="Nome, gênero, BPM, tom" aria-label="Buscar beat por nome, gênero, BPM ou tom" oninput="searchBeats(this.value)" autocomplete="off" spellcheck="false" enterkeyhint="search"/></label>
     <button class="nb-ic lucky-btn" id="luckyBtn" type="button" onclick="feelingLucky()" aria-label="Estou com sorte: tocar um beat sorteado" title="Estou com sorte">✦</button>
     <div class="nb-dd" id="ddGenero">
       <button class="nb-sel padrao" id="genBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="genMenu" onclick="menuBarra('genero')"><small>Gênero</small><span id="genVal">Todos</span><i aria-hidden="true">▾</i></button>
@@ -485,7 +485,7 @@ const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':
 const FEATURED_OVERRIDE_ID=null;
 const FEATURED_OVERRIDE_ATE='';
 </script>
-<script src="/assets/vitrine/vitrine.js?v=9106f6cc67"></script>
+<script src="/assets/vitrine/vitrine.js?v=558dcf29b3"></script>
 <!-- leva-de -->
 <script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
 (function(){
@@ -512,6 +512,7 @@ const FEATURED_OVERRIDE_ATE='';
 <details open><summary>Como funciona a licença?</summary><p>Exclusiva: o beat é vendido uma vez só e sai da loja. Contrato no seu nome, com uso comercial liberado.</p></details>
 <details><summary>Quando eu recebo o beat?</summary><p>MP3 + WAV com entrega instantânea, pelo link do pedido.</p></details>
 <details><summary>Tem desconto no PIX?</summary><p>Tem: no PIX o total sai 5% mais barato.</p></details>
+<details class="aj-rec"><summary>Comprou um beat e perdeu o link?</summary><p>Digita o e-mail que você usou na compra. Os links de todos os pedidos chegam nesse mesmo e-mail.</p><form class="aj-form js-aj-rec" novalidate><input type="email" name="email" placeholder="seu@email.com" autocomplete="email" inputmode="email" enterkeyhint="send" aria-label="E-mail da compra" maxlength="120" required><button type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg><span>Mandar os links</span></button></form><p class="aj-msg" role="status" hidden></p></details>
 <a class="aj-dm" href="https://ig.me/m/rideblan33" target="_blank" rel="noopener" data-rede="ajuda-direct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg><span>Fale conosco</span><small>Direct · @rideblan33</small></a>
 <a class="aj-pdf" href="/termos-de-licenca.pdf" target="_blank" rel="noopener">Termos da licença (PDF) ›</a></div><!--AJUDA-FIM-->
 </body>

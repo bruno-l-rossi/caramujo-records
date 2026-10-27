@@ -170,10 +170,14 @@ function renderCards(){
   // loja no ar vale mais que player perfeito.
   if(window.__VIT_OK) src=src.filter(b=>(window.__VIT[String(b.id)]||{}).mp3);
   if(showAvailOnly) src=src.filter(b=>!b.sold);
-  if(beatQuery) src=src.filter(b=>normalizeStr(b.name).includes(beatQuery));
+  if(beatQuery) src=src.filter(casaBusca);
+  // salvos (rodada Y): com "♡ Salvos" aberto, só os beats salvos neste aparelho
+  if(window.__svModo&&window.__svTem) src=src.filter(b=>window.__svTem(b.id));
   ordenarBeats(src);
   if(src.length===0){
     wrap.innerHTML=`<div style="padding:2.5rem;text-align:center;color:var(--dim);font-size:.78rem;">Nenhum beat disponível neste filtro no momento.</div>`;
+    // busca sem resultado (27/10/2026): diz o que dá pra procurar
+    if(beatQuery){ var vz=wrap.firstChild, bx=document.getElementById('beatSearchTop'); vz.className='busca-vazia'; vz.textContent='Nada com “'+((bx&&bx.value.trim())||beatQuery)+'”. Dá pra buscar por nome, gênero, BPM (ex.: 140) ou tom (ex.: Dm).'; }
     document.getElementById('pagination').style.display='flex';
     ['pgPrev','pgNext','pgPrevTop','pgNextTop'].forEach(id=>{
       const el=document.getElementById(id); if(el) el.style.visibility='hidden';
@@ -406,6 +410,69 @@ function changePage(dir,doScroll=true){
 }
 
 function normalizeStr(s){ return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
+
+/* BUSCA POR NOME, GÊNERO, BPM E TOM (27/10/2026, pedido do Bruno): "trap 140", "Dm", "boom bap",
+   "ré menor", "130-140". Cada palavra precisa bater em alguma coisa do beat (nome, gênero, BPM com
+   3 de folga ou tom); o nome inteiro digitado também vale ("fundo do fundo"). Tom casa pela nota:
+   C#m acha Dbm. Letra solta (a, e, d) só procura no nome. */
+var BUSCA_NOTA={c:0,'c#':1,db:1,d:2,'d#':3,eb:3,e:4,f:5,'f#':6,gb:6,g:7,'g#':8,ab:8,a:9,'a#':10,bb:10,b:11};
+var BUSCA_PT={'do':'c','re':'d','mi':'e','fa':'f','sol':'g','la':'a','si':'b'};
+var BUSCA_FORA={de:1,da:1,em:1,com:1,bpm:1,bpms:1,tom:1,beat:1,beats:1,type:1,e:1};
+function buscaTom(t){
+  var m=/^([a-g])(#|b)?(m|min|minor|maj|major)?$/.exec(t);
+  if(!m||(!m[2]&&!m[3])) return null;
+  var pc=BUSCA_NOTA[m[1]+(m[2]||'')]; if(pc==null) return null;
+  return {pc:pc, q:m[3]?(m[3].charAt(0)==='m'&&m[3].indexOf('maj')!==0?'m':'M'):''};
+}
+function tomDoBeat(k){
+  var t=buscaTom(normalizeStr(String(k||'')).replace(/\s+/g,'')); if(t) return t;
+  var m=/^([a-g])(#|b)?$/.exec(normalizeStr(String(k||'')).trim()); // "C" = dó maior
+  return m&&BUSCA_NOTA[m[1]+(m[2]||'')]!=null?{pc:BUSCA_NOTA[m[1]+(m[2]||'')],q:'M'}:null;
+}
+var _busca={q:null,ts:null};
+function lerBusca(q){
+  if(_busca.q===q) return _busca.ts;
+  var s=' '+q.replace(/[\/,;+]+/g,' ').replace(/\s+/g,' ')+' ';
+  // tom em português: "re menor", "fa sustenido maior", "si bemol menor"
+  s=s.replace(/ (do|re|mi|fa|sol|la|si) ?(sustenido|#|bemol)? (menor|maior|m) /g,function(_,n,a,q2){
+    return ' '+BUSCA_PT[n]+(a?(a==='bemol'?'b':'#'):'')+(q2==='maior'?'maj':'m')+' ';});
+  // gênero com espaço ou sem: "boom bap", "hood trap", "no melody", "boombap"
+  var gs=[]; for(var g in GENRE_LABELS){ gs.push([g,normalizeStr(GENRE_LABELS[g])]); }
+  gs.sort(function(x,y){return y[1].length-x[1].length;});
+  gs.forEach(function(x){
+    [x[1],x[1].replace(/\s+/g,''),x[1].replace(/\s+/g,'-'),x[0]].forEach(function(v){
+      s=s.split(' '+v+' ').join(' §'+x[0]+' ');
+    });
+  });
+  var ts=[];
+  s.trim().split(' ').forEach(function(t){
+    if(!t||BUSCA_FORA[t]) return;
+    if(t.charAt(0)==='§'){ ts.push({g:t.slice(1)}); return; }
+    var r=/^(\d{2,3})-(\d{2,3})$/.exec(t);
+    if(r){ ts.push({txt:t,de:Math.min(+r[1],+r[2]),ate:Math.max(+r[1],+r[2])}); return; }
+    var n=/^(\d{2,3})(bpm)?$/.exec(t);
+    var o={txt:n?n[1]:t};
+    if(n&&+n[1]>=40&&+n[1]<=300) o.bpm=+n[1];
+    var k=buscaTom(t); if(k) o.tom=k;
+    ts.push(o);
+  });
+  _busca={q:q,ts:ts};
+  return ts;
+}
+function casaBusca(b){
+  var nome=normalizeStr(String(b.name||''));
+  if(nome.indexOf(beatQuery)>-1) return true;
+  var ts=lerBusca(beatQuery); if(!ts.length) return true;
+  var bpm=Number(b.bpm)||0, tb=null, achouTom=false;
+  return ts.every(function(t){
+    if(t.g) return b.genre===t.g;
+    if(t.de) return bpm>=t.de&&bpm<=t.ate;
+    if(t.txt&&nome.indexOf(t.txt)>-1) return true;
+    if(t.bpm&&bpm&&Math.abs(bpm-t.bpm)<=3) return true;
+    if(t.tom){ if(!achouTom){tb=tomDoBeat(b.key);achouTom=true;} if(tb&&tb.pc===t.tom.pc&&(!t.tom.q||t.tom.q===tb.q)) return true; }
+    return false;
+  });
+}
 function searchBeats(query){
   beatQuery = normalizeStr(query.trim());
   curPage = 1;
@@ -2635,6 +2702,189 @@ try{(function(){
   io.observe(tr);
 })();}catch(_){}
 
+/* SALVOS (rodada Y, 27/10/2026, pedido do Bruno): ♡ em cada beat, "♡ Salvos N" na linha da contagem que
+   filtra o catálogo, folha "Guardar seus salvos" (e-mail pelo /api/salvos ou link) e os links que chegam
+   de fora: #salvos=135.122 (a lista que veio do e-mail ou do link copiado) e #volta=135.124&s=mix-master
+   (o aviso do PIX que ficou pra trás remonta o carrinho). Sem conta: a lista mora no aparelho
+   (caramujo_salvos_v1, sem prazo). O carrinho e o pagamento não mudam: tudo por fora, pelo toggleBeat/addSvc. */
+try{(function(){
+  var CH='caramujo_salvos_v1', MAX=60;
+  var COR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3s-7.6-4.5-7.6-10.2A4.3 4.3 0 0112 7.5a4.3 4.3 0 017.6 2.6c0 5.7-7.6 10.2-7.6 10.2z"/></svg>';
+  var CHEIO=COR.replace('fill="none"','fill="currentColor"');
+  var MAIL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13"/><path d="M3.5 6.5l8.5 6.5 8.5-6.5"/></svg>';
+  var LINK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></svg>';
+  var $=function(id){return document.getElementById(id);};
+  var ids=[];
+  try{var o=JSON.parse(localStorage.getItem(CH)||'null');if(o&&Array.isArray(o.ids))ids=o.ids.map(Number).filter(function(n){return n>0;});}catch(_){}
+  function grava(){try{localStorage.setItem(CH,JSON.stringify({ids:ids.slice(0,MAX),em:Date.now()}));}catch(_){}}
+  function beat(id){return BEATS.find(function(b){return b.id===Number(id);});}
+  function tem(id){return ids.indexOf(Number(id))>-1;}
+  function validos(){return ids.filter(function(i){return !!beat(i);});}
+  window.__svTem=tem; window.__svModo=false;
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+
+  // o botão "♡ Salvos N" mora na linha "136 beats · página 1 de 14"
+  function pilula(){
+    var c=document.querySelector('#nbar .nb-conta'); if(!c) return;
+    var p=$('svPill');
+    if(!p){ p=document.createElement('button'); p.id='svPill'; p.type='button'; p.className='sl-pill';
+      p.addEventListener('click',function(){ window.__svModo?fecharModo():abrirModo(true); }); c.appendChild(p); }
+    var n=validos().length;
+    p.innerHTML=(window.__svModo?CHEIO:COR)+'Salvos<b>'+n+'</b>';
+    p.setAttribute('aria-pressed',window.__svModo?'true':'false');
+    p.setAttribute('aria-label',window.__svModo?'Mostrar todos os beats':'Ver seus '+n+' beats salvos');
+    p.hidden=!n&&!window.__svModo;
+  }
+  function coracao(it){
+    var id=Number(it.getAttribute('data-bid')), b=beat(id); if(!b) return;
+    var c=it.querySelector('.sl-cor');
+    if(!c){ c=document.createElement('button'); c.type='button'; c.className='sl-cor';
+      c.setAttribute('onclick','event.stopPropagation();svToque('+id+')');
+      var cr=it.querySelector('.corrida'); it.insertBefore(c,cr||null); }
+    var on=tem(id);
+    c.classList.toggle('on',on); c.innerHTML=on?CHEIO:COR;
+    c.setAttribute('aria-pressed',on?'true':'false');
+    c.setAttribute('aria-label',on?'Tirar '+b.name+' dos salvos':'Salvar '+b.name);
+  }
+  function pintar(){
+    document.querySelectorAll('#beatCards .item[data-bid]').forEach(coracao);
+    pilula();
+    var lista=$('beatCards'); if(!lista) return;
+    var cab=$('svCab'), gu=$('svGuarda');
+    if(window.__svModo){
+      if(!cab){ cab=document.createElement('div'); cab.id='svCab'; cab.className='sl-cab';
+        cab.innerHTML='<span>'+CHEIO+'Seus salvos</span><button type="button">Ver todos os beats</button>';
+        cab.querySelector('button').addEventListener('click',function(){fecharModo();}); }
+      lista.parentNode.insertBefore(cab,lista);
+      if(!gu){ gu=document.createElement('div'); gu.id='svGuarda'; gu.className='sl-guarda'; }
+      var n=validos().length;
+      gu.innerHTML='Seus <b>'+n+(n===1?' salvo</b> fica':' salvos</b> ficam')+' neste aparelho. Pra não perder se trocar de navegador ou de celular:<br><button type="button">Guardar no e-mail ou copiar o link ›</button>';
+      gu.querySelector('button').addEventListener('click',function(e){abrirFolha(e.currentTarget);});
+      lista.parentNode.insertBefore(gu,lista.nextSibling);
+    } else { if(cab) cab.remove(); if(gu) gu.remove(); }
+  }
+  var _rc=window.renderCards;
+  window.renderCards=function(){ _rc.apply(this,arguments); try{pintar();}catch(e){setTimeout(function(){throw e;});} };
+
+  function limpaFiltros(){
+    curFilt='todos'; beatQuery=''; curPage=1;
+    var st=$('beatSearchTop'); if(st) st.value='';
+    document.querySelectorAll('.ft:not(#filtAvail)').forEach(function(x){var oc=x.getAttribute('onclick')||'';x.classList.toggle('on',oc.indexOf("'todos'")>-1);});
+  }
+  function rolar(){ var s=$('beats'); if(s) s.scrollIntoView({behavior:'smooth',block:'start'}); }
+  function abrirModo(rolando){
+    if(!validos().length){ showToast('Você ainda não salvou nenhum beat. Toque no ♡ pra salvar.'); return; }
+    limpaFiltros(); window.__svModo=true; renderCards(); if(rolando) rolar();
+  }
+  function fecharModo(){ window.__svModo=false; curPage=1; renderCards(); }
+  window.svAbrir=abrirModo;
+  // qualquer outro filtro (gênero, busca, sorteio) sai dos salvos
+  ['filt','filtLink','feelingLucky'].forEach(function(f){
+    var o=window[f]; if(typeof o!=='function') return;
+    window[f]=function(){ window.__svModo=false; return o.apply(this,arguments); };
+  });
+  var _sb=window.searchBeats;
+  if(typeof _sb==='function') window.searchBeats=function(q){ if(String(q||'').trim()) window.__svModo=false; return _sb.apply(this,arguments); };
+
+  // aviso com "Ver salvos" (o showToast não tem botão)
+  var tT=null;
+  function aviso(html,comBotao){
+    var t=$('svToast');
+    if(!t){ t=document.createElement('div'); t.id='svToast'; t.className='sl-toast'; t.setAttribute('role','status'); document.body.appendChild(t); }
+    t.innerHTML=CHEIO+'<span>'+html+'</span>'+(comBotao?'<button type="button">Ver salvos</button>':'');
+    var bt=t.querySelector('button'); if(bt) bt.addEventListener('click',function(){ t.classList.remove('on'); abrirModo(true); });
+    var barra=$('npBar'); t.style.bottom=(barra&&barra.classList.contains('on'))?(barra.offsetHeight+12)+'px':'';
+    t.classList.add('on'); clearTimeout(tT); tT=setTimeout(function(){t.classList.remove('on');},4200);
+  }
+  window.svToque=function(id){
+    id=Number(id); var b=beat(id); if(!b) return;
+    if(tem(id)){ ids=ids.filter(function(x){return x!==id;}); grava();
+      if(window.__svModo){ if(!validos().length){ window.__svModo=false; } renderCards(); } else pintar();
+      return; }
+    ids.unshift(id); ids=ids.slice(0,MAX); grava(); pintar();
+    aviso('<b>'+esc(b.name)+'</b> salvo.',!window.__svModo);
+  };
+
+  // folha "Guardar seus salvos"
+  var fo=null, veu=null, volta=null;
+  function linkLista(){ return location.origin+'/#salvos='+validos().join('.'); }
+  function abrirFolha(de){
+    volta=de||null;
+    if(!fo){
+      veu=document.createElement('div'); veu.className='sl-veu'; veu.hidden=true; veu.addEventListener('click',fecharFolha);
+      fo=document.createElement('div'); fo.className='aj-folha sl-folha'; fo.id='svFolha'; fo.setAttribute('role','dialog'); fo.setAttribute('aria-modal','true'); fo.setAttribute('aria-labelledby','svT'); fo.hidden=true;
+      fo.innerHTML='<button class="aj-x sl-x" type="button" aria-label="Fechar">×</button><h2 id="svT">Guardar seus salvos</h2>'+
+        '<p>Transforme seus beats salvos em uma playlist que abre em qualquer celular.</p>'+
+        '<form class="sl-form" novalidate><label for="svEmail">Seu e-mail</label><input id="svEmail" type="email" placeholder="seu@email.com" autocomplete="email" inputmode="email" enterkeyhint="send" maxlength="120">'+
+        '<button class="sl-bt" type="submit">'+MAIL+'<span>Mandar pro meu e-mail</span></button></form><p class="sl-msg" role="status" hidden></p>'+
+        '<div class="sl-ou">ou</div><button class="sl-bt sl-cont" type="button">'+LINK+'<span>Copiar link da lista</span></button><span class="sl-link"></span>';
+      document.body.appendChild(veu); document.body.appendChild(fo);
+      fo.querySelector('.sl-x').addEventListener('click',fecharFolha);
+      fo.querySelector('.sl-form').addEventListener('submit',mandar);
+      fo.querySelector('.sl-cont').addEventListener('click',copiar);
+      document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&fo&&!fo.hidden) fecharFolha(); });
+    }
+    var i=$('svEmail');
+    if(i&&!i.value){ try{var g=JSON.parse(localStorage.getItem('caramujo_lista_v1')||'null'); if(g&&g.email) i.value=g.email;}catch(_){} }
+    fo.querySelector('.sl-form').hidden=false; var m=fo.querySelector('.sl-msg'); m.hidden=true; m.className='sl-msg';
+    fo.querySelector('.sl-cont span').textContent='Copiar link da lista';
+    fo.querySelector('.sl-link').textContent=linkLista().replace(/^https?:\/\//,'');
+    veu.hidden=false; fo.hidden=false; fo.querySelector('.sl-x').focus();
+  }
+  function fecharFolha(){ if(!fo) return; fo.hidden=true; veu.hidden=true; if(volta){ try{volta.focus();}catch(_){} volta=null; } }
+  window.svFolha=abrirFolha;
+  function diz(t,erro){ var m=fo.querySelector('.sl-msg'); m.textContent=t; m.className='sl-msg'+(erro?' erro':''); m.hidden=false; }
+  function mandar(e){
+    e.preventDefault();
+    var i=$('svEmail'), b=fo.querySelector('.sl-form .sl-bt'), em=String(i.value||'').trim().toLowerCase();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)){ diz('Esse e-mail não parece certo. Confere e tenta de novo.',1); i.focus(); return; }
+    b.disabled=true;
+    fetch('/api/salvos',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:em,ids:validos()})})
+      .then(function(r){return r.json().catch(function(){return{};}).then(function(j){return{r:r,j:j};});})
+      .then(function(x){ b.disabled=false;
+        if(x.r.ok){ fo.querySelector('.sl-form').hidden=true; diz('Pronto. A lista foi pra '+em+'. Olha o spam também.'); }
+        else diz((x.j&&x.j.erro)||'Não deu pra mandar agora. Tenta de novo em instantes.',1); })
+      .catch(function(){ b.disabled=false; diz('Sem conexão agora. Tenta de novo em instantes.',1); });
+  }
+  function copiar(){
+    var l=linkLista(), s=fo.querySelector('.sl-cont span');
+    var ok=function(){ s.textContent='Link copiado ✓'; };
+    var mao=function(){ try{ var r=document.createRange(); r.selectNodeContents(fo.querySelector('.sl-link')); var sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); }catch(_){} s.textContent='Segura o link pra copiar'; };
+    try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(l).then(ok,mao); else mao(); }catch(_){ mao(); }
+  }
+
+  // links de fora: #salvos=1.2.3 (a lista), #salvos (abre) e #volta=1.2&s=mix-master (o carrinho do aviso do PIX)
+  function slug(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');}
+  function limpaHash(){ try{ if(history.replaceState) history.replaceState(null,'',location.pathname+location.search); }catch(_){} }
+  function doLink(){
+    var h=location.hash||'', m;
+    if((m=h.match(/^#salvos(?:=([0-9.]*))?$/))){
+      var novos=String(m[1]||'').split('.').map(Number).filter(function(n){return n>0&&!!beat(n);});
+      var antes=validos().length;
+      novos.slice().reverse().forEach(function(n){ if(!tem(n)) ids.unshift(n); }); ids=ids.slice(0,MAX); grava();
+      limpaHash();
+      if(!validos().length){ showToast('Esses beats não estão mais no catálogo.'); return; }
+      abrirModo(true);
+      var veio=validos().length-antes;
+      if(novos.length) aviso(veio>0?(veio===1?'1 beat entrou nos seus salvos.':veio+' beats entraram nos seus salvos.'):'Sua lista de salvos tá aqui.',false);
+      return;
+    }
+    if((m=h.match(/^#volta=([0-9.]*)(?:&s=([a-z0-9.-]*))?$/))){
+      limpaHash();
+      String(m[1]||'').split('.').map(Number).forEach(function(n){
+        var b=beat(n); if(!b||b.sold) return;
+        if(!cart.some(function(c){return c.beatId===b.id&&!c.stems;})) toggleBeat(b.id,false);
+      });
+      var precos={}; document.querySelectorAll('[onclick*="addSvc("]').forEach(function(el){ var x=/addSvc\('([^']+)',\s*(\d+(?:\.\d+)?)\)/.exec(el.getAttribute('onclick')||''); if(x) precos[slug(x[1])]=[x[1],Number(x[2])]; });
+      String(m[2]||'').split('.').filter(Boolean).forEach(function(k){ var p=precos[k]; if(p&&!cart.some(function(c){return c.type==='Servico'&&c.name===p[0];})) addSvc(p[0],p[1]); });
+      if(cart.length) openCart();
+    }
+  }
+  window.addEventListener('hashchange',function(){ if(/^#(salvos|volta)/.test(location.hash)) doLink(); });
+  pintar();
+  if(/^#(salvos|volta)/.test(location.hash)){ if(document.readyState!=='loading') setTimeout(doLink,0); else document.addEventListener('DOMContentLoaded',doLink); }
+})();}catch(e){ setTimeout(function(){ throw e; }); }
+
 /*AJUDA-INICIO*/
 (function(){if(window.__topo)return;window.__topo=1;var $=function(s){return document.querySelector(s)};
 try{var c=JSON.parse(localStorage.getItem('caramujo_carrinho_v1')||'null');if(c&&c.itens&&c.itens.length&&Date.now()-(c.em||0)<7*864e5){var n=c.itens.reduce(function(s,x){return s+(x.qty||1)},0),b=$('.js-n');if(b){b.textContent=n;b.hidden=false}}}catch(_){}
@@ -2644,5 +2894,8 @@ var ms=$('.mc-sub>a');if(ms)ms.addEventListener('click',function(e){e.preventDef
 var fo=null,veu=null,ab=null;function aj(on,de){fo=fo||$('#ajudaFolha');veu=veu||$('.aj-veu');if(!fo||!veu)return;fo.hidden=!on;veu.hidden=!on;[].forEach.call(document.querySelectorAll('.js-ajuda'),function(b){b.setAttribute('aria-expanded',on?'true':'false')});if(on){menu(false);ab=de||null;var x=fo.querySelector('.aj-x');if(x)x.focus()}else if(ab){ab.focus();ab=null}}
 document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('.js-ajuda,.js-aj-fecha');if(!t)return;e.preventDefault();if(t.classList.contains('js-ajuda')){var f=$('#ajudaFolha');aj(!!(f&&f.hidden),t)}else aj(false)});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&fo&&!fo.hidden)aj(false)});
+document.addEventListener('submit',function(e){var f=e.target;if(!f||!f.classList||!f.classList.contains('js-aj-rec'))return;e.preventDefault();var i=f.querySelector('input'),b=f.querySelector('button'),m=f.parentNode.querySelector('.aj-msg'),em=String(i.value||'').trim().toLowerCase();function diz(t,erro){m.textContent=t;m.classList.toggle('erro',!!erro);m.hidden=false}
+if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)){diz('Esse e-mail não parece certo. Confere e tenta de novo.',1);i.focus();return}
+b.disabled=true;fetch('/api/recuperar',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:em})}).then(function(r){return r.json().catch(function(){return{}}).then(function(j){return{r:r,j:j}})}).then(function(x){b.disabled=false;if(x.r.ok){f.hidden=true;m.textContent='';m.appendChild(document.createTextNode('Pronto. Se tiver compra com '));var bb=document.createElement('b');bb.textContent=em;m.appendChild(bb);m.appendChild(document.createTextNode(', os links chegam em até 1 minuto. Olha o spam também.'));m.classList.remove('erro');m.hidden=false}else diz((x.j&&x.j.erro)||'Não deu pra mandar agora. Tenta de novo ou chama no Direct.',1)}).catch(function(){b.disabled=false;diz('Sem conexão agora. Tenta de novo em instantes.',1)})});
 })();
 /*AJUDA-FIM*/

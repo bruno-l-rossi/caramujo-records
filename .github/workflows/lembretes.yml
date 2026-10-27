@@ -1,0 +1,24 @@
+name: Lembretes do PIX
+
+# Rodada Y (27/10/2026): de hora em hora pergunta ao site se tem PIX gerado há mais de 2 h e não pago.
+# O site manda um aviso só pra cada um (functions/api/lembretes.js). Leva poucos segundos.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+concurrency:
+  group: lembretes
+  cancel-in-progress: false
+
+jobs:
+  avisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Avisar quem deixou o PIX pra trás
+        env:
+          INGEST_TOKEN: ${{ secrets.INGEST_TOKEN }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://caramujorecords.com.br' }}
+        run: |
+          curl -fsS --max-time 60 -X POST "$SITE_URL/api/lembretes" -H "x-ingest-token: $INGEST_TOKEN"
