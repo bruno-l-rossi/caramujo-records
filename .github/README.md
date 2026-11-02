@@ -89,6 +89,10 @@ scripts/                conversor do Drive e cálculo da onda de cada faixa
 
 **Cupom no carrinho (02/11/2026).** O campo fica guardado atrás da linha "Cupom · Adicionar ›". O toque abre o campo; aplicado, a linha mostra o código e o % com um × pra tirar. O cupom que chega pelo link do e-mail aparece no campo aberto e entra sozinho quando tem beat no carrinho.
 
+**Meia tela do carrinho no celular (02/11/2026).** No celular (até 860px), cada item que entra no carrinho abre uma folha baixa no pé da tela: o item com o preço, a régua do combo dos beats ("Põe mais 1 beat e o 2º sai por R$99", "Cada beat a mais sai por R$79") e os botões Continuar escolhendo e Ver carrinho · N. A folha mostra sempre a mensagem do combo dos beats, até quando entra um serviço; o aviso do Mix + Master fica só no carrinho inteiro. Fundo escuro, Esc e o voltar fecham. O link `#add=` das tapes e da página do beat segue abrindo o carrinho inteiro. No computador nada mudou (o carrinho abre na 1ª adição e as outras dão o aviso). Feito por fora, embrulhando o `confirmAdd`: nenhuma função do carrinho mudou.
+
+**Texto de apoio mais legível (02/11/2026).** "por faixa", TOTAL, o tipo do item no carrinho, os números das linhas e dos serviços, o preço riscado dos serviços e o rodapé usam o tom fosco `#948365` (5:1 no fundo), no lugar do dim `#6f6757` (3,4:1). O dim segue nos traços e enfeites.
+
 **Quem já gravou, a leitura (16/10/2026).** `functions/_lib/gravou.js` descobre quem canta em cada música da aba Músicas do perfil pelas páginas públicas do Spotify (embed da faixa, página da faixa, álbum e artista), sem chave nem app de desenvolvedor, e traz nome e foto. `?op=gravou-teste` no painel só lê e responde (não grava).
 
 **PIX com 5% (17/10/2026).** `PIX_OFF=5` no `index.html`: o carrinho e o checkout mostram o valor no PIX e o servidor cobra igual (`contaDoCarrinho(..., { pix })` em `functions/api/create-payment.js`, arredonda no centavo). Cupom e Leve mais valem antes, o PIX desconta em cima.

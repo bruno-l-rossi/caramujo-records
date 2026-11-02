@@ -34,6 +34,7 @@ Texto:
 - `#b89e72` read (texto corrido)
 - `#9e7c48` label (kickers, labels)
 - `#6f6757` dim (apagado)
+- `#948365` fosco (texto pequeno de apoio: "por faixa", TOTAL, rodapé e números das linhas; meio a meio entre read e dim, 5:1 no fundo; 02/11/2026)
 - `#332c22` wire (bordas de 1px em tudo)
 
 Regra: nunca introduzir cor fora dessa paleta. Nada de azul, roxo, verde, neon.

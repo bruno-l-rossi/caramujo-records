@@ -34,7 +34,7 @@
 <!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
      a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=e7d66568d0">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=605bc6c82d">
 
 
 <link rel="canonical" href="https://caramujorecords.com.br"/>
@@ -367,6 +367,15 @@
   </div>
 </div>
 
+<!-- Meia tela do carrinho (02/11/2026, ideia 9): no celular cada item que entra mostra esta folha em vez de abrir o
+     carrinho inteiro. Mensagem sempre do combo dos beats; o aviso do Mix + Master fica no carrinho. -->
+<div class="cf-veu" id="cfVeu" hidden onclick="fecharFolhaCarrinho()"></div>
+<div class="cf-folha" id="cfFolha" role="dialog" aria-labelledby="cfNome" hidden>
+  <div class="cf-l1"><i aria-hidden="true">✓</i><b id="cfNome"></b><span>no carrinho</span><em id="cfPreco"></em></div>
+  <div id="cfRegua"></div>
+  <div class="cf-bts"><button type="button" class="cf-c1" onclick="fecharFolhaCarrinho()">Continuar escolhendo</button><button type="button" class="cf-c2" id="cfVer" onclick="verCarrinhoDaFolha()">Ver carrinho</button></div>
+</div>
+
 <!-- ═══ MP CHECKOUT MODAL ══════════════════════════ -->
 <div class="mp-modal" id="mpModal">
   <div class="mp-modal-inner">
@@ -500,7 +509,7 @@ const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':
 const FEATURED_OVERRIDE_ID=null;
 const FEATURED_OVERRIDE_ATE='';
 </script>
-<script src="/assets/vitrine/vitrine.js?v=e1ebc3e5f9"></script>
+<script src="/assets/vitrine/vitrine.js?v=413bb55689"></script>
 <!-- leva-de -->
 <script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
 (function(){

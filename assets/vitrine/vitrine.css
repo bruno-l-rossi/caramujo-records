@@ -28,6 +28,7 @@
   /* ── Versão contraste: cores de leitura mais claras ── */
   --read:   #b89e72;      /* subtextos corridos (era --dim #4a3e2a → +80% mais claro) */
   --label:  #9e7c48;      /* labels/kickers (era --clay #7a5c30 → +30% mais claro) */
+  --fosco:  #948365;      /* texto pequeno de apoio, meio a meio entre read e dim: 5:1 no fundo (02/11/2026) */
   /* --rust era usada no PIX (bolinha do "aguardando", borda do aviso de erro) e
      nunca foi definida: a bolinha e a borda saíam invisíveis (revisão de 03/10/2026) */
   --rust:   var(--fire);
@@ -239,7 +240,7 @@ footer a.foot-perfil{color:inherit;text-decoration:none;border-bottom:1px solid 
 footer a.foot-perfil:hover{color:var(--fire);border-bottom-color:var(--fire);}
 footer p{
   font-size:.57rem;font-weight:700;
-  letter-spacing:.2em;text-transform:uppercase;color:var(--dim);
+  letter-spacing:.2em;text-transform:uppercase;color:var(--fosco);
 }
 
 /* ═══ CART ═══════════════════════════════ */
@@ -281,7 +282,7 @@ footer p{
 .cp-empty{text-align:center;color:var(--dim);font-size:.76rem;padding:3rem 0;}
 .ci{display:flex;align-items:center;justify-content:space-between;padding:.85rem 0;border-bottom:1px solid var(--wire);}
 .ci-n{font-family:'Cormorant Garamond',sans-serif;font-size:.95rem;text-transform:uppercase;color:var(--cream);}
-.ci-t{font-size:.58rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;}
+.ci-t{font-size:.58rem;color:var(--fosco);letter-spacing:.1em;text-transform:uppercase;}
 .ci-p{font-family:'Cormorant Garamond',sans-serif;color:var(--fire);margin-left:.8rem;}
 .ci-rm{background:none;border:none;color:var(--dim);cursor:pointer;font-size:.85rem;margin-left:.4rem;transition:color .14s;}
 .ci-rm:hover{color:var(--fire);}
@@ -319,8 +320,23 @@ footer p{
 .cp-cl-bt .v b{font-weight:400;color:var(--bone);margin-right:.7rem}
 .cp-cl-x{width:44px;min-height:48px;margin-right:-.7rem;background:none;border:0;color:var(--read);font-size:1.1rem;cursor:pointer}
 .cp-coupon:not(.aberto) .cp-coupon-row,.cp-coupon:not(.aberto) .cp-coupon-msg,.cp-coupon.aberto .cp-cupom-linha{display:none}
+/* meia tela do carrinho (02/11/2026, ideia 9): no celular cada item que entra mostra esta folha */
+.cf-veu{position:fixed;inset:0;z-index:8400;background:rgba(5,4,3,.45)}
+.cf-folha{position:fixed;left:0;right:0;bottom:0;z-index:8401;background:var(--deep);border-top:1px solid var(--clay);padding:10px 18px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -18px 40px rgba(0,0,0,.55)}
+.cf-folha:before{content:'';display:block;width:40px;height:4px;border-radius:2px;background:var(--loam);margin:0 auto 16px}
+.cf-veu[hidden],.cf-folha[hidden]{display:none}
+.cf-l1{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.cf-l1 i{width:26px;height:26px;border-radius:50%;background:var(--fire);color:var(--black);display:flex;align-items:center;justify-content:center;flex:none;font:700 1rem var(--sans)}
+.cf-l1 b{font:500 1.35rem var(--serif);color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cf-l1 span{color:var(--read);font-size:.86rem;white-space:nowrap}
+.cf-l1 em{margin-left:auto;font:400 1.1rem var(--serif);color:var(--fire);white-space:nowrap}
+.cf-l1 em s{color:var(--fosco);margin-right:6px;font-size:.95rem}
+.cf-folha .lm-reg{margin:0}
+.cf-bts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.cf-bts button{min-height:48px;background:none;border:1px solid var(--wire);color:var(--bone);font:700 .66rem var(--sans);letter-spacing:.16em;text-transform:uppercase;cursor:pointer}
+.cf-bts .cf-c2{background:var(--bone);border-color:var(--bone);color:var(--deep)}
 .cp-tot{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1rem;}
-.cp-tot span:first-child{font-size:.6rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);}
+.cp-tot span:first-child{font-size:.6rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--fosco);}
 .cp-tv{font-family:'Cormorant Garamond',sans-serif;font-size:2.2rem;color:var(--cream);}
 .cp-add-more{
   width:100%;padding:.7rem;background:transparent;
@@ -604,7 +620,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 #beatCards .item.tocando:before{transform:scaleY(1)}
 #beatCards .item.lucky-hit{background:var(--earth)}
 #beatCards .cel-num{width:30px;flex:none;display:flex;align-items:center;justify-content:center;
-  font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--dim);font-variant-numeric:tabular-nums}
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--fosco);font-variant-numeric:tabular-nums}
 #beatCards .cel-num b,#beatCards .cel-num .eq3{display:none}
 #beatCards .cel-num b{width:30px;height:30px;align-items:center;justify-content:center;
   border:1px solid var(--wire);background:var(--mole);color:var(--bone)}
@@ -1444,14 +1460,14 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
    "Mais pedido" é texto acima do nome; o desconto do Mix + Master é um selo cheio no preço. */
 .sv-lista{list-style:none;margin:0;padding:0;border-top:1px solid var(--wire)}
 .sv-l{display:grid;grid-template-columns:28px minmax(0,1fr) auto 44px;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--wire)}
-.sv-n{font:400 .7rem 'IBM Plex Mono',monospace;color:var(--dim)}
+.sv-n{font:400 .7rem 'IBM Plex Mono',monospace;color:var(--fosco)}
 .sv-t b{display:block;font:500 1.35rem/1.15 var(--serif);color:var(--cream)}
 .sv-k{display:block;margin-bottom:4px;font:700 .56rem 'Helvetica Neue',Helvetica,Arial,sans-serif;font-style:normal;letter-spacing:.18em;text-transform:uppercase;color:var(--amber)}
 .sv-t small{display:block;margin-top:4px;font-size:.78rem;line-height:1.4;color:var(--read)}
 .sv-p{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right}
 .sv-v{font:400 .82rem 'IBM Plex Mono',monospace;color:var(--fire);white-space:nowrap}
-.sv-v s{color:var(--dim);margin-right:2px}
-.sv-p small{font-size:.62rem;letter-spacing:.04em;color:var(--dim)}
+.sv-v s{color:var(--fosco);margin-right:2px}
+.sv-p small{font-size:.62rem;letter-spacing:.04em;color:var(--fosco)}
 .sv-off{display:inline-block;padding:3px 6px;background:var(--fire);color:var(--black);font:700 .56rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}
 .sv-bt{width:44px;height:44px;border-radius:50%;border:1px solid var(--clay);background:none;color:var(--cream);font-size:1.4rem;line-height:1;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
 .sv-bt:hover,.sv-bt:active{background:var(--bone);border-color:var(--bone);color:var(--black)}

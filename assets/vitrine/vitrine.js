@@ -2009,6 +2009,52 @@ try{
 
 /* ─────────────────────────────────────────────────────────────── */
 try{
+/* ── MEIA TELA DO CARRINHO (02/11/2026, ideia 9) ──────────────────────
+   No celular (até 860px, onde o carrinho cobre a tela) cada item que entra mostra uma folha de meia altura:
+   o item, a régua do Leve mais (SEMPRE a mensagem do combo dos beats; o aviso do Mix + Master fica só no
+   carrinho) e os botões Continuar escolhendo e Ver carrinho. A folha não some sozinha. No computador segue
+   o de antes (abre o carrinho na 1ª adição, aviso nas outras). Só embrulha o confirmAdd: toggleBeat e addSvc
+   não mudam. */
+(function(){
+  var $=function(i){return document.getElementById(i);};
+  var folha=$('cfFolha'), veu=$('cfVeu'); if(!folha||!veu) return;
+  function cel(){ try{ return matchMedia('(max-width: 860px)').matches; }catch(_){ return false; } }
+  function regua(){
+    var r=$('lmRegua'); if(r) return r.outerHTML.replace(' id="lmRegua"','');
+    // só serviço no carrinho: a régua vazia com os preços do combo
+    var T=function(n){ return totalDosBeats(n); };
+    if(!(T(2)<2*T(1))) return '';
+    var seg='', num='';
+    for(var k=1;k<=5;k++){ seg+='<i></i>'; num+='<span>'+k+' · '+T(k)+'</span>'; }
+    return '<div class="lm-reg"><p>Beat sai por <b>R$'+T(1)+'</b>; o 2º, por R$'+(T(2)-T(1))+'; do 3º em diante, R$'+(T(3)-T(2))+' cada.</p><div class="lm-bar" aria-hidden="true">'+seg+'</div><div class="lm-num" aria-hidden="true">'+num+'</div></div>';
+  }
+  function item(label){
+    var nome=String(label||'').replace(/^"|"$/g,'');
+    for(var i=cart.length-1;i>=0;i--){ if(cart[i].name===nome||cart[i].name===nome+' + Stems') return cart[i]; }
+    return cart[cart.length-1]||null;
+  }
+  function abrir(label){
+    var c=item(label); if(!c) return;
+    $('cfNome').textContent=c.name;
+    $('cfPreco').innerHTML=c.type==='Servico' ? 'R$'+(c.unitPrice||c.price) : (c.orig&&c.orig>c.price?'<s>R$'+c.orig+'</s>':'')+'R$'+c.price;
+    $('cfRegua').innerHTML=regua();
+    $('cfVer').textContent='Ver carrinho · '+cart.reduce(function(s,x){ return s+(x.qty||1); },0);
+    veu.hidden=false; folha.hidden=false;
+    try{ folha.querySelector('.cf-c1').focus({preventScroll:true}); }catch(_){}
+  }
+  window.fecharFolhaCarrinho=function(){ veu.hidden=true; folha.hidden=true; };
+  window.verCarrinhoDaFolha=function(){ window.fecharFolhaCarrinho(); try{ openCart(); }catch(_){} };
+  var ca=window.confirmAdd, pn=$('cartPanel');
+  // com o carrinho já aberto na tela, a folha não sobe por cima dele: fica o de antes
+  if(typeof ca==='function') window.confirmAdd=function(label){ if(!cel()||(pn&&pn.classList.contains('open'))) return ca.apply(this,arguments); abrir(label); };
+  // o carrinho abriu por outro caminho (#add= da tape, ícone do topo): a folha sai
+  if(pn&&window.MutationObserver) new MutationObserver(function(){ if(pn.classList.contains('open')) window.fecharFolhaCarrinho(); }).observe(pn,{attributes:true,attributeFilter:['class']});
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!folha.hidden) window.fecharFolhaCarrinho(); });
+})();
+}catch(e){ setTimeout(function(){ throw e; }); }
+
+/* ─────────────────────────────────────────────────────────────── */
+try{
 /* ── DEEP-LINK POR BEAT (#beat=slug e #add=slug) ──────────────────
    Abre o site direto num beat: acha pelo nome, mostra, rola e toca.
    #add faz o mesmo e ainda joga o beat no carrinho, já aberto: é o link
@@ -2552,6 +2598,8 @@ try{
   var $=function(i){ return document.getElementById(i); };
   var tem=function(id,c){ var e=$(id); return !!(e&&e.classList.contains(c)); };
   var folhas=[
+    // meia tela do carrinho (02/11/2026, ideia 9)
+    { aberta:function(){ var f=$('cfFolha'); return !!(f&&!f.hidden); }, fechar:function(){ if(window.fecharFolhaCarrinho) window.fecharFolhaCarrinho(); } },
     { aberta:function(){ var v=document.querySelector('.cs-veu'); return !!(v&&!v.hidden); },
       fechar:function(){ try{ window.CaramujoStory.fechar(); }catch(_){} } },
     { aberta:function(){ return tem('mpModal','open'); }, fechar:function(){ closeCheckout(); },
