@@ -414,6 +414,25 @@ __META__
     padding:11px 15px;border-radius:12px;max-width:86%;text-align:center;
     transition:opacity .25s;pointer-events:none}
   .toast[hidden]{display:none}
+  /* player numa linha no celular (01/11/2026): fio de progresso em cima, faixa, play e a ação da
+     página. O toque na faixa abre o player inteiro (.aberta, o de antes) e a alça de cima fecha. */
+  .pl-fecha{display:none}
+  @media (max-width:600px){
+    #player:not(.aberta) .dock-in{padding:10px 12px}
+    #player:not(.aberta) .pl{grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"info ctl acao";column-gap:10px}
+    #player:not(.aberta) .scrub{position:absolute;left:0;right:0;top:-1px;margin:0;pointer-events:none}
+    #player:not(.aberta) .scrub time,#player:not(.aberta) .pl-ir,#player:not(.aberta) .pl-ctl .pl-btn:not(.pl-play){display:none}
+    #player:not(.aberta) #seek{height:2px}
+    #player:not(.aberta) #seek::-webkit-slider-runnable-track{height:2px;border-radius:0}
+    #player:not(.aberta) #seek::-webkit-slider-thumb{opacity:0}
+    #player:not(.aberta) #seek::-moz-range-thumb{opacity:0}
+    #player:not(.aberta) .pl .pl-top,#player:not(.aberta) .pl-acao{margin-top:0}
+    #player:not(.aberta) .pl-ctl{width:auto;margin:0;padding:0}
+    #player:not(.aberta) .pl-ctl .pl-play{width:44px;height:44px}
+    #player:not(.aberta) .pl-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #player.aberta .pl-fecha{display:flex;justify-content:center;width:100%;height:24px;padding:10px 0 0;background:none;border:0}
+    .pl-fecha i{width:36px;height:4px;border-radius:2px;background:#454545}
+  }
 
   @media (min-width:900px){
     .brand{padding:22px 32px;position:fixed;top:0;left:0;z-index:5}
@@ -596,7 +615,9 @@ __META__
 <div class="dock" id="player" hidden>
   <!-- Player A (25/09/2026): o mesmo desenho da vitrine do site, com as cores do catálogo.
        Celular: barra fina em cima, faixa + ação da página, botões embaixo.
-       Computador: uma linha só (faixa | botões + barra | ação). -->
+       Computador: uma linha só (faixa | botões + barra | ação).
+       01/11/2026: no celular ele nasce numa linha (faixa, play e ação) e abre inteiro no toque. -->
+  <button class="pl-fecha" id="plFecha" type="button" aria-label="Fechar o player"><i></i></button>
   <div class="dock-in pl">
     <div class="scrub">
       <time id="tNow">0:00</time>
@@ -1107,6 +1128,16 @@ __META__
     var t = rows[cur]; if(!t) return;
     if(CAT.artist.tape && t.buy) comprar(t);
   });
+  // player numa linha no celular (01/11/2026): fechado, o toque na faixa abre o player inteiro
+  // (linha do tempo, aleatório, anterior, próxima e compartilhar); aberto, o nome leva pra página
+  // do beat, como antes. A alça de cima fecha. Acima de 600px nada muda.
+  function plCel(){ try{ return matchMedia('(max-width: 600px)').matches; }catch(_){ return false; } }
+  function plAbrir(sim){ player.classList.toggle('aberta',!!sim); $('plLink').setAttribute('aria-expanded',sim?'true':'false'); }
+  $('plLink').addEventListener('click',function(e){
+    if(!plCel()||player.classList.contains('aberta')) return;
+    e.preventDefault(); plAbrir(true);
+  });
+  $('plFecha').addEventListener('click',function(){ plAbrir(false); });
   var ICO_CART='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="9.5" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M3 4h2.5l2.2 11h11l2-8H7"/></svg>';
   var acaoDe=null;
   function pintarAcao(t){

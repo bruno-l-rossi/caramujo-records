@@ -220,6 +220,7 @@ body.tocando .aviso{bottom:96px}
 .pacs{list-style:none;font:400 .72rem/1.9 var(--mono);color:var(--read);text-align:right}
 .pacs a{color:var(--fire);border-bottom:1px solid var(--clay)}
 .compra .btn{width:100%;margin-top:18px}
+.lm{display:none}
 .salvar{display:flex;align-items:stretch;margin-top:10px;border:1px solid var(--wire)}
 .salvar.on{border-color:var(--fire)}
 .salvar button{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 14px;background:none;border:0;color:var(--cream);font:700 .72rem var(--sans);letter-spacing:.18em;text-transform:uppercase;cursor:pointer}
@@ -301,13 +302,27 @@ body.tocando{padding-bottom:64px}
 
 ${TOPO_CSS_899}@media(max-width:860px){
 ${TOPO_CSS_CEL}  .wrap{padding:0 16px}
-  .beat{grid-template-columns:1fr;grid-template-areas:'capa' 'info' 'tape';row-gap:22px}
-  .beat h1{font-size:2.9rem}
-  .compra .linha{flex-direction:column;gap:12px}.compra .pacs{text-align:left}
+  /* 01/11/2026: capa pequena ao lado do nome, um play só (o da barra) e o preço com o botão logo
+     depois da ficha; o Leve mais vira uma linha embaixo do botão. A capa grande fica no computador. */
+  .beat{position:relative;grid-template-columns:1fr;grid-template-areas:'info' 'tape';row-gap:22px}
+  .capa-g{position:absolute;left:0;top:0;width:120px;grid-area:auto}
+  .capa-g .tocar,.capa-g .selo{display:none}
+  .beat .cabeca{min-height:120px;padding-left:136px;display:flex;flex-direction:column;justify-content:center}
+  .beat h1{font-size:min(2.2rem,calc((100vw - 168px)/(var(--l,1)*.72)));margin:8px 0 6px}
+  .beat .chips{margin-top:18px}.beat .tocador{margin-top:16px}
+  .compra{display:flex;flex-direction:column;margin-top:20px;padding-top:20px}
+  .compra .linha{display:contents}.compra .pacs{display:none}
+  .compra .lm{display:block;order:1;margin-top:12px;font:400 .8rem/1.5 var(--mono);color:var(--read)}
+  .compra .lm b{color:var(--fire);font-weight:400}
+  .compra .salvar,.compra .inclui{order:2}
   .secao{margin-top:44px}.secao h2{font-size:1.8rem}
-  .item{gap:10px;padding:9px 2px}.item .num{width:24px}.capinha{width:40px;height:40px}.item .dur{display:none}
+  .item{gap:10px;padding:9px 2px}.capinha{width:40px;height:40px}.item .dur{display:none}
   .item .nome{font-size:1.05rem}.item .ficha{font-size:.68rem}.preco{padding:.5rem .6rem;font-size:.72rem}
-  .item:hover .num{background:none;border:0}.item:hover:not(.tocando) .num i{display:inline}.item:hover:not(.tocando) .num .i-play{display:none}
+  /* ▶ em cada linha (01/11/2026), igual à vitrine: no dedo não tem mouse em cima, então o play fica
+     à vista no lugar do número; o beat que está tocando fica com o botão cheio */
+  .item .num,.item:hover .num{border:1px solid var(--clay);border-radius:50%;background:none;color:var(--fire)}
+  .item .num i{display:none}.item .num .i-play{display:block}.item.tocando.rodando .num .i-play{display:none}
+  .item.tocando .num{background:var(--fire);border-color:var(--fire);color:var(--black)}
   .topo-g{grid-template-columns:1fr;gap:22px;padding-bottom:22px}.topo-g h1{font-size:3.2rem}
   .mosaico{display:none}
   .generos{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding-left:16px;padding-right:16px}
@@ -357,6 +372,14 @@ function pacotesTexto(pk, { link = true } = {}) {
   if (!pk.length) return '';
   const lis = pk.map((p) => `<li>${p.depois ? `do ${p.n}º em diante, ${real(p.cada)} cada` : p.cada ? `${p.n} ou mais a ${real(p.cada)} cada` : `${p.n} beats por ${real(p.preco)}`}<span class="off">${p.off}% off</span></li>`).join('');
   return `<ul class="pacs">${lis}</ul>`;
+}
+// Leve mais numa linha embaixo do botão (celular, 01/11/2026): "Leve 2 por R$ 218 · 3 por R$ 297 ›",
+// levando pros parecidos da própria página (sem parecidos, pra vitrine). No computador some: lá a lista fica.
+function leveLinha(pk, href, de) {
+  const exatos = pk.filter((p) => !p.cada).slice(0, 2);
+  const txt = exatos.length ? 'Leve ' + exatos.map((p) => `${p.n} por ${real(p.preco)}`).join(' · ')
+    : pk.length ? `Leve ${pk[0].n} ou mais a ${real(pk[0].cada)} cada` : '';
+  return txt ? `<a class="lm" href="${href}"${href.startsWith('#') ? '' : deAttr(de)}>${txt} <b aria-hidden="true">›</b></a>` : '';
 }
 
 function cabecalho({ titulo, descricao, url, img, imgAlt, ogTitulo, ogDescricao, ld, preload, tipoOg = 'website' }) {
@@ -423,6 +446,8 @@ export function paginaBeat(b, loja) {
   const tom = tomPt(b.key);
   const tape = tapeDo(b, porCapa);
   const par = parecidos(b, beats);
+  // palavra mais comprida do nome: no celular o título encolhe pra ela caber inteira do lado da capa (01/11/2026)
+  const longa = Math.max(...String(b.name).split(/\s+/).map((p) => p.length));
   const img = b.capa ? { url: SITE + b.capa, w: 1000, h: 1000 } : { url: SITE + '/og-image.png', w: 1200, h: 630 };
   // Textos só pro Google (04/10/2026, aprovados pelo Bruno): a descrição curta (resultado da busca
   // e prévia do link) e a ficha (Product.description). Faltando BPM, tom ou duração, o pedaço some.
@@ -470,6 +495,7 @@ export function paginaBeat(b, loja) {
 <div class="dono"><p>Esse beat já tem dono.</p><span>A licença é exclusiva: quando alguém compra, o beat sai da loja. Os de baixo estão à venda.</span></div>`
     : `<div class="compra"><div class="linha"><div class="valor">${real(preco)}<small>Licença exclusiva</small></div>${pacotesTexto(pk)}</div>
 <a class="btn js-add" data-bid="${b.id}" data-preco="${preco}" href="${linkAdd(b)}"${deAttr(de)}>${ICO.cart}<span>Adicionar ao carrinho</span></a>
+${leveLinha(pk, par.length ? '#parecidos' : '/#beats', de)}
 <div class="salvar js-salvar-linha" data-sv="${b.id}"><button class="js-salvar" type="button" aria-pressed="false">${SV_COR}<span>Salvar pra depois</span></button><a href="/#salvos"${deAttr(de)} hidden>Ver salvos ›</a></div>
 <ul class="inclui"><li><b>Só seu:</b> depois da compra o beat sai da loja</li><li><b>Contrato no seu nome</b>, com uso comercial liberado</li><li><b>MP3 + WAV</b>, entrega instantânea</li></ul></div>`;
 
@@ -488,9 +514,9 @@ ${topo(de, '', aVendaPorGenero(beats))}
 <article class="beat${b.sold ? ' fora' : ''}" data-bid="${b.id}">
 ${capaG}${b.sold ? '<span class="selo">Vendido</span>' : ''}${b.mp3 ? `<button class="tocar js-tocar" type="button" data-bid="${b.id}" aria-label="Tocar ${esc(b.name)}">${PLAYPAUSE}</button>` : ''}</div>
 <div class="info">
-<div class="kicker">${b.sold ? 'Beat vendido' : 'Beat exclusivo'} · ${esc(gen)}</div>
-<h1>${esc(b.name)}</h1>
-<div class="por">prod. <a href="/rideblan33"${deAttr(de)}>@rideblan33 ›</a></div>
+<div class="cabeca"><div class="kicker">${b.sold ? 'Beat vendido' : 'Beat exclusivo'} · ${esc(gen)}</div>
+<h1${longa > 8 ? ` style="--l:${longa}"` : ''}>${esc(b.name)}</h1>
+<div class="por">prod. <a href="/rideblan33"${deAttr(de)}>@rideblan33 ›</a></div></div>
 <ul class="chips">${b.bpm ? `<li>${esc(b.bpm)} BPM</li>` : ''}${b.key ? `<li>${esc(b.key)}${tom ? ' // ' + esc(tom) : ''}</li>` : ''}${b.dur ? `<li>${mmss(b.dur)}</li>` : ''}</ul>
 ${b.mp3 ? `<div class="tocador" data-bid="${b.id}"><button class="pp js-tocar" type="button" data-bid="${b.id}" aria-label="Tocar ${esc(b.name)}">${PLAYPAUSE}</button><span class="t js-agora">0:00</span><div class="trilha js-trilha" data-bid="${b.id}" role="slider" tabindex="0" aria-label="Posição na faixa" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div><span class="t">${mmss(b.dur)}</span><button class="sh js-compartilhar" type="button" data-url="${SITE}/b/${esc(b.slug)}" data-titulo="${esc(b.name)} · @rideblan33" aria-label="Compartilhar ${esc(b.name)}">${ICO.share}</button></div>` : ''}
 ${compra}

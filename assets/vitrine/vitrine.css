@@ -216,25 +216,6 @@ nav{
 
 /* ═══ PACKAGES ═══════════════════════════ */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* ═══ SERVICES: em linhas desde 25/10/2026 (bloco DE-PARA FINAL, no fim) ═══ */
 
 /* SNAIL SVG DECORATIONS scattered in sections */
@@ -330,6 +311,14 @@ footer p{
 .cp-coupon-msg{font-size:.65rem;margin-top:.35rem;letter-spacing:.05em;min-height:.9rem;}
 .cp-coupon-msg.ok{color:var(--amber);}
 .cp-coupon-msg.err{border-left:2px solid var(--blood);padding-left:.5rem;}
+/* cupom em linha (02/11/2026, opção B): a linha abre o campo; aplicado mostra o código, o % e o × */
+.cp-cupom-linha{display:flex;align-items:center;border-top:1px solid var(--wire);border-bottom:1px solid var(--wire)}
+.cp-cl-bt{flex:1;display:flex;justify-content:space-between;align-items:center;gap:1rem;min-height:48px;padding:0;background:none;border:0;cursor:pointer;text-align:left}
+.cp-cl-bt .k{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--read)}
+.cp-cl-bt .v{font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:var(--fire)}
+.cp-cl-bt .v b{font-weight:400;color:var(--bone);margin-right:.7rem}
+.cp-cl-x{width:44px;min-height:48px;margin-right:-.7rem;background:none;border:0;color:var(--read);font-size:1.1rem;cursor:pointer}
+.cp-coupon:not(.aberto) .cp-coupon-row,.cp-coupon:not(.aberto) .cp-coupon-msg,.cp-coupon.aberto .cp-cupom-linha{display:none}
 .cp-tot{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1rem;}
 .cp-tot span:first-child{font-size:.6rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);}
 .cp-tv{font-family:'Cormorant Garamond',sans-serif;font-size:2.2rem;color:var(--cream);}
@@ -354,35 +343,6 @@ footer p{
 .overlay.on{display:block;}
 
 /* PKG BEAT SELECTOR MODAL */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* REVEAL */
 .rv{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease;}
@@ -435,7 +395,6 @@ html { scroll-padding-top: var(--nav-h,54px); }
   
   
   
-
 
   /* Contact */
 
@@ -573,7 +532,6 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 /* ═══ NOVO: BARRA TOCANDO AGORA ═══ */
 .np-bar{position:fixed;display:flex;flex-direction:column;align-items:stretch;padding:.6rem .9rem;transition:transform .3s cubic-bezier(.4,0,.2,1);}
 
-
 /* ═══ AJUSTES v2 ═══ */
 .hero-week{position:absolute;z-index:4;max-width:none;padding:1.4rem;background:rgba(20,17,13,.72);border:1px solid var(--clay);backdrop-filter:blur(6px);}
 .hero-week .hw-name{font-size:2.4rem;}
@@ -582,17 +540,13 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .hw-add{margin-top:.9rem;}
 @media(max-width:900px){.hero-week .hw-name{font-size:2rem;}}
 
-
 /* ═══ AJUSTES v3 ═══ */
 .hero-logo-wrap{justify-content:flex-start;padding-left:1vw;}
 .hero-week{right:auto;left:50%;top:46%;transform:translate(-50%,-50%);width:min(440px,46vw);}
 
-
-
 @media(max-width:900px){.hero-week{position:static;left:auto;top:auto;transform:none;width:100%;max-width:430px;margin:1.8rem 0 0;}.hero-logo-wrap{justify-content:center;padding-left:0;}}
 
 /* ═══ AJUSTES v4 (mobile + refinamentos) ═══ */
-
 
 @media(max-width:600px){
   .nav-links{scrollbar-width:none;-webkit-overflow-scrolling:touch;}
@@ -752,7 +706,11 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 @media(max-width:760px){
   #beatCards .nome{font-size:1.05rem}
   #beatCards .item{gap:10px;padding:9px 2px}
-  #beatCards .cel-num{width:26px}
+  #beatCards .cel-num{width:30px}
+  /* ▶ em cada linha (01/11/2026): sem mouse, o play fica à vista no lugar do número */
+  #beatCards .cel-num i,#beatCards .item.tocando.rodando:not(:hover) .cel-num .eq3{display:none}
+  #beatCards .cel-num b,#beatCards .item.tocando.rodando:not(:hover) .cel-num b{display:flex}
+  #beatCards .cel-num b{border-radius:50%;border-color:var(--clay);background:none;color:var(--fire)}
   .capa{width:40px;height:40px}
   #beatCards .dur{display:none}
   .preco{padding:.5rem .62rem;font-size:.72rem;gap:0}
@@ -763,8 +721,6 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
   .pe-nome .quem{display:none}
   .pe-dir{flex:none}
 }
-
-
 
 /* ══ NOVO v29 — parcelamento visível, carrinho do pé e barra simétrica ══════
    Parcelar em até 12x aparece no total do carrinho e embaixo do botão de cada
@@ -778,11 +734,8 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 /* o botão de preço do pé aceso = já está no carrinho (igual à lista) */
 .pe-dir #npPreco.on{background:var(--fire);border-color:var(--fire)}
 
-/* ══ NOVO v30 — barra do pé em duas linhas no celular, play no modal do pacote ══
-   Celular: nome e ficha inteiros em cima (com o volume no canto), e os 5
-   controles centrados embaixo: aleatório, anterior, PLAY, próxima,
-   compartilhar. Computador: aleatório, anterior, PLAY, próxima, volume;
-   compartilhar à direita, do lado do preço (arrumaBarra move os dois). */
+/* ══ NOVO v30: barra do pé em duas linhas no celular (desde 01/11/2026, a barra aberta) ══
+   Computador: compartilhar do lado do preço (arrumaBarra). */
 .pe-dir #npShare{flex:none}
 @media(max-width:600px){
   .pe-baixo{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"info dir" "ctl ctl";row-gap:6px;column-gap:10px}
@@ -790,15 +743,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
   .pe-dir{grid-area:dir}
   .transporte{grid-area:ctl;}
   .np-bar #npShuffle{display:flex}
-  html body.tocando{padding-bottom:140px}
 }
-/* modal do pacote: ouvir antes de escolher */
-
-
-
-
-
-
 
 /* ══ NOVO v31 — mensagens na paleta, caixinha do pacote à direita, carrinho na barra do celular ══ */
 .msg-ok{color:var(--amber)}
@@ -973,12 +918,7 @@ body.tocando{padding-bottom:104px}
   .tb.principal{width:44px;height:44px}
   .transporte{gap:4px}
   #npShuffle{display:none}
-  /* no celular o volume ocupa o lugar do carrinho (o carrinho da página já
-     está ali do lado). Se o aparelho não deixa mexer no volume por software,
-     como o iPhone, o carrinho volta: controle morto não fica na tela.
-     (03/10/2026: as regras do volume saíram daqui. Até 600px o player A esconde
-     o volume e acima disso o arrumaBarra leva ele pros controles, então nenhuma
-     regra de .pe-dir .vol-wrap chegava a valer.) */
+  /* o preço sai e o volume fica; aparelho sem volume por software (iPhone) mostra o preço */
   .pe-dir #npPreco{display:none}
   body.sem-volume .pe-dir #npPreco{display:inline-flex}
   body.tocando{padding-bottom:96px}
@@ -1002,6 +942,18 @@ body.tocando{padding-bottom:104px}
 @media(max-width:600px){
   .np-bar .pe-dir .vol-wrap{display:none}
   .np-bar .transporte{justify-content:space-between;width:100%;max-width:360px;margin:0 auto;gap:0}
+}
+/* player numa linha no celular (01/11/2026): o toque no nome abre a barra inteira (.aberta) e a alça fecha */
+.np-fecha{display:none}
+@media(max-width:600px){
+  .np-bar:not(.aberta) .pe-seek{position:absolute;left:0;right:0;top:-1px;padding:0;pointer-events:none}
+  .np-bar:not(.aberta) .pe-t,.np-bar:not(.aberta) .pe-ir,.np-bar:not(.aberta) .pe-seek .trilha i:after,#npBar:not(.aberta) .transporte .tb:not(.principal){display:none}
+  .np-bar:not(.aberta) .pe-seek .trilha{height:2px;border-radius:0}
+  .np-bar:not(.aberta) .pe-baixo{display:flex;gap:10px;padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px))}
+  .np-bar:not(.aberta) .transporte{width:auto;margin:0}
+  html body.tocando{padding-bottom:84px}
+  .np-bar.aberta .np-fecha{display:flex;justify-content:center;height:26px;padding-top:10px;background:none;border:0}
+  .np-fecha i{width:36px;height:4px;border-radius:2px;background:var(--loam)}
 }
 @media(max-width:760px){
   .pe-seek{gap:13px}
@@ -1088,11 +1040,8 @@ html{-webkit-text-size-adjust:100%}
   .vol-pop input{width:26px;max-width:none;height:132px;touch-action:none}
 }
 
-/* ══ NOVO v24 — volume sem esbarrão, hero mais curto ═══════════════════════
-   A barra do pé cria contexto de empilhamento próprio (tem transform), então
-   nada dentro dela subia acima do carrinho flutuante (z 8000). Subo a barra
-   pra 8100 — ainda abaixo do véu (8200) e do painel do carrinho (8500) — e,
-   enquanto o slider está aberto, o carrinho desliza pra cima pra não brigar. */
+/* ══ NOVO v24 — a barra do pé acima do carrinho flutuante (8000) e abaixo do véu (8200);
+   com o volume aberto o carrinho sobe pra não brigar ══ */
 .np-bar{z-index:8100}
 .cart-btn{transition:background .14s,transform .22s ease,opacity .22s ease}
 body.vol-aberto .cart-btn{transform:translateY(-76px)}
@@ -1330,6 +1279,23 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
   body.mn-aberto{overflow:hidden}
 }
 @media (prefers-reduced-motion:reduce){.nb-sel i,.nb-tg b,.nb-tg b:after{transition:none}}
+/* Filtros (02/11/2026, ideia 10): no celular a busca, o ✦ e o Filtros numa linha; a folha junta o resto */
+#ddFiltros,.nb-fb b[hidden]{display:none}
+.nb-fb svg{width:16px;height:16px;flex:none;color:var(--fire)}
+.nb-fb b{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--fire);color:var(--black);font-size:.6rem;letter-spacing:0;display:inline-flex;align-items:center;justify-content:center}
+@media(max-width:860px){
+  #nbar .nb{flex-wrap:nowrap}
+  #nbar .nb-busca{flex:1 1 0}
+  #ddGenero,#ddOrdem,#filtAvail{display:none}
+  #ddFiltros{display:block;flex:none}
+  #ddFiltros .nb-sel{width:auto;gap:.5rem}
+  .nb-fb.ativo{border-color:var(--clay)}
+  .mf-k{display:block;padding:1rem 1.1rem .5rem;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--label)}
+  .mf-gen{display:flex;flex-wrap:wrap;gap:.45rem;padding:0 1.1rem}
+  .mf-limpa{margin-left:auto;min-height:40px;background:none;border:0;color:var(--read);font-size:.82rem;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+  .mf-tg{display:flex;width:calc(100% - 2.2rem);margin:1.2rem 1.1rem 0;justify-content:space-between}
+  .mf-ver{display:block;width:calc(100% - 2.2rem);min-height:50px;margin:1rem 1.1rem 0;background:var(--bone);border:0;color:var(--deep);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;cursor:pointer}
+}
 
 /* QUEM JÁ GRAVOU na vitrine (17/10/2026, opção B, sem a contagem de músicas): fotos redondas que
    deslizam entre o catálogo e os serviços. Seção montada no servidor (_lib/gravouvitrine.js). */

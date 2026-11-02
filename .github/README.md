@@ -83,7 +83,11 @@ scripts/                conversor do Drive e cálculo da onda de cada faixa
 
 **Leve mais na vitrine (16/10/2026).** "Leve 2 ou mais e pague menos" ao lado da contagem abre a tabela (total de 1 a 5 beats e o preço do 6º em diante, tudo do `LEVE_MAIS`). Com beat no carrinho, o botão dos outros mostra o preço do próximo (R$119 riscado, + R$100). Só aparência: a conta segue no carrinho e no servidor.
 
-**Barra dos beats (16/10/2026).** Em cima da lista: busca, ✦ (Estou com sorte), Gênero e Ordem (menus; no celular sobem de baixo e o voltar fecha) e a chave Só à venda, desligada ao abrir. Os botões de gênero continuam sendo links `/beats/<gênero>` (o clique filtra ali mesmo).
+**Barra dos beats (16/10/2026).** Em cima da lista: busca, ✦ (Estou com sorte), Gênero e Ordem (menus; no celular sobem de baixo e o voltar fecha) e a chave Só à venda, desligada ao abrir. Desde 02/11/2026, no celular, a linha tem só a busca, o ✦ e o Filtros: a folha do Filtros junta gênero, ordem e Só à venda, vale na hora, fecha no "Ver N beats" e o botão mostra quantos filtros estão ligados. No computador nada mudou. Os botões de gênero continuam sendo links `/beats/<gênero>` (o clique filtra ali mesmo).
+
+**Player e página do beat no celular (01/11/2026).** Na vitrine, na tape e na pasta de artista o player do pé nasce numa linha: fio de progresso em cima, capa, nome, play e o preço (ou o Comprar da tape). Um toque no nome abre o player inteiro (linha do tempo, aleatório, anterior, próxima e compartilhar); aberto, o nome leva pra página do beat e a alça de cima fecha. No computador nada mudou. No celular cada linha de beat mostra o ▶ no lugar do número (vitrine, páginas de gênero e parecidos). Na página do beat, no celular, a capa fica pequena do lado do nome, o play é o da barra e o preço com o botão aparece na 1ª tela; o Leve mais vira uma linha embaixo do botão que leva pros parecidos.
+
+**Cupom no carrinho (02/11/2026).** O campo fica guardado atrás da linha "Cupom · Adicionar ›". O toque abre o campo; aplicado, a linha mostra o código e o % com um × pra tirar. O cupom que chega pelo link do e-mail aparece no campo aberto e entra sozinho quando tem beat no carrinho.
 
 **Quem já gravou, a leitura (16/10/2026).** `functions/_lib/gravou.js` descobre quem canta em cada música da aba Músicas do perfil pelas páginas públicas do Spotify (embed da faixa, página da faixa, álbum e artista), sem chave nem app de desenvolvedor, e traz nome e foto. `?op=gravou-teste` no painel só lê e responde (não grava).
 

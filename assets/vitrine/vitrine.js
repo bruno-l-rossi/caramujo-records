@@ -1352,7 +1352,7 @@ try{
     if($('npMeta')) $('npMeta').innerHTML='<span class="quem">@rideblan33  ·  </span>'+
       glab(b)+(b.bpm?'  ·  '+b.bpm+' BPM':'')+(b.key?'  ·  '+b.key:'');
     var c=$('npCapa'); if(c) c.outerHTML=capaHTML(f,'npCapa');
-    var lk=$('npLink'); if(lk){ lk.href=paginaDoBeat(b.name); lk.setAttribute('aria-label','Abrir a página de '+b.name); }
+    var lk=$('npLink'); if(lk){ lk.href=paginaDoBeat(b.name); lk.setAttribute('aria-label','Abrir a página de '+b.name); rotuloBarra(); }
     if($('npTime')) $('npTime').textContent=mm(f.dur);
     window.pintarPrecoPe();
     sistema(b,f);
@@ -1763,9 +1763,32 @@ try{
     else { if(vol.parentNode!==tr) tr.appendChild(vol); if(sh.parentNode!==dir) dir.insertBefore(sh,dir.firstChild); }
   }
 
+  // Player numa linha no celular (01/11/2026): fechado, o toque na capa ou no nome abre a barra
+  // inteira (linha do tempo, aleatório, anterior, próxima e compartilhar); aberto, o mesmo toque
+  // leva pra página do beat, como antes. A alça de cima fecha. Acima de 600px nada muda.
+  function barraCel(){ try{ return matchMedia('(max-width: 600px)').matches; }catch(_){ return false; } }
+  function rotuloBarra(){
+    var bar=$('npBar'), lk=$('npLink'); if(!bar||!lk) return;
+    var b=beat(bar.dataset.bid), nome=b?b.name:'', fechada=barraCel()&&!bar.classList.contains('aberta');
+    if(nome) lk.setAttribute('aria-label',fechada?'Abrir o player de '+nome:'Abrir a página de '+nome);
+    if(barraCel()) lk.setAttribute('aria-expanded',fechada?'false':'true'); else lk.removeAttribute('aria-expanded');
+  }
+  window.npAbrirBarra=function(sim){ var bar=$('npBar'); if(!bar) return; bar.classList.toggle('aberta',!!sim); rotuloBarra(); };
+  function ligarBarraCel(){
+    var lk=$('npLink'), fe=$('npFecha');
+    if(lk) lk.addEventListener('click',function(e){
+      var bar=$('npBar'); if(!bar||!barraCel()||bar.classList.contains('aberta')) return;
+      e.preventDefault(); window.npAbrirBarra(true);
+    });
+    if(fe) fe.addEventListener('click',function(){ window.npAbrirBarra(false); });
+    window.addEventListener('resize',rotuloBarra);
+    rotuloBarra();
+  }
+
   function boot(){
     medirMenu();
     arrumaBarra();
+    ligarBarraCel();
     window.addEventListener('resize',arrumaBarra);
     window.addEventListener('resize',medirMenu);
     document.body.classList.toggle('sem-volume',!volumeMexe());
@@ -1951,6 +1974,36 @@ try{
     tenta();
   }
   if(document.readyState!=='loading') setTimeout(chegou,300); else document.addEventListener('DOMContentLoaded',function(){ setTimeout(chegou,300); });
+})();
+}catch(e){ setTimeout(function(){ throw e; }); }
+
+/* ─────────────────────────────────────────────────────────────── */
+try{
+/* ── CUPOM EM LINHA (02/11/2026, opção B do Bruno) ────────────────────
+   No carrinho, no lugar do campo sempre aberto, a linha "Cupom · Adicionar ›". O toque abre o campo de
+   sempre (applyCoupon); aplicado, a linha mostra o código, o % e o × (removeCoupon). Campo com código
+   (o do link do e-mail) ou com erro fica aberto. Nada do carrinho é reescrito: só embrulha o updateCart
+   e o showCouponMsg, como o cupom do e-mail faz. */
+(function(){
+  var area=document.getElementById('cpCouponArea'), bt=document.getElementById('cpCupomBt'), v=document.getElementById('cpCupomV'),
+      x=document.getElementById('cpCupomX'), inp=document.getElementById('cpCouponInput'), msg=document.getElementById('cpCouponMsg'), pn=document.getElementById('cartPanel');
+  if(!area||!bt||!v||!x||!inp||!msg) return;
+  var aberto=false;
+  function pintar(){
+    var c=(typeof activeCoupon!=='undefined'&&activeCoupon)||null;
+    var abre=!c&&(aberto||!!inp.value||/\berr\b/.test(msg.className));
+    area.classList.toggle('aberto',abre); area.classList.toggle('aplicado',!!c);
+    if(c){ v.textContent=''; var b=document.createElement('b'); b.textContent=c.code; v.appendChild(b);
+      v.appendChild(document.createTextNode((c.fixedPrice!==undefined&&c.fixedPrice!==null)?'R$'+c.fixedPrice:c.pct+'% off')); }
+    else v.textContent='Adicionar ›';
+    x.hidden=!c; bt.setAttribute('aria-expanded',abre?'true':'false');
+  }
+  bt.addEventListener('click',function(){ if(typeof activeCoupon!=='undefined'&&activeCoupon) return; aberto=true; pintar(); try{ inp.focus(); }catch(_){} });
+  x.addEventListener('click',function(){ aberto=false; if(typeof removeCoupon==='function') removeCoupon(); pintar(); });
+  var uc=window.updateCart; if(typeof uc==='function') window.updateCart=function(){ var r=uc.apply(this,arguments); pintar(); return r; };
+  var sm=window.showCouponMsg; if(typeof sm==='function') window.showCouponMsg=function(){ var r=sm.apply(this,arguments); pintar(); return r; };
+  if(pn&&window.MutationObserver) new MutationObserver(pintar).observe(pn,{attributes:true,attributeFilter:['class']});
+  pintar();
 })();
 }catch(e){ setTimeout(function(){ throw e; }); }
 
@@ -2623,7 +2676,7 @@ try{
    computador desce do botão. Fecha ao escolher, no X, no Esc, tocando fora e no voltar. */
 (function(){
   var $=function(i){ return document.getElementById(i); };
-  var MENUS={ genero:['genBtn','genMenu'], ordem:['ordBtn','ordMenu'], leve:['lmBtn','lmMenu'] };
+  var MENUS={ genero:['genBtn','genMenu'], ordem:['ordBtn','ordMenu'], leve:['lmBtn','lmMenu'], filtros:['filtBtn','filtMenu'] };
   function folha(){ try{ return window.matchMedia('(max-width:860px)').matches; }catch(_){ return false; } }
   function fechar(){
     Object.keys(MENUS).forEach(function(k){ var b=$(MENUS[k][0]), m=$(MENUS[k][1]); if(m) m.hidden=true; if(b) b.setAttribute('aria-expanded','false'); });
@@ -2636,6 +2689,7 @@ try{
     var m=$(par[1]), estava=m&&!m.hidden;
     fechar();
     if(!m||estava) return;
+    if(nome==='filtros') pintarFiltros();
     m.hidden=false; $(par[0]).setAttribute('aria-expanded','true');
     if(folha()){ var f=$('mnFundo'); if(f) f.hidden=false; document.body.classList.add('mn-aberto'); }
     var foco=m.querySelector('.ft.on,.mn-o.on'); if(foco){ try{ foco.focus({preventScroll:true}); }catch(_){} }
@@ -2658,7 +2712,44 @@ try{
     var fa=$('filtAvail'); if(fa) fa.setAttribute('aria-checked',showAvailOnly?'true':'false');
     var t=$('nbTotal'); if(t) t.textContent = total + (total===1?' beat':' beats');
     var p=$('nbPag'); if(p) p.textContent = paginas>1 ? 'página '+curPage+' de '+paginas : '';
+    ultimoTotal=total; pintarFiltros();
   };
+  /* Filtros (02/11/2026, ideia 10): a folha do celular repete gênero, ordem e Só à venda chamando as
+     funções de sempre (filtLink/filt, sortBeats, toggleAvail) e mostra quantos filtros estão ligados */
+  var ultimoTotal=null, ORDENS=[['padrao','Padrão'],['novos','Mais novos'],['bpm','BPM'],['aleatorio','Aleatória']];
+  function generos(){ return [].slice.call(document.querySelectorAll('#genMenu .ft')); }
+  function pintarFiltros(){
+    var gen=$('filtGen'), ord=$('filtOrd'); if(!gen||!ord) return;
+    if(!gen.children.length){
+      generos().forEach(function(o,i){ var b=document.createElement('button'); b.type='button'; b.className='ft'; b.textContent=o.textContent; b.setAttribute('data-i',i);
+        b.addEventListener('click',function(e){ var orig=generos()[i]; if(!orig) return; var m=(orig.getAttribute('onclick')||'').match(/'([a-z]+)'/); if(m) filt(m[1],orig); });
+        gen.appendChild(b); });
+      ORDENS.forEach(function(o){ var b=document.createElement('button'); b.type='button'; b.className='ft'; b.textContent=o[1]; b.setAttribute('data-ordem',o[0]);
+        b.addEventListener('click',function(){ var sl=$('beatSort'); if(sl) sl.value=o[0]; sortBeats(o[0]); });
+        ord.appendChild(b); });
+      var tg=$('filtAvail2'); if(tg) tg.addEventListener('click',function(){ var fa=$('filtAvail'); if(fa) toggleAvail(fa); });
+    }
+    var gs=generos();
+    [].forEach.call(gen.children,function(b,i){ b.classList.toggle('on',!!gs[i]&&gs[i].classList.contains('on')); });
+    var modo=(typeof sortMode!=='undefined'&&sortMode)||'padrao';
+    [].forEach.call(ord.children,function(b){ b.classList.toggle('on',b.getAttribute('data-ordem')===modo); });
+    var so=typeof showAvailOnly!=='undefined'&&showAvailOnly;
+    var tg2=$('filtAvail2'); if(tg2) tg2.setAttribute('aria-checked',so?'true':'false');
+    var n=(curFilt!=='todos'?1:0)+(modo!=='padrao'?1:0)+(so?1:0), fn=$('filtN');
+    if(fn){ fn.textContent=n; fn.hidden=!n; }
+    var fb=$('filtBtn'); if(fb){ fb.classList.toggle('ativo',n>0); fb.setAttribute('aria-label',n?'Filtros, '+n+(n===1?' ligado':' ligados'):'Filtros'); }
+    var v=$('filtVer'); if(v&&ultimoTotal!==null) v.textContent = ultimoTotal ? 'Ver '+ultimoTotal+(ultimoTotal===1?' beat':' beats') : 'Nenhum beat com esses filtros';
+  }
+  window.limparFiltrosBarra=function(){
+    var t=generos()[0]; if(t&&curFilt!=='todos') filt('todos',t);
+    if(typeof sortMode!=='undefined'&&sortMode&&sortMode!=='padrao'){ var sl=$('beatSort'); if(sl) sl.value='padrao'; sortBeats('padrao'); }
+    if(typeof showAvailOnly!=='undefined'&&showAvailOnly){ var fa=$('filtAvail'); if(fa) toggleAvail(fa); }
+    pintarFiltros();
+  };
+  // o campo da busca: com pouco espaço (celular, do lado do Filtros) o texto encurta pra caber
+  var busca=$('beatSearchTop'), LONGO=busca&&busca.getAttribute('placeholder');
+  function textoBusca(){ if(!busca||!LONGO) return; busca.setAttribute('placeholder','Nome, gênero, BPM, tom'===LONGO&&busca.clientWidth&&busca.clientWidth<200?'Buscar beat':LONGO); }
+  textoBusca(); window.addEventListener('resize',textoBusca);
   var gm=$('genMenu');
   if(gm) gm.addEventListener('click',function(e){
     var ft=e.target.closest&&e.target.closest('.ft');

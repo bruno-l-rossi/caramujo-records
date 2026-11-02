@@ -34,7 +34,7 @@
 <!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
      a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=0159235d1d">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=e7d66568d0">
 
 
 <link rel="canonical" href="https://caramujorecords.com.br"/>
@@ -192,6 +192,18 @@
       </div>
     </div>
     <button class="nb-tg" id="filtAvail" type="button" role="switch" aria-checked="false" onclick="toggleAvail(this)">Só à venda<b aria-hidden="true"></b></button>
+    <!-- Filtros (02/11/2026, ideia 10): no celular a busca, o ✦ e este botão ficam numa linha e a folha junta
+         gênero, ordem e Só à venda (o que muda ali vale na hora; "Ver N beats" fecha). No computador some. -->
+    <div class="nb-dd" id="ddFiltros">
+      <button class="nb-sel nb-fb" id="filtBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="filtMenu" onclick="menuBarra('filtros')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filtros<b id="filtN" hidden></b></button>
+      <div class="mn mn-filt" id="filtMenu" hidden>
+        <div class="mn-t"><b>Filtros</b><button class="mf-limpa" type="button" onclick="limparFiltrosBarra()">Limpar</button><button class="mn-x" type="button" onclick="fecharMenusBarra()" aria-label="Fechar">×</button></div>
+        <b class="mf-k">Gênero</b><div class="mf-gen" id="filtGen"></div>
+        <b class="mf-k">Ordem</b><div class="mf-gen" id="filtOrd"></div>
+        <button class="nb-tg mf-tg" id="filtAvail2" type="button" role="switch" aria-checked="false">Só à venda<b aria-hidden="true"></b></button>
+        <button class="mf-ver" id="filtVer" type="button" onclick="fecharMenusBarra()">Ver os beats</button>
+      </div>
+    </div>
   </div>
   <div class="nb-meta">
     <span class="nb-conta"><b id="nbTotal"></b><span id="nbPag"></span></span>
@@ -280,6 +292,7 @@
 
 <!-- ═══ NOVO: BARRA TOCANDO AGORA ═══ -->
 <div class="np-bar" id="npBar" data-bid="">
+  <button class="np-fecha" id="npFecha" type="button" aria-label="Fechar o player"><i></i></button>
   <div class="pe-seek">
     <div class="pe-t" id="npTAgora">0:00</div>
     <div class="trilha" id="npSeek" role="slider" aria-label="Avançar ou voltar na faixa" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0"><i id="npSeekFill"></i></div>
@@ -334,8 +347,10 @@
     <div class="cp-empty">Nenhum item adicionado.</div>
   </div>
   <div class="cp-foot">
+    <!-- 02/11/2026 (opção B): o campo abre pela linha "Cupom · Adicionar"; aplicado, a linha mostra o código, o % e o × -->
     <div class="cp-coupon" id="cpCouponArea">
-      <div class="cp-coupon-row">
+      <div class="cp-cupom-linha"><button class="cp-cl-bt" id="cpCupomBt" type="button" aria-expanded="false" aria-controls="cpCouponRow"><span class="k">Cupom</span><span class="v" id="cpCupomV">Adicionar ›</span></button><button class="cp-cl-x" id="cpCupomX" type="button" aria-label="Tirar o cupom" hidden>×</button></div>
+      <div class="cp-coupon-row" id="cpCouponRow">
         <input class="cp-coupon-input" id="cpCouponInput" type="text" placeholder="CUPOM DE DESCONTO" maxlength="20" autocomplete="off" spellcheck="false" autocapitalize="characters" enterkeyhint="done"/>
         <button class="cp-coupon-btn" id="cpCouponBtn" onclick="applyCoupon()">APLICAR</button>
       </div>
@@ -485,7 +500,7 @@ const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':
 const FEATURED_OVERRIDE_ID=null;
 const FEATURED_OVERRIDE_ATE='';
 </script>
-<script src="/assets/vitrine/vitrine.js?v=558dcf29b3"></script>
+<script src="/assets/vitrine/vitrine.js?v=e1ebc3e5f9"></script>
 <!-- leva-de -->
 <script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
 (function(){
