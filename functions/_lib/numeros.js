@@ -34,10 +34,11 @@ export function longo(n) {
 }
 
 // Troca os três números do hero da vitrine (<b data-num="...">).
+// 02/11/2026 (hero H1): os streams saem curtos ("2,5 mi"), como no perfil, pra linha caber no celular.
 export function injetarNumeros(html, num) {
   const n = limpar(num);
   return html
     .replace(/(<b data-num="artistas">)[^<]*(<\/b>)/, `$1${cheio(n.artistas)}+$2`)
     .replace(/(<b data-num="faixas">)[^<]*(<\/b>)/, `$1${cheio(n.faixas)}+$2`)
-    .replace(/(<b data-num="streams">)[^<]*(<\/b>)/, `$1${cheio(n.streams)}+$2`);
+    .replace(/(<b data-num="streams">)[^<]*(<\/b>)/, `$1${curto(n.streams)}$2`);
 }

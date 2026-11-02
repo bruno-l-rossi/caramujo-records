@@ -68,7 +68,7 @@ O contraste serif grande + sans miúda espaçada + mono técnica É a identidade
 
 ## Contexto de uso
 
-Público acessa 80%+ pelo celular, vindo do Instagram (bio e Direct). Mobile-first sempre. Vitrine é one-pager: hero → catálogo de beats (player contínuo, áudio do R2) → pacotes → serviços → estúdio → contato. Tapes, pastas de artista e o perfil /rideblan33 são páginas à parte. Compra via carrinho próprio com PIX e cartão (Mercado Pago).
+Público acessa 80%+ pelo celular, vindo do Instagram (bio e Direct). Mobile-first sempre. Vitrine é one-pager: hero curto da marca → catálogo de beats (player contínuo, áudio do R2) → pacotes → serviços → estúdio → contato. Tapes, pastas de artista e o perfil /rideblan33 são páginas à parte. Compra via carrinho próprio com PIX e cartão (Mercado Pago).
 
 ## Ícone da aba (padrão de todas as páginas)
 
@@ -187,22 +187,26 @@ Nenhuma das duas leva texto de cupom. Desenho em `assets/story.js` (artePerfil, 
 ## Números do site (desde 27/09/2026)
 
 Artistas, faixas e streams mudam no painel (home, "Números do site") e aparecem no hero
-da vitrine ("2.500.000+ streams", número cheio), no topo do perfil e na prévia do perfil
+da vitrine ("2,5 mi de streams", curto, desde 02/11/2026), no topo do perfil e na prévia do perfil
 nas redes ("2,5 mi de streams", curto), nos dados pro Google ("2,5 milhões") e no
 `/llms.txt`, o resumo pras IAs (número cheio). Sempre com o
 "+" depois. A imagem da prévia do perfil (`rideblan33-og-2.jpg`) não tem números desenhados.
 
-## @rideblan33 no hero (desde 27/09/2026)
+## @rideblan33 no hero (desde 27/09/2026; frase nova em 02/11/2026)
 
-Na frase "Beats exclusivos, mixagem e masterização por @rideblan33." o @ é o link do perfil,
-igual ao das tapes: bone em negrito, sublinhado discreto e a setinha, que anda no hover.
+Desde 02/11/2026 o link mora na frase da tag: "Atenção! Você está ouvindo um beat do @rideblan33 ›".
+O @ é o link do perfil, igual ao das tapes: creme, sublinhado discreto e a setinha, que anda no hover.
+A frase do estúdio ("Beats exclusivos, mixagem e masterização por...") saiu.
 
-## Hero no notebook (desde 03/10/2026)
+## Hero curto, H1 (desde 02/11/2026)
 
-Entre 901 e 1500px de largura o "Caramujo" encolhe um pouco (6,6% da largura, até 7,4rem)
-e o card do Beat em destaque vai pros 56% da tela com até 400px, pra um nunca encostar
-no outro. Acima de 1500px e no celular o hero segue como era. Escolha do Bruno (opção B
-das prévias de 03/10).
+O hero fica só com a marca, no fundo de sempre (preto, brilho de terra, espiral sépia à direita):
+olho "São Carlos, SP · desde 2018", o logo (600px no computador, 300px no celular), a frase da tag,
+o botão "▶ Ouvir os beats" (fundo `fire`, 48px) com "Mix & master" de link sublinhado ao lado e os
+números numa linha em mono. Sem altura mínima: o catálogo aparece na 1ª tela (1º beat em ~566px no
+celular e ~732px no computador). Saíram o card do Beat em destaque, o ajuste do notebook de 03/10 e
+os botões `.btn` da vitrine. A cabeça do catálogo virou "Beats à venda", sem o olho "Catálogo ·
+pronta entrega" e sem o caramujo desenhado.
 
 ## Checkout na paleta (desde 03/10/2026)
 
@@ -333,7 +337,7 @@ quadro "Esse beat já tem dono" (vendido) desce na direita. No celular nada muda
 
 
 ## Hero da vitrine com o logo (17/10/2026, rodada N)
-O nome do hero é o logo: `assets/brand/caramujo-wordmark.svg`, a letra do `caramujo-v.webp` vetorizada (CARAMUJO #eae2d0, RECORDS #ab7d4c espaçado e alinhado à esquerda, como no `caramujo-h`). Largura 4.55em do tamanho do título (o mesmo espaço do texto antigo). O texto fica no alt do h1.
+O nome do hero é o logo: `assets/brand/caramujo-wordmark.svg`, a letra do `caramujo-v.webp` vetorizada (CARAMUJO #eae2d0, RECORDS #ab7d4c espaçado e alinhado à esquerda, como no `caramujo-h`). Desde 02/11/2026 (hero H1) tem 600px no computador e 300px no celular. O texto fica no alt do h1.
 
 ## Ajuda na página do beat (17/10/2026, rodada O)
 Botão-pílula creme "AJUDA" fixo no canto de baixo à direita (46px, ícone de balão com ?), sobe 66px quando a barra do tocador aparece. Abre uma folha (celular: de baixo, largura toda; computador: 380px acima do botão) com título em Cormorant "Dúvida sobre o <beat>?", o texto "Dúvidas sobre licença, entrega, ajustes no beat, etc." e um botão só: "Direct no Instagram" (@rideblan33). Sem WhatsApp no site.

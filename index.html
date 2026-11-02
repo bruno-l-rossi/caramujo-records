@@ -34,7 +34,7 @@
 <!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
      a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=605bc6c82d">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=c6bdcb7a05">
 
 
 <link rel="canonical" href="https://caramujorecords.com.br"/>
@@ -65,6 +65,9 @@
 
 <!-- ═══ HERO ══════════════════════════════════════════ -->
 <main id="conteudo">
+<!-- 02/11/2026 (H1, escolha do Bruno): o hero encurta e fica só com a marca: olho, logo, a frase da tag com o
+     @rideblan33 que leva pro perfil (sublinhado e seta, como era na frase do estúdio), Ouvir os beats, Mix & master e
+     os números numa linha. Saíram o beat em destaque e a frase do estúdio; o catálogo aparece na 1ª tela. -->
 <section id="hero">
   <div class="hero-glow"></div>
   <div class="hero-logo-wrap">
@@ -73,53 +76,21 @@
   <div class="hero-edge"></div>
 
   <div class="hero-content">
-    <div class="hero-eyebrow">
-      <span class="rec"></span>
-      São Carlos, SP — Desde 2018
-    </div>
+    <div class="hero-eyebrow"><span class="rec"></span>São Carlos, SP · desde 2018</div>
 
     <!-- 17/10/2026 (rodada N): o nome do hero é o logo (caramujo-wordmark.svg, a letra do caramujo-v
          vetorizada), pra não destoar da marca. O alt mantém o texto do h1 pro Google. -->
     <h1 class="hero-title"><img class="hero-wm" src="/assets/brand/caramujo-wordmark.svg" alt="Caramujo Records" width="640" height="129" fetchpriority="high"></h1>
 
-    <p class="hero-lede">Atenção! Você está ouvindo um beat do Rideblan</p>
-
-    <p class="hero-desc">
-      Estúdio popular e independente.<br/>
-      Beats exclusivos, mixagem e masterização por <a class="hero-at" href="/rideblan33" data-de="hero" aria-label="Portfólio do @rideblan33">@rideblan33<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>.
-    </p>
-
-    <p class="hero-proof">
-      <span><b data-num="artistas">40+</b> artistas</span>
-      <span><b data-num="faixas">200+</b> faixas lançadas</span>
-      <span><b data-num="streams">2.500.000+</b> streams</span>
-    </p>
+    <p class="hero-lede">Atenção! Você está ouvindo um beat do <a class="hero-at" href="/rideblan33" data-de="hero" aria-label="Portfólio do @rideblan33">@rideblan33<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a></p>
 
     <div class="hero-ctas">
-      <a class="btn btn-fire" href="#beats" onclick="return window.ouvirCatalogo?window.ouvirCatalogo(event):true">Ouvir o catálogo</a>
-      <a class="btn btn-ghost" href="#services">Mix &amp; master</a>
+      <a class="hero-ouvir" href="#beats" onclick="return window.ouvirCatalogo?window.ouvirCatalogo(event):true"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>Ouvir os beats</a>
+      <a class="hero-mix" href="#services">Mix &amp; master</a>
     </div>
-  </div>
 
-  <div class="hero-week" id="heroWeek">
-    <div class="hw-topo">
-      <div class="hw-capa vazia" id="hwCapa"><img src="assets/brand/selo-creme.svg" alt="" width="34" height="34"></div>
-      <div class="hw-txt">
-        <div class="hw-head">
-          <span class="hw-kick">Beat em destaque</span>
-        </div>
-        <div class="hw-name" id="hwName">—</div>
-      </div>
-    </div>
-    <div class="hw-chips" id="hwChips"></div>
-    <div class="hw-play" id="hwPlay">
-      <button class="tb principal" id="hwBtn" type="button" aria-label="Tocar o beat em destaque"></button>
-      <div class="trilha" id="hwSeek"><i id="hwFill"></i></div>
-      <div class="pe-t" id="hwTempo">0:00</div>
-    </div>
-    <button class="btn btn-fire hw-add" id="hwAdd" onclick="npAddFeatured()">Adicionar ao carrinho · R$119</button>
+    <p class="hero-proof"><span><b data-num="artistas">40+</b> artistas</span> · <span><b data-num="faixas">200+</b> faixas</span> · <span><b data-num="streams">2,5 mi</b> de streams</span></p>
   </div>
-
 </section>
 
 <div class="hr"></div>
@@ -127,17 +98,9 @@
 <!-- ═══ BEATS DISPONÍVEIS (merged) ══════════════════ -->
 <section id="beats" class="s s-earth">
 
-  <svg class="snail-svg tl" width="110" height="70" viewBox="0 0 110 70" stroke="#7a5c30" stroke-width="1">
-    <ellipse cx="68" cy="42" rx="32" ry="24"/>
-    <ellipse cx="68" cy="42" rx="20" ry="15"/>
-    <ellipse cx="68" cy="42" rx="8" ry="6"/>
-    <path d="M36 42 Q20 42 12 33 Q5 23 16 18 Q28 12 37 23" fill="none"/>
-    <line x1="37" y1="11" x2="35" y2="5"/><line x1="44" y1="10" x2="44" y2="3"/>
-  </svg>
-
   <div class="s-head">
-    <span class="s-kicker">Catálogo · pronta entrega</span>
-    <h2 class="s-title">Catálogo de <span class="r">beats</span></h2>
+    <!-- 02/11/2026 (H1): o título encurta e o olho "Catálogo · pronta entrega" sai; o hero de cima já diz o que é -->
+    <h2 class="s-title">Beats à <span class="r">venda</span></h2>
     <p class="s-sub">
       <!-- 25/10/2026 (de-para final, item 2): a explicação numa frase; o balão do ⓘ é o mesmo -->
       Cada beat é vendido uma vez só, com <span class="lic-wrap"><button class="lic-toggle" onclick="toggleLic(event)">licença exclusiva&nbsp;ⓘ</button><span class="lic-box" id="licBox">
@@ -275,7 +238,7 @@
      26/10/2026 (rodada W, opção A): o cartão vira uma faixa da largura toda com a foto do estúdio. No computador a foto
      ocupa a direita e some no preto pra esquerda; no celular fica em cima. A foto vem por último no HTML (posição pelo CSS). -->
 <section id="estudio" class="s s-earth">
-  <a class="eu-card" href="/rideblan33" data-de="sobre"><span class="eu-anel"><img src="assets/perfil/rideblan33-avatar.webp" alt="" width="200" height="200" loading="lazy"></span><span class="eu-tx"><span class="eu-k">Quem faz o som</span><b>@rideblan33</b><span class="eu-p">Produtor desde 2018 em São Carlos. Fotos do estúdio, quem já gravou e as beat tapes.</span><span class="eu-cta">Ver portfólio</span></span><span class="eu-foto" aria-hidden="true"><img src="assets/studio-hero.jpg" alt="" width="768" height="768" loading="lazy" decoding="async"></span></a>
+  <a class="eu-card" href="/rideblan33" data-de="sobre"><span class="eu-anel"><img src="assets/perfil/rideblan33-avatar.webp" alt="" width="200" height="200" loading="lazy"></span><span class="eu-tx"><span class="eu-k">Quem faz o som</span><b>@rideblan33</b><span class="eu-p">Produtor desde 2018 em São Carlos, trabalhando de maneira popular e independente.</span><span class="eu-cta">Ver portfólio</span></span><span class="eu-foto" aria-hidden="true"><img src="assets/studio-hero.jpg" alt="" width="768" height="768" loading="lazy" decoding="async"></span></a>
 </section>
 
 
