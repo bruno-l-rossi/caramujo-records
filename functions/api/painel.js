@@ -6,7 +6,7 @@ import { db, json, TETO_LEITURA } from '../_lib/db.js';
 import { autenticado } from '../_lib/sessao.js';
 import { mesma, mesmoTom, limpo, tituloCasa, casaAntes } from '../_lib/casar.js';
 import { vitrine, indexar, achar, esquecerVitrine } from '../_lib/vitrine.js';
-import { lerBeats, lerDestaque, lerEstatico, esquecerLoja } from '../_lib/loja.js';
+import { lerBeats, lerEstatico, esquecerLoja } from '../_lib/loja.js';
 import { slug } from '../_lib/casar.js';
 import { tomDeCopia, ehBeatNovo } from '../_lib/tom.js';
 import { esquecerApiVitrine } from './vitrine.js';
@@ -900,20 +900,18 @@ async function abaPerfil(d, p) {
   return { agora, antes, serie, tapes, origens, redes };
 }
 
-/* ---------- a loja: beats do site, destaque do hero e cupons (24/09/2026) ---------- */
+/* ---------- a loja: beats do site e cupons (24/09/2026; o destaque do hero saiu em 03/11/2026) ---------- */
 // Tudo que antes era editar o index.html ou o coupons.json e fazer push.
 
 async function loja(d, request, env) {
-  const [beats, destaque, cupons] = await Promise.all([
+  const [beats, cupons] = await Promise.all([
     lerBeats(d),
-    lerDestaque(d),
     d.prepare("SELECT codigo, pct, preco_fixo, max_usos, usos, ativo, criado_em FROM cupons WHERE codigo NOT LIKE 'LISTA-%' ORDER BY ativo DESC, criado_em DESC, codigo").all()   // os cupons da lista (um por pessoa) ficam fora da tela de cupons (11/10/2026)
   ]);
   let generos = {}, preco = null;
   try { const est = await lerEstatico(request, env); generos = est.generos; preco = est.preco; } catch (_) { /* segue sem rótulo */ }
   return json({
     beats: beats.map((b) => ({ ...b, slug: slug(b.name) })),
-    destaque,
     cupons: cupons.results || [],
     generos,
     preco
@@ -1080,10 +1078,6 @@ const LOJA_POST = {
     if (!b || b.removido_em) return json({ erro: 'beat não encontrado' }, 404);
     const quando = new Date().toISOString();
     await d.prepare('UPDATE beats SET removido_em = ?, mexido_em = ? WHERE id = ?').bind(quando, quando, b.id).run();
-    const dest = await lerDestaque(d);
-    if (dest && dest.id === b.id) {
-      await d.prepare("UPDATE meta SET valor = ? WHERE chave = 'destaque'").bind(JSON.stringify({ id: null, ate: '' })).run();
-    }
     return json({ ok: true });
   },
 
@@ -1158,22 +1152,6 @@ const LOJA_POST = {
     if (!b) return json({ erro: 'beat não encontrado' }, 404);
     await d.prepare('UPDATE beats SET ordem = ?, mexido_em = ? WHERE id = ?')
       .bind(await topoDaLista(d), new Date().toISOString(), b.id).run();
-    return json({ ok: true });
-  },
-
-  // Destaque do hero. id vazio = volta o rodízio semanal. ate vazio = sem prazo.
-  async destaque(d, body) {
-    const ate = String(body.ate || '');
-    if (ate && !/^\d{4}-\d{2}-\d{2}$/.test(ate)) return json({ erro: 'data inválida' }, 400);
-    let id = null;
-    if (body.id) {
-      const b = await beatPorId(d, body.id);
-      if (!b) return json({ erro: 'beat não encontrado' }, 404);
-      if (b.sold) return json({ erro: 'beat vendido não vai pro destaque' }, 400);
-      id = b.id;
-    }
-    await d.prepare("INSERT OR REPLACE INTO meta (chave, valor) VALUES ('destaque', ?)")
-      .bind(JSON.stringify({ id, ate: id ? ate : '' })).run();
     return json({ ok: true });
   },
 

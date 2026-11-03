@@ -20,7 +20,8 @@ import { CHAVE_GRAVOU, gravouDeTexto, gravouLimpar, montarGravou, imgPequena } f
 import { fotoArtista } from './gravoupagina.js';
 import { topo, TOPO_PAGINA_CSS, TOPO_JS } from './topo.js';
 // as fotos de "Por dentro do estúdio" (25/10/2026: saíram da vitrine e moram no cartão "Quer um som assim?")
-const FOTOS_ESTUDIO = [['/assets/studio-hero.jpg', 'Onde tudo acontece'], ['/assets/sessao-poster.jpg', 'Sessão de estúdio'], ['/assets/depo-fab-poster.jpg', 'Colaboração fatal, o retorno do Fab'], ['/assets/depo-candy.jpg', 'Parcerias de destaque, o direct do Candy']];
+// 03/11/2026: as 4 em WebP (245 KB viraram 110 KB); os JPEG antigos ficam na pasta pra quem tiver link velho
+const FOTOS_ESTUDIO = [['/assets/studio-hero.webp', 'Onde tudo acontece'], ['/assets/sessao-poster.webp', 'Sessão de estúdio'], ['/assets/depo-fab-poster.webp', 'Colaboração fatal, o retorno do Fab'], ['/assets/depo-candy.webp', 'Parcerias de destaque, o direct do Candy']];
 
 const VALIDADE = 60 * 1000;
 const REGIAO = '/__cache/perfil-v3';
@@ -203,7 +204,7 @@ function grade(tapes, nova = null, emAlta = null) {
     const href = `/${t.slug}/${t.code}`;
     const img = t.capa
       ? `<img src="${esc(capaUrl(t.capa, 'm'))}" srcset="${esc(capaUrl(t.capa, 'p'))} 200w, ${esc(capaUrl(t.capa, 'm'))} 480w, ${esc(capaUrl(t.capa))} 1000w" sizes="(max-width:600px) 31vw, (max-width:820px) 24vw, 222px" alt="Capa da beat tape ${esc(t.name)}" width="1000" height="1000"${i < 6 ? '' : ' loading="lazy"'} decoding="async">`
-      : `<img class="semcapa" src="/assets/brand/caramujo-v.webp" alt="Beat tape ${esc(t.name)}" width="300" height="300"${i < 6 ? '' : ' loading="lazy"'}>`;
+      : `<img class="semcapa" src="/assets/brand/caramujo-v.svg" alt="Beat tape ${esc(t.name)}" width="300" height="300"${i < 6 ? '' : ' loading="lazy"'}>`;
     return `<a class="tape" href="${esc(href)}"${deAttr('perfil')} data-id="${t.id}"><span class="capa">${img}<span class="sobre" aria-hidden="true"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span>${pastilha(t, nova, emAlta)}</span><span class="leg"><b>${esc(t.name)}</b><i>${beats(t.n)}</i></span></a>`;
   }).join('\n');
 }
@@ -224,7 +225,7 @@ const SP_PEQUENA = (u) => (/ab67616d0000b273/.test(u) ? u.replace('ab67616d0000b
 function capaMus(m) {
   if (m.capa) return { src: capaUrl(m.capa, 'p'), grande: capaUrl(m.capa), srcset: `${capaUrl(m.capa, 'p')} 300w, ${capaUrl(m.capa)} 640w` };
   if (m.capaUrl) return { src: SP_PEQUENA(m.capaUrl), grande: m.capaUrl, srcset: SP_PEQUENA(m.capaUrl) !== m.capaUrl ? `${SP_PEQUENA(m.capaUrl)} 300w, ${m.capaUrl} 640w` : '' };
-  return { src: '/assets/brand/caramujo-v.webp', grande: SELO_GRANDE, srcset: '', sem: true };
+  return { src: '/assets/brand/caramujo-v.svg', grande: SELO_GRANDE, srcset: '', sem: true };
 }
 const linkMus = (m) => m.spotify || m.youtube;
 const temAudio = (m) => !!m.faixa;
@@ -370,7 +371,7 @@ export function paginaPerfil(dados, { url, aba = 'musicas', previa = false, prev
   const idEmAlta = Array.isArray(dados) ? null : (dados.emAlta ?? null);
   const nova = tapes[0] || null;
   const tocador = nova && faixas.length ? {
-    tape: { id: nova.id, name: nova.name, url: `/${nova.slug}/${nova.code}`, capa: nova.capa ? capaUrl(nova.capa, 'p') : '/assets/brand/caramujo-v.webp',
+    tape: { id: nova.id, name: nova.name, url: `/${nova.slug}/${nova.code}`, capa: nova.capa ? capaUrl(nova.capa, 'p') : '/assets/brand/caramujo-v.svg',
       // a tela de bloqueio usa a arte inteira, igual à página da tape
       arte: nova.capa ? capaUrl(nova.capa) : SELO_GRANDE },
     faixas

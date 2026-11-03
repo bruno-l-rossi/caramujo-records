@@ -29,7 +29,7 @@ __META__
     --ink-5:#454545;
     --sheet:#141414;
     --logo:url('/assets/brand/caramujo-h.webp');
-    --logo-v:url('/assets/brand/caramujo-v.webp');
+    --logo-v:url('/assets/brand/caramujo-v.svg');   /* 03/11/2026: SVG (53 KB viraram ~10) */
     --sans:"Schibsted Grotesk",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;
   }
   html,body{height:100%}
@@ -1274,7 +1274,7 @@ __META__
       var img=document.createElement('img'); img.loading='lazy'; img.decoding='async'; img.alt='';
       // 480px no meio (03/10/2026): em tela 2x e 3x o celular puxava a de 1000px
       if(t.capa){ img.src=capaURL(t.capa,'p'); img.srcset=capaURL(t.capa,'p')+' 200w, '+capaURL(t.capa,'m')+' 480w, '+capaURL(t.capa,'')+' 1000w'; img.sizes='148px'; }
-      else { img.src='/assets/brand/caramujo-v.webp'; img.className='m-sem'; }
+      else { img.src='/assets/brand/caramujo-v.svg'; img.className='m-sem'; }
       cap.appendChild(img); c.appendChild(cap);
       var b=document.createElement('b'); b.textContent=t.name; c.appendChild(b);
       var sm=document.createElement('small'); sm.textContent=t.n+(t.n===1?' beat':' beats'); c.appendChild(sm);

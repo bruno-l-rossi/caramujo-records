@@ -44,6 +44,9 @@ Regra: nunca introduzir cor fora dessa paleta. Nada de azul, roxo, verde, neon.
 - Display/títulos: Cormorant Garamond (serif), peso 500-600, mixed-case, letter-spacing quase zero. Títulos grandes, presença editorial.
 - UI/labels/botões: Helvetica Neue (sans), bold, caixa alta, letter-spacing largo (.12em a .3em), tamanhos pequenos.
 - Dados/mono: IBM Plex Mono pra números, metadados (BPM, tom), inputs e microcopy técnica.
+- Números no Cormorant sempre retos (`font-variant-numeric: lining-nums`, desde 03/11/2026): os
+  números de estilo antigo da fonte deixavam o 1 igual a um I ("R$ ıı9"). Na vitrine são 3 arquivos
+  do Cormorant (500, 500 itálico e 600); quem pede 400 recebe o 500.
 - Tapes, pastas, painel e perfil usam a Schibsted Grotesk num arquivo só (variável, pesos 400 a
   900; desde 04/10/2026, no lugar de quatro arquivos).
 
@@ -52,6 +55,9 @@ O contraste serif grande + sans miúda espaçada + mono técnica É a identidade
 ## Elementos de marca
 
 - Selo do caramujo (espiral desenhada a traço) em creme ou sépia. Aparece no hero (grande, translúcido, à direita), no rodapé e no ícone da aba. No topo das páginas entra o logo horizontal (ver abaixo).
+- Logo vertical (espiral em cima, CARAMUJO e RECORDS embaixo) em SVG desde 03/11/2026: `assets/brand/caramujo-v.svg`, a espiral do selo e a letra do `caramujo-wordmark.svg` nas posições do `caramujo-v.webp` antigo (~10 KB comprimido no lugar de 53 KB). Topo da tape e capa reserva do perfil.
+- Capa reserva (beat sem capa): o selo creme a 45%, centrado na caixa `mole`, como nas linhas da vitrine e, desde 03/11/2026, na página do pedido.
+- Imagem de compartilhamento (`og-image.png`, 1200 × 630, refeita em 03/11/2026): espiral à esquerda e o logo de hoje à direita, no fundo preto com o brilho de terra do hero.
 - Grão de filme sutil sobre os fundos (desligado no mobile).
 - Bordas de 1px `#332c22` em cards, tabelas e botões ghost; cantos retos, zero border-radius (exceto o círculo do carrinho mobile).
 - Interlude tipográfico: faixa escura com texto gigante em outline "ATENÇÃO! VOCÊ ESTÁ OUVINDO UM BEAT DO RIDEBLAN" (a palavra RIDEBLAN em contorno cor fire).
@@ -205,8 +211,9 @@ olho "São Carlos, SP · desde 2018", o logo (600px no computador, 300px no celu
 o botão "▶ Ouvir os beats" (fundo `fire`, 48px) com "Mix & master" de link sublinhado ao lado e os
 números numa linha em mono. Sem altura mínima: o catálogo aparece na 1ª tela (1º beat em ~566px no
 celular e ~732px no computador). Saíram o card do Beat em destaque, o ajuste do notebook de 03/10 e
-os botões `.btn` da vitrine. A cabeça do catálogo virou "Beats à venda", sem o olho "Catálogo ·
-pronta entrega" e sem o caramujo desenhado.
+os botões `.btn` da vitrine. A cabeça do catálogo segue "Catálogo de beats" (passou 1 dia como "Beats à
+venda" e voltou em 03/11/2026), sem o olho "Catálogo · pronta entrega" e sem o caramujo desenhado. A 404 e a
+página de erro usam o mesmo par de botões desde 03/11/2026. Pra quem pede menos movimento, a espiral não pulsa.
 
 ## Checkout na paleta (desde 03/10/2026)
 
@@ -313,8 +320,9 @@ creme e 44px de altura.
 O CSS da vitrine saiu do `index.html` e mora em `assets/vitrine/vitrine.css` (o código, em
 `assets/vitrine/vitrine.js`). Os tokens desta página ficam no `:root` do topo desse arquivo.
 Regra nova de visual na vitrine entra lá, nunca num `<style>` dentro do `index.html` (o
-`teste46` reprova). Mexeu no arquivo: o `?v=` dele no `index.html` troca junto
-(`node testes/vitrine-versao.mjs`), senão quem já visitou vê o visual velho por até 1 dia.
+`teste46` reprova). Desde 03/11/2026 o site serve o `vitrine.min.css` e o `vitrine.min.js`, gerados desses
+dois. Mexeu no arquivo: `node testes/vitrine-versao.mjs` gera os `.min` e troca o `?v=` no `index.html`,
+senão o site segue com o visual velho (os `.min` ficam 1 ano guardados no navegador).
 
 ## Página do pedido (desde 10/10/2026)
 

@@ -1,8 +1,8 @@
 /* Vitrine (caramujorecords.com.br): o código da página, fora do index.html desde 10/10/2026
-   pra ficar guardado no navegador (?v= no index.html = hash deste arquivo). Cada bloco aqui
-   era um script separado da página, na mesma ordem. O que o servidor lê ou escreve (BEATS,
-   PRICE_BEAT, PRICE_STEMS, GENRE_LABELS, FEATURED_OVERRIDE_*) segue no index.html. Mexeu
-   aqui: node testes/vitrine-versao.mjs (troca o ?v=). */
+   pra ficar guardado no navegador. Cada bloco aqui era um script separado da página, na mesma
+   ordem. O que o servidor lê ou escreve (BEATS, PRICE_BEAT, PRICE_STEMS, GENRE_LABELS) segue no
+   index.html. Desde 03/11/2026 o site serve o vitrine.min.js, gerado deste arquivo. Mexeu aqui:
+   node testes/vitrine-versao.mjs (gera o .min e troca o ?v=). */
 /* ── MERCADO PAGO ─────────────────────────────────── */
 const MP_PUBLIC_KEY = 'APP_USR-31288966-8cae-422f-abe4-09ef24baaeb6';
 let mp, brickController, contractPdfData = null;
@@ -1291,24 +1291,8 @@ setTimeout(()=>document.querySelectorAll('.rv').forEach(el=>ro.observe(el)),200)
 /* ─────────────────────────────────────────────────────────────── */
 try{
 (function(){
-  /* ── BEAT EM DESTAQUE ─────────────────────────────────────────────
-     Rodízio automático: 1 beat por semana, do catálogo inteiro (pula vendidos).
-     Destaque manual: painel > Vitrine > beat > Pôr no destaque. O servidor
-     escreve os dois valores abaixo a cada visita. Vencido o prazo, sem destaque
-     ou com o beat vendido, o rodízio volta sozinho. */
-  /* FEATURED_OVERRIDE_ID e FEATURED_OVERRIDE_ATE ficam no index.html (o servidor escreve lá) */
-  const FEATURED_BEAT_ID=(function(){
-    if(FEATURED_OVERRIDE_ID){
-      var ob=BEATS.find(function(x){return x.id===FEATURED_OVERRIDE_ID;});
-      var noPrazo=!FEATURED_OVERRIDE_ATE||new Date()<=new Date(FEATURED_OVERRIDE_ATE+'T23:59:59');
-      if(ob&&!ob.sold&&noPrazo) return FEATURED_OVERRIDE_ID;
-    }
-    var pool=BEATS.filter(function(b){return !b.sold;}).map(function(b){return b.id;});
-    if(!pool.length && BEATS.length) pool=[BEATS[0].id];
-    if(!pool.length) return null;          // loja fora do ar: lista vazia
-    var wk=Math.floor(Date.now()/6048e5); // nº da semana; troca 1x por semana
-    return pool[wk%pool.length];
-  })();
+  /* 03/11/2026: o beat em destaque saiu (o card já tinha saído do hero no H1, 02/11; o "Pôr no destaque"
+     do painel saiu junto). O "Ouvir os beats" toca a 1ª da lista. */
 
   /* ── O PLAYER ──────────────────────────────────────────────────────
      Um <audio> só pra página inteira, tocando o MP3 que o conversor guardou
@@ -1397,7 +1381,6 @@ try{
       var b=el.querySelector('.cel-num b'); if(b) ico(b,(meu&&tocando)?ICO_PAUSE:ICO_PLAY);
       var c=el.querySelector('.corrida'); if(c) c.style.width=meu?(f*100)+'%':'0';
     }
-    pintarHero(f,tocando);
     // modal do pacote: play/pause em cada beat e a linha de progresso embaixo
     var pk=document.querySelectorAll('#pkgBeatList .pkg-play');
     for(var k=0;k<pk.length;k++){
@@ -1409,18 +1392,6 @@ try{
     }
   }
   window.repintarPlayer=repintar;
-
-  function pintarHero(f,tocando){
-    var meu=String(atual)===String(FEATURED_BEAT_ID);
-    var bt=$('hwBtn'); if(!bt) return;
-    ico(bt,(meu&&tocando)?ICO_PA:ICO_P);
-    if($('hwFill')) $('hwFill').style.width=meu?(f*100)+'%':'0';
-    if($('hwSeek')) $('hwSeek').classList.toggle('zerada',!(meu&&f>0.004));
-    if($('hwTempo')){
-      var d=fonte(FEATURED_BEAT_ID);
-      $('hwTempo').textContent=meu?mm(som.currentTime):mm(d?d.dur:0);
-    }
-  }
 
   function ordem(){
     var out=[], linhas=document.querySelectorAll('#beatCards .item');
@@ -1524,15 +1495,7 @@ try{
     pr.setAttribute('aria-label',no?b.name+' está no carrinho: abrir o carrinho':'Pôr '+b.name+' no carrinho');
     pr.innerHTML=(no?ICO_OK:ICO_MAIS)+'<span class="rotulo">'+(no?'No carrinho':'R$'+PRICE_BEAT)+'</span>'+(no?'<span class="ir" aria-hidden="true">›</span>':'');
   };
-  window.npAddFeatured=function(){ try{botaoBeat(FEATURED_BEAT_ID);}catch(_){} };
-  // o botão do destaque segue a mesma regra: no carrinho, vira "No carrinho ›" e abre o carrinho
-  window.pintarHeroAdd=function(){
-    var ad=$('hwAdd'); if(!ad) return;
-    var no=false; try{ no=cart.some(function(c){return c.beatId===FEATURED_BEAT_ID&&c.stems===false;}); }catch(_){}
-    ad.textContent=no?'No carrinho ›':'Adicionar ao carrinho · R$'+PRICE_BEAT;
-  };
-
-  /* seek: clique e arrasto, no pé e no destaque */
+  /* seek: clique e arrasto, no pé */
   function ligarSeek(el){
     if(!el) return;
     var arrastando=false;
@@ -1601,26 +1564,6 @@ try{
     if(linha) window.tocarBeat(linha.dataset.bid);
   });
 
-  /* ── beat em destaque ── */
-  function renderFeatured(){
-    try{
-      var b=BEATS.find(function(x){return x.id===FEATURED_BEAT_ID;});
-      if(!b){ var hw=document.querySelector('.hero-week'); if(hw) hw.style.display='none'; return; }
-      var gl=glab(b);
-      var nm=$('hwName'); if(nm) nm.textContent=b.name;
-      var ch=$('hwChips');
-      if(ch) ch.innerHTML='<span class="hw-chip">'+gl+'</span><span class="hw-chip">'+b.bpm+' BPM</span><span class="hw-chip">'+b.key+'</span>';
-      if(window.pintarHeroAdd) window.pintarHeroAdd();
-      var f=fonte(FEATURED_BEAT_ID);
-      var cp=$('hwCapa');
-      if(cp){
-        if(f&&f.capa){ cp.className='hw-capa'; cp.innerHTML='<img src="'+f.capa+'" alt="">'; }
-        else { cp.className='hw-capa vazia'; cp.innerHTML='<img src="assets/brand/selo-creme.svg" alt="" width="34" height="34">'; }
-      }
-      var bloco=$('hwPlay'); if(bloco) bloco.style.display=(f&&f.mp3)?'':'none';
-      pintarHero(0,false);
-    }catch(_){}
-  }
   // "Ouvir o catálogo": desce pro começo do catálogo e já toca a 1ª faixa da
   // lista, do jeito que ela estiver (filtro, ordem). O play sai dentro do
   // toque, senão o celular bloqueia o som. Sem vitrine (sem MP3), só desce.
@@ -1636,11 +1579,7 @@ try{
     }catch(_){ return true; }
   };
 
-  function initHero(){
-    var bt=$('hwBtn');
-    if(bt&&!bt.__ligado){ bt.__ligado=true; bt.addEventListener('click',function(){ window.tocarBeat(FEATURED_BEAT_ID); }); }
-    ligarSeek($('hwSeek'));
-  }
+
 
 
   // Plano B (26/09/2026): a última lista boa fica guardada no navegador. Se a
@@ -1655,7 +1594,6 @@ try{
     try{ if(window.__ldCatalogo) window.__ldCatalogo(); }catch(_){}    // lista do Google com as capas
     var av=$('foraAr'); if(av && !av.dataset.lista) av.remove();
     if(typeof renderCards==='function') renderCards();
-    renderFeatured();
     repintar();
   }
   function avisoForaDoAr(){
@@ -1792,8 +1730,6 @@ try{
     window.addEventListener('resize',arrumaBarra);
     window.addEventListener('resize',medirMenu);
     document.body.classList.toggle('sem-volume',!volumeMexe());
-    renderFeatured();
-    initHero();
     ligarSeek($('npSeek'));
     if($('npPlay')) $('npPlay').innerHTML=ICO_P;
     if(window.__LOJA_FORA) avisoForaDoAr();

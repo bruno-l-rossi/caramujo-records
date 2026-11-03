@@ -1,8 +1,9 @@
 /* Vitrine (caramujorecords.com.br): o visual da página, fora do index.html desde 10/10/2026
-   pra ficar guardado no navegador (?v= no index.html = hash deste arquivo). Os dois blocos de
-   estilo de antes, na mesma ordem: o da página e o do checkout. Mexeu aqui: node testes/vitrine-versao.mjs */
-@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
-@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:400;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-400-italic.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+   pra ficar guardado no navegador. Os dois blocos de estilo de antes, na mesma ordem: o da página
+   e o do checkout. Desde 03/11/2026 o site serve o vitrine.min.css, gerado deste arquivo.
+   Mexeu aqui: node testes/vitrine-versao.mjs (gera o .min e troca o ?v=) */
+/* 03/11/2026: a vitrine baixa 4 arquivos de fonte. O 400 normal e o 400 itálico saíram: quem pede 400 recebe o 500,
+   que já vem (regra de escolha de peso das fontes), sem negrito falso. */
 @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
 @font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-500-italic.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
 @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
@@ -40,6 +41,9 @@ body{
   color:var(--txt);
   font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
 }
+/* 03/11/2026: no Cormorant o 1 parecia um I ("R$ ıı9", o badge do carrinho com "I"). Números retos em tudo;
+   !important porque o atalho font: de cada regra zera essa propriedade. Os tabular-nums daqui são da mono. */
+*{font-variant-numeric:lining-nums!important}
 
 /* GRAIN */
 body::before{
@@ -492,6 +496,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 }
 @media (prefers-reduced-motion: reduce){
   body::before{animation:none;}
+  .hero-logo-wrap img{animation:none;}   /* 03/11/2026: a espiral do hero também para */
   html{scroll-behavior:auto;}
 }
 
@@ -649,7 +654,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 @media(hover:hover){
   .vol-wrap:before{content:'';position:absolute;left:-12px;right:-12px;top:-16px;bottom:0}
 }
-.vol-pop input{-webkit-appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;
+.vol-pop input{writing-mode:vertical-lr;direction:rtl;
   width:22px;height:96px;accent-color:#b98f5e;background:transparent;cursor:pointer}
 @media(max-width:760px){
   #beatCards .nome{font-size:1.05rem}

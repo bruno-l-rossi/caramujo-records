@@ -40,13 +40,15 @@ p.texto a{color:var(--fire);text-decoration:underline;text-underline-offset:3px;
   text-decoration-color:rgba(185,143,94,.45)}
 p.texto a:hover{color:var(--cream);text-decoration-color:var(--cream)}
 .saidas{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:2rem}
-a.btn{font-family:'Cormorant Garamond',serif;letter-spacing:.1em;
-  text-transform:uppercase;text-decoration:none;padding:.7rem 1.6rem;min-height:44px;
-  display:inline-flex;align-items:center;justify-content:center;transition:background .18s,border-color .18s,color .18s}
-.fogo{background:var(--ember);color:var(--cream)}
-.fogo:hover{background:var(--fire)}
-.fantasma{color:var(--bone);border:1px solid var(--wire)}
-.fantasma:hover{border-color:var(--clay);color:var(--cream)}
+/* 03/11/2026: os dois botões iguais aos do hero da vitrine ("▶ Ouvir os beats" e o link sublinhado) */
+.saidas{align-items:center;gap:20px}
+a.btn{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:700;text-transform:uppercase;text-decoration:none;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;transition:background .15s,color .15s}
+.fogo{min-height:48px;padding:0 24px;background:var(--fire);color:var(--black);font-size:.66rem;letter-spacing:.2em}
+.fogo:hover{background:#c3a074}
+.fogo svg{width:14px;height:14px;flex:none}
+a.btn.fantasma{font-size:.62rem;letter-spacing:.16em;color:var(--bone);text-decoration:underline;text-decoration-color:var(--clay);text-underline-offset:6px}
+a.btn.fantasma:hover{color:var(--cream)}
 </style>
 <!--TOPO-CSS-INICIO--><style>@font-face{font-family:'Cormorant Garamond';font-weight:500;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-500-normal.woff2) format('woff2')}
 .topo,.menu-cel,.aj-folha,.aj-veu{--black:#14110d;--clay:#A87B4A;--amber:#c3a074;--bone:#E8E0CF;--cream:#f2ecdf;--fire:#b98f5e;--dim:#6f6757;--wire:#332c22;--read:#b89e72;--serif:'Cormorant Garamond',Georgia,serif;--sans:'Helvetica Neue',Helvetica,Arial,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;box-sizing:border-box;font-family:var(--sans);-webkit-font-smoothing:antialiased}
@@ -178,7 +180,7 @@ body{padding-top:calc(54px + 2rem)}
   <p class="texto">Ou o link veio cortado, ou o catálogo mudou de endereço.
     Procure no <a href="/rideblan33?de=404">catálogo de beat tapes</a> ou chame o <a href="https://ig.me/m/rideblan33" rel="noopener">@rideblan33</a>.</p>
   <div class="saidas">
-    <a class="btn fogo" href="/#beats">Ouvir o catálogo</a>
+    <a class="btn fogo" href="/#beats"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>Ouvir os beats</a>
     <a class="btn fantasma" href="/">Voltar pro início</a>
   </div>
 </main>

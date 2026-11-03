@@ -65,6 +65,7 @@ h1{font-family:var(--serif);font-weight:500;font-size:2.7rem;line-height:1;color
 .beat{display:grid;grid-template-columns:64px minmax(0,1fr);gap:14px;align-items:center;padding:14px;border:1px solid var(--wire);background:var(--deep)}
 .beat+.beat{margin-top:10px}
 .beat img{width:64px;height:64px;object-fit:cover;border:1px solid var(--wire);background:var(--mole);display:block}
+.beat img.sem{object-fit:contain;padding:18px;opacity:.45}
 .beat .n{font-family:var(--serif);font-weight:500;font-size:1.35rem;text-transform:uppercase;color:var(--cream);line-height:1.1;overflow-wrap:anywhere}
 .beat .f{margin-top:4px;font-family:var(--mono);font-size:.66rem;color:var(--read);letter-spacing:.03em}
 .beat .f em{font-style:normal;color:var(--clay);text-transform:uppercase}
@@ -188,7 +189,7 @@ export function paginaPedido(p, faixas = new Map()) {
       const f = b.faixa ? faixas.get(b.faixa) : null;
       const ficha = [b.genero ? `<em>${esc(b.genero)}</em>` : '', b.bpm ? esc(b.bpm) + ' BPM' : '', b.key ? esc(b.key) : ''].filter(Boolean).join(' · ');
       html += '<div class="beat">' +
-        (b.capa ? `<img src="${esc(capaUrl(b.capa, 'p'))}" alt="" width="64" height="64" loading="lazy" decoding="async">` : '<img src="/assets/brand/caramujo-v.webp" alt="" width="64" height="64">') +
+        (b.capa ? `<img src="${esc(capaUrl(b.capa, 'p'))}" alt="" width="64" height="64" loading="lazy" decoding="async">` : '<img class="sem" src="/assets/brand/selo-creme.svg" alt="" width="64" height="64">') +   // 03/11/2026: sem capa, o selo (o logo vertical saía cortado, "ARAMU")
         `<div><div class="n">${esc(b.nome)}</div>${ficha ? `<div class="f">${ficha}</div>` : ''}</div>`;
       if (b.faixa && b.id != null) {
         html += '<div class="bx">' +

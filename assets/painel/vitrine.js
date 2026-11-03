@@ -1,7 +1,7 @@
 /* Vitrine do painel (24/09/2026): a loja do site, que antes era editar o
    index.html e o coupons.json e fazer push.
-   - Beats: a lista do site (editar, vender, desfazer vendido, subir pro topo,
-     destaque do hero) + o que está sem áudio.
+   - Beats: a lista do site (editar, vender, desfazer vendido, subir pro topo)
+     + o que está sem áudio. O destaque do hero saiu em 03/11/2026.
    - Fila: beat disponível numa tape paga que ainda não está no site. Publicar
      pede o gênero (nunca adivinho gênero).
    - Cupons: criar, buscar, editar (desconto e limite de usos), pausar, ver cada uso.
@@ -14,11 +14,6 @@
     '.vt-seg em{font-style:normal;color:#e0b155;margin-left:5px}',
     '.vt-seg button[aria-pressed="true"] em{color:#8a5a00}',
     '@media (max-width:380px){.vt-seg button{padding:8px 11px;font-size:13px}}',
-    '.vt-dest{display:flex;align-items:center;gap:12px;background:#101010;border:1px solid var(--borda);border-radius:14px;padding:13px 14px;margin-bottom:14px}',
-    '.vt-dest div{flex:1;min-width:0}',
-    '.vt-dest b{display:block;font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-    '.vt-dest small{display:block;font-size:12px;color:var(--ink4);margin-top:3px}',
-    '.vt-dest .pill{padding:8px 13px;font-size:13px}',
     '.vt-filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 6px}',
     '.vt-filtros .campo{flex:1 1 220px}',
     '.vt-chips{display:flex;gap:6px}',
@@ -29,7 +24,6 @@
     '.vt-linha .nome span{overflow:hidden;text-overflow:ellipsis}',
     '.vt-vend .nome span{text-decoration:line-through;text-decoration-color:rgba(255,255,255,.35);color:var(--ink3)}',
     '.vt-tag{flex:none;font-size:10px;letter-spacing:.08em;text-transform:uppercase;border:1px solid #3a3a3a;color:var(--ink3);padding:2px 6px;border-radius:999px}',
-    '.vt-tag.ouro{border-color:#6b5320;color:#e0b155}',
     '.vt-mais{display:block;width:100%;margin-top:12px;padding:12px;border-radius:12px;border:1px solid var(--borda);background:#141414;color:var(--ink2);font-size:13.5px;cursor:pointer}',
     '.vt-form{display:flex;flex-direction:column;gap:12px;margin-top:16px}',
     '.vt-form label{display:flex;flex-direction:column;gap:6px;font-size:11px;letter-spacing:.14em;color:var(--ink4);text-transform:uppercase}',
@@ -169,14 +163,7 @@
     var aVenda = beats.filter(function (b) { return !b.sold; }).length;
     $('resumo').textContent = beats.length + ' beats no site · ' + aVenda + ' à venda · R$' + (loja.preco || '') + ' cada';
 
-    var d = loja.destaque, db = d && d.id ? beatPorId(d.id) : null;
-    var vencido = d && d.ate && new Date() > new Date(d.ate + 'T23:59:59');
-    var h = '<div class="vt-dest"><div><b>' + (db && !db.sold && !vencido ? 'Destaque: ' + esc(db.name) : 'Destaque: rodízio da semana') + '</b>' +
-      '<small>' + (db && !db.sold && !vencido
-        ? (d.ate ? 'no hero até ' + dataBR(d.ate) + ', depois volta o rodízio' : 'no hero sem prazo')
-        : (db && db.sold ? esc(db.name) + ' foi vendido, o rodízio voltou' : vencido ? 'o prazo acabou, o rodízio voltou' : 'um beat à venda por semana, sozinho')) +
-      '</small></div>' +
-      (db && !db.sold && !vencido ? '<button class="pill" type="button" id="vtTiraDest">Voltar o rodízio</button>' : '') + '</div>';
+    var h = '';
 
     // o que não tem áudio é conserto (o beat some da lista do site sem MP3)
     // recolhível: o resumo fica à vista, a lista abre no toque (lembra a escolha)
@@ -209,14 +196,6 @@
       corpo.hidden = !abre; sa.setAttribute('aria-expanded', String(abre));
       try { localStorage.setItem('painel-vitrine-aberta', abre ? '1' : '0'); } catch (_) {}
     });
-    var t = $('vtTiraDest');
-    if (t) t.addEventListener('click', function () {
-      t.disabled = true;
-      acao('destaque', { id: null }).then(function (j) {
-        if (j.ok) { flash('O rodízio da semana voltou pro hero.'); carregar(); }
-        else { t.disabled = false; flash(j.erro || 'Não consegui mudar.'); }
-      });
-    });
     var campo = $('vtBusca');
     campo.addEventListener('input', function () { busca = campo.value; mostrar = 30; pintarLista(); });
     corpo.querySelectorAll('[data-f]').forEach(function (b) {
@@ -232,7 +211,6 @@
   function pintarLista() {
     var alvo = $('vtLista'); if (!alvo) return;
     var q = sem(busca).trim();
-    var dest = loja.destaque && loja.destaque.id;
     var lista = loja.beats.filter(function (b) {
       if (filtro === 'venda' && b.sold) return false;
       if (filtro === 'vendidos' && !b.sold) return false;
@@ -243,7 +221,7 @@
     h += lista.slice(0, mostrar).map(function (b) {
       return '<div class="item vt-linha' + (b.sold ? ' vt-vend' : '') + '"><button type="button" class="linha" data-id="' + b.id + '">' +
         '<span style="flex:1;min-width:0"><span class="nome"><span>' + esc(b.name) + '</span>' +
-        (b.sold ? '<i class="vt-tag">vendido</i>' : '') + (dest === b.id && !b.sold ? '<i class="vt-tag ouro">destaque</i>' : '') + '</span>' +
+        (b.sold ? '<i class="vt-tag">vendido</i>' : '') + '</span>' +
         '<span class="meta">' + esc(ficha(b)) + '</span></span><span class="seta" aria-hidden="true">›</span></button></div>';
     }).join('');
     if (lista.length > mostrar) h += '<button type="button" class="vt-mais" id="vtMais">Mostrar mais ' + Math.min(30, lista.length - mostrar) + '</button>';
@@ -276,7 +254,6 @@
   function abrirBeat(b) {
     if (!b) return;
     var c = $('card');
-    var ehDest = loja.destaque && loja.destaque.id === b.id;
     c.innerHTML = '<h2>' + esc(b.name) + '</h2><p>' + esc(ficha(b)) + (b.sold ? ' · vendido' + (b.sold_at ? ' em ' + dataBR(b.sold_at) : '') + (b.sold_por === 'painel' ? ' (marcado aqui)' : '') : ' · à venda') + '</p>' +
       '<div class="vt-acoes">' +
         '<button class="pill" type="button" data-act="abrir">Abrir no site</button>' +
@@ -287,8 +264,7 @@
         '<div class="vt-acoes"><button class="pill solid" type="button" data-act="salvar">Salvar ficha</button></div></div>' +
       '<div class="bloco"><div class="rot">NA LISTA DO SITE</div><div class="vt-acoes">' +
         '<button class="pill" type="button" data-act="topo">Subir pro topo</button>' +
-        (b.sold ? '' : '<button class="pill" type="button" data-act="dest">' + (ehDest ? 'Trocar prazo do destaque' : 'Pôr no destaque') + '</button>') +
-      '</div><div id="vtDestForm" hidden></div></div>' +
+      '</div></div>' +
       '<div class="bloco"><div class="rot">VENDA</div><div class="vt-acoes">' +
         (b.sold
           ? '<button class="pill vt-perigo" type="button" data-act="desvender">Desfazer vendido</button>'
@@ -331,21 +307,6 @@
       acao('beat-topo', { id: b.id }).then(function (j) {
         if (!j.ok) { bt.disabled = false; flash(j.erro || 'Não consegui mexer.'); return; }
         flash(b.name + ' é o primeiro da lista agora.'); fechar(); carregar();
-      });
-    });
-    var bd = c.querySelector('[data-act=dest]');
-    if (bd) bd.addEventListener('click', function () {
-      var box = $('vtDestForm');
-      box.hidden = false;
-      box.innerHTML = '<div class="vt-form"><label>Até quando (opcional)<input type="date" id="vtAte" value="' + esc(ehDest ? loja.destaque.ate : '') + '"></label>' +
-        '<p class="vt-nota">Sem data, fica no hero até você trocar. Vendeu, o rodízio volta sozinho.</p>' +
-        '<div class="vt-acoes"><button class="pill solid" type="button" id="vtDestOk">Pôr no hero</button></div></div>';
-      $('vtDestOk').addEventListener('click', function (e) {
-        var bt = e.currentTarget; bt.disabled = true;
-        acao('destaque', { id: b.id, ate: $('vtAte').value || '' }).then(function (j) {
-          if (!j.ok) { bt.disabled = false; flash(j.erro || 'Não consegui.'); return; }
-          flash(b.name + ' está no hero. O site atualiza em até 1 minuto.'); fechar(); carregar();
-        });
       });
     });
     var tira = $('vtTirar');

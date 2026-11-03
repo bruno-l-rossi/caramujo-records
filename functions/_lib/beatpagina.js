@@ -132,6 +132,8 @@ const CSS = `
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
 body{background:var(--black);color:var(--bone);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+/* 03/11/2026: no Cormorant o 1 parecia um I ("R$ ıı9"); números retos (o atalho font: zera, por isso o !important) */
+*{font-variant-numeric:lining-nums!important}
 a{color:inherit;text-decoration:none}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 img{display:block}

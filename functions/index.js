@@ -1,6 +1,6 @@
 // A página inicial (caramujorecords.com.br/). Desde 24/09/2026 a lista de beats
 // mora no banco: a cada visita eu pego o index.html estático e troco o bloco
-// const BEATS pela lista do banco (e o destaque do hero pelo que o painel marcou).
+// const BEATS pela lista do banco (o destaque do hero saiu em 03/11/2026).
 // Todo o resto da página é o arquivo de sempre.
 //
 // Nunca pode quebrar: banco fora do ar = última lista boa guardada; sem cópia

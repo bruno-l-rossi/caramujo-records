@@ -38,8 +38,9 @@ Site do estúdio Caramujo Records (São Carlos, SP): vitrine de beats exclusivos
 ## Estrutura
 
 ```
-index.html              vitrine: marcação + os dados que o servidor escreve (lista, preços, gêneros, destaque)
-assets/vitrine/         vitrine.css e vitrine.js: o visual e o código da vitrine (?v= no index.html)
+index.html              vitrine: marcação + os dados que o servidor escreve (lista, preços, gêneros)
+assets/vitrine/         vitrine.css e vitrine.js: o visual e o código da vitrine (os que a gente edita);
+                        vitrine.min.css e vitrine.min.js: o que o site serve (gerados, ?v= no index.html)
 catalogo/app.html       molde das beat tapes e pastas de artista
 404.html  _headers  _routes.json  robots.txt  llms.txt  og-image.png
 assets/                 marca, fontes próprias, mídias do estúdio, perfil/, story.js, mp4-muxer.js,
@@ -93,7 +94,9 @@ scripts/                conversor do Drive e cálculo da onda de cada faixa
 
 **Texto de apoio mais legível (02/11/2026).** "por faixa", TOTAL, o tipo do item no carrinho, os números das linhas e dos serviços, o preço riscado dos serviços e o rodapé usam o tom fosco `#948365` (5:1 no fundo), no lugar do dim `#6f6757` (3,4:1). O dim segue nos traços e enfeites.
 
-**Hero curto, H1 (02/11/2026).** O hero da vitrine ficou só com a marca: "São Carlos, SP · desde 2018", o logo, a frase "Atenção! Você está ouvindo um beat do @rideblan33 ›" (o @ leva pro perfil, origem `hero`), "▶ Ouvir os beats" (toca a 1ª da lista e desce pro catálogo), "Mix & master" e os números numa linha (os streams saem curtos, "2,5 mi", pelo `_lib/numeros.js`). Sem altura mínima: o 1º beat aparece na 1ª tela, em ~566px no celular e ~732px no computador. Saíram o card do Beat em destaque, a frase do estúdio e os `.btn` da vitrine; o catálogo virou "Beats à venda". O "Pôr no destaque" do painel segue gravando, mas a vitrine não mostra mais o card (o JS do destaque fica parado, sem as peças na página). O cartão "Quem faz o som" do fim diz "Produtor desde 2018 em São Carlos, trabalhando de maneira popular e independente."
+**Hero curto, H1 (02/11/2026).** O hero da vitrine ficou só com a marca: "São Carlos, SP · desde 2018", o logo, a frase "Atenção! Você está ouvindo um beat do @rideblan33 ›" (o @ leva pro perfil, origem `hero`), "▶ Ouvir os beats" (toca a 1ª da lista e desce pro catálogo), "Mix & master" e os números numa linha (os streams saem curtos, "2,5 mi", pelo `_lib/numeros.js`). Sem altura mínima: o 1º beat aparece na 1ª tela, em ~566px no celular e ~732px no computador. Saíram o card do Beat em destaque, a frase do estúdio e os `.btn` da vitrine. O catálogo seguiu como "Catálogo de beats" (voltou em 03/11/2026, depois de 1 dia como "Beats à venda"), sem o olho "Catálogo · pronta entrega". Em 03/11/2026 o "Pôr no destaque" saiu do painel e o código do destaque saiu da vitrine, da API e da loja (a chave `destaque` da meta ficou no banco, parada). O cartão "Quem faz o som" do fim diz "Produtor desde 2018 em São Carlos, trabalhando de maneira popular e independente."
+
+**Leveza e acabamento (03/11/2026).** Da leitura de oportunidades de 02/11 (`docs/oportunidades-2026-11-02.md`), tudo aplicado: números retos no Cormorant (`font-variant-numeric: lining-nums` na vitrine e nas páginas de beat e de gênero; o 1 parecia um I nos preços e no badge do carrinho); a vitrine baixa 4 arquivos de fonte (o 400 normal e o 400 itálico saíram, quem pede 400 recebe o 500); as fotos do estúdio em WebP (`studio-hero`, `sessao-poster`, `depo-fab-poster`, `depo-candy`: 247 KB viraram 111 KB; os JPEG ficam na pasta pra link velho); o logo vertical em SVG (`assets/brand/caramujo-v.svg`, na tape e nas capas reserva do perfil); o pedido sem capa mostra o selo; a 404 e a página de erro com os botões do hero; `og-image.png` refeita com o logo de hoje; 1 ano de cache pro `/assets/vitrine/*` e `/assets/fonts/*` (`_headers`, com o `! Cache-Control` pra não juntar com o do `/assets/*`); CSS e JS da vitrine minificados (`.min`, uns 22 KB a menos comprimido na 1ª visita); e a faxina do volume (sem o `slider-vertical` velho) e da espiral do hero, que para pra quem pede menos movimento.
 
 **Quem já gravou, a leitura (16/10/2026).** `functions/_lib/gravou.js` descobre quem canta em cada música da aba Músicas do perfil pelas páginas públicas do Spotify (embed da faixa, página da faixa, álbum e artista), sem chave nem app de desenvolvedor, e traz nome e foto. `?op=gravou-teste` no painel só lê e responde (não grava).
 
@@ -135,7 +138,7 @@ Desde 12/10/2026 o painel abre no **Hoje** e se divide em 5 seções (barra emba
 
 - **Hoje:** o que precisa do Bruno (serviço com material pra entregar, beats na Fila, beats pra revisar nas tapes, e-mail do cupom que não saiu, comentário aberto, banco passando da metade), os números dos últimos 7 dias e atalhos.
 - **Vendas:** Pedidos (filtro Pra fazer / Todos / Testes; cada pedido abre com o material de cada serviço e o campo pra entregar pelo link; pedido de teste de beat e de serviço), Cupons e Lista (quem se cadastrou, copiar os e-mails, resultado de cada e-mail do cupom).
-- **Catálogo:** Vitrine (beats: editar, vender, destaque, tirar), Fila (publicar beats das tapes), Beat tapes (revisão, linha do @rideblan33 e chave "Mostrar no perfil") e Artistas (as pastas; abre pela última atividade, desde 14/10/2026).
+- **Catálogo:** Vitrine (beats: editar, vender, tirar), Fila (publicar beats das tapes), Beat tapes (revisão, linha do @rideblan33 e chave "Mostrar no perfil") e Artistas (as pastas; abre pela última atividade, desde 14/10/2026).
 - **Perfil:** Músicas (colar o link do Spotify ou do YouTube, Destaque ou Recente, arrastar, o áudio que toca inteiro), Ordem das beat tapes, Números do site e Ver o perfil.
 - **Números:** o Analytics (Vitrine, Beat tapes, Artistas e Portfólio, com período livre e comparação; não conta as visitas do Bruno nem troca de rede como outra pessoa).
 - **Ajustes** (engrenagem): chaves Entrega na hora e Músicas no perfil, a situação dos Comentários das pastas (chave no código), o consumo do banco e da prateleira de arquivos.
@@ -181,7 +184,7 @@ Workflows: **Catálogo dos artistas** (madrugada e manual), **Catálogo, carga g
 git add <arquivos> && git commit -m "mensagem" && git push
 ```
 
-Todo push na `main` publica. Antes de subir mudança em `functions/`, compilar com esbuild: um erro de sintaxe derruba o deploy inteiro. Mexeu no `_headers` (CSP)? Testar o checkout de ponta a ponta. Mexeu no `assets/vitrine/vitrine.css` ou `vitrine.js`? Trocar o `?v=` deles no `index.html` (`node testes/vitrine-versao.mjs`): sem isso quem já visitou segue com o arquivo velho por até 1 dia.
+Todo push na `main` publica. Antes de subir mudança em `functions/`, compilar com esbuild: um erro de sintaxe derruba o deploy inteiro. Mexeu no `_headers` (CSP)? Testar o checkout de ponta a ponta. Mexeu no `assets/vitrine/vitrine.css` ou `vitrine.js`? Rodar `node testes/vitrine-versao.mjs`: ele gera o `vitrine.min.css` e o `vitrine.min.js` (o que o site serve desde 03/11/2026) e troca o `?v=` deles no `index.html`. Sem isso o site segue com o `.min` velho, e como os dois ficam 1 ano guardados no navegador, quem já visitou não veria a mudança. O teste46 reprova `.min` atrasado.
 
 ---
 

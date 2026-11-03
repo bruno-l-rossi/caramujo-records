@@ -27,14 +27,15 @@
 <script>/* capa-volta */window.addEventListener("error",function(e){var t=e.target;if(!t||t.tagName!=="IMG"||t.__volta)return;var m=/^https:\/\/som\.caramujorecords\.com\.br\/capa\/([A-Za-z0-9_-]+?)(?:-(p|m))?\.jpg$/.exec(t.currentSrc||t.src||"");if(!m)return;t.__volta=1;t.removeAttribute("srcset");t.src="/capa/"+m[1]+(m[2]?"?"+m[2]:"")},true);</script>
 <!-- Fontes servidas daqui mesmo (subset latin, licença OFL em assets/fonts/).
      Antes vinham do Google: 2 domínios a mais pra resolver e um CSS que
-     segurava a primeira pintura. As 3 de cima são as que o hero usa. -->
+     segurava a primeira pintura. As 3 de cima são as que o hero usa.
+     03/11/2026: a vitrine ficou com 4 arquivos (o 400 normal e o 400 itálico saíram; o 500 faz o papel deles). -->
 <link rel="preload" href="/assets/fonts/cormorant-garamond-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin/>
-<link rel="preload" href="/assets/fonts/cormorant-garamond-latin-400-italic.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="preload" href="/assets/fonts/cormorant-garamond-latin-500-italic.woff2" as="font" type="font/woff2" crossorigin/>
 <link rel="preload" href="/assets/fonts/ibm-plex-mono-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin/>
 <!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
      a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.css?v=c6bdcb7a05">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.min.css?v=1ced63dc1d">
 
 
 <link rel="canonical" href="https://caramujorecords.com.br"/>
@@ -99,8 +100,8 @@
 <section id="beats" class="s s-earth">
 
   <div class="s-head">
-    <!-- 02/11/2026 (H1): o título encurta e o olho "Catálogo · pronta entrega" sai; o hero de cima já diz o que é -->
-    <h2 class="s-title">Beats à <span class="r">venda</span></h2>
+    <!-- 02/11/2026 (H1): o olho "Catálogo · pronta entrega" saiu; 03/11/2026: o título voltou a ser "Catálogo de beats" -->
+    <h2 class="s-title">Catálogo de <span class="r">beats</span></h2>
     <p class="s-sub">
       <!-- 25/10/2026 (de-para final, item 2): a explicação numa frase; o balão do ⓘ é o mesmo -->
       Cada beat é vendido uma vez só, com <span class="lic-wrap"><button class="lic-toggle" onclick="toggleLic(event)">licença exclusiva&nbsp;ⓘ</button><span class="lic-box" id="licBox">
@@ -238,7 +239,7 @@
      26/10/2026 (rodada W, opção A): o cartão vira uma faixa da largura toda com a foto do estúdio. No computador a foto
      ocupa a direita e some no preto pra esquerda; no celular fica em cima. A foto vem por último no HTML (posição pelo CSS). -->
 <section id="estudio" class="s s-earth">
-  <a class="eu-card" href="/rideblan33" data-de="sobre"><span class="eu-anel"><img src="assets/perfil/rideblan33-avatar.webp" alt="" width="200" height="200" loading="lazy"></span><span class="eu-tx"><span class="eu-k">Quem faz o som</span><b>@rideblan33</b><span class="eu-p">Produtor desde 2018 em São Carlos, trabalhando de maneira popular e independente.</span><span class="eu-cta">Ver portfólio</span></span><span class="eu-foto" aria-hidden="true"><img src="assets/studio-hero.jpg" alt="" width="768" height="768" loading="lazy" decoding="async"></span></a>
+  <a class="eu-card" href="/rideblan33" data-de="sobre"><span class="eu-anel"><img src="assets/perfil/rideblan33-avatar.webp" alt="" width="200" height="200" loading="lazy"></span><span class="eu-tx"><span class="eu-k">Quem faz o som</span><b>@rideblan33</b><span class="eu-p">Produtor desde 2018 em São Carlos, trabalhando de maneira popular e independente.</span><span class="eu-cta">Ver portfólio</span></span><span class="eu-foto" aria-hidden="true"><img src="assets/studio-hero.webp" alt="" width="768" height="768" loading="lazy" decoding="async"></span></a>
 </section>
 
 
@@ -455,7 +456,7 @@
 
 <script>
 /* O que o servidor lê e escreve a cada visita (functions/index.js e _lib/loja.js): a lista de
-   beats, os preços, os rótulos de gênero e o beat em destaque. O resto do código da página
+   beats, os preços e os rótulos de gênero. O resto do código da página
    está em assets/vitrine/vitrine.js. */
 /* beats data
    A lista mora no banco (painel > Vitrine). A cada visita o servidor
@@ -469,10 +470,8 @@ const PIX_OFF=5; // % de desconto no PIX (17/10/2026); o servidor lê daqui e co
 /* Leve mais, pague menos (11/10/2026): total por quantidade de beats; 'N+' = preço de cada beat a partir de N */
 const LEVE_MAIS={'2':218,'3':297,'+':79};
 const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':'Hood Trap','experimental':'Experimental','detroit':'Detroit','drumless':'Drumless','hard':'Hard','funk':'Funk','pluggnb':'Pluggnb','drill':'Drill','nomelody':'No Melody','bounce':'Bounce'};
-const FEATURED_OVERRIDE_ID=null;
-const FEATURED_OVERRIDE_ATE='';
 </script>
-<script src="/assets/vitrine/vitrine.js?v=413bb55689"></script>
+<script src="/assets/vitrine/vitrine.min.js?v=3c09bf6236"></script>
 <!-- leva-de -->
 <script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
 (function(){

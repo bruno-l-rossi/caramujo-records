@@ -1,5 +1,6 @@
-// A loja do site: beats à venda, cupons e o destaque do hero, no D1 (tabelas
-// beats, cupons, cupom_uso e a chave 'destaque' na meta). Até 24/09/2026 isso era
+// A loja do site: beats à venda e cupons, no D1 (tabelas beats, cupons e
+// cupom_uso). O destaque do hero saiu em 03/11/2026 (a chave 'destaque' da meta
+// ficou parada no banco, ninguém lê). Até 24/09/2026 isso era
 // const BEATS escrito no index.html e functions/coupons.json no GitHub; a
 // importação rodou uma vez e o código dela saiu na limpeza da mesma data.
 // Quem abre o site recebe a lista daqui: functions/index.js troca o bloco
@@ -116,26 +117,14 @@ export async function lerNumeros(d) {
   } catch (_) { return { ...PADRAO }; }
 }
 
-export async function lerDestaque(d) {
-  const r = await d.prepare("SELECT valor FROM meta WHERE chave = 'destaque'").first();
-  return destaqueDeTexto(r ? r.valor : null);
-}
-function destaqueDeTexto(v) {
-  if (!v) return null;
-  try {
-    const j = JSON.parse(v);
-    return { id: Number(j.id) || null, ate: /^\d{4}-\d{2}-\d{2}$/.test(j.ate || '') ? j.ate : '' };
-  } catch (_) { return null; }
-}
-
-// Destaque e números numa consulta só (10/10/2026). Falhou = sem destaque e os números de sempre.
+// Números e Quem já gravou numa consulta só (10/10/2026). Falhou = os números de sempre.
 async function lerMetaLoja(d) {
   try {
     // 17/10/2026: + 'gravou' (a fileira Quem já gravou da vitrine), na mesma consulta
-    const { results } = await d.prepare("SELECT chave, valor FROM meta WHERE chave IN ('destaque', 'numeros', 'gravou')").all();
+    const { results } = await d.prepare("SELECT chave, valor FROM meta WHERE chave IN ('numeros', 'gravou')").all();
     const v = Object.fromEntries((results || []).map((r) => [r.chave, r.valor]));
-    return { destaque: destaqueDeTexto(v.destaque), numeros: v.numeros ? deTexto(v.numeros) : { ...PADRAO }, gravou: v.gravou ? resumoVitrine(v.gravou) : null };
-  } catch (_) { return { destaque: null, numeros: { ...PADRAO }, gravou: null }; }
+    return { numeros: v.numeros ? deTexto(v.numeros) : { ...PADRAO }, gravou: v.gravou ? resumoVitrine(v.gravou) : null };
+  } catch (_) { return { numeros: { ...PADRAO }, gravou: null }; }
 }
 
 /* ---------- a lista que vai dentro da página ---------- */
@@ -155,7 +144,7 @@ export async function esquecerLoja(request) {
   }
 }
 
-// {lista:[{id,name,bpm,key,genre,sold}], destaque:{id,ate}|null}
+// {lista:[{id,name,bpm,key,genre,sold}], numeros, gravou}
 // Ordem: memória do isolate (1 min) > cópia da região (1 min) > banco. O banco só é
 // lido uma vez por minuto por região, não uma vez por isolate.
 // Falhou o banco: a última lista boa (cache da Cloudflare, 30 dias). Sem ela, null.
@@ -163,18 +152,17 @@ export async function lojaParaPagina(request, env) {
   if (pagina.dados && Date.now() - pagina.at < VALIDADE_PAGINA) return pagina.dados;
   const fresca = await lerCache(request, FRESCA);
   if (fresca && fresca.at && Date.now() - fresca.at < VALIDADE_PAGINA && Array.isArray(fresca.lista)) {
-    pagina = { at: fresca.at, dados: { lista: fresca.lista, destaque: fresca.destaque || null, numeros: fresca.numeros || null, gravou: fresca.gravou || null } };
+    pagina = { at: fresca.at, dados: { lista: fresca.lista, numeros: fresca.numeros || null, gravou: fresca.gravou || null } };
     return pagina.dados;
   }
   try {
     const d = await db(env);
-    // beats, destaque e números saem juntos (10/10/2026): o banco fica longe do Brasil e
+    // beats e números saem juntos (10/10/2026): o banco fica longe do Brasil e
     // eram três idas e voltas, uma atrás da outra, no servidor frio
     const [beats, meta] = await Promise.all([lerBeats(d), lerMetaLoja(d)]);
     if (!beats.length) throw new Error('lista vazia no banco');
     const dados = {
       lista: beats.map((b) => ({ id: b.id, name: b.name, bpm: b.bpm, key: b.key || '', genre: b.genre, sold: !!b.sold })),
-      destaque: meta.destaque,
       numeros: meta.numeros,
       gravou: meta.gravou
     };
@@ -224,16 +212,7 @@ export function injetar(html, dados) {
     ', key:' + js(b.key) + ', genre:' + js(b.genre) + ', sold:' + (b.sold ? 'true' : 'false') + '}'
   ).join(',\n');
   // lista vazia: o próprio index.html liga o aviso (if(!BEATS.length) window.__LOJA_FORA=true)
-  let saida = html.slice(0, ini) + 'const BEATS=[\n' + linhas + '\n];' + html.slice(fim + 2);
-
-  const dest = dados && dados.destaque;
-  if (dest) {
-    saida = saida
-      .replace(/const FEATURED_OVERRIDE_ID\s*=\s*[^;]*;/, 'const FEATURED_OVERRIDE_ID=' + (Number(dest.id) || 'null') + ';')
-      .replace(/const FEATURED_OVERRIDE_ATE\s*=\s*'[^']*'\s*;/, "const FEATURED_OVERRIDE_ATE='" +
-        (/^\d{4}-\d{2}-\d{2}$/.test(dest.ate || '') ? dest.ate : '') + "';");
-  }
-  return saida;
+  return html.slice(0, ini) + 'const BEATS=[\n' + linhas + '\n];' + html.slice(fim + 2);
 }
 
 /* ---------- venda e cupom ---------- */
