@@ -8,7 +8,7 @@
 //     mandam um aviso que diz com todas as letras que ainda não é venda.
 //   - webhook: todo pagamento aprovado (PIX ou cartão que saiu da análise) que ainda não foi avisado
 //     manda o "✅ VENDA" e o e-mail do comprador.
-//   - de hora em hora (/api/lembretes): as vendas aprovadas das últimas 48 h (meta 'vendas-origem') que
+//   - 1x por dia (/api/lembretes): as vendas aprovadas das últimas 72 h (meta 'vendas-origem') que
 //     não foram avisadas, ou cujo aviso falhou, vão de novo. Falhou de vez aparece no Hoje do painel.
 // 1ª leitura (a meta ainda não existe): o que foi aprovado há mais de 30 min conta como avisado (pelo caminho
 // antigo). O que é mais novo fica de fora: pode ser o pagamento que está chegando agora (o webhook grava a origem
@@ -174,17 +174,19 @@ export async function emailVendaAprovada({ env, payment, pedido = null }) {
 }
 
 
-// De hora em hora (/api/lembretes): venda aprovada há mais de 10 min (e menos de 48 h) que não foi
+// 1x por dia desde 04/11 (/api/lembretes): venda aprovada há mais de 10 min (e menos de 72 h) que não foi
 // avisada, ou cujo aviso falhou, vai de novo. Os 10 min dão tempo do create-payment e do webhook
 // mandarem o deles. Confere no Mercado Pago antes (só manda se ainda está aprovado). No máximo 5 por vez.
+// janela e tentativas pra passada diária (eram 48 h e 24 tentativas de hora em hora)
+export const REAVISO = { janelaH: 72, tentativas: 4 };
 export async function reavisarVendas(d, env, { agora = Date.now(), max = 5 } = {}) {
   const x = await lerAvisos(d);
   if (x.novo) { await gravarAvisos(d, x); return { semeado: x.ok.length, avisados: 0 }; }
   let l = [];
   try { l = JSON.parse((await lerMeta(d, CHAVE_ORIGEM)) || '[]'); } catch (_) { l = []; }
-  const janela = (Array.isArray(l) ? l : []).filter((v) => { const t = new Date(v && v.em).getTime(); return t && t <= agora - 10 * 60e3 && t >= agora - 48 * 3600e3; });
+  const janela = (Array.isArray(l) ? l : []).filter((v) => { const t = new Date(v && v.em).getTime(); return t && t <= agora - 10 * 60e3 && t >= agora - REAVISO.janelaH * 3600e3; });
   const ids = [...new Set(janela.filter((v) => !x.ok.includes(String(v.p))).map((v) => String(v.p))
-    .concat(x.falhou.filter((f) => (f.n || 1) < 24).map((f) => String(f.p))))].slice(0, max);
+    .concat(x.falhou.filter((f) => (f.n || 1) < REAVISO.tentativas).map((f) => String(f.p))))].slice(0, max);
   // o valor da venda vai junto na falha (o Hoje mostra "Venda de R$ X sem aviso no e-mail")
   const valorDe = Object.fromEntries(janela.map((v) => [String(v.p), v.v]).concat(x.falhou.map((f) => [String(f.p), f.v])).filter((p) => p[1] != null));
   let avisados = 0;

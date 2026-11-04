@@ -412,7 +412,7 @@ export async function onRequestPost({ request, env }) {
     } catch (e) { console.error('[contrato] Erro:', e.message); }
 
     // Envia email de notificação ao dono (com contrato em anexo). Aprovado na hora: anota que já
-    // avisou (o webhook não repete); falhou: anota a falha (o de hora em hora tenta de novo e o Hoje mostra).
+    // avisou (o webhook não repete); falhou: anota a falha (a passada diária tenta de novo e o Hoje mostra).
     try {
       await sendNotificationEmail({ env, payment, name, artistName, email, cpf, itemsList: itemsForEmail, categoryLabel, couponCode, amount, selectedPaymentMethod, termsAcceptance, contractHtml, pedido });
       if (payment.status === 'approved') { try { await anotarAviso(await db(env), payment.id, 'ok'); } catch (_) { /* o webhook confere */ } }

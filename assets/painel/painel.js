@@ -307,10 +307,10 @@
     var env=lista&&lista.envios&&lista.envios[0];
     if(env&&env.ok&&(env.status==='bounced'||env.status==='complained')) add(linhaTarefa(IC_MAIL,env.status==='bounced'?'E-mail do cupom voltou':'E-mail do cupom marcado como spam','pra '+esc(env.email),'Ver',function(){ irPara('lista'); }));
     if(env&&!env.ok) add(linhaTarefa(IC_MAIL,'E-mail do cupom não saiu','pra '+esc(env.email)+' · ver o motivo','Ver',function(){ irPara('lista'); }));
-    // 04/11/2026: venda aprovada cujo aviso não chegou no e-mail (a passada de hora em hora tenta de novo).
+    // 04/11/2026: venda aprovada cujo aviso não chegou no e-mail (a passada diária tenta de novo, até 4 vezes).
     // Tocar abre Vendas; "Já vi" tira daqui e para de tentar.
     ((entrega&&entrega.avisos)||[]).slice(0,3).forEach(function(f){
-      var t=linhaTarefa(IC_MAIL,'Aviso de venda não chegou',(f.v?reaisInt(f.v)+' · ':'')+esc(f.itens||'pagamento '+f.p)+' · '+quandoRel(f.em)+((f.n||1)<24?' · tento de novo de hora em hora':' · parei de tentar'),'Já vi',function(){ irPara('pedidos'); },true);
+      var t=linhaTarefa(IC_MAIL,'Aviso de venda não chegou',(f.v?reaisInt(f.v)+' · ':'')+esc(f.itens||'pagamento '+f.p)+' · '+quandoRel(f.em)+((f.n||1)<4?' · tento de novo 1x por dia':' · parei de tentar'),'Já vi',function(){ irPara('pedidos'); },true);
       t.classList.add('aviso-falhou'); t.dataset.p=f.p;
       var b=t.querySelector('.btn'), nb=b.cloneNode(true); b.parentNode.replaceChild(nb,b);
       nb.addEventListener('click',function(e){

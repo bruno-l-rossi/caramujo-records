@@ -1,5 +1,5 @@
 // E-mail do mês (04/11/2026, pedido do Bruno: "email pode implementar mensal"). Todo dia 1º, a partir
-// das 9h de São Paulo, a passada de hora em hora (/api/lembretes) manda pro NOTIFY_EMAIL o resumo do
+// das 9h de São Paulo, a passada diária (/api/lembretes, 18h43 desde 04/11) manda pro NOTIFY_EMAIL o resumo do
 // mês que fechou: R$ e vendas (com o mês de antes), visitas, quantos compraram, o R$ de cada semana, as
 // vendas com o estado de cada pedido, os 3 beats mais tocados na vitrine e o que espera por ele.
 // Só pro Bruno: nada sai pra lista.
@@ -13,7 +13,7 @@
 // 1ª leitura (a meta não existe): conta o mês que fechou como enviado. O 1º e-mail sai no dia 1º seguinte
 // (o mês de outubro só tem venda registrada desde o dia 17). Pra ver como fica antes: "Mandar um agora",
 // em Ajustes, manda o mês corrente até hoje.
-// Não deu no dia 1º (Actions parado, Resend fora): tenta de hora em hora até o dia 7, no máximo 6 falhas.
+// Não deu no dia 1º (Actions parado, Resend fora): tenta 1x por dia até o dia 7, no máximo 6 falhas.
 import { CHAVE_ORIGEM } from './vendasorigem.js';
 import { GENEROS } from './generos.js';
 import { lerAvisos } from './avisovenda.js';
@@ -53,7 +53,7 @@ async function gravarResumo(d, x) {
 }
 export async function ligarResumo(d, ligado, { agora = Date.now() } = {}) {
   const x = await lerResumo(d);
-  // a 1ª vez que alguém mexe: o mês que fechou conta como enviado (igual à passada de hora em hora)
+  // a 1ª vez que alguém mexe: o mês que fechou conta como enviado (igual à passada diária)
   if (x.novo) x.enviado = mesAntes(mesSP(agora));
   x.ligado = !!ligado;
   await gravarResumo(d, x);
@@ -229,7 +229,7 @@ export function emailResumo(m) {
   return { assunto, html, texto };
 }
 
-/* ---------- a passada de hora em hora ---------- */
+/* ---------- a passada diária ---------- */
 export async function passarResumo(d, env, { agora = Date.now() } = {}) {
   const x = await lerResumo(d);
   const alvo = mesAntes(mesSP(agora));

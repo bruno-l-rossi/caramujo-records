@@ -1,6 +1,6 @@
 // Rodada Y (27/10/2026): o aviso do PIX que ficou pra trás (_lib/avisos.js, passarLembretes).
 //   POST /api/lembretes   com o cabeçalho x-ingest-token (o mesmo do conversor)
-// Quem chama: o GitHub Actions de hora em hora (.github/workflows/lembretes.yml). As Functions do
+// Quem chama: o GitHub Actions 1x por dia, 18h43 de SP (.github/workflows/lembretes.yml). As Functions do
 // Cloudflare Pages não têm relógio próprio no plano grátis.
 // 04/11/2026: a mesma passada também
 //   - reenvia o aviso de venda que não saiu ou falhou (_lib/avisovenda.js, reavisarVendas)

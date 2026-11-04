@@ -1,7 +1,7 @@
 // Rodada Y (27/10/2026, pedido do Bruno): três e-mails novos, no molde dos que já saem (emails.js, lista.js).
 //  1. Salvos: a lista de beats salvos vira um link que abre em qualquer celular (POST /api/salvos).
 //  3. PIX parado: um aviso só, umas 2 horas depois do PIX gerado e não pago, se o beat segue à venda
-//     (POST /api/lembretes, chamado de hora em hora pelo GitHub Actions; workflow lembretes.yml).
+//     (POST /api/lembretes, chamado 1x por dia pelo GitHub Actions desde 04/11; workflow lembretes.yml).
 //  6. "Comprou um beat e perdeu o link?": os links dos pedidos pagos daquele e-mail (POST /api/recuperar).
 // Os três respondem só pro próprio e-mail e nada entra na lista de novidades (LGPD: aviso de um pedido
 // que a pessoa começou, ou algo que ela pediu na hora). Limite por rede e por e-mail na meta 'limite-envios'
@@ -123,13 +123,16 @@ export function emailPedidos(pedidos) {
 }
 
 /* ---------- 3. PIX parado ---------- */
-export const LEMBRETE = { depoisH: 2, ateH: 26, porVez: 5, guarda: 300 };
+// 04/11/2026: a passada é 1x por dia; a janela de 28 h (2 a 30 h) pega cada PIX numa passada, com folga
+// pro atraso do GitHub, e o porVez dobrou porque é uma passada só no dia.
+export const LEMBRETE = { depoisH: 2, ateH: 30, porVez: 10, guarda: 300 };
 const slugSvc = (n) => String(n || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 export const linkVolta = (ids, svcs) => `${SITE}/?de=lembrete-pix#volta=${ids.join('.')}${svcs.length ? '&s=' + svcs.map(slugSvc).join('.') : ''}`;
 const quando = (iso, agora = Date.now()) => {
   const f = (t) => new Date(t).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
   const h = new Date(iso).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
-  return (f(iso) === f(agora) ? 'hoje' : 'ontem') + ' às ' + h;
+  const ontem = f(new Date(agora).getTime() - 864e5);
+  return (f(iso) === f(agora) ? 'hoje' : f(iso) === ontem ? 'ontem' : 'no dia ' + f(iso).slice(0, 5)) + ' às ' + h;
 };
 // p = o pedido (itens já lidos); vit = a vitrine; vencido = o Mercado Pago já deu o PIX por vencido
 export function emailPix(p, vit, { vencido, preco, agora = Date.now() }) {
@@ -168,7 +171,7 @@ async function lerMeta(d, chave, padrao) {
 }
 async function gravarMeta(d, chave, v) { await d.prepare('INSERT OR REPLACE INTO meta (chave, valor) VALUES (?, ?)').bind(chave, JSON.stringify(v)).run(); }
 
-// Uma passada: até LEMBRETE.porVez pedidos com PIX pendente há mais de 2 h (e menos de 26 h) recebem o
+// Uma passada: até LEMBRETE.porVez pedidos com PIX pendente há mais de 2 h (e menos de 30 h) recebem o
 // aviso. Cada pagamento recebe uma vez só (meta 'lembrete-pix'.feitos). Confere no Mercado Pago antes:
 // pago, recusado ou cartão = não manda. Comprou depois com o mesmo e-mail = não manda.
 export async function passarLembretes(d, env, { vitrine, preco, agora = Date.now() }) {

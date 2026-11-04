@@ -31,7 +31,7 @@ import { emailVendaAprovada, lerAvisos, anotarAviso, anotarFalha } from '../_lib
 // ── E-mail interno "COMPRA CONFIRMADA" (pro dono) ─────────────────────────────
 // Dispara quando o pagamento é APROVADO.
 
-// O e-mail "✅ VENDA" pro Bruno mora em _lib/avisovenda.js desde 04/11/2026 (também usado de hora em hora).
+// O e-mail "✅ VENDA" pro Bruno mora em _lib/avisovenda.js desde 04/11/2026 (também usado na passada diária).
 
 // ── Venda e cupom no banco ───────────────────────────────────────────────────
 
@@ -199,7 +199,7 @@ export async function onRequestPost({ request, env }) {
       if (!avisouDono) {
         try {
           await emailVendaAprovada({ env, payment, pedido });
-          try { await anotarAviso(await db(env), payment.id, 'ok'); } catch (_) { /* o de hora em hora confere */ }
+          try { await anotarAviso(await db(env), payment.id, 'ok'); } catch (_) { /* a passada diária confere */ }
         } catch (emailErr) {
           console.error('[webhook] Falha no email ao dono:', emailErr.message);
           try { await anotarFalha(await db(env), payment.id, { valor: payment.transaction_amount, itens: payment.metadata?.items_display || '', erro: emailErr.message }); } catch (_) { /* segue */ }

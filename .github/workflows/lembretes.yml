@@ -1,11 +1,13 @@
 name: Lembretes do PIX
 
-# Rodada Y (27/10/2026): de hora em hora pergunta ao site se tem PIX gerado há mais de 2 h e não pago.
+# Rodada Y (27/10/2026): pergunta ao site se tem PIX gerado há mais de 2 h e não pago.
 # O site manda um aviso só pra cada um (functions/api/lembretes.js). Leva poucos segundos.
+# Rodada AF (04/11/2026, pedido do Bruno): 1x por dia, às 18h43 de São Paulo (21h43 UTC; SP sem horário
+# de verão). A mesma passada reenvia aviso de venda que falhou e manda o e-mail do mês no dia 1º.
 on:
   workflow_dispatch:
   schedule:
-    - cron: '17 * * * *'
+    - cron: '43 21 * * *'
 
 concurrency:
   group: lembretes
