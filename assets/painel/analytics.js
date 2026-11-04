@@ -10,6 +10,7 @@
   // métrica tem a sua cor fixa (a cor segue a métrica, não a posição).
   var CORES = ['#b88a3a', '#3987e5', '#199e70'];
   var COR = CORES[0], LAVAGEM = 'rgba(184,138,58,.12)', GRADE = '#232323', FUNDO = '#101010';
+  var origemVendas = null;   // a promessa do op=entrega (De onde vêm as vendas), uma vez só
 
   var CSS = [
     '.an-filtros{position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 6px;margin:18px 0 6px}',
@@ -114,6 +115,13 @@
     if (!b) return 'antes: 0';
     var d = Math.round((a - b) * 100 / b);
     return (d > 0 ? '↑ ' + d : d < 0 ? '↓ ' + (-d) : '= 0') + '% vs período anterior';
+  }
+  // a comparação curta (04/11/2026, item 15): vai junto do "% das visitas" nos números do meio
+  function deltaCurto(a, b) {
+    if (semComparar || (!a && !b)) return '';
+    if (!b) return ' · antes: 0';
+    var d = Math.round((a - b) * 100 / b);
+    return ' · ' + (d > 0 ? '↑ ' + d + '%' : d < 0 ? '↓ ' + (-d) + '%' : '= igual');
   }
   function niceMax(v) {
     if (v <= 4) return 4;
@@ -392,10 +400,14 @@
       var q = normal(String(qBruto || '').trim());
       var idx = [];
       for (var i = 0; i < linhas.length; i++) if (!q || chaves[i].indexOf(q) > -1) idx.push(i);
+      // 04/11/2026 (item 15): sem busca, a tabela mostra só quem teve algum número no período
+      var total = idx.length;
+      if (!q && opts.soComValor) idx = idx.filter(function (i) { return Number(String(linhas[i][linhas[i].length - 1]).replace(/\D/g, '')) > 0; });
       var teto = q ? MAX_BUSCA : (limite || linhas.length);
       t.textContent = ''; t.appendChild(cab);
       idx.slice(0, teto).forEach(function (i) { t.appendChild(linha(linhas[i])); });
-      if (!idx.length) mais.textContent = 'Nenhum resultado pra essa busca.';
+      if (!idx.length) mais.textContent = q ? 'Nenhum resultado pra essa busca.' : 'Nada nesse período. A busca acha qualquer um.';
+      else if (!q && opts.soComValor && idx.length < total) mais.textContent = (idx.length > teto ? 'Mostrando ' + teto + ' de ' + idx.length : idx.length + (idx.length === 1 ? ' teve' : ' tiveram')) + ' algum número no período. A busca acha os ' + (total - idx.length) + ' zerados também.';
       else if (idx.length > teto) mais.textContent = q
         ? 'Mostrando ' + teto + ' de ' + idx.length + ' resultados. Continue digitando pra achar.'
         : 'Mostrando ' + teto + ' de ' + linhas.length + '. Use a busca pra achar os outros.';
@@ -420,8 +432,8 @@
     var V = a.visita.total;
     corpo.appendChild(tiles([
       ['Visitas', num(V), delta(V, an.visita.total)],
-      ['Deram play', num(a.play.total), pct(a.play.total, V) + ' das visitas'],
-      ['Puseram no carrinho', num(a.carrinho.total), pct(a.carrinho.total, V) + ' das visitas'],
+      ['Deram play', num(a.play.total), pct(a.play.total, V) + ' das visitas' + deltaCurto(a.play.total, an.play.total)],
+      ['Puseram no carrinho', num(a.carrinho.total), pct(a.carrinho.total, V) + ' das visitas' + deltaCurto(a.carrinho.total, an.carrinho.total)],
       ['Pagaram', num(a.pago.total), delta(a.pago.total, an.pago.total)],
       ['Conversão', pct(a.pago.total, V), 'visitas que viraram venda']
     ]));
@@ -451,15 +463,28 @@
     corpo.appendChild(dois);
     corpo.appendChild(tabela('De onde vieram', 'Use ?de=bio ou ?de=story nos links que você divulga pra separar a origem.', ['Origem', 'Visitas', 'Carrinho', 'Pagaram'],
       j.origens.map(function (o) { return [nomeOrigem(o), num(o.visitas), num(o.carrinho), num(o.pagos)]; }), { vazio: 'Nenhuma visita nesse período.' }));
+    // 04/11/2026 (revisão do painel, item 8): "De onde vêm as vendas" saiu dos Pedidos e veio pra cá
+    // (os 90 dias não mudam com o período escolhido: pede uma vez por abertura do painel)
+    var ov = el('div', 'an-bloco'); ov.id = 'anOrigemVendas'; corpo.appendChild(ov);
+    (origemVendas || (origemVendas = fetch('/api/painel?op=entrega').then(function (r) { return r.json(); }).catch(function (e) { origemVendas = null; throw e; }))).then(function (e) {
+      var og = e && e.origens; if (!og || !og.vendas) { ov.remove(); return; }
+      var reais = function (v) { return 'R$ ' + Math.round(v).toLocaleString('pt-BR'); };
+      ov.appendChild(el('h3', null, 'De onde vêm as vendas · ' + og.dias + ' dias'));
+      ov.appendChild(el('p', 'an-sub', og.vendas + (og.vendas === 1 ? ' venda aprovada' : ' vendas aprovadas') + ' desde que o site começou a guardar (17/10/2026). "Conheceu por" é a 1ª visita do aparelho; "Comprou vindo de" é a visita da compra.'));
+      var d2 = el('div', 'an-dois');
+      d2.appendChild(tabela('Conheceu por', null, ['Origem', 'Vendas', 'Valor'], og.conheceu.map(function (x) { return [x.origem, num(x.n), reais(x.valor)]; })));
+      d2.appendChild(tabela('Comprou vindo de', null, ['Origem', 'Vendas', 'Valor'], og.comprou.map(function (x) { return [x.origem, num(x.n), reais(x.valor)]; })));
+      ov.appendChild(d2);
+    }).catch(function () { ov.remove(); });
     // beats tocados e adições ao carrinho: top 10, com uma busca só pras duas
     var bb = el('div', 'an-bloco');
     bb.appendChild(el('h3', null, 'Beats'));
-    bb.appendChild(el('p', 'an-sub', 'Quantas visitas tocaram cada beat e quantas puseram no carrinho. Todos os beats da vitrine, inclusive os zerados.'));
+    bb.appendChild(el('p', 'an-sub', 'Quantas visitas tocaram cada beat e quantas puseram no carrinho. Sem busca, só os que tiveram algum número; a busca acha qualquer beat da vitrine.'));
     var top = el('div', 'an-dois');
     var tt = tabela('Beats tocados', null, ['Beat', 'Visitas'],
-      j.tocados.map(function (x) { return [x.vendido ? [x.nome, 'vendido'] : x.nome, num(x.n)]; }), { limite: 10 });
+      j.tocados.map(function (x) { return [x.vendido ? [x.nome, 'vendido'] : x.nome, num(x.n)]; }), { limite: 10, soComValor: true });
     var tc = tabela('Adições ao carrinho', null, ['Beat', 'Visitas'],
-      j.carrinhos.map(function (x) { return [x.vendido ? [x.nome, 'vendido'] : x.nome, num(x.n)]; }), { limite: 10 });
+      j.carrinhos.map(function (x) { return [x.vendido ? [x.nome, 'vendido'] : x.nome, num(x.n)]; }), { limite: 10, soComValor: true });
     bb.appendChild(campoBusca('Buscar beat', function (q) { tt.__filtra(q); tc.__filtra(q); }));
     top.appendChild(tt); top.appendChild(tc);
     bb.appendChild(top);
@@ -489,8 +514,8 @@
     corpo.appendChild(tabela('Por beat tape', null, ['Tape', 'Pessoas', 'Plays', 'Carrinho', 'Vitrine', 'Vendas'],
       j.lista.map(function (t) { return [t.name, num(t.pessoas), num(t.play), num(t.carrinho), num(t.vitrine), num(t.pagos)]; }),
       { busca: 'Buscar beat tape', limite: 10, vazio: 'Nenhuma beat tape convertida ainda.' }));
-    corpo.appendChild(tabela('Beats das tapes', 'Plays no período. Todos os beats, inclusive os zerados.', ['Beat', 'Plays'],
-      j.faixas.map(function (f) { return [[f.title, f.onde], num(f.n)]; }), { busca: 'Buscar beat ou tape', limite: 10 }));
+    corpo.appendChild(tabela('Beats das tapes', 'Plays no período. Sem busca, só os que tocaram.', ['Beat', 'Plays'],
+      j.faixas.map(function (f) { return [[f.title, f.onde], num(f.n)]; }), { busca: 'Buscar beat ou tape', limite: 10, soComValor: true }));
   }
 
   function artistas(j, corpo) {
@@ -510,8 +535,8 @@
     corpo.appendChild(tabela('Por artista', 'Ordenado por aberturas no período.', ['Artista', 'Aberturas', 'Pessoas', 'Plays', 'Downloads', 'Última'],
       j.lista.map(function (t) { return [t.name, num(t.open), num(t.pessoas), num(t.play), num(t.download), ult(t.ultima)]; }),
       { busca: 'Buscar artista', limite: 10, vazio: 'Nenhum artista convertido ainda.' }));
-    corpo.appendChild(tabela('Faixas', 'Plays no período. Todas as faixas, inclusive as zeradas.', ['Faixa', 'Plays'],
-      j.faixas.map(function (f) { return [[f.title, f.onde, f.kind === 'beat' ? 'Beat' : 'Música'], num(f.n)]; }), { busca: 'Buscar faixa ou artista', limite: 10 }));
+    corpo.appendChild(tabela('Faixas', 'Plays no período. Sem busca, só as que tocaram.', ['Faixa', 'Plays'],
+      j.faixas.map(function (f) { return [[f.title, f.onde, f.kind === 'beat' ? 'Beat' : 'Música'], num(f.n)]; }), { busca: 'Buscar faixa ou artista', limite: 10, soComValor: true }));
   }
 
   // Portfólio (26/09/2026): o perfil caramujorecords.com.br/rideblan33

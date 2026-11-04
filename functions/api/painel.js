@@ -1,7 +1,7 @@
 // As ações do painel: lista de artistas, permissão por pasta,
 // atividade e o disparo da conversão. Tudo atrás do mesmo cookie do painel.
 
-import { resumoOrigem } from '../_lib/vendasorigem.js';
+import { resumoOrigem, CHAVE_ORIGEM } from '../_lib/vendasorigem.js';
 import { db, json, TETO_LEITURA } from '../_lib/db.js';
 import { autenticado } from '../_lib/sessao.js';
 import { mesma, mesmoTom, limpo, tituloCasa, casaAntes } from '../_lib/casar.js';
@@ -13,7 +13,7 @@ import { esquecerApiVitrine } from './vitrine.js';
 import { esquecerPerfil } from '../_lib/perfil.js';
 import { PADRAO as NUM_PADRAO, deTexto as numDeTexto } from '../_lib/numeros.js';
 import { painelLer as musicasLer, painelAcao as musicasAcao } from '../_lib/musicas.js';
-import { somUrl } from '../_lib/midia.js';
+import { somUrl, capaUrl } from '../_lib/midia.js';
 import { entregaLigada, ligarEntrega, pedidoDeTeste, pedidoDeTesteServico, ultimosPedidos, salvarEntrega } from '../_lib/pedidos.js';
 import { avisarEntrega } from '../_lib/servicoemails.js';
 import { painelLista } from '../_lib/lista.js';
@@ -21,8 +21,12 @@ import { varrer as varrerGravou, painelGravou } from '../_lib/gravou.js';
 import { CHAVE as MUS_CHAVE, deTexto as musDeTexto } from '../_lib/musicas.js';
 import { lerAjuste, salvarAjuste, daTape, ordemDaTape, reordenarNaVitrine } from '../_lib/tapeajuste.js';
 import { GENEROS } from '../_lib/generos.js';
+import { lerAvisos, marcarVisto } from '../_lib/avisovenda.js';
+import { estadoResumo, ligarResumo, resumoAgora } from '../_lib/resumomes.js';
+import { dentroDoLimite } from '../_lib/avisos.js';
 
 const TETO_BYTES = 8 * 1024 * 1024 * 1024;
+const avisosFalhos = async (d) => { try { return (await lerAvisos(d)).falhou.map((f) => ({ p: f.p, v: f.v, itens: f.itens, erro: f.erro, em: f.em, n: f.n })); } catch (_) { return []; } };
 
 export async function onRequest({ request, env }) {
   if (!(await autenticado(request, env))) return json({ erro: 'entra no painel primeiro' }, 401);
@@ -44,6 +48,8 @@ export async function onRequest({ request, env }) {
   if (op === 'revisar') return revisar(d);
   if (op === 'vitrine') return relatorio(d, request, env);
   if (op === 'funil') return funil(d, request, env, url.searchParams.get('dias'));
+  // a semana do Hoje (04/11/2026, revisão do painel, item 1): R$, vendas e visitas por dia
+  if (op === 'semana') return semana(d);
   if (op === 'analytics') return analytics(d, request, env, url.searchParams);
   if (op === 'loja') return loja(d, request, env);
   if (op === 'cupom-usos') return cupomUsos(d, url.searchParams.get('codigo'));
@@ -55,7 +61,10 @@ export async function onRequest({ request, env }) {
     return json(r.corpo);
   }
   // Entrega na hora dos beats (10/10/2026): a chave e os últimos pedidos com link
-  if (op === 'entrega' && request.method !== 'POST') return json({ ok: true, ligada: await entregaLigada(d), pedidos: await ultimosPedidos(d), origens: await resumoOrigem(d).catch(() => null) });
+  // 04/11/2026: + os avisos de venda que não chegaram no e-mail (viram tarefa no Hoje)
+  if (op === 'entrega' && request.method !== 'POST') return json({ ok: true, ligada: await entregaLigada(d), pedidos: await ultimosPedidos(d), origens: await resumoOrigem(d).catch(() => null), avisos: await avisosFalhos(d) });
+  // e-mail do mês (04/11/2026): ligado ou não, o último que saiu e pra onde vai
+  if (op === 'resumo' && request.method !== 'POST') return json({ ok: true, ...(await estadoResumo(d, env)) });
   // lista de e-mails com cupom (11/10/2026): quantos, quantos usaram o cupom, os e-mails pra copiar
   if (op === 'lista' && request.method !== 'POST') return json({ ok: true, ...(await painelLista(d, env)) });
   // Quem já gravou (16/10/2026): só lê e responde (não guarda nada). Varre as músicas da aba
@@ -74,6 +83,14 @@ export async function onRequest({ request, env }) {
     await ligarEntrega(d, !!body.ligada);
     return json({ ok: true, ligada: !!body.ligada, pedidos: await ultimosPedidos(d) });
   }
+  if (op === 'resumo-ligar') { await ligarResumo(d, !!body.ligado); return json({ ok: true, ...(await estadoResumo(d, env)) }); }
+  if (op === 'resumo-agora') {
+    if (!(await dentroDoLimite(d, [['resumo-agora', 5, 3600e3]]))) return json({ erro: 'Já foram 5 nesta hora. Tenta daqui a pouco.' }, 429);
+    const r = await resumoAgora(d, env);
+    return r.ok ? json({ ok: true, assunto: r.assunto, para: env.NOTIFY_EMAIL || 'rideblan33@gmail.com' }) : json({ erro: 'O e-mail não saiu (' + (r.erro || 'Resend') + ').' }, 502);
+  }
+  // o Bruno viu a venda no painel: o aviso que falhou sai do Hoje e para de tentar de novo
+  if (op === 'aviso-visto') { await marcarVisto(d, String(body.p || '')); return json({ ok: true, avisos: await avisosFalhos(d) }); }
   if (op === 'pedido-teste') {
     const t = await pedidoDeTeste(request, env);
     if (!t) return json({ erro: 'Nenhum beat à venda com arquivo pra testar.' }, 400);
@@ -336,7 +353,7 @@ async function relatorio(d, request, env) {
     .concat(exclusivos.map((e) => ({ title: e.title, bpm: e.bpm, key: e.key, onde: 'Exclusivos' })));
   const mapa = indexar(beats);
   const { results: disp } = await d.prepare(
-    `SELECT t.id, t.title, t.bpm, t.mkey AS key, t.src_modified, a.id AS tape_id, a.name AS tape FROM tracks t
+    `SELECT t.id, t.title, t.bpm, t.mkey AS key, t.src_modified, a.id AS tape_id, a.name AS tape, a.cover_key FROM tracks t
        JOIN artists a ON a.id = t.artist_id
       WHERE a.tipo = 'tape' AND a.dl_beats = 0 AND t.kind = 'beat' AND t.tag = 'disponivel'
       ORDER BY t.src_modified DESC`
@@ -354,6 +371,8 @@ async function relatorio(d, request, env) {
     semBotao.push({
       id: t.id, title: t.title, tape: t.tape, tape_id: t.tape_id, at: t.src_modified,
       bpm: achado.bpm, key: achado.key,
+      // 04/11/2026 (revisão do painel, item 12): o ▶ da fila toca o trecho e a capa é a da tape
+      mp3: somUrl(t.id), ...(t.cover_key ? { capa: capaUrl(t.cover_key, 'p') } : {}),
       ...(achado.keyOnde ? { keyOnde: achado.keyOnde } : {}),
       ...(achado.bpmOnde ? { bpmOnde: achado.bpmOnde } : {}),
       ...(achado.confere ? { confere: true } : {})
@@ -551,6 +570,30 @@ async function sync(env, d, body) {
 
 // Funil de venda do site: quantas visitas chegaram em cada etapa no período.
 // Cada linha da tabela já é "uma sessão numa etapa", então contar linha é contar gente.
+// A semana do Hoje (04/11/2026, revisão do painel, item 1). O dinheiro vem dos pagamentos aprovados
+// guardados na meta 'vendas-origem' (cartão na hora e PIX pelo webhook, desde 17/10; pedido de teste
+// não passa pelo Mercado Pago e fica de fora) e as visitas do funil. Dia de São Paulo, como no funil.
+// 14 dias: os 7 de agora (com hoje) e os 7 de antes, pra comparação. Lê 1 linha da meta e as visitas.
+const diaSP = (t) => new Date(t - 3 * 3600e3).toISOString().slice(0, 10);
+async function semana(d, agora = Date.now()) {
+  const dias = [];
+  for (let i = 13; i >= 0; i--) dias.push(diaSP(agora - i * 864e5));
+  const por = Object.fromEntries(dias.map((x) => [x, { dia: x, valor: 0, vendas: 0, visitas: 0 }]));
+  const r = await d.prepare('SELECT valor FROM meta WHERE chave = ?').bind(CHAVE_ORIGEM).first();
+  let l = [];
+  try { l = JSON.parse((r && r.valor) || '[]'); } catch (_) { l = []; }
+  for (const x of Array.isArray(l) ? l : []) {
+    const t = new Date(x && x.em).getTime();
+    const k = isNaN(t) ? null : diaSP(t);
+    if (k && por[k]) { por[k].valor = Math.round((por[k].valor + Number(x.v || 0)) * 100) / 100; por[k].vendas++; }
+  }
+  const { results } = await d.prepare("SELECT dia, COUNT(*) AS n FROM funil WHERE etapa = 'visita' AND dia >= ? GROUP BY dia").bind(dias[0]).all();
+  for (const x of results || []) if (por[x.dia]) por[x.dia].visitas = Number(x.n) || 0;
+  const lista = dias.map((x) => por[x]);
+  const soma = (a) => a.reduce((s, x) => ({ valor: Math.round((s.valor + x.valor) * 100) / 100, vendas: s.vendas + x.vendas, visitas: s.visitas + x.visitas }), { valor: 0, vendas: 0, visitas: 0 });
+  return json({ ok: true, hoje: dias[13], dias: lista.slice(7), semana: soma(lista.slice(7)), anterior: soma(lista.slice(0, 7)) });
+}
+
 const ETAPAS_FUNIL = ['visita', 'play', 'carrinho', 'checkout', 'pagamento', 'pago'];
 
 async function funil(d, request, env, diasTxt) {

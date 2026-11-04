@@ -41,6 +41,11 @@
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
 
+# 04/11/2026: os 5 arquivos do painel também vão com ?v= do conteúdo (node testes/painel-versao.mjs)
+/assets/painel/*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+
 /og-image.png
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 

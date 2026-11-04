@@ -18,6 +18,8 @@ import { db } from '../_lib/db.js';
 import { lerCupom, situacaoCupom, vendidosEntre, lerEstatico, totalDosBeats } from '../_lib/loja.js';
 import { fmtCpf, contratoHtml, enviarEmailComprador } from '../_lib/emails.js';
 import { abrirPedido, entregaLigada } from '../_lib/pedidos.js';
+import { anotarAviso, anotarFalha, assuntoVenda, assuntoPix, assuntoAnalise } from '../_lib/avisovenda.js';
+import { reais } from '../_lib/avisos.js';
 
 async function conferirCupom(request, env, couponCode) {
   if (!couponCode) return { valid: false, reason: 'sem cupom' };
@@ -134,7 +136,8 @@ async function sendNotificationEmail({ env, payment, name, artistName, email, cp
   const notifyEmail = env.NOTIFY_EMAIL || 'rideblan33@gmail.com';
   const fromEmail   = env.NOTIFY_FROM  || 'rideblan33@caramujorecords.com.br';
 
-  if (!resendKey) { console.warn('[email] RESEND_API_KEY não configurado — skip.'); return; }
+  // 04/11/2026: sem a chave o aviso não sai; venda aprovada vira falha anotada (aparece no Hoje), em vez de sumir
+  if (!resendKey) throw new Error('RESEND_API_KEY não configurado');
 
   const statusPt = { approved: '✅ APROVADO', pending: '⏳ PENDENTE (PIX)', in_process: '🔄 EM ANÁLISE', rejected: '❌ RECUSADO' };
   const statusLabel = statusPt[payment.status] || payment.status.toUpperCase();
@@ -159,7 +162,8 @@ async function sendNotificationEmail({ env, payment, name, artistName, email, cp
   <div class="bar">&nbsp;</div>
   <div class="hd"><div class="kick">// Caramujo Records</div><h1>Nova venda</h1><p>${dataHora}</p></div>
   <div class="bdy">
-    <div class="status">${statusLabel} — R$ ${amount}</div>
+    <div class="status">${statusLabel} · ${reais(amount)}</div>
+    ${payment.status === 'pending' ? '<p style="font-size:.78rem;color:#c3a074;margin:0 0 14px">Ainda não é venda: o PIX foi gerado e não caiu. Quando cair, chega outro e-mail com ✅ VENDA.</p>' : payment.status === 'in_process' ? '<p style="font-size:.78rem;color:#c3a074;margin:0 0 14px">Ainda não é venda: o Mercado Pago está analisando o cartão. Quando aprovar, chega outro e-mail com ✅ VENDA.</p>' : ''}
     <table>
       <tr class="sect"><td colspan="2">PEDIDO</td></tr>
       <tr><td>ID</td><td>${payment.id}</td></tr>
@@ -184,16 +188,20 @@ async function sendNotificationEmail({ env, payment, name, artistName, email, cp
 </div></body></html>`;
 
   // Email único — resumo da venda + contrato como anexo
-  const isPending = payment.status === 'pending';
+  // 04/11/2026 (revisão dos avisos de venda): o assunto diz se é venda ou não. Só "✅ VENDA" é dinheiro
+  // aprovado; PIX gerado e cartão em análise avisam que ainda não é venda (o "✅ VENDA" chega depois,
+  // pelo webhook). Antes o cartão em análise chegava como PAGO.
+  const st = payment.status;
   const emailPayload = {
     from: `Caramujo Records <${fromEmail}>`,
     to: [notifyEmail],
-    // entrega na hora (10/10/2026): beat que já saiu no link não pede envio
-    subject: isPending
-      ? `🐌 Novo pedido R$${amount} — ${itemsList} [${statusLabel}]`
-      : pedido && pedido.tudo
-        ? `🐌 PAGO R$${amount} — ${itemsList} — ENTREGUE NO LINK`
-        : `🐌 PAGO R$${amount} — ${itemsList} — ENVIAR ARQUIVOS`,
+    subject: st === 'approved'
+      ? assuntoVenda({ amount, itens: itemsList, metodo: selectedPaymentMethod === 'bank_transfer' ? 'PIX' : 'cartão', pedido })
+      : st === 'pending'
+        ? assuntoPix({ amount, itens: itemsList })
+        : st === 'in_process'
+          ? assuntoAnalise({ amount, itens: itemsList })
+          : `${statusLabel} ${reais(amount)} · ${itemsList}`,
     html: notifHtml,
   };
 
@@ -403,15 +411,21 @@ export async function onRequestPost({ request, env }) {
       contractHtml = contratoHtml({ name, cpf, email, items: itemsForEmail, category: categoryLabel, amount, paymentId: payment.id, termsTimestamp: termsAcceptance.timestamp, artistName, naHora });
     } catch (e) { console.error('[contrato] Erro:', e.message); }
 
-    // Envia email de notificação ao dono (com contrato em anexo)
+    // Envia email de notificação ao dono (com contrato em anexo). Aprovado na hora: anota que já
+    // avisou (o webhook não repete); falhou: anota a falha (o de hora em hora tenta de novo e o Hoje mostra).
     try {
       await sendNotificationEmail({ env, payment, name, artistName, email, cpf, itemsList: itemsForEmail, categoryLabel, couponCode, amount, selectedPaymentMethod, termsAcceptance, contractHtml, pedido });
-    } catch (e) { console.error('[email] Erro notificação:', e.message); }
+      if (payment.status === 'approved') { try { await anotarAviso(await db(env), payment.id, 'ok'); } catch (_) { /* o webhook confere */ } }
+    } catch (e) {
+      console.error('[email] Erro notificação:', e.message);
+      if (payment.status === 'approved') { try { await anotarFalha(await db(env), payment.id, { valor: amount, itens: itemsForEmail, erro: e.message }); } catch (_) { /* segue */ } }
+    }
 
     // Envia email de confirmação de pedido ao comprador (apenas quando aprovado)
     if (payment.status === 'approved') {
       try {
         await enviarEmailComprador(env, { name, artistName, email, itemsList: itemsForEmail, contractHtml, pedidoUrl: pedido ? pedido.url : null, pedidoTudo: !!(pedido && pedido.tudo), pedidoTipo: pedido ? pedido.tipo : null, naHora });
+        try { await anotarAviso(await db(env), payment.id, 'c'); } catch (_) { /* segue */ }
       } catch (e) { console.error('[email] Erro confirmação comprador:', e.message); }
     }
 

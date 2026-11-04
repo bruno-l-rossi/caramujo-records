@@ -14,6 +14,16 @@
     '.gv-topo .sw{border-bottom:0;padding:12px 0 8px}',
     '.gv-topo a{font-size:13px;color:var(--ink2);text-underline-offset:3px}',
     '.gv-img{display:flex;align-items:center;gap:12px;background:#101010;border:1px solid var(--borda);border-radius:14px;padding:12px 14px;margin-bottom:16px}',
+    // 04/11/2026: o bloco Manutenção (fotos, plays e ordem), fechado no fim da página
+    '.gv-manut{margin:22px 0 8px;border-radius:16px;background:var(--s1,#131313);padding:4px 14px}',
+    '.gv-manut summary{list-style:none;cursor:pointer;padding:12px 0;display:flex;flex-direction:column;gap:3px}',
+    '.gv-manut summary::-webkit-details-marker{display:none}',
+    '.gv-manut summary b{font-size:15px;font-weight:650}',
+    '.gv-manut summary b::after{content:" ›";color:var(--ink3)}',
+    '.gv-manut[open] summary b::after{content:" ⌄"}',
+    '.gv-manut summary small{font-size:12.5px;color:var(--ink3)}',
+    '.gv-manut summary em{font-style:normal;color:var(--at,#e0b155)}',
+    '.gv-manut[open]{padding-bottom:12px}',
     '.gv-img div{flex:1;min-width:0}',
     '.gv-img b{display:block;font-size:14px;font-weight:600}',
     '.gv-img small{display:block;margin-top:3px;font-size:12.5px;color:var(--ink4);line-height:1.4}',
@@ -108,7 +118,7 @@
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {})
     }).then(function (r) { return r.json(); }).catch(function () { return { erro: 'Sem conexão. Tenta de novo.' }; });
   }
-  var verOrdem = false, verPlays = false;
+  var verOrdem = false, verPlays = false, verManut = false;   // verManut (04/11/2026): o bloco Manutenção aberto
   /* Plays (17/10/2026, rodada N): o Spotify só mostra os plays pra quem está logado, e o servidor
      não loga. Então quem lê é o navegador do Bruno: o atalho "Plays Caramujo" (favorito) roda dentro
      do open.spotify.com, abre cada música da lista como uma pessoa faria (uma por vez, ~1 s cada),
@@ -215,10 +225,12 @@
       '</small></div><button class="toggle" type="button" id="gvNoAr" aria-pressed="' + !!dados.noAr + '" aria-label="Quem já gravou no ar"><i></i></button></div>' +
       '<a href="' + PAGINA + '" target="_blank" rel="noopener">Ver ' + (dados.noAr ? 'a página' : 'a prévia') + ' ↗</a></div>';
     h += blocoAdicionar();
-    h += '<div class="gv-img"><div><b>Fotos, capas e ouvintes</b><small>' + (dados.faltam ? (buscando ? 'buscando no Spotify… faltam ' + dados.faltam : 'faltam ' + dados.faltam + ' (fotos, capas das faixas e ouvintes mensais). Sem foto, a página mostra as iniciais.') : 'Tudo guardado no nosso servidor' + (dados.atualizado ? ' (' + new Date(dados.atualizado).toLocaleDateString('pt-BR') + ')' : '') + '. Toca em Atualizar quando um artista trocar a foto ou pra ler os ouvintes do mês.') + '</small></div>' +
+    // 04/11/2026 (revisão do painel, item 15): a lista vem logo depois do No ar e do Adicionar; fotos, plays e
+    // ordem da página moram no bloco Manutenção, fechado (abre sozinho quando falta foto ou capa)
+    var manut = '<div class="gv-img"><div><b>Fotos, capas e ouvintes</b><small>' + (dados.faltam ? (buscando ? 'buscando no Spotify… faltam ' + dados.faltam : 'faltam ' + dados.faltam + ' (fotos, capas das faixas e ouvintes mensais). Sem foto, a página mostra as iniciais.') : 'Tudo guardado no nosso servidor' + (dados.atualizado ? ' (' + new Date(dados.atualizado).toLocaleDateString('pt-BR') + ')' : '') + '. Toca em Atualizar quando um artista trocar a foto ou pra ler os ouvintes do mês.') + '</small></div>' +
       '<button class="pill' + (dados.faltam ? ' solid' : '') + '" type="button" id="gvImg"' + (buscando ? ' disabled' : '') + '>' + (buscando ? 'Buscando…' : dados.faltam ? 'Buscar' : 'Atualizar') + '</button></div>';
     var nFx = Object.keys(dados.faixas || {}).length;
-    h += '<div class="gv-pl"><div class="gv-pl-topo"><div><b>Plays das músicas</b><small>' + (dados.playsEm ? 'Lidos em ' + quando(dados.playsEm) + '.' : 'Os da varredura de 17/10/2026.') + ' As músicas de cada artista aparecem das mais tocadas pras menos.</small></div>' +
+    manut += '<div class="gv-pl"><div class="gv-pl-topo"><div><b>Plays das músicas</b><small>' + (dados.playsEm ? 'Lidos em ' + quando(dados.playsEm) + '.' : 'Os da varredura de 17/10/2026.') + ' As músicas de cada artista aparecem das mais tocadas pras menos.</small></div>' +
       '<button class="pill" type="button" data-plays="1" aria-expanded="' + verPlays + '">' + (verPlays ? 'Fechar' : 'Atualizar plays') + '</button></div>' +
       (verPlays ? '<ol><li><b>Uma vez só:</b> arraste este botão pra barra de favoritos do navegador.<br><a class="gv-atalho" href="' + esc(codigoAtalho(Object.keys(dados.faixas || {}))) + '" onclick="event.preventDefault();return false">Plays Caramujo</a><br><small>Se a lista de músicas mudar, arraste de novo (o atalho leva a lista de hoje: ' + nFx + ' músicas).</small></li>' +
         '<li>Abra o Spotify neste navegador, logado na sua conta.<br><a class="gv-sp" href="https://open.spotify.com/" target="_blank" rel="noopener">Abrir o Spotify ↗</a></li>' +
@@ -226,7 +238,7 @@
     // Ordem da página (17/10/2026): padrão por ouvintes ou a do Bruno (arrastar)
     var porId = {}; dados.artistas.forEach(function (a) { porId[a.id] = a; });
     var manual = !!dados.ordemManual;
-    h += '<div class="gv-ord"><div class="gv-ord-topo"><b>Ordem da página</b><div class="gv-ord-modo" role="group" aria-label="Ordem da página">' +
+    manut += '<div class="gv-ord"><div class="gv-ord-topo"><b>Ordem da página</b><div class="gv-ord-modo" role="group" aria-label="Ordem da página">' +
       '<button type="button" data-modo="ouvintes" aria-pressed="' + !manual + '">Por ouvintes (padrão)</button><button type="button" data-modo="manual" aria-pressed="' + manual + '">Na minha ordem</button></div></div>' +
       '<small>' + (manual ? 'Na sua ordem: segura a alça e arrasta. Salva sozinho. Artista novo entra no fim.' : 'Mais ouvintes mensais primeiro; diferença pequena, quem tem mais faixas. Arrastar um artista liga a sua ordem.') + '</small>' +
       '<button type="button" class="gv-ord-ver" data-verordem="1" aria-expanded="' + verOrdem + '">' + (verOrdem ? 'Esconder a lista' : 'Ver e arrastar a ordem (' + (dados.ordemPagina || []).length + ')') + '</button>' +
@@ -235,6 +247,8 @@
         return '<li data-id="' + esc(id) + '"><span class="gv-foto">' + (a.foto ? '<img src="' + esc(peq(a.foto)) + '" alt="" loading="lazy">' : esc(ini(a.nome))) + '</span><span class="t">' + esc(a.nome) + (a.ouvintes != null ? '<small>' + ouv(a.ouvintes) + '</small>' : '') + '</span>' +
           '<button class="gv-alca" type="button" aria-label="Mover ' + esc(a.nome) + ' (setas pra cima e pra baixo)">' + ALCA + '</button></li>';
       }).join('') + '</ol>' : '') + '</div>';
+    var abreManut = verManut || !!dados.faltam || buscando || verPlays || verOrdem;
+    var manutHtml = '<details class="gv-manut" id="gvManut"' + (abreManut ? ' open' : '') + '><summary><b>Manutenção</b><small>fotos, capas e ouvintes · plays das músicas · ordem da página' + (dados.faltam ? ' · <em>faltam ' + dados.faltam + '</em>' : '') + '</small></summary>' + manut + '</details>';
     h += '<div class="campo gv-busca"><input id="gvFiltro" type="search" placeholder="Buscar artista ou pasta" autocomplete="off" aria-label="Buscar artista" value="' + esc(filtro) + '"></div>';
     var solo = dados.artistas.filter(function (a) { return a.eu; }), outros = dados.artistas.filter(function (a) { return !a.eu; });
     var comPasta = outros.filter(function (a) { return a.pasta; }), feat = outros.filter(function (a) { return !a.pasta; });
@@ -243,7 +257,9 @@
     if (solo.length) h += '<div class="gv-sec"><b>Você</b><small>Seu cartão: as músicas em que você aparece como artista (solo, principal ou feat). A chave tira ele ou uma faixa da página.</small><ul class="gv-lista">' + solo.map(linhaArtista).join('') + '</ul></div>';
     h += '<div class="gv-sec"><b>Com pasta no Drive · ' + comPasta.length + '</b><small>Toque no nome pra ver as músicas. A chave tira da página.</small><ul class="gv-lista">' + comPasta.sort(ord).map(linhaArtista).join('') + '</ul></div>';
     h += '<div class="gv-sec"><b>Só participação · ' + feat.length + '</b><small>Cantaram junto nas faixas, mas não têm pasta no Drive.</small><ul class="gv-lista">' + feat.sort(ord).map(linhaArtista).join('') + '</ul></div>';
+    h += manutHtml;
     raiz.innerHTML = h;
+    var dm = $('gvManut'); if (dm) dm.addEventListener('toggle', function () { verManut = dm.open; });
     filtrar();
     var ol = $('gvOl'); if (ol) ligarOrdem(ol);
   }

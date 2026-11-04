@@ -3,7 +3,8 @@
  * POST /api/payment-webhook
  *
  * Quando pagamento é aprovado:
- *  1. Envia email de notificação ao dono (com contrato em anexo) — só PIX
+ *  1. Avisa o dono ("✅ VENDA") e o comprador, uma vez por pagamento: PIX e cartão que saiu da análise
+ *     (04/11/2026, _lib/avisovenda.js; o cartão aprovado na hora já foi avisado no create-payment)
  *  2. Marca os beats como vendidos no D1 (tabela beats)
  *  3. Conta o uso do cupom no D1 (tabela cupom_uso, um por pagamento)
  * Desde 24/09/2026 nada disso vira commit no GitHub: sem redeploy a cada venda
@@ -22,6 +23,7 @@ import { marcarVendidos, usarCupom, esquecerLoja } from '../_lib/loja.js';
 import { esquecerVitrine } from '../_lib/vitrine.js';
 import { contratoHtml, enviarEmailComprador } from '../_lib/emails.js';
 import { marcarPago, pedidoDoPagamento, entregaLigada } from '../_lib/pedidos.js';
+import { emailVendaAprovada, lerAvisos, anotarAviso, anotarFalha } from '../_lib/avisovenda.js';
 
 
 
@@ -29,103 +31,7 @@ import { marcarPago, pedidoDoPagamento, entregaLigada } from '../_lib/pedidos.js
 // ── E-mail interno "COMPRA CONFIRMADA" (pro dono) ─────────────────────────────
 // Dispara quando o pagamento é APROVADO.
 
-async function sendApprovalEmail({ env, payment, pedido = null }) {
-  const resendKey   = env.RESEND_API_KEY;
-  const notifyEmail = env.NOTIFY_EMAIL || 'rideblan33@gmail.com';
-  const fromEmail   = env.NOTIFY_FROM  || 'rideblan33@caramujorecords.com.br';
-
-  if (!resendKey) {
-    console.warn('[email] RESEND_API_KEY não configurado — skip.');
-    return;
-  }
-
-  const payer    = payment.payer || {};
-  const meta     = payment.metadata || {};
-  const name     = meta.buyer_name   || [payer.first_name, payer.last_name].filter(Boolean).join(' ') || '—';
-  const artistName = meta.buyer_artist || meta.buyer_name || name;
-  const email    = meta.buyer_email  || payer.email || '—';
-  const rawCpf   = meta.buyer_cpf    || payer.identification?.number || '—';
-  const cpf      = rawCpf.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') || rawCpf;
-  const amount   = payment.transaction_amount;
-  const methodMap = { bank_transfer: 'PIX', credit_card: 'Cartão de Crédito', debit_card: 'Cartão de Débito' };
-  const method   = methodMap[payment.payment_type_id] || payment.payment_type_id || '—';
-  const couponCode = meta.coupon_code || null;
-  const dataHora = new Date(payment.date_approved || payment.date_last_updated)
-    .toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-
-  // Usa items_display e category_label salvos no metadata durante create-payment
-  // (fallback para description caso o pagamento seja de versão anterior)
-  const rawDesc        = (payment.description || '—').replace('Caramujo Records — ', '');
-  const itemsDisplay   = meta.items_display   || rawDesc;
-  const categoryDisplay = meta.category_label || rawDesc;
-
-  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>
-  body{font-family:'Courier New',monospace;background:#14110d;color:#E8E0CF;margin:0;padding:24px 0;}
-  .wrap{max-width:560px;margin:0 auto;}
-  .bar{background:#b98f5e;height:4px;font-size:0;line-height:0;}
-  .hd{background:#1A1815;padding:24px;border:1px solid #332c22;border-bottom:none;}
-  .kick{font-size:.58rem;letter-spacing:.34em;text-transform:uppercase;color:#b98f5e;margin-bottom:8px;}
-  .hd h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:1.4rem;letter-spacing:.03em;color:#f2ecdf;text-transform:uppercase;}
-  .hd p{margin:6px 0 0;font-size:.7rem;color:#9e7c48;}
-  .bdy{background:#221e18;padding:24px;border:1px solid #332c22;border-top:none;}
-  .status{font-size:1rem;font-weight:700;margin-bottom:16px;padding:10px 14px;background:#1A1815;border-left:3px solid #b98f5e;color:#f2ecdf;}
-  .action{margin:20px 0;padding:14px 16px;background:#221e18;border:1px solid #A87B4A;border-left:4px solid #A87B4A;font-size:.82rem;line-height:1.7;color:#E8E0CF;}
-  .action strong{color:#c3a074;display:block;margin-bottom:4px;font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;}
-  table{width:100%;border-collapse:collapse;margin-bottom:16px;}
-  td{padding:7px 4px;font-size:.8rem;border-bottom:1px solid #2a241c;vertical-align:top;color:#E8E0CF;}
-  td:first-child{color:#c3a074;width:38%;white-space:nowrap;font-weight:700;}
-  .sect{color:#b98f5e;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;padding:12px 0 4px;border-top:1px solid #332c22;}
-  .ft{margin-top:24px;padding-top:16px;border-top:1px solid #332c22;font-size:.68rem;color:#9e7c48;text-align:center;}
-  </style></head><body><div class="wrap">
-  <div class="bar">&nbsp;</div>
-  <div class="hd"><div class="kick">// Caramujo Records</div><h1>Pagamento aprovado</h1><p>${dataHora}</p></div>
-  <div class="bdy">
-    <div class="status">APROVADO — R$ ${amount}</div>
-    ${pedido && pedido.tudo ? `<div class="action"><strong>Entregue na hora</strong>
-      Os arquivos já estão no <a href="${pedido.url}" style="color:#c3a074">link do pedido</a>, que foi pro e-mail de <strong style="color:#c3a074">${email}</strong>.<br/>
-      Itens: <strong style="color:#c3a074">${itemsDisplay}</strong>
-    </div>` : `<div class="action"><strong>Ação necessária</strong>
-      Envie os arquivos para <strong style="color:#c3a074">${email}</strong><br/>
-      Itens: <strong style="color:#c3a074">${itemsDisplay}</strong>${pedido ? `<br/>Os beats já foram no <a href="${pedido.url}" style="color:#c3a074">link do pedido</a>; os serviços ficam com você.` : ''}
-    </div>`}
-    <table>
-      <tr class="sect"><td colspan="2">PEDIDO</td></tr>
-      <tr><td>ID Pagamento</td><td>${payment.id}</td></tr>
-      <tr><td>Categoria</td><td>${categoryDisplay}</td></tr>
-      <tr><td>Itens</td><td>${itemsDisplay}</td></tr>
-      <tr><td>Valor Total</td><td>R$ ${amount}</td></tr>
-      <tr><td>Método</td><td>${method}</td></tr>
-      ${couponCode ? `<tr><td>Cupom</td><td>${couponCode}</td></tr>` : ''}
-      <tr class="sect"><td colspan="2">CLIENTE</td></tr>
-      <tr><td>Nome artístico</td><td>${artistName || '—'}</td></tr>
-      <tr><td>Nome</td><td>${name}</td></tr>
-      <tr><td>Email</td><td>${email}</td></tr>
-      <tr><td>CPF</td><td>${cpf}</td></tr>
-    </table>
-  </div>
-  <div class="ft">Caramujo Records · São Carlos, SP · @rideblan33</div>
-</div></body></html>`;
-
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${resendKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: `Caramujo Records <${fromEmail}>`,
-      to: [notifyEmail],
-      subject: pedido && pedido.tudo ? `✅ PAGO R$${amount} — ${itemsDisplay} — ENTREGUE NO LINK` : `✅ PAGO R$${amount} — ${itemsDisplay} — ENVIAR ARQUIVOS`,
-      html,
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Resend error: ${res.status} — ${err}`);
-  }
-  console.log(`[email] Notificação enviada para ${notifyEmail} via Resend`);
-}
+// O e-mail "✅ VENDA" pro Bruno mora em _lib/avisovenda.js desde 04/11/2026 (também usado de hora em hora).
 
 // ── Venda e cupom no banco ───────────────────────────────────────────────────
 
@@ -262,54 +168,49 @@ export async function onRequestPost({ request, env }) {
           visita: payment.metadata?.origem_visita, primeira: payment.metadata?.origem_primeira });
       } catch (oErr) { console.warn('[webhook] Origem da venda:', oErr.message); }
 
-      // ── Idempotência: evita processar o mesmo pagamento duas vezes ──────────
-      // O MP dispara o webhook múltiplas vezes para o mesmo evento de pagamento.
-      // Solução: marcamos o pagamento com webhook_processed=true via PUT no MP
-      // antes de executar qualquer ação. Se já estiver marcado, ignoramos.
-      if (payment.metadata?.webhook_processed === 'true') {
-        console.log(`[webhook] Pagamento ${payment.id} já processado anteriormente — sem emails de novo.`);
+      // ── Quem já foi avisado (04/11/2026, _lib/avisovenda.js) ──────────────────
+      // A meta 'avisos-venda' diz se o Bruno e o comprador já receberam o e-mail deste pagamento: vale
+      // pra PIX e pra cartão (o cartão que saiu da análise do Mercado Pago não era avisado). Se o banco
+      // não responder, vale a marca antiga no metadata do Mercado Pago (webhook_processed).
+      let avisos = null;
+      try { avisos = await lerAvisos(await db(env)); } catch (aErr) { console.warn('[webhook] Avisos no banco:', aErr.message); }
+      const marcaAntiga = payment.metadata?.webhook_processed === 'true';
+      const idS = String(payment.id);
+      const avisouDono = avisos ? avisos.ok.includes(idS) : marcaAntiga;
+      const avisouComprador = avisos ? avisos.c.includes(idS) : marcaAntiga;
+      if (avisouDono && avisouComprador) {
+        console.log(`[webhook] Pagamento ${payment.id} já avisado — sem e-mails de novo.`);
         return new Response(vendaFalhou ? 'db error' : 'ok', { status: vendaFalhou ? 500 : 200 });
       }
 
-      // Marca como processado ANTES de executar as ações (evita race condition)
-      try {
-        const patchRes = await fetch(`https://api.mercadopago.com/v1/payments/${payment.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${ACCESS_TOKEN}`,
-          },
-          body: JSON.stringify({
-            metadata: { ...payment.metadata, webhook_processed: 'true' },
-          }),
-        });
-        if (!patchRes.ok) {
-          console.warn(`[webhook] PUT metadata falhou (${patchRes.status}) — prosseguindo mesmo assim.`);
-        } else {
-          console.log(`[webhook] Pagamento ${payment.id} marcado como processado.`);
-        }
-      } catch (patchErr) {
-        console.warn(`[webhook] Erro ao marcar pagamento: ${patchErr.message} — prosseguindo.`);
-      }
-      // ── fim idempotência ────────────────────────────────────────────────────
-
-      // Emails só são enviados aqui para PIX — cartão já recebe os emails no create-payment
-      const isPix = payment.payment_type_id === 'bank_transfer';
-      console.log(`[webhook] isPix: ${isPix}`);
-
-      // 1. Email de notificação ao dono (somente PIX — cartão já enviou no create-payment)
-      if (isPix) {
+      // A marca no Mercado Pago segue (reserva pra quando o banco cair)
+      if (!marcaAntiga) {
         try {
-          await sendApprovalEmail({ env, payment, pedido });
+          const patchRes = await fetch(`https://api.mercadopago.com/v1/payments/${payment.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ACCESS_TOKEN}` },
+            body: JSON.stringify({ metadata: { ...payment.metadata, webhook_processed: 'true' } }),
+          });
+          if (!patchRes.ok) console.warn(`[webhook] PUT metadata falhou (${patchRes.status}) — prosseguindo mesmo assim.`);
+        } catch (patchErr) { console.warn(`[webhook] Erro ao marcar pagamento: ${patchErr.message} — prosseguindo.`); }
+      }
+
+      // 1. "✅ VENDA" pro Bruno: todo pagamento aprovado que ainda não foi avisado (PIX ou cartão)
+      if (!avisouDono) {
+        try {
+          await emailVendaAprovada({ env, payment, pedido });
+          try { await anotarAviso(await db(env), payment.id, 'ok'); } catch (_) { /* o de hora em hora confere */ }
         } catch (emailErr) {
           console.error('[webhook] Falha no email ao dono:', emailErr.message);
+          try { await anotarFalha(await db(env), payment.id, { valor: payment.transaction_amount, itens: payment.metadata?.items_display || '', erro: emailErr.message }); } catch (_) { /* segue */ }
         }
       }
 
-      // 2. Email de confirmação ao comprador (somente PIX — cartão já enviou no create-payment)
-      if (isPix) {
+      // 2. Confirmação pro comprador (o cartão aprovado na hora já recebeu no create-payment e está anotado)
+      if (!avisouComprador) {
         try {
           await sendBuyerConfirmationEmail({ env, payment, pedido });
+          try { await anotarAviso(await db(env), payment.id, 'c'); } catch (_) { /* segue */ }
         } catch (emailErr) {
           console.error('[webhook] Falha no email ao comprador:', emailErr.message);
         }

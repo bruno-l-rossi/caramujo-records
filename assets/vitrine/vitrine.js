@@ -1564,20 +1564,7 @@ try{
     if(linha) window.tocarBeat(linha.dataset.bid);
   });
 
-  // "Ouvir o catálogo": desce pro começo do catálogo e já toca a 1ª faixa da
-  // lista, do jeito que ela estiver (filtro, ordem). O play sai dentro do
-  // toque, senão o celular bloqueia o som. Sem vitrine (sem MP3), só desce.
-  window.ouvirCatalogo=function(ev){
-    try{
-      var sec=$('beats'); if(!sec) return true;
-      if(ev&&ev.preventDefault) ev.preventDefault();
-      var linha=document.querySelector('#beatCards .item');
-      if(linha && String(atual)!==String(linha.dataset.bid)) window.tocarBeat(linha.dataset.bid);
-      else if(linha && som.paused) som.play().catch(nada);
-      sec.scrollIntoView({behavior:'smooth',block:'start'});
-      return false;
-    }catch(_){ return true; }
-  };
+  // (o "Ouvir os beats" do hero, window.ouvirCatalogo, saiu com o hero em 04/11/2026: a 1ª linha já está na 1ª tela)
 
 
 
@@ -1595,6 +1582,19 @@ try{
     var av=$('foraAr'); if(av && !av.dataset.lista) av.remove();
     if(typeof renderCards==='function') renderCards();
     repintar();
+    setTimeout(aquecerPrimeiro,300);
+  }
+  // 04/11/2026 (oportunidade 1, escolha do Bruno): o começo do 1º beat da lista chega enquanto a abertura
+  // roda (ou logo depois da lista, sem abertura). Um <audio> à parte, mudo, com preload=metadata: o navegador
+  // baixa só o começo, a conexão com o som.caramujorecords.com.br fica aberta e a borda da Cloudflare já tem o
+  // arquivo quando o ▶ pede. Uma vez por página; economia de dados ou 2G = não baixa nada.
+  function aquecerPrimeiro(){
+    if(window.__aquecido) return;
+    try{ var c=navigator.connection; if(c&&(c.saveData||/(^|-)2g$/.test(c.effectiveType||''))) return; }catch(_){}
+    var linha=document.querySelector('#beatCards .item'); if(!linha) return;
+    var f=fonte(linha.dataset.bid); if(!f||!f.mp3||atual!==null) return;
+    window.__aquecido=f.mp3;
+    try{ var a=new Audio(); a.muted=true; a.preload='metadata'; a.src=f.mp3; window.__aquece=a; }catch(_){}
   }
   function avisoForaDoAr(){
     if($('foraAr')) return;

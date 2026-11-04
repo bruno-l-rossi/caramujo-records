@@ -192,19 +192,41 @@ Nenhuma das duas leva texto de cupom. Desenho em `assets/story.js` (artePerfil, 
 
 ## Números do site (desde 27/09/2026)
 
-Artistas, faixas e streams mudam no painel (home, "Números do site") e aparecem no hero
-da vitrine ("2,5 mi de streams", curto, desde 02/11/2026), no topo do perfil e na prévia do perfil
+Artistas, faixas e streams mudam no painel (home, "Números do site") e aparecem no topo
+da vitrine ("2,5 mi de streams", curto, desde 02/11/2026; no hero até 04/11/2026), no topo do perfil e na prévia do perfil
 nas redes ("2,5 mi de streams", curto), nos dados pro Google ("2,5 milhões") e no
 `/llms.txt`, o resumo pras IAs (número cheio). Sempre com o
 "+" depois. A imagem da prévia do perfil (`rideblan33-og-2.jpg`) não tem números desenhados.
 
-## @rideblan33 no hero (desde 27/09/2026; frase nova em 02/11/2026)
+## @rideblan33 na frase da tag (desde 27/09/2026; frase nova em 02/11/2026; no topo desde 04/11/2026)
 
 Desde 02/11/2026 o link mora na frase da tag: "Atenção! Você está ouvindo um beat do @rideblan33 ›".
 O @ é o link do perfil, igual ao das tapes: creme, sublinhado discreto e a setinha, que anda no hover.
-A frase do estúdio ("Beats exclusivos, mixagem e masterização por...") saiu.
+A frase do estúdio ("Beats exclusivos, mixagem e masterização por...") saiu. Desde 04/11/2026 a frase mora no
+topo (abaixo), com o `data-de="hero"` de sempre pra origem.
 
-## Hero curto, H1 (desde 02/11/2026)
+## Topo T4 compacto (desde 04/11/2026, escolha do Bruno)
+
+O hero saiu. No lugar, a tag de manchete do tamanho do T1 (o mockup de 03/11), sem botão nenhum (o Mix & master
+saiu; os serviços seguem no ☰ e no fim da lista): "Atenção!" em Cormorant 500 itálico, `cream`, 2.8rem no celular e
+4.2rem no computador, com line-height .95; embaixo "Você está ouvindo um beat do @rideblan33 ›" em `amber`, 1.15rem
+e 1.5rem; e os números numa linha em IBM Plex Mono .64rem, `fosco` com o número em `bone` (no celular embaixo, com
+um fio `wire` em cima; no computador à direita, alinhados ao pé da frase). A espiral sépia fica de marca d'água à
+direita, a 9%. Fundo `black` e fio `wire` embaixo. O h1 é só pro Google e pro leitor de tela ("Caramujo Records:
+beats exclusivos, mix e master por @rideblan33"). 1º beat em ~432px no celular e ~458px no computador.
+
+## Abertura M3 (desde 04/11/2026, escolha do Bruno)
+
+A 1ª visita da aba abre com uma cortina `black` com o brilho de terra no meio (`rgba(74,56,32,.42)`, o mesmo tom do
+brilho do hero antigo). A tag aparece palavra por palavra, já no tamanho e na cor do topo (uma a cada 150 ms, 260 ms
+cada, subindo 8px). Aos 1,15 s a espiral se desenha em cima (traço `cream` de 3.4 em 100, 650 ms) e aos 1,5 s entra o
+nome (o `caramujo-wordmark.svg`), no desenho do logo do menu. Aos 2,15 s os dois voam juntos por 600 ms
+(`cubic-bezier(.65,0,.25,1)`): o logo encolhe até o logo do menu e as 2 linhas da frase pousam no topo, enquanto a
+cortina some. Tudo dura ~2,8 s, uns 450 ms a mais que o esboço, pra dar tempo de ler. Não abre com #link, ?cupom=,
+volta de e-mail (?de=lista, lembrete, salvos, painel, pedido, recuperar), "reduzir movimento", aba escondida nem pra
+navegador automatizado. Toque, tecla ou rolagem pulam. Sem o script, a cortina sai sozinha aos 4,6 s.
+
+## Hero curto, H1 (02/11/2026 a 04/11/2026, saiu pro topo T4)
 
 O hero fica só com a marca, no fundo de sempre (preto, brilho de terra, espiral sépia à direita):
 olho "São Carlos, SP · desde 2018", o logo (600px no computador, 300px no celular), a frase da tag,
@@ -345,7 +367,7 @@ quadro "Esse beat já tem dono" (vendido) desce na direita. No celular nada muda
 
 
 ## Hero da vitrine com o logo (17/10/2026, rodada N)
-O nome do hero é o logo: `assets/brand/caramujo-wordmark.svg`, a letra do `caramujo-v.webp` vetorizada (CARAMUJO #eae2d0, RECORDS #ab7d4c espaçado e alinhado à esquerda, como no `caramujo-h`). Desde 02/11/2026 (hero H1) tem 600px no computador e 300px no celular. O texto fica no alt do h1.
+O nome do hero é o logo: `assets/brand/caramujo-wordmark.svg`, a letra do `caramujo-v` vetorizada (CARAMUJO #eae2d0, RECORDS #ab7d4c espaçado e alinhado à esquerda, como no `caramujo-h`). Desde 02/11/2026 (hero H1) tem 600px no computador e 300px no celular. O texto fica no alt do h1. Desde 04/11/2026 o hero saiu e o wordmark entra na abertura (ver Abertura M3).
 
 ## Ajuda na página do beat (17/10/2026, rodada O)
 Botão-pílula creme "AJUDA" fixo no canto de baixo à direita (46px, ícone de balão com ?), sobe 66px quando a barra do tocador aparece. Abre uma folha (celular: de baixo, largura toda; computador: 380px acima do botão) com título em Cormorant "Dúvida sobre o <beat>?", o texto "Dúvidas sobre licença, entrega, ajustes no beat, etc." e um botão só: "Direct no Instagram" (@rideblan33). Sem WhatsApp no site.

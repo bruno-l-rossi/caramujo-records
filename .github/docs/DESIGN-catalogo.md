@@ -222,3 +222,20 @@ Master branco cheio, Beat personalizado com borda branca a 50%).
 
 Fique por dentro da tape: 42px entre o fim dos beats e a caixa e 42px entre a caixa e o "Mais de"
 (a medida conta o respiro da lista e do título).
+
+## Painel (revisão de 04/11/2026)
+
+O painel segue preto, com a Schibsted Grotesk e o branco no botão principal. Superfícies: `#131313` (`--s1`, cartões
+e o seletor), `#1b1b1b` (`--s2`) e `#242424` (`--s3`, botão comum), fio `#1f1f1f` (`--linha`). Texto `#fff`,
+`#b7b7b7`, `#8a8a8a` e `#6a6a6a` (`--ink` a `--ink4`). Duas cores, e só pra isso:
+- `#e0b155` âmbar (`--at`): "precisa de você". Bolinha com número na barra e nas abas, ícone da tarefa, PIX pendente,
+  "falta o gênero". Nunca enfeite.
+- `#e08d7e` vermelho (`--erro`): só o que apaga ou dá erro (Tirar do site, Tirar mesmo?, erro de campo).
+
+Hoje: o cartão da semana (R$ dos últimos 7 dias em 44px peso 800, a % contra os 7 de antes numa pílula, vendas,
+visitas, quanto % comprou e as barras por dia), o "Precisa de você" com o botão da ação na própria linha (Entregar,
+Publicar, Revisar, Já vi), as 4 últimas vendas com o estado em chip e 4 atalhos. No computador, 2 colunas.
+Abas com o nome do que guardam (No site, Pra publicar, Tapes, Artistas) e um seletor só pra todo filtro (`.seg`).
+Folha do beat no computador vira gaveta de 440px à direita. Busca única na lupa do topo (⌘K no computador).
+O banco só aparece no Hoje passando de 80% do dia; o número mora em Ajustes, junto do E-mail do mês.
+

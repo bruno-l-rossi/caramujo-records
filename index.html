@@ -27,7 +27,7 @@
 <script>/* capa-volta */window.addEventListener("error",function(e){var t=e.target;if(!t||t.tagName!=="IMG"||t.__volta)return;var m=/^https:\/\/som\.caramujorecords\.com\.br\/capa\/([A-Za-z0-9_-]+?)(?:-(p|m))?\.jpg$/.exec(t.currentSrc||t.src||"");if(!m)return;t.__volta=1;t.removeAttribute("srcset");t.src="/capa/"+m[1]+(m[2]?"?"+m[2]:"")},true);</script>
 <!-- Fontes servidas daqui mesmo (subset latin, licença OFL em assets/fonts/).
      Antes vinham do Google: 2 domínios a mais pra resolver e um CSS que
-     segurava a primeira pintura. As 3 de cima são as que o hero usa.
+     segurava a primeira pintura. As 3 de cima são as que o topo e a abertura usam.
      03/11/2026: a vitrine ficou com 4 arquivos (o 400 normal e o 400 itálico saíram; o 500 faz o papel deles). -->
 <link rel="preload" href="/assets/fonts/cormorant-garamond-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin/>
 <link rel="preload" href="/assets/fonts/cormorant-garamond-latin-500-italic.woff2" as="font" type="font/woff2" crossorigin/>
@@ -35,7 +35,9 @@
 <!-- a lista com o endereço de cada MP3 e as capas (03/10/2026): o pedido sai junto com
      a página, em vez de esperar o HTML inteiro ser lido. Mesmo pedido do carregarVitrine. -->
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.min.css?v=1ced63dc1d">
+<!-- 04/11/2026: o áudio e as capas saem do som.caramujorecords.com.br; a conexão abre junto com a página -->
+<link rel="preconnect" href="https://som.caramujorecords.com.br"/>
+<link rel="stylesheet" href="/assets/vitrine/vitrine.min.css?v=ee6c5cc66e">
 
 
 <link rel="canonical" href="https://caramujorecords.com.br"/>
@@ -44,6 +46,42 @@
 </script>
 </head>
 <body>
+<!-- Abertura (04/11/2026, M3): monta a cortina antes da 1ª pintura. Quando roda, os tempos e a rede de segurança
+     estão no CSS (═══ ABERTURA, assets/vitrine/vitrine.css). Nada da página depende dela. -->
+<script>/* abertura */(function(){
+var D=document,H=D.documentElement,o=null,vai=0,tv=0,tf=0,EV=['pointerdown','keydown','wheel','touchstart'];
+function tirar(){EV.forEach(function(e){removeEventListener(e,pula,true);});}
+function fim(){tirar();H.classList.remove('abre');if(o&&o.parentNode)o.parentNode.removeChild(o);o=null;}
+function pula(){if(!o)return;clearTimeout(tv);clearTimeout(tf);tirar();var x=o;o=null;x.style.transition='opacity .18s';x.style.opacity='0';H.classList.remove('abre');setTimeout(function(){if(x.parentNode)x.parentNode.removeChild(x);},400);}
+function voa(){
+  if(!o)return;if(!o.animate){pula();return;}
+  var op={duration:600,easing:'cubic-bezier(.65,0,.25,1)',fill:'forwards'},lg=o.querySelector('.ab-logo'),nv=D.querySelector('.nav-logo img');
+  if(nv){var a=lg.getBoundingClientRect(),b=nv.getBoundingClientRect();lg.animate([{transform:'none'},{transform:'translate('+(b.left-a.left)+'px,'+(b.top-a.top)+'px) scale('+(b.width/a.width)+')'}],op);}
+  else lg.animate([{opacity:1},{opacity:0}],op);
+  var li=o.querySelectorAll('.ab-l'),de=o.querySelectorAll('.ab-alvo'),pra=D.querySelectorAll('#topo .ab-alvo');
+  for(var i=0;i<li.length;i++){var r=pra[i]?pra[i].getClientRects():[],c=de[i].getBoundingClientRect();
+    if(r.length===1)li[i].animate([{transform:'none'},{transform:'translate('+(r[0].left-c.left)+'px,'+(r[0].top-c.top)+'px)'}],op);
+    else li[i].animate([{opacity:1},{opacity:0}],op);}
+  o.querySelector('.ab-fundo').animate([{opacity:1},{opacity:0}],{duration:520,delay:60,easing:'ease-in',fill:'forwards'});
+  tf=setTimeout(fim,640);
+}
+function comeca(){if(!o||vai)return;vai=1;o.classList.add('vai');tv=setTimeout(voa,2150);}
+try{
+  var L=location;
+  if(L.hash||/[?&](cupom=|de=(lista|lembrete|salvos|painel|pedido|recuperar))/i.test(L.search)||D.visibilityState==='hidden'||(navigator.webdriver&&!window.__abertura)||sessionStorage.getItem('cr_abertura')||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  sessionStorage.setItem('cr_abertura','1');
+  var cel=innerWidth<901,lg=cel?290:520,al=lg*22/122,es=al*1.02,k=0;
+  var pal=function(t,c){return '<span class="ab-p'+(c||'')+'" style="animation-delay:'+(150*k++)+'ms">'+t+'</span>';};
+  o=D.createElement('div');o.id='abertura';o.setAttribute('aria-hidden','true');
+  o.innerHTML='<div class="ab-fundo"></div><div class="ab-logo" style="width:'+lg+'px;height:'+al+'px"><svg class="ab-esp" viewBox="0 0 100 100" style="width:'+es+'px;height:'+es+'px;top:'+(-al*.01)+'px"><path pathLength="1" transform="rotate(180 50 50)" d="M50 51.3 L49.8 51.3 L49.5 51.3 L49.2 51.3 L48.9 51.2 L48.6 51.1 L48.4 50.9 L48.1 50.6 L47.9 50.3 L47.7 49.9 L47.6 49.4 L47.6 49 L47.7 48.5 L47.9 47.9 L48.2 47.4 L48.6 47 L49.1 46.6 L49.7 46.3 L50.4 46.1 L51.1 46 L51.9 46.1 L52.7 46.3 L53.5 46.7 L54.2 47.3 L54.9 48 L55.4 48.8 L55.8 49.8 L56 50.9 L55.9 52 L55.7 53.2 L55.2 54.3 L54.5 55.4 L53.6 56.3 L52.5 57.1 L51.3 57.7 L49.9 58.1 L48.4 58.2 L46.8 58.1 L45.3 57.6 L43.8 56.9 L42.4 55.8 L41.2 54.5 L40.3 52.9 L39.6 51.2 L39.3 49.3 L39.3 47.3 L39.7 45.3 L40.4 43.4 L41.5 41.5 L43 39.9 L44.8 38.5 L46.9 37.4 L49.1 36.8 L51.6 36.5 L54 36.7 L56.5 37.3 L58.9 38.4 L61.1 40 L63 41.9 L64.5 44.3 L65.7 46.9 L66.3 49.8 L66.4 52.7 L66 55.8 L65 58.7 L63.5 61.5 L61.5 64 L59 66.1 L56 67.8 L52.8 69 L49.3 69.5 L45.8 69.5 L42.2 68.8 L38.8 67.4 L35.6 65.4 L32.8 62.8 L30.4 59.6 L28.6 56.1 L27.5 52.2 L27.1 48.1 L27.4 43.9 L28.5 39.8 L30.4 35.9 L32.9 32.3 L36.2 29.2 L39.9 26.7 L44.2 24.9 L48.8 23.9 L53.5 23.7 L58.3 24.3 L62.9 25.9 L67.3 28.2 L71.2 31.4 L74.6 35.3 L77.2 39.8 L79 44.8 L79.9 50 L79.8 55.5 L78.8 60.9 L76.7 66.1 L73.7 70.9 L69.9 75.1 L65.3 78.7 L60 81.3 L54.3 83.1 L50.3 83.6"/></svg>'+
+    '<img class="ab-nome" src="/assets/brand/caramujo-wordmark.svg" alt="" style="width:'+lg*.75+'px;left:'+lg*.245+'px;top:'+al*.08+'px"></div>'+
+    '<p class="topo-a ab-l"><span class="ab-alvo">'+pal('Atenção!')+'</span></p>'+
+    '<p class="topo-b ab-l"><span class="ab-alvo">'+'Você está ouvindo um beat do'.split(' ').map(function(t){return pal(t);}).join(' ')+' '+pal('@rideblan33<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',' hero-at')+'</span></p>';
+  H.classList.add('abre');D.body.insertBefore(o,D.body.firstChild);
+  EV.forEach(function(e){addEventListener(e,pula,{capture:true,passive:true});});
+  if(D.fonts&&D.fonts.load){D.fonts.load('italic 500 1em "Cormorant Garamond"').then(comeca,comeca);setTimeout(comeca,700);}else comeca();
+}catch(e){fim();}
+})();</script>
 
 <!-- NAV -->
 <nav>
@@ -64,37 +102,20 @@
   </div>
 </nav>
 
-<!-- ═══ HERO ══════════════════════════════════════════ -->
+<!-- ═══ TOPO ══════════════════════════════════════════ -->
 <main id="conteudo">
-<!-- 02/11/2026 (H1, escolha do Bruno): o hero encurta e fica só com a marca: olho, logo, a frase da tag com o
-     @rideblan33 que leva pro perfil (sublinhado e seta, como era na frase do estúdio), Ouvir os beats, Mix & master e
-     os números numa linha. Saíram o beat em destaque e a frase do estúdio; o catálogo aparece na 1ª tela. -->
-<section id="hero">
-  <div class="hero-glow"></div>
-  <div class="hero-logo-wrap">
-    <img class="hero-mark" width="400" height="400" src="assets/brand/selo-sepia.svg" alt=""/>
-  </div>
-  <div class="hero-edge"></div>
-
-  <div class="hero-content">
-    <div class="hero-eyebrow"><span class="rec"></span>São Carlos, SP · desde 2018</div>
-
-    <!-- 17/10/2026 (rodada N): o nome do hero é o logo (caramujo-wordmark.svg, a letra do caramujo-v
-         vetorizada), pra não destoar da marca. O alt mantém o texto do h1 pro Google. -->
-    <h1 class="hero-title"><img class="hero-wm" src="/assets/brand/caramujo-wordmark.svg" alt="Caramujo Records" width="640" height="129" fetchpriority="high"></h1>
-
-    <p class="hero-lede">Atenção! Você está ouvindo um beat do <a class="hero-at" href="/rideblan33" data-de="hero" aria-label="Portfólio do @rideblan33">@rideblan33<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a></p>
-
-    <div class="hero-ctas">
-      <a class="hero-ouvir" href="#beats" onclick="return window.ouvirCatalogo?window.ouvirCatalogo(event):true"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>Ouvir os beats</a>
-      <a class="hero-mix" href="#services">Mix &amp; master</a>
-    </div>
-
-    <p class="hero-proof"><span><b data-num="artistas">40+</b> artistas</span> · <span><b data-num="faixas">200+</b> faixas</span> · <span><b data-num="streams">2,5 mi</b> de streams</span></p>
+<!-- 04/11/2026 (escolha do Bruno): o hero saiu. No lugar, a tag de manchete (T4 compacto, sem o Mix & master) e os
+     números numa linha. A abertura (o script logo depois do <body>) escreve a tag no meio da tela, o logo assina em
+     cima e os dois voam: o logo pro menu e a frase pra cá (os .ab-alvo são onde ela pousa). O h1 segue com o nome
+     da marca pro Google e pro leitor de tela; os números (data-num) seguem trocados pelo functions/index.js. -->
+<section id="topo" class="topo">
+  <img class="topo-selo" src="assets/brand/selo-sepia.svg" alt="" width="400" height="400" aria-hidden="true">
+  <h1 class="so-leitor">Caramujo Records: beats exclusivos, mix e master por @rideblan33</h1>
+  <div class="topo-in">
+    <p class="topo-tag"><span class="topo-a"><span class="ab-alvo">Atenção!</span></span> <span class="topo-b"><span class="ab-alvo">Você está ouvindo um beat do <a class="hero-at" href="/rideblan33" data-de="hero">@rideblan33<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a></span></span></p>
+    <p class="topo-n"><span><b data-num="artistas">40+</b> artistas</span> · <span><b data-num="faixas">200+</b> faixas</span> · <span><b data-num="streams">2,5 mi</b> de streams</span></p>
   </div>
 </section>
-
-<div class="hr"></div>
 
 <!-- ═══ BEATS DISPONÍVEIS (merged) ══════════════════ -->
 <section id="beats" class="s s-earth">
@@ -471,7 +492,7 @@ const PIX_OFF=5; // % de desconto no PIX (17/10/2026); o servidor lê daqui e co
 const LEVE_MAIS={'2':218,'3':297,'+':79};
 const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':'Hood Trap','experimental':'Experimental','detroit':'Detroit','drumless':'Drumless','hard':'Hard','funk':'Funk','pluggnb':'Pluggnb','drill':'Drill','nomelody':'No Melody','bounce':'Bounce'};
 </script>
-<script src="/assets/vitrine/vitrine.min.js?v=3c09bf6236"></script>
+<script src="/assets/vitrine/vitrine.min.js?v=682c646670"></script>
 <!-- leva-de -->
 <script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
 (function(){
