@@ -1419,3 +1419,6 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .eu-foto::after{background:linear-gradient(90deg,var(--black) 0%,rgba(20,17,13,.55) 38%,rgba(20,17,13,.15) 100%)}
 .eu-card .eu-anel,.eu-card .eu-tx{margin-top:0}.eu-card .eu-tx{max-width:440px}
 .eu-anel{width:116px;height:116px}.eu-tx b{font-size:2.3rem}.eu-p{font-size:.86rem}}
+
+/* rodada AF (04/11/2026): a lista dos beats que o servidor manda no HTML (functions/_lib/prebeats.js); com JS some */
+.pre-beats{max-width:960px;margin:0 auto;padding:1rem;font-size:.85rem;line-height:1.7;color:var(--read)}.pre-beats p{margin:0 0 .5rem;color:var(--label);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase}.pre-beats ul{list-style:none;margin:0;padding:0;columns:2}.pre-beats a{color:var(--cream)}.pre-beats span{color:var(--dim)}html.js .pre-beats{display:none}

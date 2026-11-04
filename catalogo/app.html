@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<script>/* js-classe */document.documentElement.className+=' js'</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <meta name="color-scheme" content="dark">
@@ -492,6 +493,8 @@ __META__
     .veil{align-items:center}
     .card{border-radius:20px}
   }
+/* rodada AF (04/11/2026): a lista dos beats que o servidor manda no HTML (functions/_lib/prebeats.js); com JS some */
+.pre-beats{padding:16px 20px;font:14px/1.6 'Helvetica Neue',Helvetica,Arial,sans-serif;color:#b89e72}.pre-beats p{margin:0 0 8px;color:#9e7c48;font-size:12px;letter-spacing:.14em;text-transform:uppercase}.pre-beats ul{list-style:none;margin:0;padding:0}.pre-beats a{color:#f2ecdf}.pre-beats span{color:#6f6757}html.js .pre-beats{display:none}
 </style>
 <!--TOPO_CSS-->
 </head>
@@ -576,6 +579,8 @@ __META__
         <strong id="selCount">0 faixas</strong>
       </div>
 
+      <!-- rodada AF (04/11/2026): numa tape o servidor põe aqui os links dos beats que têm página (functions/_lib/page.js); com JS ela some -->
+      <!--PRE-BEATS-->
       <div class="list" id="list"></div>
 
       <!-- Fique por dentro (12/10/2026): só na página de uma tape; o servidor (/api/lista) cria o cupom -->
@@ -842,6 +847,8 @@ __META__
   // (o mesmo que a vitrine restaura, conferindo preço e vendido), o número do topo sobe e um aviso de
   // 3 segundos oferece "Ver carrinho". A música segue tocando. Sem localStorage: a aba da vitrine de antes.
   var CARR='caramujo_carrinho_v1';
+  /* rodada AF (04/11/2026): carrinho de quem está na lista vai pro servidor (functions/_lib/carrinho.js, AVISA_JS) */
+  function avisaCarr(){try{var q=JSON.parse(localStorage.getItem('cr_avisa')||'null')||{},l=JSON.parse(localStorage.getItem('caramujo_lista_v1')||'null');if(l&&l.email)q.e=l.email;if(!q.e&&!q.c)return;var c=JSON.parse(localStorage.getItem('caramujo_carrinho_v1')||'null'),ids=((c&&c.itens)||[]).filter(function(x){return x&&x.type==='Beat'&&!x.stems&&x.beatId;}).map(function(x){return Number(x.beatId);}).sort(function(a,b){return a-b;}),s=ids.join('.');if(s===(q.s||''))return;fetch('/api/lista',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({carrinho:ids,email:q.e||undefined,cupom:q.c||undefined}),keepalive:true}).then(function(r){if(r.ok){q.s=s;localStorage.setItem('cr_avisa',JSON.stringify(q));}}).catch(function(){});}catch(_){}}
   var ICO_FEITO='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   function lerCarr(){
     try{ var c=JSON.parse(localStorage.getItem(CARR)||'null'); if(c&&Array.isArray(c.itens)&&Date.now()-(c.em||0)<7*864e5) return c; }catch(_){}
@@ -864,6 +871,7 @@ __META__
         c.itens.push({ id:Date.now(), beatId:Number(t.bid), name:t.title||'', price:119, orig:119, type:'Beat', stems:false });
       c.em=Date.now();
       localStorage.setItem(CARR, JSON.stringify(c));
+      setTimeout(avisaCarr,0);
       return noCarrinho(t);
     }catch(_){ return false; }
   }

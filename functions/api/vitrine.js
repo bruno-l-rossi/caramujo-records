@@ -127,6 +127,7 @@ async function montar(request, env) {
     return {
       id: b.id, name: b.name, slug: b.slug, bpm: b.bpm, key: b.key,
       genre: b.genre, genero: b.generoLabel || b.genre || '', sold: b.sold,
+      ...(b.em ? { em: b.em } : {}),
       mp3: f ? somUrl(f.id) : null,
       // capa = /capa/<id> (página do beat, painel, Google); capaP/capaM/capaG = os
       // endereços prontos pro navegador (miniatura, média e inteira), pelo R2

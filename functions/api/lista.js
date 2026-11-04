@@ -1,10 +1,12 @@
 // Lista de e-mails com cupom de 15% (11/10/2026; era 25% até 17/10, _lib/lista.js).
 //   POST /api/lista { email, de }   entra na lista; o cupom vai pro e-mail
 //   GET  /api/lista?sair=<token>     sai da lista (o link do rodapé do e-mail)
+//   POST /api/lista { carrinho: [ids], email | cupom }   o carrinho de quem está na lista (04/11, _lib/carrinho.js)
 import { db, json } from '../_lib/db.js';
 import { entrar, sair, enviarCupom, ipDe, esperaReenvio, REENVIO_S, PCT } from '../_lib/lista.js';
 import { paginaAviso } from '../_lib/pedidopagina.js';
 import { tapesDoPerfil } from '../_lib/perfil.js';
+import { guardarCarrinho } from '../_lib/carrinho.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -18,6 +20,11 @@ export async function onRequestPost(context) {
   if (!b || typeof b !== 'object') return json({ erro: 'pedido torto' }, 400);
   const d = await db(env);
   const ip = await ipDe(request, env.PAINEL_SENHA || '');
+  // rodada AF (04/11/2026): o carrinho de quem está na lista (pro e-mail de carrinho abandonado)
+  if (Array.isArray(b.carrinho)) {
+    try { return json(await guardarCarrinho(d, { email: b.email, cupom: b.cupom, ids: b.carrinho, ip })); }
+    catch (e) { console.error('[carrinho]', e && e.message); return json({ ok: true }); }
+  }
   // o lançamento de agora = a 1ª beat tape do perfil (rodada S): lançamento novo = cupom novo pra quem já está na lista
   let lanc = null;
   try { const t = await tapesDoPerfil(request, env); lanc = t && t[0] ? t[0].slug : null; } catch (_) { lanc = null; }

@@ -23,6 +23,7 @@ import { GENEROS, RODAPE_GENEROS, menuGeneros, CSS_RODAPE_GENEROS } from './gene
 import { slug } from './casar.js';
 import { CABECALHOS } from './cabecalhos.js';
 import { LEVA_DE, deAttr } from './origem.js';
+import { AVISA_JS } from './carrinho.js';
 import { topo, TOPO_CSS, TOPO_CSS_899, TOPO_CSS_CEL, TOPO_JS } from './topo.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -715,6 +716,8 @@ const JS = `(function(){
     });
   }
   try{ pintarCarrinho(); }catch(_){}
+  /* rodada AF (04/11/2026): carrinho de quem está na lista vai pro servidor (_lib/carrinho.js, AVISA_JS) */
+  ${AVISA_JS}
   /* Comprar sem sair da página (25/10/2026, de-para final, item 3): o botão grava o beat no carrinho
      guardado (o mesmo que a vitrine restaura, conferindo preço e vendido) e a pessoa segue aqui.
      Já no carrinho, o link abre o carrinho na vitrine. Sem localStorage, o link de sempre (/#add=). */
@@ -728,6 +731,7 @@ const JS = `(function(){
         c.itens.push({ id:Date.now(), beatId:bid, name:'', price:preco, orig:preco, type:'Beat', stems:false });
       c.em=Date.now();
       localStorage.setItem(CARR, JSON.stringify(c));
+      setTimeout(avisaCarr,0);
       if(JSON.parse(localStorage.getItem(CARR)||'null').itens.length!==c.itens.length) return;
     }catch(_){ return; }
     e.preventDefault();

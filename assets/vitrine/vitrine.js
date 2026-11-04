@@ -1915,6 +1915,22 @@ try{
 
 /* ─────────────────────────────────────────────────────────────── */
 try{
+/* ── CARRINHO QUE AVISA (04/11/2026, rodada AF) ─────────────────────
+   Quem está na lista (deu o e-mail numa beat tape ou chegou pelo cupom do e-mail) tem os ids dos beats
+   do carrinho guardados também no servidor. Carrinho parado ~20 h sem pedido = 1 e-mail (functions/_lib/
+   carrinho.js: 1 a cada 7 dias, e de novo só se mexer no carrinho depois disso). Quem não está na lista:
+   nada sai daqui. Nada do carrinho é reescrito: só embrulha o updateCart. O avisaCarr é o AVISA_JS do
+   carrinho.js, igual no catalogo/app.html e na página do beat. */
+(function(){
+  function avisaCarr(){try{var q=JSON.parse(localStorage.getItem('cr_avisa')||'null')||{},l=JSON.parse(localStorage.getItem('caramujo_lista_v1')||'null');if(l&&l.email)q.e=l.email;if(!q.e&&!q.c)return;var c=JSON.parse(localStorage.getItem('caramujo_carrinho_v1')||'null'),ids=((c&&c.itens)||[]).filter(function(x){return x&&x.type==='Beat'&&!x.stems&&x.beatId;}).map(function(x){return Number(x.beatId);}).sort(function(a,b){return a-b;}),s=ids.join('.');if(s===(q.s||''))return;fetch('/api/lista',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({carrinho:ids,email:q.e||undefined,cupom:q.c||undefined}),keepalive:true}).then(function(r){if(r.ok){q.s=s;localStorage.setItem('cr_avisa',JSON.stringify(q));}}).catch(function(){});}catch(_){}}
+  try{ var g=JSON.parse(localStorage.getItem('cr_cupom_email')||'null'); if(g&&/^LISTA-[A-Z0-9]{4}$/.test(g.c||'')){ var q=JSON.parse(localStorage.getItem('cr_avisa')||'null')||{}; if(q.c!==g.c){ q.c=g.c; localStorage.setItem('cr_avisa',JSON.stringify(q)); } } }catch(_){}
+  var t=null, uc=window.updateCart;
+  if(typeof uc==='function') window.updateCart=function(){ var r=uc.apply(this,arguments); clearTimeout(t); t=setTimeout(avisaCarr,1500); return r; };
+})();
+}catch(e){ setTimeout(function(){ throw e; }); }
+
+/* ─────────────────────────────────────────────────────────────── */
+try{
 /* ── CUPOM EM LINHA (02/11/2026, opção B do Bruno) ────────────────────
    No carrinho, no lugar do campo sempre aberto, a linha "Cupom · Adicionar ›". O toque abre o campo de
    sempre (applyCoupon); aplicado, a linha mostra o código, o % e o × (removeCoupon). Campo com código

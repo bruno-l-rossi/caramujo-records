@@ -10,6 +10,7 @@
 import { lojaParaPagina, injetar, lerEstatico } from './_lib/loja.js';
 import { injetarNumeros } from './_lib/numeros.js';
 import { injetarGravou } from './_lib/gravouvitrine.js';
+import { injetarPreBeats } from './_lib/prebeats.js';
 
 // Os mesmos cabeçalhos do bloco /* do _headers (moram em _lib/cabecalhos.js desde
 // 03/10/2026: as páginas de beat e de gênero usam os mesmos).
@@ -29,9 +30,11 @@ export async function onRequest({ request, env }) {
     if (dados && dados.numeros) saida = injetarNumeros(saida, dados.numeros);
     // Quem já gravou (17/10/2026): a seção entra no lugar do marcador só com a página no ar
     saida = injetarGravou(saida, dados && dados.gravou);
+    // rodada AF (04/11/2026): os links de todos os beats no HTML (pro Google achar as páginas de beat)
+    saida = injetarPreBeats(saida, (dados && dados.lista) || [], 'Todos os beats');
   } catch (e) {
     console.error('index sem loja', e && e.message);
-    saida = injetarGravou(injetar(html, null), null);
+    saida = injetarPreBeats(injetarGravou(injetar(html, null), null), [], '');
   }
 
   const headers = new Headers({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' });

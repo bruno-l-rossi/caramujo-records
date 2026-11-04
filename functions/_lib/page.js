@@ -1,4 +1,5 @@
 import { topo, TOPO_PAGINA_CSS, TOPO_JS } from './topo.js';
+import { preBeats, MARCA as MARCA_PRE } from './prebeats.js';
 // Monta a página do catálogo: pega o molde em /catalogo/app.html e injeta os dados.
 
 // JSON que entra dentro de <script> precisa fugir de < > & e dos dois
@@ -114,6 +115,10 @@ export async function pagina(request, env, { titulo, descricao, url, capa, cat, 
     .replace('__META__', metas({ titulo, descricao, url, capa, indexar, descricaoGoogle, ogUrl }) + capaCedo +
       (indexar ? '\n' + tapeLd({ titulo, url, capa, cat }) : ''))
     .replace('<!--DADOS-->', `<script>window.__CAT__=${dados(cat)}</script>`)
+    // rodada AF (04/11/2026): numa tape, os links dos beats que têm página, no HTML (pro Google); pasta de artista nunca
+    .replace(MARCA_PRE, () => (indexar && cat && cat.artist && cat.artist.tape
+      ? preBeats((cat.tracks || []).filter((t) => t.kind === 'beat' && t.pagina).map((t) => ({ name: t.title, slug: t.pagina, bpm: t.bpm, sold: t.tag === 'vendido' })), 'Beats da tape')
+      : ''))
     // rodada Q (18/10/2026): o topo do site (o mesmo da vitrine e das outras páginas), fixo no alto
     .replace('<!--TOPO-->', () => topo(cat && cat.artist && cat.artist.tape ? 'tape' : 'pasta', '', null, { ativo: '' }))
     .replace('<!--TOPO_CSS-->', () => `<style>${TOPO_PAGINA_CSS}

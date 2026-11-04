@@ -208,3 +208,5 @@ Todo push na `main` publica. Antes de subir mudança em `functions/`, compilar c
 ---
 
 **@rideblan33** · [contato@caramujorecords.com.br](mailto:contato@caramujorecords.com.br) · São Carlos, SP · desde 2018
+
+**Carrinho abandonado e links dos beats no HTML (04/11/2026, rodada AF).** Quem está na lista e deixa beat no carrinho recebe 1 e-mail depois de ~20 h parado (`functions/_lib/carrinho.js`, na passada diária do `/api/lembretes`): sem cupom, o carrinho e o total; com o cupom da lista valendo, o cupom já no link. 1 e-mail em 7 dias; de novo só se a pessoa mexer no carrinho depois disso. O navegador só manda os ids dos beats (`POST /api/lista {carrinho}`) quando a pessoa está na lista. A home e as tapes saem do servidor com os links de todos os beats (`functions/_lib/prebeats.js`, escondidos com `html.js`), e o sitemap tem `<lastmod>`.

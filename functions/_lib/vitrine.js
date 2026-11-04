@@ -42,6 +42,8 @@ async function guardarRegiao(request, dados) {
   } catch (_) { /* bônus */ }
 }
 
+const ultimaMudanca = (b) => [b.criado_em, b.mexido_em, b.sold_at, b.unsold_at].filter((x) => x && /^\d{4}-\d\d-\d\d/.test(String(x))).map((x) => String(x).slice(0, 10)).sort().pop() || null;
+
 export async function vitrine(request, env) {
   if (cache.beats && Date.now() - cache.at < VALIDADE) return cache.beats;
   const regiao = await lerRegiao(request);
@@ -54,7 +56,7 @@ export async function vitrine(request, env) {
     // Beat tirado do site some da vitrine, MENOS se foi vendido: aí ele continua
     // aqui pra tape seguir com pastilha de vendido e a Fila não oferecer de novo.
     const { results } = await d.prepare(
-      `SELECT id, name, bpm, mkey AS key, genre, sold, removido_em, casa FROM beats
+      `SELECT id, name, bpm, mkey AS key, genre, sold, removido_em, casa, criado_em, mexido_em, sold_at, unsold_at FROM beats
         WHERE removido_em IS NULL OR sold = 1 ORDER BY ordem, id`
     ).all();
     const linhas = results || [];
@@ -74,6 +76,8 @@ export async function vitrine(request, env) {
       generoLabel: rotulos[b.genre] || b.genre || '',
       sold: !!b.sold,
       ...(b.casa ? { casa: b.casa } : {}),
+      // rodada AF (04/11/2026): a última mudança do beat (criado, editado, vendido, voltou) = <lastmod> do sitemap
+      ...(ultimaMudanca(b) ? { em: ultimaMudanca(b) } : {}),
       ...(b.removido_em ? { removido: true } : {})
     }));
     if (beats.length) { cache = { at: Date.now(), beats }; await guardarRegiao(request, cache); }

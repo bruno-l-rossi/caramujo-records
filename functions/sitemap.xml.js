@@ -17,20 +17,23 @@ export async function onRequestGet({ request, env }) {
   const tapes = perfil.tapes || [];
   // Quem já gravou (16/10/2026): só entra com a página no ar
   const gravou = !!(perfil.gravou && perfil.gravou.noAr);
-  const url = (loc, prioridade) =>
-    `  <url><loc>${loc}</loc><changefreq>weekly</changefreq><priority>${prioridade}</priority></url>`;
+  // rodada AF (04/11/2026): <lastmod> = a última mudança do beat (criado, editado, vendido); gênero e home = a do
+  // beat mais recente deles. O Google usa a data pra saber o que é novo (antes nenhuma URL tinha).
+  const url = (loc, prioridade, em) =>
+    `  <url><loc>${loc}</loc>${em ? `<lastmod>${em}</lastmod>` : ''}<changefreq>weekly</changefreq><priority>${prioridade}</priority></url>`;
+  const maisNova = (lista) => lista.map((b) => b.em).filter(Boolean).sort().pop() || null;
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
   const beats = (loja && loja.beats) || [];
   const generos = [...new Set(beats.map((b) => b.gslug).filter(Boolean))];
   const xml = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    url(SITE + '/', '1.0'),
+    url(SITE + '/', '1.0', maisNova(beats)),
     url(SITE + '/rideblan33', '0.9'),
     ...(gravou ? [url(SITE + '/rideblan33/artistas', '0.7')] : []),
-    ...generos.map((g) => url(esc(`${SITE}/beats/${g}`), '0.8')),
+    ...generos.map((g) => url(esc(`${SITE}/beats/${g}`), '0.8', maisNova(beats.filter((b) => b.gslug === g)))),
     ...(tapes || []).map((t) => url(esc(`${SITE}/${t.slug}/${t.code}`), '0.7')),
-    ...beats.filter((b) => b.slug).map((b) => url(esc(`${SITE}/beat/${b.slug}`), b.sold ? '0.4' : '0.6')),
+    ...beats.filter((b) => b.slug).map((b) => url(esc(`${SITE}/beat/${b.slug}`), b.sold ? '0.4' : '0.6', b.em)),
     '</urlset>'
   ].join('\n');
   return new Response(xml, {
