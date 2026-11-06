@@ -4,8 +4,8 @@ import { paginaErro } from '../_lib/erro.js';
 import { db } from '../_lib/db.js';
 import { pagina, faixa, textoGoogleTape } from '../_lib/page.js';
 import { lerEstatico } from '../_lib/loja.js';
-import { vitrine, indexar, achar } from '../_lib/vitrine.js';
-import { tapesDoPerfil } from '../_lib/perfil.js';
+import { vitrine, vitrinePronta, indexar, achar } from '../_lib/vitrine.js';
+import { tapesDoPerfil, perfilPronto } from '../_lib/perfil.js';
 import { MIDIA } from '../_lib/midia.js';
 import { slug as slugDe } from '../_lib/casar.js';
 import { CHAVE_GRAVOU, fotoDaPasta } from '../_lib/gravou.js';
@@ -14,6 +14,14 @@ import { lerAjuste, daTape, aplicarNaTape } from '../_lib/tapeajuste.js';
 // caminhos do site que não são artista
 const RESERVADO = new Set(['api', 'audio', 'assets', 'docs', 'previews', 'functions',
   'mockups-antigos', 'catalogo', 'painel', 'dl', 'f', 'p', 'b', 'beat', 'beats', 'capa', 'cdn-cgi', 'rideblan33', 'pedido']);
+
+// slug e código como o db.js gera (slugify: a-z, 0-9 e hífen, até 48; code(): 5 letras/números,
+// "-xyz" no slug quando repete). Folga no tamanho pra nenhum link antigo cair.
+const ENDERECO_OK = (s, c) => /^[a-z0-9][a-z0-9-]{0,63}$/.test(s) && /^[a-z0-9]{1,16}$/.test(c);
+const nao = (request, env) => paginaErro(request, env, 404, {
+  titulo: 'Esse link não abre',
+  texto: 'Ou ele veio cortado, ou o catálogo mudou de endereço. Procure no {perfil} ou chame o {direct}.'
+});
 
 // preço do beat avulso, lido do index.html (o mesmo que a loja cobra); falhou = sem preço no texto
 async function precoDoBeat(request, env) {
@@ -27,18 +35,23 @@ export async function onRequestGet({ params, request, env }) {
   // caminho do site que não é artista: devolve pro conteúdo estático
   if (RESERVADO.has(slug)) return env.ASSETS.fetch(request);
 
+  // Rodada AG (06/11/2026): robô atrás de senha (/.env, /x/config.bak, /wp-admin/x.php) bate
+  // aqui aos milhares. Em 05/11 um só fez 16 mil acessos numa hora e o banco chegou a 96% do
+  // limite do dia. Endereço com caractere que nenhuma tape tem (slugify e code() do db.js só
+  // geram a-z, 0-9 e hífen) cai na 404 sem tocar no banco.
+  if (!ENDERECO_OK(slug, codigo)) return nao(request, env);
+
   const d = await db(env);
   // As duas consultas saem juntas (03/10/2026): o banco fica longe do Brasil e cada
   // ida e volta custava ~150ms, uma atrás da outra. As faixas só vêm se o slug E o
   // código baterem (código errado = lista vazia, nada lido à toa).
-  // A vitrine (só a tape usa) e a lista do perfil (o "Mais de") também já saem agora,
-  // em paralelo: as duas costumam vir da cópia guardada, mas no servidor frio iam ao
-  // banco depois das consultas da página.
-  const pVitrine = vitrine(request, env).catch(() => []);
-  const pPerfil = tapesDoPerfil(request, env).catch(() => null);
-  // ordem, gênero, BPM e beats escondidos que o Bruno acertou no painel (24/10/2026; só vale pra tape)
-  const pAjuste = lerAjuste(d);
+  // A vitrine e a lista do perfil (o "Mais de") saem em paralelo SÓ quando já estão
+  // guardadas na memória (custo zero). Fria, cada uma ia ao banco por ~1.000 linhas
+  // antes de saber se o link existia: era isso que o robô de 05/11 pagava (rodada AG).
   // (os comentários das pastas, desligados desde 11/10/2026, saíram do código em 25/10/2026)
+  const quentes = vitrinePronta() && perfilPronto();
+  let pVitrine = quentes ? vitrine(request, env).catch(() => []) : null;
+  let pPerfil = quentes ? tapesDoPerfil(request, env).catch(() => null) : null;
   const [artist, faixasDoBanco] = await Promise.all([
     d.prepare('SELECT * FROM artists WHERE slug = ?').bind(slug).first(),
     d.prepare(
@@ -48,12 +61,13 @@ export async function onRequestGet({ params, request, env }) {
   ]);
 
   // a prateleira interna da vitrine não é catálogo de ninguém: não abre página
-  if (!artist || artist.code !== codigo || artist.tipo === 'vitrine') {
-    return paginaErro(request, env, 404, {
-      titulo: 'Esse link não abre',
-      texto: 'Ou ele veio cortado, ou o catálogo mudou de endereço. Procure no {perfil} ou chame o {direct}.'
-    });
-  }
+  if (!artist || artist.code !== codigo || artist.tipo === 'vitrine') return nao(request, env);
+
+  // o link existe: agora sim a vitrine, o perfil e os ajustes do painel
+  if (!pVitrine) pVitrine = vitrine(request, env).catch(() => []);
+  if (!pPerfil) pPerfil = tapesDoPerfil(request, env).catch(() => null);
+  // ordem, gênero, BPM e beats escondidos que o Bruno acertou no painel (24/10/2026; só vale pra tape)
+  const pAjuste = artist.tipo === 'tape' ? lerAjuste(d) : Promise.resolve({});
 
   const { results } = faixasDoBanco;
 

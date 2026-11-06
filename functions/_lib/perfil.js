@@ -29,8 +29,15 @@ let cache = { at: 0, dados: null };
 
 const regiao = () => (typeof caches !== 'undefined' && caches.default ? caches.default : null);
 
+// Rodada AG (06/11/2026): uma leitura por vez. Com 50 acessos chegando juntos no servidor
+// frio, cada um ia ao banco (~1.800 linhas cada; 1.813 vezes numa hora em 05/11). Agora o
+// 1º vai e os outros esperam a mesma resposta.
+let emVoo = null;
+export const perfilPronto = () => !!(cache.dados && Date.now() - cache.at < VALIDADE);
+
 export async function esquecerPerfil(request) {
   cache = { at: 0, dados: null };
+  emVoo = null;
   const c = regiao();
   if (c && request) { try { await c.delete(new URL(REGIAO, request.url)); } catch (_) { /* bônus */ } }
 }
@@ -99,6 +106,13 @@ async function lerMetaPerfil(d, nova, linhas) {
 // Duas consultas, guardadas 60 s na memória e 5 min na região.
 export async function lerPerfil(request, env) {
   if (cache.dados && Date.now() - cache.at < VALIDADE) return cache.dados;
+  if (emVoo) return emVoo;
+  const p = lerPerfilAgora(request, env);
+  emVoo = p;
+  try { return await p; } finally { if (emVoo === p) emVoo = null; }
+}
+
+async function lerPerfilAgora(request, env) {
   const c = regiao();
   const chave = request ? new URL(REGIAO, request.url) : null;
   if (c && chave) {

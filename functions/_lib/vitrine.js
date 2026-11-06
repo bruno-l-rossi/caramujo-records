@@ -22,6 +22,7 @@ const chaveRegiao = (request) => { try { return new URL(REGIAO, request.url); } 
 // (painel) cai também a cópia da região.
 export async function esquecerVitrine(request) {
   cache = { at: 0, beats: null };
+  emVoo = null;
   const k = request && temCache() ? chaveRegiao(request) : null;
   if (k) { try { await caches.default.delete(k); } catch (_) { /* bônus */ } }
 }
@@ -44,8 +45,20 @@ async function guardarRegiao(request, dados) {
 
 const ultimaMudanca = (b) => [b.criado_em, b.mexido_em, b.sold_at, b.unsold_at].filter((x) => x && /^\d{4}-\d\d-\d\d/.test(String(x))).map((x) => String(x).slice(0, 10)).sort().pop() || null;
 
+// Rodada AG (06/11/2026): uma leitura por vez (quem chega junto espera a mesma resposta)
+// e um jeito de saber, sem custo, se a lista já está na memória.
+let emVoo = null;
+export const vitrinePronta = () => !!(cache.beats && Date.now() - cache.at < VALIDADE);
+
 export async function vitrine(request, env) {
   if (cache.beats && Date.now() - cache.at < VALIDADE) return cache.beats;
+  if (emVoo) return emVoo;
+  const p = vitrineAgora(request, env);
+  emVoo = p;
+  try { return await p; } finally { if (emVoo === p) emVoo = null; }
+}
+
+async function vitrineAgora(request, env) {
   const regiao = await lerRegiao(request);
   if (regiao && regiao.at && Date.now() - regiao.at < VALIDADE && Array.isArray(regiao.beats) && regiao.beats.length) {
     cache = { at: regiao.at, beats: regiao.beats };
