@@ -1409,33 +1409,32 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .foot-generos a:after{inset:-9px -5px}
 
 /* ── RODADA AJ (11/11/2026): computador com a lista em colunas, 20 por página, ordem pelo título e aviso do carrinho no canto ── */
-#beatCards .col,.lista-cab,.nb-novos{display:none}
+#beatCards .col,.lista-cab,.nb-seg{display:none}
 @media(min-width:861px){
   #ddOrdem{display:none}
+  #beatCards .item,.lista-cab{display:grid;grid-template-columns:30px 64px minmax(0,2.3fr) repeat(4,minmax(0,1fr)) 132px 36px;align-items:center;gap:0}
   #beatCards .item{padding:4px 10px;min-height:50px}
-  #beatCards .capa{width:40px;height:40px}
-  #beatCards .sl-cor{height:40px}
-  #beatCards .preco,#beatCards .vendido{min-height:40px}
-  .lc{flex:none;min-height:36px;padding:0;border:0;background:none;text-align:left;cursor:pointer;font:700 .6rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--label)}
+  #beatCards .capa{width:40px;height:40px;justify-self:center}
+  #beatCards .sl-cor{height:40px;margin:0;justify-self:end}
   #beatCards .ficha{display:none}
-  #beatCards .info{flex:2.2 1 0}
-  #beatCards .col{display:block;flex:none;font:400 .76rem 'IBM Plex Mono',monospace;color:var(--read);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #beatCards .c-gen,.lc-genero{flex:1.1 1 0;min-width:0}
+  #beatCards .info,.lc-nome{min-width:0;padding-right:20px}
+  #beatCards .col,#beatCards .dur{min-width:0;width:auto;margin:0;padding:0 12px 0 0;text-align:left}
+  #beatCards .col,#beatCards .dur{display:block;font:400 .78rem 'IBM Plex Mono',monospace;color:var(--read);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #beatCards .c-gen{color:var(--label);text-transform:uppercase;font-size:.68rem;letter-spacing:.1em}
-  #beatCards .c-bpm,.lc-bpm,#beatCards .c-tom,.lc-tom{width:76px}
-  #beatCards .dur,.lc-dur{width:76px;text-align:left}
-  #beatCards .dur{color:var(--read)}
   #beatCards .item.fora .col,#beatCards .item.fora .dur{color:var(--fosco)}
-  #beatCards .preco,#beatCards .vendido{width:132px;justify-content:center}
-  .lista-cab{display:flex;align-items:center;gap:14px;padding:0 10px;border:1px solid var(--wire);border-bottom-color:var(--clay);background:var(--deep)}
-  .lc-vago{flex:none;width:84px}
-  .lc-fim{flex:none;width:calc(132px + 14px + 26px)}
-  .lc-nome{flex:2.2 1 0}
+  #beatCards .preco,#beatCards .vendido{width:132px;min-height:40px;justify-content:center}
+  .lista-cab{padding:0 10px;border:1px solid var(--wire);border-bottom-color:var(--clay);background:var(--deep)}
+  .lc{min-height:38px;padding:0;border:0;background:none;text-align:left;cursor:pointer;font:700 .6rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--label)}
+  .lc-vago,.lc-fim{grid-column:span 2}
   .lc:hover,.lc.on{color:var(--fire)}
   .lc i{font-style:normal;margin-left:.4em;font-size:.55rem}
-  .nb-novos{display:inline-block;border:0;background:none;padding:.2rem 0;cursor:pointer;font:400 .72rem 'IBM Plex Mono',monospace;color:var(--read);border-bottom:1px dashed var(--wire)}
-  .nb-novos:hover,.nb-novos.on{color:var(--fire);border-bottom-color:var(--clay)}
+  .nb-seg{display:flex;align-items:center;align-self:stretch;min-height:46px;flex:none;border:1px solid var(--wire);background:var(--deep)}
+  .nb-seg small{padding:0 .7rem 0 .9rem;font:700 .56rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--label)}
+  .nb-seg button{align-self:stretch;padding:0 .8rem;border:0;border-left:1px solid var(--wire);background:none;cursor:pointer;font:700 .62rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--cream)}
+  .nb-seg button:hover{color:var(--fire)}
+  .nb-seg button.on{background:var(--fire);color:var(--black)}
   .cf-veu{display:none}
-  .cf-folha{left:auto;right:2.4rem;bottom:6.4rem;width:380px;border:1px solid var(--clay);padding:18px;box-shadow:0 18px 40px rgba(0,0,0,.5)}
+  .cf-folha{left:auto;right:2.4rem;bottom:6.4rem;width:380px;border:1px solid var(--clay);padding:18px;box-shadow:0 18px 40px rgba(0,0,0,.5);transition:opacity .6s}
+  .cf-folha.saindo{opacity:0}
   .cf-folha:before{display:none}
 }

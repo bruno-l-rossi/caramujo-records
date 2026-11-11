@@ -2010,10 +2010,22 @@ try{
     $('cfPreco').innerHTML=c.type==='Servico' ? 'R$'+(c.unitPrice||c.price) : (c.orig&&c.orig>c.price?'<s>R$'+c.orig+'</s>':'')+'R$'+c.price;
     $('cfRegua').innerHTML=regua();
     $('cfVer').textContent='Ver carrinho · '+cart.reduce(function(s,x){ return s+(x.qty||1); },0);
-    veu.hidden=false; folha.hidden=false;
+    veu.hidden=false; folha.hidden=false; folha.classList.remove('saindo');
     try{ folha.querySelector('.cf-c1').focus({preventScroll:true}); }catch(_){}
+    agendar(SOME);
   }
-  window.fecharFolhaCarrinho=function(){ veu.hidden=true; folha.hidden=true; };
+  // 11/11/2026 (pedido do Bruno): no computador o cartão some sozinho depois de 10 s sem ninguém mexer nele.
+  // Mouse em cima ou foco dentro seguram; saiu, conta mais 5 s. No celular a meia tela segue até a pessoa escolher.
+  var SOME=10000, relogio=0, apaga=0;
+  function parar(){ clearTimeout(relogio); clearTimeout(apaga); folha.classList.remove('saindo'); }
+  function agendar(ms){
+    parar(); if(cel()) return;
+    relogio=setTimeout(function(){ if(folha.hidden) return; folha.classList.add('saindo'); apaga=setTimeout(function(){ if(folha.classList.contains('saindo')) window.fecharFolhaCarrinho(); },700); },ms);
+  }
+  folha.addEventListener('mouseenter',parar);
+  folha.addEventListener('mouseleave',function(){ if(!folha.hidden) agendar(SOME/2); });
+  folha.addEventListener('focusin',function(e){ if(e.target&&e.target.matches&&e.target.matches(':focus-visible')) parar(); });
+  window.fecharFolhaCarrinho=function(){ parar(); veu.hidden=true; folha.hidden=true; };
   window.verCarrinhoDaFolha=function(){ window.fecharFolhaCarrinho(); try{ openCart(); }catch(_){} };
   var ca=window.confirmAdd, pn=$('cartPanel');
   // com o carrinho já aberto na tela, a folha não sobe por cima dele: fica o de antes
@@ -3295,13 +3307,16 @@ try{(function(){
   var cab=document.createElement('div'); cab.className='lista-cab'; cab.id='listaCab'; cab.setAttribute('role','group'); cab.setAttribute('aria-label','Ordenar a lista');
   cab.innerHTML='<span class="lc-vago"></span>'+COLS.map(function(c){ return '<button type="button" class="lc lc-'+c[0]+'" data-col="'+c[0]+'">'+c[1]+'<i aria-hidden="true"></i></button>'; }).join('')+'<span class="lc-fim"></span>';
   cards.parentNode.insertBefore(cab,cards);
-  var novos=document.createElement('button'); novos.type='button'; novos.className='nb-novos'; novos.id='nbNovos'; novos.textContent='Mais novos';
-  if(conta) conta.appendChild(novos);
-  novos.addEventListener('click',function(){ Catalogo.ir({ ordem:(sortMode==='novos')?'padrao':'novos' }); });
-  // a Aleatória do menu Ordem (que saiu da barra do computador) segue a um clique: embaralha de novo a cada clique
-  var aleat=document.createElement('button'); aleat.type='button'; aleat.className='nb-novos'; aleat.id='nbAleat'; aleat.textContent='Aleatória';
-  if(conta) conta.appendChild(aleat);
-  aleat.addEventListener('click',function(){ var sl=$('beatSort'); if(sl) sl.value='aleatorio'; sortBeats('aleatorio'); });
+  // 11/11/2026 (pedido do Bruno: os links ao lado da contagem ficaram escondidos): seletor de ordem à vista na barra,
+  // no lugar onde ficava o menu Ordem. Clicar de novo em Aleatória embaralha outra vez. Com ordem de coluna, nenhum fica aceso.
+  var seg=document.createElement('div'); seg.className='nb-seg'; seg.id='nbSeg'; seg.setAttribute('role','group'); seg.setAttribute('aria-label','Ordem da lista');
+  seg.innerHTML='<small>Ordem</small><button type="button" id="nbPadrao" data-o="padrao">Padrão</button><button type="button" id="nbNovos" data-o="novos">Mais novos</button><button type="button" id="nbAleat" data-o="aleatorio">Aleatória</button>';
+  var fav=$('filtAvail'); if(fav&&fav.parentNode) fav.parentNode.insertBefore(seg,fav);
+  seg.addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('button[data-o]'); if(!b) return;
+    var o=b.getAttribute('data-o'), sl=$('beatSort'); if(sl) sl.value=o;
+    sortBeats(o);
+  });
   cab.addEventListener('click',function(e){
     var b=e.target.closest&&e.target.closest('.lc'); if(!b) return;
     var c=b.getAttribute('data-col'), sobe=(c==='bpm')?'bpm':c, desce=c+'-d';
@@ -3313,8 +3328,7 @@ try{(function(){
       b.classList.toggle('on',!!on); b.querySelector('i').textContent=on==='sobe'?'▲':on==='desce'?'▼':'';
       b.setAttribute('aria-pressed',on?'true':'false'); b.setAttribute('aria-label',b.firstChild.textContent+(on==='sobe'?': ordem crescente':on==='desce'?': ordem decrescente':': ordenar'));
     });
-    novos.classList.toggle('on',sortMode==='novos'); novos.setAttribute('aria-pressed',sortMode==='novos'?'true':'false');
-    aleat.classList.toggle('on',sortMode==='aleatorio'); aleat.setAttribute('aria-pressed',sortMode==='aleatorio'?'true':'false');
+    [].forEach.call(seg.querySelectorAll('button'),function(b){ var on=(sortMode||'padrao')===b.getAttribute('data-o'); b.classList.toggle('on',on); b.setAttribute('aria-pressed',on?'true':'false'); });
   }
   // a tela cruzou 860px (girou o tablet, redimensionou a janela): a página muda de 10 pra 20 beats
   try{ var mq=window.matchMedia('(min-width:861px)'), troca=function(){ curPage=1; renderCards(); }; if(mq.addEventListener) mq.addEventListener('change',troca); else if(mq.addListener) mq.addListener(troca); }catch(_){}
@@ -3339,17 +3353,22 @@ try{(function(){
     };
   } };
 
-  /* ── amarração: cada redesenho da lista ou do carrinho repinta o que é desta rodada ── */
+  /* ── amarração: cada redesenho da lista ou do carrinho repinta o que é desta rodada ──
+     11/11/2026: e avisa o resto da página por evento. Bloco novo NÃO embrulha mais renderCards nem updateCart
+     (já são 2 e 5 camadas, e a ordem delas importa): escuta document 'cr:lista' e 'cr:carrinho' e lê Site.estado(). */
+  function avisar(nome){ try{ document.dispatchEvent(new CustomEvent(nome)); }catch(_){} }
   var rc=window.renderCards;
   window.renderCards=function(){
     var r=rc.apply(this,arguments);
     try{ var c=pintarGeneros(); pintarFila(c); saidaDaBuscaVazia(c); pintarMarca(); pintarCab(); guardar(); }catch(e){ setTimeout(function(){ throw e; }); }
+    avisar('cr:lista');
     return r;
   };
   var uc=window.updateCart;
   window.updateCart=function(){
     var r=uc.apply(this,arguments);
     try{ vestirCarrinho(); pintarFicha(); }catch(e){ setTimeout(function(){ throw e; }); }
+    avisar('cr:carrinho');
     return r;
   };
   window.renderCards();
