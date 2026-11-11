@@ -171,6 +171,12 @@ ${TOPO_CSS}.wrap{max-width:1120px;margin:0 auto;padding:0 2.4rem}
 .item .corrida{position:absolute;left:0;bottom:-1px;height:2px;background:var(--fire)}
 .preco{flex:none;display:inline-flex;align-items:center;gap:7px;background:var(--bone);color:var(--black);border:1px solid var(--bone);font:500 .76rem var(--mono);padding:.52rem .8rem;white-space:nowrap;transition:background .14s,border-color .14s}
 .preco svg{width:15px;height:15px}
+.preco s{font-size:.85em;opacity:.62;margin-right:.35em}
+.valor .era{font-size:1.5rem;margin-left:.6rem;color:var(--fosco);text-decoration-color:var(--fosco);text-decoration-thickness:1px}
+.item .sv{flex:none;width:34px;height:42px;display:flex;align-items:center;justify-content:center;background:none;border:0;padding:0;color:var(--amber);cursor:pointer}
+.item .sv svg{width:19px;height:19px}
+.item .sv.on{color:var(--fire)}
+.item .sv[hidden]{display:none}
 .preco:hover,.preco.no-carrinho{background:var(--fire);border-color:var(--fire)}
 .vendido{flex:none;font-size:.58rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--blood);border:1px solid var(--blood);padding:.52rem .8rem}
 .item.fora .nome{color:var(--amber);text-decoration:line-through;text-decoration-color:var(--blood);text-decoration-thickness:1.5px}
@@ -367,8 +373,28 @@ ${capinha(b)}
 <div class="info"><a class="nome" href="/beat/${esc(b.slug)}">${esc(b.name)}</a><div class="ficha">${ficha(b)}</div></div>
 <span class="dur">${b.dur ? mmss(b.dur) : ''}</span>
 ${acao}
+${b.sold ? '' : `<button class="sv js-sv" type="button" data-sv="${b.id}" aria-pressed="false" aria-label="Salvar ${esc(b.name)}">${SV_COR}</button>`}
 <span class="corrida" aria-hidden="true"></span>
 </li>`;
+}
+
+// rodada AH (10/11/2026): quanto custa o 1º, o 2º, o 3º... beat pela curva do Leve mais ([119, 99, 79, 79]).
+// A página usa pra mostrar o preço do próximo quando já tem beat no carrinho (só mostra: a conta é da vitrine).
+export function precosDoProximo(preco, pk) {
+  const unit = Number(preco) || 0;
+  if (!unit) return [];
+  const exatos = new Map((pk || []).filter((p) => !p.cada && p.preco).map((p) => [p.n, p.preco]));
+  const depois = (pk || []).find((p) => p.depois && p.cada);
+  const max = exatos.size ? Math.max(...exatos.keys()) : 1;
+  const out = [unit];
+  let total = unit;
+  for (let n = 2; n <= max; n++) {
+    const t = exatos.has(n) ? exatos.get(n) : total + unit;
+    out.push(Math.max(0, t - total));
+    total = t;
+  }
+  if (depois) out.push(depois.cada);
+  return out.every((x) => x > 0 && x <= unit) ? out : [unit];
 }
 
 function pacotesTexto(pk, { link = true } = {}) {
@@ -531,7 +557,7 @@ ${par.length ? `<section class="secao" id="parecidos" aria-labelledby="tParecido
 </main>
 ${par.length ? BARRA : ''}
 ${RODAPE}
-<script>window.__PG=${jsonSeguro({ pagina: 'beat', atual: b.id, beats: lista.map(praTela) })}</script>
+<script>window.__PG=${jsonSeguro({ pagina: 'beat', atual: b.id, lm: precosDoProximo(preco, pk), beats: lista.map(praTela) })}</script>
 <script>${JS}</script>
 ${TOPO_JS}
 ${LEVA_DE}
@@ -614,7 +640,7 @@ ${pacoteBloco}
 </main>
 ${BARRA}
 ${RODAPE}
-<script>window.__PG=${jsonSeguro({ pagina: 'genero', preco, beats: ordem.map(praTela) })}</script>
+<script>window.__PG=${jsonSeguro({ pagina: 'genero', preco, lm: precosDoProximo(preco, pk), beats: ordem.map(praTela) })}</script>
 <script>${JS}</script>
 ${TOPO_JS}
 ${LEVA_DE}
@@ -715,7 +741,25 @@ const JS = `(function(){
       a.setAttribute('aria-label','Já está no carrinho: abrir o carrinho');
     });
   }
-  try{ pintarCarrinho(); }catch(_){}
+  /* rodada AH (10/11/2026): com beat no carrinho, a página mostra o preço do próximo (Leve mais), como a
+     linha da vitrine: R$119 riscado e R$99. Só o que aparece: a conta de verdade é do carrinho e do servidor. */
+  var LM=(window.__PG&&window.__PG.lm)||[];
+  function pintarProximo(){
+    var c=lerCarrinho(), n=c?c.itens.filter(function(x){ return x.type==='Beat'&&!x.stems; }).length:0;
+    if(!n || LM.length<2) return;
+    var cheio=LM[0], p=LM[Math.min(n,LM.length-1)]; if(!(p<cheio)) return;
+    $$('.js-add').forEach(function(a){
+      if(a.classList.contains('no-carrinho')) return;
+      if(a.classList.contains('btn')){
+        var v=$('.compra .valor');
+        if(v) v.innerHTML='R$ '+p+'<s class="era">R$ '+cheio+'</s><small>Preço do '+(n+1)+'º beat · você já tem '+n+' no carrinho</small>';
+        return;
+      }
+      var t=a.querySelector('span'); if(t) t.innerHTML='<s>R$'+cheio+'</s>R$'+p;
+      a.setAttribute('aria-label',(a.getAttribute('aria-label')||'').replace(/, R\$.*$/,', R$ '+p));
+    });
+  }
+  try{ pintarCarrinho(); pintarProximo(); }catch(_){}
   /* rodada AF (04/11/2026): carrinho de quem está na lista vai pro servidor (_lib/carrinho.js, AVISA_JS) */
   ${AVISA_JS}
   /* Comprar sem sair da página (25/10/2026, de-para final, item 3): o botão grava o beat no carrinho
@@ -736,7 +780,7 @@ const JS = `(function(){
     }catch(_){ return; }
     e.preventDefault();
     funil('carrinho',bid); funil('adicao',bid);   // o funil conta aqui, como a vitrine contava ao receber o #add=
-    pintarCarrinho();
+    pintarCarrinho(); pintarProximo();
     var bn=$('.js-n'); if(bn){ bn.classList.remove('pulou'); void bn.offsetWidth; bn.classList.add('pulou'); }
   });
 
@@ -767,6 +811,28 @@ const JS = `(function(){
     }catch(_){ return; }
     svPinta();
   });
+
+  /* rodada AH (10/11/2026): ♡ em cada linha (parecidos e página de gênero), a mesma lista dos salvos */
+  function svLinhas(){
+    var ids=svLer();
+    $$('.js-sv').forEach(function(b){
+      var on=ids.indexOf(Number(b.getAttribute('data-sv')))>-1;
+      b.classList.toggle('on',on); b.setAttribute('aria-pressed',on?'true':'false');
+      b.innerHTML=on?SV_CHEIO:SV_COR;
+    });
+  }
+  try{ localStorage.setItem('cr_teste_sv','1'); localStorage.removeItem('cr_teste_sv'); svLinhas(); }catch(_){ $$('.js-sv').forEach(function(b){ b.hidden=true; }); }
+  document.addEventListener('click',function(e){
+    var bt=e.target.closest&&e.target.closest('.js-sv'); if(!bt) return;
+    e.stopPropagation();
+    var id=Number(bt.getAttribute('data-sv')); if(!(id>0)) return;
+    try{
+      var ids=svLer(), i=ids.indexOf(id);
+      if(i>-1) ids.splice(i,1); else ids.unshift(id);
+      localStorage.setItem(SV,JSON.stringify({ ids:ids.slice(0,60), em:Date.now() }));
+    }catch(_){ return; }
+    svLinhas(); svPinta();
+  },true);
 
   /* menu do celular */
   // (rodada Q) o menu do celular, o acordeão do BEATS e a Ajuda são do TOPO_JS (topo.js)

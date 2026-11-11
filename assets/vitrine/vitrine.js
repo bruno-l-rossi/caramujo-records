@@ -1493,7 +1493,9 @@ try{
     var no=false; try{ no=cart.some(function(c){return c.beatId===b.id&&c.stems===false;}); }catch(_){}
     pr.classList.toggle('on',no);
     pr.setAttribute('aria-label',no?b.name+' está no carrinho: abrir o carrinho':'Pôr '+b.name+' no carrinho');
-    pr.innerHTML=(no?ICO_OK:ICO_MAIS)+'<span class="rotulo">'+(no?'No carrinho':'R$'+PRICE_BEAT)+'</span>'+(no?'<span class="ir" aria-hidden="true">›</span>':'');
+    // rodada AH (10/11/2026): o pé mostra o preço do próximo beat (Leve mais), igual à linha da lista
+    var px=(typeof precoDoProximo==='function')?precoDoProximo():PRICE_BEAT;
+    pr.innerHTML=(no?ICO_OK:ICO_MAIS)+'<span class="rotulo">'+(no?'No carrinho':(px<PRICE_BEAT?'<s>R$'+PRICE_BEAT+'</s>R$'+px:'R$'+PRICE_BEAT))+'</span>'+(no?'<span class="ir" aria-hidden="true">›</span>':'');
   };
   /* seek: clique e arrasto, no pé */
   function ligarSeek(el){
@@ -2550,6 +2552,8 @@ try{
   var $=function(i){ return document.getElementById(i); };
   var tem=function(id,c){ var e=$(id); return !!(e&&e.classList.contains(c)); };
   var folhas=[
+    // ficha do beat (rodada AH, 10/11/2026)
+    { aberta:function(){ return !!(window.fichaAberta&&window.fichaAberta()); }, fechar:function(){ if(window.fecharFicha) window.fecharFicha(); } },
     // meia tela do carrinho (02/11/2026, ideia 9)
     { aberta:function(){ var f=$('cfFolha'); return !!(f&&!f.hidden); }, fechar:function(){ if(window.fecharFolhaCarrinho) window.fecharFolhaCarrinho(); } },
     { aberta:function(){ var v=document.querySelector('.cs-veu'); return !!(v&&!v.hidden); },
@@ -2974,6 +2978,331 @@ try{(function(){
   window.addEventListener('hashchange',function(){ if(/^#(salvos|volta)/.test(location.hash)) doLink(); });
   pintar();
   if(/^#(salvos|volta)/.test(location.hash)){ if(document.readyState!=='loading') setTimeout(doLink,0); else document.addEventListener('DOMContentLoaded',doLink); }
+})();}catch(e){ setTimeout(function(){ throw e; }); }
+
+/* ── RODADA AH (10 e 11/11/2026, varredura de celular: docs/varredura-ux-mobile-2026-11-10.md) ──
+   Tudo aqui é plugin por fora: nada reescreve carrinho nem pagamento.
+   1. window.Catalogo: a máquina de estado da lista (gênero, ordem, só à venda, busca, página) com
+      UMA leitura (estado) e UMA porta de entrada (ir). Antes eram 5 variáveis soltas mexidas em 9 lugares.
+   2. Gêneros com a contagem de beats à venda, do maior pro menor; gênero zerado some.
+   3. Fileira de gêneros que desliza (#gFila) e etiqueta do filtro ligado (#gTag).
+   4. Busca: exemplos ao focar (#bEx), Cancelar no celular e saída na busca vazia.
+   5. Voltar abre onde a pessoa estava (sessionStorage cr_lugar).
+   9. Ficha do beat por cima da lista (#fbFicha), no celular e no computador.
+   10a. Item do carrinho com capa, ▶ e a ficha.
+   Mapa das máquinas de estado do site: docs/maquinas-de-estado.md. */
+try{(function(){
+  var $=function(i){ return document.getElementById(i); };
+  var nbar=$('nbar'), inp=$('beatSearchTop'), cards=$('beatCards');
+  if(!nbar||!cards||typeof BEATS==='undefined') return;
+  var cel=function(){ try{ return window.matchMedia('(max-width:860px)').matches; }catch(_){ return false; } };
+  var esc=function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); };
+  var beat=function(id){ for(var i=0;i<BEATS.length;i++){ if(String(BEATS[i].id)===String(id)) return BEATS[i]; } return null; };
+  var rot=function(g){ return (typeof GENRE_LABELS==='object'&&GENRE_LABELS[g])||g; };
+  var gens=function(){ return [].slice.call(document.querySelectorAll('#genMenu .ft')); };
+  var gDe=function(el){ var m=(el.getAttribute('onclick')||'').match(/filt(?:Link)?\((?:event,)?'([a-z0-9]+)'/); return m?m[1]:''; };
+  var gEl=function(g){ var l=gens(); for(var i=0;i<l.length;i++){ if(gDe(l[i])===g) return l[i]; } return null; };
+
+  /* ── 1. A máquina de estado da lista ── */
+  var ORDENS={padrao:1,novos:1,bpm:1,aleatorio:1};
+  var Catalogo=window.Catalogo={
+    // foto do estado: é o que os testes, o "voltar no lugar" e qualquer plugin leem
+    estado:function(){
+      return { genero:curFilt, ordem:sortMode||'padrao', soVenda:!!showAvailOnly, busca:(inp&&inp.value)||'',
+               pagina:curPage, salvos:!!window.__svModo };
+    },
+    // única porta de entrada: aceita só o que mudou e passa pelas funções de sempre (filt, sortBeats,
+    // toggleAvail, searchBeats), na ordem em que uma não desfaz a outra. Valor inválido é ignorado.
+    ir:function(p){
+      p=p||{};
+      if(typeof p.soVenda==='boolean'&&p.soVenda!==!!showAvailOnly){ var fa=$('filtAvail'); if(fa) toggleAvail(fa); }
+      if(p.ordem&&ORDENS[p.ordem]&&p.ordem!==(sortMode||'padrao')){ var sl=$('beatSort'); if(sl) sl.value=p.ordem; sortBeats(p.ordem); }
+      if(p.genero&&p.genero!==curFilt){ var el=gEl(p.genero); if(el) filt(p.genero,el); }
+      if(typeof p.busca==='string'&&inp&&p.busca!==inp.value){ inp.value=p.busca; window.searchBeats(p.busca); }
+      if(p.pagina>0&&(p.pagina|0)!==curPage){ curPage=p.pagina|0; renderCards(); }
+      return Catalogo.estado();
+    },
+    // beats à venda por gênero (a mesma conta da lista: sem áudio não aparece)
+    contagem:function(){
+      var c={todos:0}, V=window.__VIT||{}, ok=!!window.__VIT_OK;
+      BEATS.forEach(function(b){ if(b.sold) return; if(ok&&!(V[String(b.id)]||{}).mp3) return; c[b.genre]=(c[b.genre]||0)+1; c.todos++; });
+      return c;
+    }
+  };
+
+  /* ── 2. Contagem, ordem e gênero zerado ── */
+  var ordenado=false;
+  function ordenarGeneros(c){
+    var cx=document.querySelector('#genMenu .ftabs'); if(!cx) return;
+    var l=gens(), todos=gEl('todos');
+    l.sort(function(a,b){ return (c[gDe(b)]||0)-(c[gDe(a)]||0); });
+    if(todos) cx.appendChild(todos);
+    l.forEach(function(e){ if(e!==todos) cx.appendChild(e); });
+    // a folha do celular copia os gêneros pela posição: refaz na ordem nova
+    var fg=$('filtGen');
+    if(fg){
+      fg.innerHTML='';
+      gens().forEach(function(o){
+        var b=document.createElement('button'); b.type='button'; b.className='ft'; b.setAttribute('data-g',gDe(o)); b.textContent=o.textContent;
+        b.addEventListener('click',function(){ filt(gDe(o),o); });
+        fg.appendChild(b);
+      });
+    }
+    ordenado=true;
+  }
+  function pintarGeneros(){
+    var c=Catalogo.contagem();
+    if(!ordenado) ordenarGeneros(c);
+    var num=function(el,g){
+      var n=c[g]||0;
+      el.setAttribute('data-n',n);   // o número entra pelo CSS (:after): o texto do botão segue só o nome
+      el.hidden=(g!=='todos'&&!n&&g!==curFilt);
+      el.classList.toggle('on',g===curFilt);
+    };
+    gens().forEach(function(o){ num(o,gDe(o)); });
+    [].forEach.call(document.querySelectorAll('#filtGen .ft'),function(b){ num(b,b.getAttribute('data-g')); });
+    // rodapé: gênero sem beat à venda sai até entrar beat de novo
+    [].forEach.call(document.querySelectorAll('footer a[href^="/beats/"]'),function(a){
+      var o=null, l=gens(); for(var i=0;i<l.length;i++){ if(l[i].getAttribute('href')===a.getAttribute('href')) o=l[i]; }
+      if(o) a.hidden=!(c[gDe(o)]>0);
+    });
+    return c;
+  }
+
+  /* ── 3. Fileira de gêneros e etiqueta do filtro ── */
+  var fila=document.createElement('div'); fila.className='gfila'; fila.id='gFila'; fila.setAttribute('role','group'); fila.setAttribute('aria-label','Filtrar por gênero');
+  var meta=nbar.querySelector('.nb-meta'); nbar.insertBefore(fila,meta);
+  var tag=document.createElement('button'); tag.type='button'; tag.className='g-tag'; tag.id='gTag'; tag.hidden=true;
+  var conta=nbar.querySelector('.nb-conta'), pg=$('nbPagina'); if(conta) conta.insertBefore(tag,pg||null);
+  var X='<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  function pintarFila(c){
+    var h='';
+    gens().forEach(function(o){
+      var g=gDe(o), n=c[g]||0; if(g!=='todos'&&!n&&g!==curFilt) return;
+      h+='<a class="gf'+(g===curFilt?' on':'')+'" href="'+esc(o.getAttribute('href')||'#beats')+'" data-g="'+g+'"'+(g===curFilt?' aria-current="true"':'')+'>'+esc(g==='todos'?'Todos':rot(g))+'<small>'+n+'</small></a>';
+    });
+    if(fila.__h!==h){ fila.innerHTML=h; fila.__h=h; var on=fila.querySelector('.on'); if(on&&fila.scrollWidth>fila.clientWidth) fila.scrollLeft=Math.max(0,on.offsetLeft-fila.clientWidth/2+on.offsetWidth/2); }
+    var lig=curFilt!=='todos';
+    tag.hidden=!lig;
+    if(lig){ tag.innerHTML=esc(rot(curFilt))+X; tag.setAttribute('aria-label','Tirar o filtro '+rot(curFilt)); }
+  }
+  function escolher(g){ Catalogo.ir({ genero:(g===curFilt&&g!=='todos')?'todos':g }); }
+  fila.addEventListener('click',function(e){
+    var a=e.target.closest&&e.target.closest('.gf'); if(!a||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
+    e.preventDefault(); escolher(a.getAttribute('data-g'));
+  });
+  tag.addEventListener('click',function(){ Catalogo.ir({ genero:'todos' }); });
+
+  /* ── 4. Busca: exemplos, Cancelar e a saída da busca vazia ── */
+  var EX=['140bpm','130-140','Dm','trap 140','boom bap'];
+  var bex=document.createElement('div'); bex.className='b-ex'; bex.id='bEx'; bex.hidden=true;
+  bex.innerHTML='<b>Dá pra buscar assim</b><div>'+EX.map(function(q){ return '<button type="button" data-q="'+q+'">'+q+'</button>'; }).join('')+'</div>';
+  nbar.insertBefore(bex,fila);
+  var canc=document.createElement('button'); canc.type='button'; canc.className='nb-canc'; canc.id='bCanc'; canc.textContent='Cancelar';
+  var lb=inp&&inp.closest('.nb-busca'); if(lb&&lb.parentNode) lb.parentNode.insertBefore(canc,lb.nextSibling);
+  var PH=inp?inp.getAttribute('placeholder'):'';
+  function abrirBusca(){ nbar.classList.add('busca-on'); bex.hidden=!!inp.value.trim(); if(cel()){ PH=inp.getAttribute('placeholder'); inp.setAttribute('placeholder','Nome, BPM ou tom'); } }
+  function fecharBusca(){ if(!nbar.classList.contains('busca-on')) return; nbar.classList.remove('busca-on'); bex.hidden=true; if(PH) inp.setAttribute('placeholder',PH); }
+  if(inp){
+    inp.addEventListener('focus',abrirBusca);
+    inp.addEventListener('input',function(){ if(nbar.classList.contains('busca-on')) bex.hidden=!!inp.value.trim(); });
+    inp.addEventListener('blur',function(){ setTimeout(function(){ if(document.activeElement!==inp) fecharBusca(); },160); });
+    inp.addEventListener('keydown',function(e){ if(e.key==='Escape'){ Catalogo.ir({ busca:'' }); inp.blur(); } });
+    bex.addEventListener('mousedown',function(e){ e.preventDefault(); });   // o toque no exemplo não tira o foco do campo
+    bex.addEventListener('click',function(e){
+      var b=e.target.closest&&e.target.closest('button[data-q]'); if(!b) return;
+      Catalogo.ir({ busca:b.getAttribute('data-q') }); fecharBusca(); inp.blur();
+    });
+    canc.addEventListener('mousedown',function(e){ e.preventDefault(); });
+    canc.addEventListener('click',function(){ Catalogo.ir({ busca:'' }); fecharBusca(); inp.blur(); });
+  }
+  function saidaDaBuscaVazia(c){
+    var v=cards.querySelector('.busca-vazia'); if(!v||cards.querySelector('.bv-acoes')) return;
+    var d=document.createElement('div'); d.className='bv-acoes';
+    var top=gens().map(gDe).filter(function(g){ return g!=='todos'&&c[g]>0; }).slice(0,5);
+    d.innerHTML='<button type="button" class="bv-limpar">Limpar busca</button>'+
+      (top.length?'<span>Ou vai por gênero</span><div>'+top.map(function(g){ return '<button type="button" class="gf" data-g="'+g+'">'+esc(rot(g))+'<small>'+c[g]+'</small></button>'; }).join('')+'</div>':'');
+    v.parentNode.insertBefore(d,v.nextSibling);
+  }
+  cards.addEventListener('click',function(e){
+    var t=e.target.closest&&e.target.closest('.bv-acoes button'); if(!t) return;
+    e.stopPropagation();
+    if(t.classList.contains('bv-limpar')) Catalogo.ir({ busca:'' }); else Catalogo.ir({ genero:t.getAttribute('data-g') });
+  });
+
+  /* ── 5. Voltar abre onde a pessoa estava ── */
+  var LUGAR='cr_lugar', aberto=0, pronto=false;
+  function guardar(){
+    if(!pronto) return;
+    try{ var e=Catalogo.estado(); if(e.salvos) return;
+      if(e.ordem==='aleatorio') e.ordem='padrao';
+      e.y=Math.round(window.pageYOffset||0); e.b=aberto; e.t=Date.now();
+      sessionStorage.setItem(LUGAR,JSON.stringify(e)); }catch(_){}
+  }
+  document.addEventListener('click',function(e){
+    var a=e.target.closest&&e.target.closest('#beatCards a[href^="/beat/"]'); if(!a) return;
+    var l=a.closest('.item'); aberto=l?Number(l.dataset.bid)||0:0; guardar();
+  },true);
+  window.addEventListener('pagehide',guardar);
+  function veioDeVolta(){
+    try{ var n=performance.getEntriesByType('navigation')[0]; if(n&&n.type==='back_forward') return true; }catch(_){}
+    try{ var r=document.referrer?new URL(document.referrer):null; return !!(r&&r.origin===location.origin&&/^\/beats?\//.test(r.pathname)); }catch(_){ return false; }
+  }
+  // o beat que a pessoa abriu fica marcado por 2 s; a lista pode ser redesenhada nesse meio (o áudio chegando), então a marca é repintada
+  var marcado=0, marcaAte=0;
+  function pintarMarca(){ if(!marcado) return; var l=cards.querySelector('.item[data-bid="'+marcado+'"]'); if(l) l.classList.toggle('voltou',Date.now()<marcaAte); if(Date.now()>=marcaAte) marcado=0; }
+  function marcar(id){ if(!id) return; marcado=id; marcaAte=Date.now()+2200; pintarMarca(); setTimeout(pintarMarca,2250); }
+  // voltou pela memória do navegador (a página nem recarrega): só a marca
+  window.addEventListener('pageshow',function(ev){ if(ev.persisted&&aberto) marcar(aberto); });
+  function retomar(){
+    var e=null; try{ e=JSON.parse(sessionStorage.getItem(LUGAR)||'null'); }catch(_){}
+    if(!e||!(Date.now()-(e.t||0)<30*60e3)||location.hash||/[?&](cupom|de)=/.test(location.search)||!veioDeVolta()) return;
+    Catalogo.ir({ soVenda:!!e.soVenda, ordem:e.ordem, genero:e.genero }); Catalogo.ir({ busca:e.busca||'' }); Catalogo.ir({ pagina:e.pagina });
+    var poe=function(){ try{ window.scrollTo({top:e.y||0,behavior:'instant'}); }catch(_){ window.scrollTo(0,e.y||0); } };
+    var marca=function(){ marcar(e.b); };
+    try{ history.scrollRestoration='manual'; }catch(_){}
+    requestAnimationFrame(function(){ poe(); marca(); });
+    // a lista é redesenhada quando o áudio chega do servidor: a página guardada vale de novo
+    var vez=0, t=setInterval(function(){ if(++vez>12||window.__VIT_OK){ clearInterval(t); if(curPage!==(e.pagina|0)&&e.pagina>0){ Catalogo.ir({ pagina:e.pagina }); poe(); marca(); } } },250);
+  }
+
+  /* ── 9. Ficha do beat por cima da lista ── */
+  var NOTA={C:'Dó','C#':'Dó sustenido',Db:'Ré bemol',D:'Ré','D#':'Ré sustenido',Eb:'Mi bemol',E:'Mi',F:'Fá','F#':'Fá sustenido',Gb:'Sol bemol',G:'Sol','G#':'Sol sustenido',Ab:'Lá bemol',A:'Lá','A#':'Lá sustenido',Bb:'Si bemol',B:'Si'};
+  function tomPt(k){
+    var m=String(k||'').trim().match(/^([A-G](?:#|b)?)\s*(maj|major|min|minor|m)?$/i); if(!m) return '';
+    var n=NOTA[m[1].charAt(0).toUpperCase()+(m[1].charAt(1)||'')]; if(!n) return '';
+    return n+(m[2]&&/^m(in(or)?)?$/i.test(m[2])&&m[2]!=='M'?' menor':' maior');
+  }
+  var mmss=function(s){ s=Math.round(s||0); return s?Math.floor(s/60)+':'+('0'+(s%60)).slice(-2):''; };
+  var fb=null, fveu=null, fbId=0, fbVolta=null;
+  var I_PLAY='<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>';
+  var I_PAUSE='<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>';
+  var I_COR='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3s-7.6-4.5-7.6-10.2A4.3 4.3 0 0112 7.5a4.3 4.3 0 017.6 2.6c0 5.7-7.6 10.2-7.6 10.2z"/></svg>';
+  var I_ENV='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="12" r="2.2"/><circle cx="17.5" cy="6" r="2.2"/><circle cx="17.5" cy="18" r="2.2"/><path d="M8 11l7.5-4M8 13l7.5 4"/></svg>';
+  function tocandoAgora(id){ var bar=$('npBar'), som=window.__npSom&&window.__npSom(); return !!(bar&&String(bar.dataset.bid)===String(id)&&som&&!som.paused); }
+  function noCarr(id){ try{ return cart.some(function(c){ return c.beatId===Number(id)&&c.stems===false; }); }catch(_){ return false; } }
+  function pintarFicha(){
+    if(!fb||fb.hidden) return;
+    var b=beat(fbId); if(!b){ fecharFicha(); return; }
+    var f=(window.__VIT||{})[String(b.id)]||{}, pag=paginaDoBeat(b.name), no=noCarr(b.id), sv=!!(window.__svTem&&window.__svTem(b.id));
+    var chips=[b.bpm?b.bpm+' BPM':'', b.key?(tomPt(b.key)?b.key+' // '+tomPt(b.key):b.key):'', mmss(f.dur)].filter(Boolean);
+    var p=(typeof precoDoProximo==='function')?precoDoProximo():PRICE_BEAT;
+    var preco=p<PRICE_BEAT?'<s>R$'+PRICE_BEAT+'</s> R$'+p:'R$'+PRICE_BEAT;
+    fb.innerHTML=
+      '<button type="button" class="fb-x" aria-label="Fechar a ficha">'+X+'</button>'+
+      '<div class="fb-top">'+(f.capa?'<img class="fb-capa" src="'+esc(f.capa)+'" alt="">':'<div class="fb-capa vazia"><img src="assets/brand/selo-creme.svg" alt="" width="34" height="34"></div>')+
+        '<div class="fb-quem"><small>'+esc(rot(b.genre))+'</small><h3 id="fbNome">'+esc(b.name)+'</h3><span>prod. @rideblan33</span></div></div>'+
+      '<ul class="fb-chips">'+chips.map(function(c){ return '<li>'+esc(c)+'</li>'; }).join('')+'</ul>'+
+      '<div class="fb-acoes">'+
+        (f.mp3?'<button type="button" class="fb-bt fb-tocar" aria-label="'+(tocandoAgora(b.id)?'Pausar ':'Tocar ')+esc(b.name)+'">'+(tocandoAgora(b.id)?I_PAUSE:I_PLAY)+'</button>':'')+
+        (b.sold?'<span class="fb-dono">Esse beat já tem dono</span>'
+               :'<button type="button" class="fb-add'+(no?' on':'')+'">'+(no?'No carrinho · ver carrinho':'Adicionar · '+preco)+'</button>'+
+                '<button type="button" class="fb-bt fb-sv'+(sv?' on':'')+'" aria-pressed="'+(sv?'true':'false')+'" aria-label="'+(sv?'Tirar dos salvos':'Salvar '+esc(b.name))+'">'+(sv?I_COR.replace('fill="none"','fill="currentColor"'):I_COR)+'</button>')+
+        (f.mp3?'<button type="button" class="fb-bt fb-env" aria-label="Compartilhar '+esc(b.name)+'">'+I_ENV+'</button>':'')+
+      '</div>'+
+      '<div class="fb-links"><a href="'+pag+'#parecidos" data-de="ficha"><span>'+(b.sold?'Podem te interessar':'Beats parecidos')+'</span><i>'+esc(rot(b.genre))+' ›</i></a>'+
+        '<a href="'+pag+'" data-de="ficha"><span>Abrir a página do beat</span><i>licença e detalhes ›</i></a></div>';
+  }
+  function abrirFicha(id){
+    if(!beat(id)) return;
+    if(!fb){
+      fveu=document.createElement('div'); fveu.className='fb-veu'; fveu.hidden=true;
+      fb=document.createElement('aside'); fb.className='fb'; fb.id='fbFicha'; fb.hidden=true;
+      fb.setAttribute('role','dialog'); fb.setAttribute('aria-modal','true'); fb.setAttribute('aria-labelledby','fbNome');
+      document.body.appendChild(fveu); document.body.appendChild(fb);
+      fveu.addEventListener('click',fecharFicha);
+      fb.addEventListener('click',function(e){
+        var t=e.target.closest&&e.target.closest('button'); if(!t) return;
+        var id=fbId;
+        if(t.classList.contains('fb-x')) return fecharFicha();
+        if(t.classList.contains('fb-tocar')){ window.tocarBeat(id); return; }
+        if(t.classList.contains('fb-sv')){ if(window.svToque) window.svToque(id); pintarFicha(); return; }
+        if(t.classList.contains('fb-env')){ fecharFicha(); if(String(($('npBar')||{dataset:{}}).dataset.bid)!==String(id)) window.tocarBeat(id); if(window.npCompartilhar) window.npCompartilhar(); return; }
+        if(t.classList.contains('fb-add')){ var ja=noCarr(id); if(ja||cel()) fecharFicha(); botaoBeat(Number(id)); pintarFicha(); }
+      });
+      document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&fb&&!fb.hidden) fecharFicha(); });
+      var som=window.__npSom&&window.__npSom(); if(som){ som.addEventListener('play',pintarFicha); som.addEventListener('pause',pintarFicha); }
+    }
+    fbId=id; fbVolta=document.activeElement;
+    fveu.hidden=false; fb.hidden=false; pintarFicha();
+    var x=fb.querySelector('.fb-x'); if(x){ try{ x.focus({preventScroll:true}); }catch(_){} }
+  }
+  function fecharFicha(){ if(!fb||fb.hidden) return; fb.hidden=true; fveu.hidden=true; if(fbVolta){ try{ fbVolta.focus({preventScroll:true}); }catch(_){} fbVolta=null; } }
+  window.abrirFicha=abrirFicha; window.fecharFicha=fecharFicha; window.fichaAberta=function(){ return !!(fb&&!fb.hidden); };
+  var mod=function(e){ return e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||e.button>0; };
+  // o nome do beat na barra do player: no celular com a barra fechada o toque só abre a barra (como antes)
+  var lk=$('npLink');
+  if(lk) lk.addEventListener('click',function(e){
+    var bar=$('npBar'); if(e.defaultPrevented||mod(e)||!bar||!bar.dataset.bid) return;
+    if(cel()&&!bar.classList.contains('aberta')) return;
+    e.preventDefault(); abrirFicha(bar.dataset.bid);
+  });
+  // o nome do beat na linha (computador; no celular o toque na linha toca)
+  cards.addEventListener('click',function(e){
+    var a=e.target.closest&&e.target.closest('a.nome'); if(!a||mod(e)) return;
+    var l=a.closest('.item'); if(!l) return;
+    e.preventDefault(); abrirFicha(l.dataset.bid);
+  });
+
+  /* ── 10a. Item do carrinho com capa, ▶ e a ficha ── */
+  function vestirCarrinho(){
+    var pb=$('cpBody'); if(!pb) return;
+    var ls=pb.querySelectorAll('.ci');
+    for(var i=0;i<ls.length&&i<cart.length;i++){
+      var c=cart[i], l=ls[i]; if(c.type!=='Beat'||!c.beatId||l.querySelector('.ci-pl')) continue;
+      var b=beat(c.beatId), f=(window.__VIT||{})[String(c.beatId)]||{};
+      var d=document.createElement('div'); d.className='ci-som';
+      d.innerHTML=(f.mp3?'<button type="button" class="ci-pl" data-bid="'+c.beatId+'" aria-label="'+(tocandoAgora(c.beatId)?'Pausar ':'Ouvir ')+esc(c.name)+'">'+(tocandoAgora(c.beatId)?I_PAUSE:I_PLAY)+'</button>':'')+
+        (f.capa?'<img class="ci-capa" src="'+esc(f.capa)+'" alt="">':'<span class="ci-capa vazia"></span>');
+      l.insertBefore(d,l.firstChild);
+      var t=l.querySelector('.ci-t');
+      if(t&&b&&!c.stems) t.textContent='Beat · '+rot(b.genre)+(b.bpm?' · '+b.bpm+' BPM':'')+(b.key?' · '+b.key:'');
+    }
+  }
+  var cpb=$('cpBody');
+  if(cpb) cpb.addEventListener('click',function(e){ var t=e.target.closest&&e.target.closest('.ci-pl'); if(t) window.tocarBeat(t.getAttribute('data-bid')); });
+  function repintarSomDoCarrinho(){
+    [].forEach.call(document.querySelectorAll('#cpBody .ci-pl'),function(t){ var on=tocandoAgora(t.getAttribute('data-bid')); t.innerHTML=on?I_PAUSE:I_PLAY; t.classList.toggle('on',on); });
+  }
+  var som0=window.__npSom&&window.__npSom(); if(som0){ som0.addEventListener('play',repintarSomDoCarrinho); som0.addEventListener('pause',repintarSomDoCarrinho); }
+
+  /* ── Site.estado(): a foto de todas as máquinas de estado da vitrine, só de leitura ──
+     Carrinho, checkout e player seguem com o código de sempre: aqui só se LÊ o estado deles, num lugar só,
+     pra teste, plugin e agente não precisarem adivinhar por classe e style.display. docs/maquinas-de-estado.md */
+  var mostra=function(id){ var e=$(id); return !!(e&&e.style.display&&e.style.display!=='none'); };
+  var tem=function(id,c){ var e=$(id); return !!(e&&e.classList.contains(c)); };
+  window.Site={ estado:function(){
+    var bar=$('npBar'), som=window.__npSom&&window.__npSom(), mn=document.querySelector('#nbar .mn:not([hidden])');
+    var cf=$('cfFolha'), aj=$('ajudaFolha'), st=document.querySelector('.cs-veu'), nl=document.querySelector('.nav-links');
+    var folha=window.fichaAberta()?'ficha':(cf&&!cf.hidden)?'carrinho-meia':(st&&!st.hidden)?'story':tem('mpModal','open')?'checkout':
+      tem('cartPanel','open')?'carrinho':(nl&&nl.classList.contains('open'))?'menu':mn?mn.id:(aj&&!aj.hidden)?'ajuda':null;
+    var nb=0; try{ nb=cart.filter(function(c){ return c.type==='Beat'&&!c.stems; }).length; }catch(_){}
+    return {
+      catalogo:Catalogo.estado(),
+      player:{ beat:(bar&&bar.dataset.bid)?Number(bar.dataset.bid):null, tocando:!!(som&&!som.paused&&som.src), barra:!tem('npBar','on')?'escondida':tem('npBar','aberta')?'aberta':'fechada' },
+      carrinho:{ itens:(typeof cart!=='undefined')?cart.length:0, beats:nb, proximo:(typeof precoDoProximo==='function')?precoDoProximo():PRICE_BEAT },
+      checkout:!tem('mpModal','open')?'fechado':mostra('mpPixConfirmed')?'confirmado':mostra('mpPixPending')?'pix-pendente':mostra('mpStep3')?'resultado':mostra('mpStep2')?'pagamento':'dados',
+      folha:folha
+    };
+  } };
+
+  /* ── amarração: cada redesenho da lista ou do carrinho repinta o que é desta rodada ── */
+  var rc=window.renderCards;
+  window.renderCards=function(){
+    var r=rc.apply(this,arguments);
+    try{ var c=pintarGeneros(); pintarFila(c); saidaDaBuscaVazia(c); pintarMarca(); guardar(); }catch(e){ setTimeout(function(){ throw e; }); }
+    return r;
+  };
+  var uc=window.updateCart;
+  window.updateCart=function(){
+    var r=uc.apply(this,arguments);
+    try{ vestirCarrinho(); pintarFicha(); }catch(e){ setTimeout(function(){ throw e; }); }
+    return r;
+  };
+  window.renderCards();
+  try{ vestirCarrinho(); }catch(_){}
+  try{ retomar(); }catch(_){}
+  pronto=true;
 })();}catch(e){ setTimeout(function(){ throw e; }); }
 
 /*AJUDA-INICIO*/

@@ -1,9 +1,5 @@
-/* Vitrine (caramujorecords.com.br): o visual da página, fora do index.html desde 10/10/2026
-   pra ficar guardado no navegador. Os dois blocos de estilo de antes, na mesma ordem: o da página
-   e o do checkout. Desde 03/11/2026 o site serve o vitrine.min.css, gerado deste arquivo.
-   Mexeu aqui: node testes/vitrine-versao.mjs (gera o .min e troca o ?v=) */
-/* 03/11/2026: a vitrine baixa 4 arquivos de fonte. O 400 normal e o 400 itálico saíram: quem pede 400 recebe o 500,
-   que já vem (regra de escolha de peso das fontes), sem negrito falso. */
+/* Vitrine (caramujorecords.com.br): o visual da página, fora do index.html desde 10/10/2026 */
+/* 03/11/2026: a vitrine baixa 4 arquivos de fonte */
 @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
 @font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:500;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-500-italic.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
 @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
@@ -41,8 +37,7 @@ body{
   color:var(--txt);
   font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
 }
-/* 03/11/2026: no Cormorant o 1 parecia um I ("R$ ıı9", o badge do carrinho com "I"). Números retos em tudo;
-   !important porque o atalho font: de cada regra zera essa propriedade. Os tabular-nums daqui são da mono. */
+/* 03/11/2026: no Cormorant o 1 parecia um I ("R$ ıı9", o badge do carrinho com "I") */
 *{font-variant-numeric:lining-nums!important}
 
 /* GRAIN */
@@ -87,10 +82,7 @@ nav{
 }
 .nav-links a:hover{color:var(--fire);background:rgba(232,76,24,.05);}
 
-/* ═══ TOPO ═══════════════════════════════
-   04/11/2026 (escolha do Bruno: T4 compacto, sem o Mix & master): o hero saiu. No lugar, a tag de manchete
-   ("Atenção!" grande e a frase com o @rideblan33 que leva pro perfil) e os números numa linha. Do tamanho do T1:
-   1º beat em ~440px no celular e ~470px no computador. A abertura (abaixo) pousa a frase aqui. */
+/* ═══ TOPO ═══════════════════════════════ */
 .topo{position:relative;overflow:hidden;background:var(--black);padding:calc(var(--nav-h,54px) + 18px) 1rem 18px;border-bottom:1px solid var(--wire)}
 .topo-selo{position:absolute;right:-40px;top:calc(var(--nav-h,54px) + 2px);width:150px;height:auto;opacity:.09;pointer-events:none}
 .topo-in{position:relative}
@@ -115,13 +107,7 @@ nav{
 }
 .so-leitor{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
 
-/* ═══ ABERTURA ═══════════════════════════
-   04/11/2026 (M3, escolha do Bruno, um pouco mais devagar que o esboço pra dar tempo de ler): a tag aparece
-   palavra por palavra no meio da tela, o logo assina em cima e os dois voam, o logo pro menu e a frase pro topo.
-   Quem monta é o script logo depois do <body> (index.html): uma vez por aba, nunca com #link, ?cupom= ou volta de
-   e-mail, nem com "reduzir movimento", aba escondida ou navegador automatizado (os testes; o teste72 liga com
-   window.__abertura). Toque, tecla ou rolagem pulam. Se o script parar no meio, este CSS tira a
-   cortina e mostra a frase sozinho aos 4,6 s. */
+/* ═══ ABERTURA ═══════════════════════════ */
 #abertura{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent;animation:abSai .4s ease 4.6s forwards}
 #abertura .ab-fundo{position:absolute;inset:0;background:radial-gradient(ellipse 70% 55% at 50% 48%,rgba(74,56,32,.42) 0%,transparent 70%),var(--black)}
 #abertura .ab-logo{position:relative;flex:none;margin-bottom:26px;transform-origin:0 0}
@@ -363,9 +349,7 @@ html, body {
   max-width: 100%;
 }
 /* Âncoras (#beats etc.) param abaixo da nav fixa de 54px */
-/* v28: âncora cai no começo exato da seção. Um recuo só, igual à altura real
-   do menu fixo (--nav-h, medida pelo JS no load e no resize). Antes somavam
-   70px aqui + 60px de scroll-margin em cada seção = 76px de vão. */
+/* v28: âncora cai no começo exato da seção */
 html { scroll-padding-top: var(--nav-h,54px); }
 /* a última seção + rodapé ocupam no mínimo uma tela: senão, no computador, o
    "Contato" não tinha página embaixo pra subir até o menu e parava 129px abaixo */
@@ -410,8 +394,7 @@ html { scroll-padding-top: var(--nav-h,54px); }
   .cart-btn{bottom:1rem;right:1rem;width:58px;height:58px;border-radius:50%;padding:0;justify-content:center;}
   .cart-btn .cart-label{display:none;}
   .cart-btn .cart-n{position:absolute;top:-5px;right:-5px;border:1px solid var(--ember);}
-  /* rodada R (18/10/2026): o respiro extra no fim de Serviços e Contato era pro círculo do carrinho,
-     que saiu na rodada Q (carrinho no topo); agora todas as seções têm o mesmo espaço no celular */
+  /* rodada R (18/10/2026): o respiro extra no fim de Serviços e Contato era pro círculo do car */
   /* Inputs com 16px: impede o zoom automático do iOS ao focar */
   input,select,textarea{font-size:16px!important;}
   /* Piso de legibilidade pra textos miúdos */
@@ -489,9 +472,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 
 @media(max-width:860px){
   body::before{animation:none;}
-  /* O balão da licença abre COLADO no link, igual ao computador. Ele era folha
-     fixa no rodapé e a barra do player passou a cobrir. Posição vem do JS
-     (posicionarLic), que mede o botão e encaixa o balão embaixo sem vazar. */
+  /* O balão da licença abre COLADO no link, igual ao computador */
   .lic-box{position:fixed;left:0;top:0;transform:none;max-width:none;}
   .lic-box::before{display:none;}
 }
@@ -546,9 +527,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
   .nav-links.open{max-height:82vh;border-bottom:1px solid var(--wire);}
   .nav-links>li>a{width:100%;border-bottom:1px solid var(--wire);padding:0 1.4rem!important;font-size:.74rem!important;justify-content:flex-start;}
 }
-/* ══ NOVO v18 — player do Drive (sai o SoundCloud) ═══════════════════
-   Linha do beat: número/play, capa da beat tape, nome, ficha e preço.
-   Barra do pé: tempo, seek, capa, nome, transporte, volume e preço. */
+/* ══ NOVO v18 — player do Drive (sai o SoundCloud) ═══════════════════ */
 #beatCards{display:block}
 #beatCards .item{position:relative;display:flex;align-items:center;gap:14px;padding:11px 10px;
   border-bottom:1px solid var(--wire);cursor:pointer;transition:background .14s}
@@ -675,9 +654,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
   .pe-dir{flex:none}
 }
 
-/* ══ NOVO v29 — parcelamento visível, carrinho do pé e barra simétrica ══════
-   Parcelar em até 12x aparece no total do carrinho e embaixo do botão de cada
-   pacote. Na linha de cada beat, não: a lista fica limpa. */
+/* ══ NOVO v29 — parcelamento visível, carrinho do pé e barra simétrica ══════ */
 .cp-parc{margin:-.6rem 0 1rem;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--read);letter-spacing:.04em}
 .cp-parc b{color:var(--cream);font-weight:600}
 /* PIX com desconto (17/10/2026): o aviso em cima do Mercado Pago */
@@ -853,9 +830,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 
 #mpBrickContainer .mp-checkout-bricks__container { background: transparent !important; }
 
-/* ══ NOVO v19 — passada de celular no player ═════════════════════════
-   O público chega pelo celular, então: alvo de toque grande, seek que dá
-   pra pegar sem hover, e nada de controle que não funciona no aparelho. */
+/* ══ NOVO v19 — passada de celular no player ═════════════════════════ */
 #beatCards .item,.preco,.tb,.trilha{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .np-bar.on ~ .cart-btn{bottom:7.2rem}
 body.tocando{padding-bottom:104px}
@@ -912,10 +887,7 @@ body.tocando{padding-bottom:104px}
   .pe-seek{gap:13px}
 }
 
-/* ══ NOVO v20 — carrinho no topo do celular ══════════════════════════
-   A bolha flutuante caía bem em cima da coluna de preço das faixas. No
-   celular ela sai e o carrinho vira ícone fixo na barra de cima, que já
-   está sempre à vista. No computador nada muda. */
+/* ══ NOVO v20 — carrinho no topo do celular ══════════════════════════ */
 .nav-cart{display:none;position:relative;background:none;border:none;cursor:pointer;
   width:44px;height:44px;align-items:center;justify-content:center;padding:0;
   color:var(--bone);transition:color .15s}
@@ -928,10 +900,7 @@ body.tocando{padding-bottom:104px}
   .cart-btn.has-items{display:none}
 }
 
-/* ══ NOVO v21 — dedo no celular ══════════════════════════════════════
-   Tudo que faz parte do caminho de ouvir e comprar passa a ter 40px ou
-   mais de altura, que é o tamanho de um polegar. E a ficha do beat ganha
-   um ponto de corpo: é a linha que a pessoa lê de perto pra decidir. */
+/* ══ NOVO v21 — dedo no celular ══════════════════════════════════════ */
 html{-webkit-text-size-adjust:100%}
 @media(max-width:760px){
   #beatCards .ficha{font-size:.72rem;letter-spacing:0}
@@ -973,9 +942,7 @@ html{-webkit-text-size-adjust:100%}
 
 @media(max-width:760px){
   /* slider de volume DEITADO no telefone: o de pé não obedece arrasto de dedo */
-  /* o popup é absoluto dentro de um wrap de 38px e o max-width:100% da casa
-     espremia tudo. Largura na mão resolve, e o slider fica EM PÉ como no
-     computador. touch-action:none pro arrasto do dedo não virar rolagem. */
+  /* o popup é absoluto dentro de um wrap de 38px e o max-width:100% da casa */
   .vol-pop{width:54px;max-width:none;padding:14px 12px}
   .vol-pop input{width:26px;max-width:none;height:132px;touch-action:none}
 }
@@ -987,11 +954,7 @@ html{-webkit-text-size-adjust:100%}
 body.vol-aberto .cart-btn{transform:translateY(-76px)}
 
 
-/* ══ Revisão de 03/10/2026 — leveza e celular, sem mudar o desenho ══════════
-   1) Rolar dentro do carrinho, da escolha do pacote, do checkout ou da mídia
-      ampliada não arrasta mais a página que está atrás (no celular arrastava).
-   2) No celular o menu de cima perde o desfoque do fundo: com o fundo 97%
-      opaco ele não aparecia, e custava processamento a cada quadro da rolagem. */
+/* ══ Revisão de 03/10/2026 — leveza e celular, sem mudar o desenho ══════════ */
 .cp-body,.mp-modal-inner{overscroll-behavior:contain}
 @media(max-width:860px){ nav{backdrop-filter:none;-webkit-backdrop-filter:none} }
 /* faixa do PIX que ficou aberto (03/10/2026): embaixo, acima do player, abaixo do véu */
@@ -1031,8 +994,7 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .nav-links .sub-gen a.sg-todos{font:700 .66rem var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--bone);padding:4px 0 12px;margin-bottom:8px;border-bottom:1px solid var(--wire)}
 .nav-links .sub-gen a.sg-todos:hover{color:var(--fire)}
 .sg-lista{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
-/* celular (04/10/2026, opção A do Bruno): BEATS no ☰ vira acordeão; "Todos os beats" em destaque
-   e os gêneros em duas colunas com quantos estão à venda (o número só aparece aqui) */
+/* celular (04/10/2026, opção A do Bruno): BEATS no ☰ vira acordeão; "Todos os beats" em dest */
 .sub-gen a i{display:none}
 @media(max-width:860px){
   .nav-links.open{overflow-y:auto;overscroll-behavior:contain}
@@ -1071,8 +1033,7 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .mp-ok-nota{font-family:'IBM Plex Mono',monospace;font-size:.66rem;line-height:1.6;color:var(--dim);margin:.6rem auto 1.4rem;max-width:320px}
 .mp-ok-assina{margin-top:1.4rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.06em;color:var(--dim)}
 
-/* Nome do beat vendido na lista (11/10/2026): no mouse, o mesmo sublinhado dos à venda (é link pra
-   página do beat, com os parecidos). O riscado do vendido fica; o sublinhado vem por baixo. */
+/* Nome do beat vendido na lista (11/10/2026): no mouse, o mesmo sublinhado dos à venda (é li */
 @media(hover:hover) and (pointer:fine){
   #beatCards .item.fora a.nome:hover{background:linear-gradient(var(--fire),var(--fire)) 0 calc(100% - 1px)/100% 1px no-repeat;padding-bottom:3px;margin-bottom:-3px}
 }
@@ -1118,9 +1079,7 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .lm-num{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:.56rem;color:var(--dim);text-align:center;white-space:nowrap}
 .lm-num span.on{color:var(--bone)}
 
-/* ═══ BARRA DOS BEATS (16/10/2026, opção A do Bruno) ═══
-   busca + ✦ + Gênero + Ordem + Só à venda. Celular: busca e ✦ numa linha, os 3 controles
-   na de baixo, menus em folha que sobe de baixo. Computador: uma linha, menus descem do botão. */
+/* ═══ BARRA DOS BEATS (16/10/2026, opção A do Bruno) ═══ */
 .nbar{position:relative;margin:0}
 .nb{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin:0 0 .9rem}
 .nb-busca{flex:1 1 220px;min-width:0;display:flex;align-items:center;gap:.6rem;min-height:46px;padding:0 0 0 1rem;border:1px solid var(--clay);background:var(--deep);cursor:text;transition:border-color .14s}
@@ -1221,8 +1180,7 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
   .mf-ver{display:block;width:calc(100% - 2.2rem);min-height:50px;margin:1rem 1.1rem 0;background:var(--bone);border:0;color:var(--deep);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;cursor:pointer}
 }
 
-/* QUEM JÁ GRAVOU na vitrine (17/10/2026, opção B, sem a contagem de músicas): fotos redondas que
-   deslizam entre o catálogo e os serviços. Seção montada no servidor (_lib/gravouvitrine.js). */
+/* QUEM JÁ GRAVOU na vitrine (17/10/2026, opção B, sem a contagem de músicas): fotos redondas */
 .qg-vit .qg-head{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.6rem}
 .qg-ver{flex:none;font-size:.66rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--fire);border-bottom:1px solid var(--fire);padding-bottom:3px;white-space:nowrap;text-decoration:none;transition:color .2s,border-color .2s}
 .qg-trilho{display:flex;gap:18px;overflow-x:auto;scrollbar-width:none;padding-bottom:6px;scroll-snap-type:x proximity}
@@ -1240,8 +1198,7 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 @media (hover:hover){.qg-ver:hover{color:var(--cream);border-bottom-color:var(--cream)}.qg-card:hover b{color:var(--cream)}.qg-card:hover img{border-color:var(--fire)}.qg-todos:hover .qg-mais{border-color:var(--fire)}.qg-todos:hover .qg-veu{background:rgba(20,17,13,.38)}}
 @media (min-width:900px){.qg-trilho{gap:26px}.qg-card{width:140px}.qg-card img,.qg-card .qg-ini,.qg-card .qg-mais{width:140px;height:140px}}
 
-/* Quem já gravou na vitrine mostra que desliza (rodada Q, 18/10/2026), igual à fileira do perfil:
-   degradê na borda direita (some no fim), empurrãozinho quando aparece e setas no computador */
+/* Quem já gravou na vitrine mostra que desliza (rodada Q, 18/10/2026), igual à fileira do pe */
 .qg-dir{display:flex;align-items:center;gap:14px;flex:none}
 .qg-setas{display:flex;gap:6px}
 .qg-setas[hidden]{display:none}
@@ -1339,9 +1296,7 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .nav-cart{display:flex}#cartBtn.cart-btn{display:none}
 .nav-cart:not(.has-items) .cart-n{display:none}
 /*AJUDA-FIM*/
-/* TOPO IGUAL AO DAS OUTRAS PÁGINAS (rodada S, 23/10/2026): as medidas do _lib/topo.js na barra da
-   vitrine (margens, espaço entre os ícones, tamanho do anel, recuo dos links) e o ☰ a partir de 860px,
-   como nas outras páginas. O anel de story (degradê) passa a ser o de todas. */
+/* TOPO IGUAL AO DAS OUTRAS PÁGINAS (rodada S, 23/10/2026): as medidas do _lib/topo.js na bar */
 .nav-links a{padding:0 1rem}
 .nav-right{gap:14px}
 .nav-eu{width:32px;height:32px}
@@ -1354,15 +1309,12 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
   .nav-right{gap:2px}
 }
 
-/* ═══ DE-PARA FINAL (25/10/2026) ═══════════════════════════════════════════════
-   2: no celular o botão do gênero e o da ordem dizem "Gênero"/"Ordem" até a pessoa escolher
-   (pintarBarra liga a classe .padrao); no computador o rótulo pequeno já diz. */
+/* ═══ DE-PARA FINAL (25/10/2026) ═══════════════════════════════════════════════ */
 @media(max-width:860px){
   .nb-sel.padrao small{display:inline;font-size:inherit;font-weight:inherit;color:inherit;letter-spacing:inherit}
   .nb-sel.padrao>span{display:none}
 }
-/* 4: serviços em linhas (nome, uma frase, preço, +); 2 colunas no computador.
-   "Mais pedido" é texto acima do nome; o desconto do Mix + Master é um selo cheio no preço. */
+/* 4: serviços em linhas (nome, uma frase, preço, +); 2 colunas no computador. */
 .sv-lista{list-style:none;margin:0;padding:0;border-top:1px solid var(--wire)}
 .sv-l{display:grid;grid-template-columns:28px minmax(0,1fr) auto 44px;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--wire)}
 .sv-n{font:400 .7rem 'IBM Plex Mono',monospace;color:var(--fosco)}
@@ -1398,8 +1350,7 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .qg-depo p{margin:0;font:italic 500 1.2rem/1.4 var(--serif);color:var(--bone)}
 .qg-depo cite{display:block;margin-top:6px;font:400 .66rem 'IBM Plex Mono',monospace;font-style:normal;letter-spacing:.14em;text-transform:uppercase;color:var(--label)}
 #estudio{padding-top:3.4rem;padding-bottom:4rem}
-/* 26/10 (rodada W, opção A): faixa com a foto do estúdio. Celular: foto em cima (220px), anel e texto sobem 46px por cima do degradê.
-   Computador: foto na direita (60%, até 1000px; o arquivo tem 768), texto na esquerda */
+/* 26/10 (rodada W, opção A): faixa com a foto do estúdio */
 .eu-card{position:relative;overflow:hidden;display:grid;grid-template-columns:84px minmax(0,1fr);grid-template-areas:"foto foto" "anel tx";column-gap:16px;align-items:center;padding:0 18px 20px;border:1px solid var(--wire);background:var(--black);text-decoration:none;color:var(--bone)}
 .eu-foto{grid-area:foto;position:relative;z-index:0;display:block;width:calc(100% + 36px);max-width:none;height:220px;margin:0 -18px;overflow:hidden}
 .eu-foto img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 40%}
@@ -1422,3 +1373,68 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 
 /* rodada AF (04/11/2026): a lista dos beats que o servidor manda no HTML (functions/_lib/prebeats.js); com JS some */
 .pre-beats{max-width:960px;margin:0 auto;padding:1rem;font-size:.85rem;line-height:1.7;color:var(--read)}.pre-beats p{margin:0 0 .5rem;color:var(--label);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase}.pre-beats ul{list-style:none;margin:0;padding:0;columns:2}.pre-beats a{color:var(--cream)}.pre-beats span{color:var(--dim)}html.js .pre-beats{display:none}
+
+/* ── RODADA AH (10 e 11/11/2026): gêneros com contagem, fileira, busca, ficha do beat, carrinho ── */
+.ft[data-n]:after{content:attr(data-n)}
+.ft[data-n]:after,.gf small{font:400 .72rem 'IBM Plex Mono',monospace;letter-spacing:0;color:var(--read);margin-left:.5rem}
+.ft.on[data-n]:after,.gf.on small{color:var(--black)}
+#nbar .ft[hidden],#filtGen .ft[hidden],footer a[hidden],.nb-canc,.b-ex[hidden],.g-tag[hidden],.fb[hidden],.fb-veu[hidden]{display:none}
+.gfila{display:flex;gap:.5rem;margin:0 0 .9rem;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.gfila::-webkit-scrollbar{display:none}
+.gf{flex:none;display:inline-flex;align-items:center;min-height:44px;padding:0 .9rem;border:1px solid var(--wire);background:var(--deep);color:var(--cream);font:700 .66rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;white-space:nowrap;cursor:pointer;transition:border-color .14s}
+.gf:hover{border-color:var(--clay)}
+.gf.on{background:var(--fire);border-color:var(--fire);color:var(--black)}
+.g-tag{display:inline-flex;align-items:center;gap:.45rem;min-height:30px;padding:0 .55rem 0 .65rem;border:0;background:var(--fire);color:var(--black);font:700 .62rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;align-self:center}
+.b-ex{margin:-.2rem 0 .9rem}
+.b-ex b,.bv-acoes span{display:block;font:700 .6rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:var(--label);margin:0 0 .55rem}
+.b-ex div,.bv-acoes div{display:flex;flex-wrap:wrap;gap:.5rem}
+.b-ex button{min-height:44px;padding:0 .8rem;border:1px solid var(--wire);background:var(--deep);color:var(--cream);font:400 .8rem 'IBM Plex Mono',monospace;cursor:pointer}
+.b-ex button:hover{border-color:var(--clay)}
+.bv-acoes{padding:0 1rem 1.6rem;display:flex;flex-direction:column;align-items:center;gap:1rem;text-align:center}
+.bv-acoes div{justify-content:center}
+.bv-acoes span{margin:0}
+.bv-limpar{min-height:46px;padding:0 1.2rem;border:0;background:var(--bone);color:var(--black);font:700 .68rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;cursor:pointer}
+#beatCards .item.voltou{background:var(--earth);box-shadow:inset 3px 0 0 var(--fire)}
+#beatCards .item{transition:background .5s}
+#npPreco s{font-size:.85em;opacity:.62;margin-right:.3em}
+@media(min-width:861px){#ddGenero{display:none}.gfila{flex-wrap:wrap;gap:.4rem}.gf{min-height:34px;padding:0 .7rem;font-size:.6rem}}
+@media(max-width:860px){
+  .gfila{margin:0 -1rem .7rem;padding:0 1rem}
+  #nbar .nb{margin-bottom:.6rem}
+  #nbar.busca-on .nb>.nb-ic,#nbar.busca-on #ddFiltros{display:none}
+  #nbar.busca-on .nb-canc{display:block;flex:none;min-height:46px;padding:0 .2rem;border:0;background:none;color:var(--amber);font:400 .82rem 'Helvetica Neue',Helvetica,Arial,sans-serif;cursor:pointer}
+  #beatCards .preco,#beatCards .vendido{width:88px;min-width:0;padding-left:0;padding-right:0;justify-content:center;align-items:center}
+  #beatCards .preco.on .rotulo{font-size:0}
+  #beatCards .preco.on .rotulo:after{content:'ver';font-size:.72rem}
+  #beatCards .nome{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  #beatCards .ficha{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+.fb-veu{position:fixed;inset:0;z-index:8350;background:rgba(5,4,3,.6)}
+.fb{position:fixed;z-index:8360;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto;background:var(--deep);border:1px solid var(--clay);padding:1.4rem 1.3rem 1rem;display:flex;flex-direction:column;gap:1rem}
+.fb-x{position:absolute;top:4px;right:4px;width:44px;height:44px;border:0;background:none;color:var(--cream);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.fb-top{display:flex;align-items:center;gap:1rem;padding-right:2.2rem}
+.fb-capa{width:76px;height:76px;flex:none;object-fit:cover;border:1px solid var(--wire)}
+.fb-capa.vazia{display:flex;align-items:center;justify-content:center;background:var(--mole)}
+.fb-capa.vazia img{opacity:.45}
+.fb-quem{min-width:0}
+.fb-quem small{font:700 .6rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:var(--label)}
+.fb-quem h3{font:500 1.9rem/1 var(--serif);color:var(--cream);margin:.3rem 0;text-transform:uppercase;overflow-wrap:anywhere}
+.fb-quem span{font:400 .8rem 'Helvetica Neue',Helvetica,Arial,sans-serif;color:var(--read)}
+.fb-chips{list-style:none;display:flex;flex-wrap:wrap;gap:.4rem;margin:0;padding:0}
+.fb-chips li{padding:.45rem .65rem;border:1px solid var(--wire);font:400 .72rem 'IBM Plex Mono',monospace;color:var(--read)}
+.fb-acoes{display:flex;gap:.5rem;align-items:stretch}
+.fb-bt{width:52px;height:52px;flex:none;border:1px solid var(--wire);background:none;color:var(--amber);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.fb-bt.on,.fb-bt:hover{color:var(--fire);border-color:var(--clay)}
+.fb-add{flex:1;min-width:0;min-height:52px;border:0;background:var(--bone);color:var(--black);font:700 .68rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+.fb-add.on{background:var(--fire)}
+.fb-add s{opacity:.6;font-weight:400}
+.fb-dono{flex:1;display:flex;align-items:center;font:500 1.15rem var(--serif);color:var(--amber)}
+.fb-links a{display:flex;align-items:center;justify-content:space-between;gap:.8rem;min-height:48px;border-top:1px solid var(--wire);color:var(--cream);text-decoration:none;font:400 .86rem 'Helvetica Neue',Helvetica,Arial,sans-serif}
+.fb-links i{font:400 .72rem 'IBM Plex Mono',monospace;color:var(--read)}
+.fb-links a:hover span{color:var(--fire)}
+@media(max-width:860px){.fb{left:0;right:0;top:auto;bottom:0;transform:none;width:auto;max-height:86%;border-width:1px 0 0;padding-bottom:calc(1rem + env(safe-area-inset-bottom,0px))}}
+.ci-som{display:flex;align-items:center;gap:.5rem;margin-right:.7rem;flex:none}
+.ci-pl{width:36px;height:44px;border:0;background:none;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--amber)}
+.ci-pl svg{box-sizing:content-box;padding:8px;border:1px solid var(--clay);border-radius:50%}
+.ci-pl.on svg{background:var(--fire);border-color:var(--fire);color:var(--black)}
+.ci-capa{width:40px;height:40px;flex:none;object-fit:cover;border:1px solid var(--wire);background:var(--mole)}
