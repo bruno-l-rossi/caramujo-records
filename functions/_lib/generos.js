@@ -24,4 +24,5 @@ export const CSS_RODAPE_GENEROS = `.foot-generos{flex-basis:100%;align-self:stre
 .foot-generos .fg-k{font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--clay,#A87B4A);margin-right:.5rem}
 .foot-generos a{font-family:var(--serif);font-size:1.05rem;font-weight:500;letter-spacing:0;text-transform:none;color:var(--read);text-decoration:none;transition:color .2s}
 .foot-generos a:hover,.foot-generos a[aria-current]{color:var(--fire)}
+.foot-generos a{position:relative}.foot-generos a:after{content:'';position:absolute;inset:-9px -5px}.foot-generos a[hidden]{display:none}
 @media(max-width:760px){.foot-generos{gap:.35rem .95rem}.foot-generos .fg-k{flex-basis:100%;margin:0 0 .2rem}}`;

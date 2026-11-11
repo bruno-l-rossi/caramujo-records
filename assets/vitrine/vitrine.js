@@ -3073,7 +3073,8 @@ try{(function(){
   var fila=document.createElement('div'); fila.className='gfila'; fila.id='gFila'; fila.setAttribute('role','group'); fila.setAttribute('aria-label','Filtrar por gênero');
   var meta=nbar.querySelector('.nb-meta'); nbar.insertBefore(fila,meta);
   var tag=document.createElement('button'); tag.type='button'; tag.className='g-tag'; tag.id='gTag'; tag.hidden=true;
-  var conta=nbar.querySelector('.nb-conta'), pg=$('nbPagina'); if(conta) conta.insertBefore(tag,pg||null);
+  var conta=nbar.querySelector('.nb-conta'), pg=$('nbPag'); if(conta) conta.insertBefore(tag,pg||null);
+  var venda=document.createElement('span'); venda.className='nb-venda'; venda.id='nbVenda'; venda.hidden=true; if(conta) conta.insertBefore(venda,tag);
   var X='<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
   function pintarFila(c){
     var h='';
@@ -3082,6 +3083,10 @@ try{(function(){
       h+='<a class="gf'+(g===curFilt?' on':'')+'" href="'+esc(o.getAttribute('href')||'#beats')+'" data-g="'+g+'"'+(g===curFilt?' aria-current="true"':'')+'>'+esc(g==='todos'?'Todos':rot(g))+'<small>'+n+'</small></a>';
     });
     if(fila.__h!==h){ fila.innerHTML=h; fila.__h=h; var on=fila.querySelector('.on'); if(on&&fila.scrollWidth>fila.clientWidth) fila.scrollLeft=Math.max(0,on.offsetLeft-fila.clientWidth/2+on.offsetWidth/2); }
+    // rodada AI (11/11/2026): a contagem diz quantos dos beats da lista ainda estão à venda ("37 beats · 35 à venda")
+    var e=Catalogo.estado(), nv=c[curFilt]||0, tot=parseInt((($('nbTotal')||{}).textContent||''),10)||0;
+    venda.hidden=!!(e.busca||e.salvos||e.soVenda||!nv||nv>=tot);
+    if(!venda.hidden) venda.textContent='· '+nv+' à venda';
     var lig=curFilt!=='todos';
     tag.hidden=!lig;
     if(lig){ tag.innerHTML=esc(rot(curFilt))+X; tag.setAttribute('aria-label','Tirar o filtro '+rot(curFilt)); }
@@ -3200,6 +3205,7 @@ try{(function(){
                 '<button type="button" class="fb-bt fb-sv'+(sv?' on':'')+'" aria-pressed="'+(sv?'true':'false')+'" aria-label="'+(sv?'Tirar dos salvos':'Salvar '+esc(b.name))+'">'+(sv?I_COR.replace('fill="none"','fill="currentColor"'):I_COR)+'</button>')+
         (f.mp3?'<button type="button" class="fb-bt fb-env" aria-label="Compartilhar '+esc(b.name)+'">'+I_ENV+'</button>':'')+
       '</div>'+
+      (b.sold?'':'<p class="fb-lic">Licença exclusiva · MP3 + WAV na hora</p>')+
       '<div class="fb-links"><a href="'+pag+'#parecidos" data-de="ficha"><span>'+(b.sold?'Podem te interessar':'Beats parecidos')+'</span><i>'+esc(rot(b.genre))+' ›</i></a>'+
         '<a href="'+pag+'" data-de="ficha"><span>Abrir a página do beat</span><i>licença e detalhes ›</i></a></div>';
   }

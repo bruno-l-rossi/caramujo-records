@@ -136,7 +136,7 @@
     // 27/09/2026: caminhos novos pro perfil
     anel: 'Anel do topo da vitrine', sobre: 'Card do Sobre nós', hero: '@ do topo da vitrine', '404': 'Link quebrado (página de erro)', 'story-catalogo': 'Story do catálogo', link: 'Link compartilhado do perfil',
     // 05/10/2026: as páginas de beat e de gênero, a pasta de artista e o painel
-    'pagina-beat': 'Página de beat', 'pagina-genero': 'Página de gênero', artista: '@ da pasta de artista',
+    'pagina-beat': 'Página de beat', ficha: 'Ficha do beat (vitrine)', 'pagina-genero': 'Página de gênero', artista: '@ da pasta de artista',
     'artista-mais': 'Ver tudo da pasta de artista', painel: 'Painel (você)',
     // 11/10/2026: caixa "Quer um som assim?" da aba Músicas, topo da página do pedido
     'perfil-musicas': 'Quer um som assim? (aba Músicas)', 'perfil-gravou': 'Linha Quem já gravou (aba Músicas)',

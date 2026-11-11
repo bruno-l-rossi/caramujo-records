@@ -458,6 +458,12 @@ const BARRA = `<div class="barra" aria-label="Tocando agora">
 const praTela = (b) => ({ id: b.id, s: b.slug, n: b.name, mp3: b.mp3 || null, capa: capaP(b), arte: capaGrande(b), dur: b.dur || 0, sold: !!b.sold });
 
 // quantos à venda no total e por gênero (o acordeão do menu do celular)
+// rodada AI (11/11/2026): gênero sem beat à venda sai do rodapé (como na vitrine) até entrar beat de novo
+function rodapeSemZerado(beats) {
+  const n = aVendaPorGenero(beats);
+  return RODAPE.replace(/<a href="\/beats\/([a-z0-9-]+)"/g, (m, s) => (n.por.get(s) > 0 ? m : '<a hidden href="/beats/' + s + '"'));
+}
+
 function aVendaPorGenero(beats) {
   const por = new Map(); let total = 0;
   for (const b of beats || []) if (!b.sold) { total++; por.set(b.gslug, (por.get(b.gslug) || 0) + 1); }
@@ -556,7 +562,7 @@ ${par.length ? `<section class="secao" id="parecidos" aria-labelledby="tParecido
 <ol class="lista js-lista">${par.map((x, i) => linha(x, i, de, preco)).join('')}</ol></section>` : ''}
 </main>
 ${par.length ? BARRA : ''}
-${RODAPE}
+${rodapeSemZerado(beats)}
 <script>window.__PG=${jsonSeguro({ pagina: 'beat', atual: b.id, lm: precosDoProximo(preco, pk), beats: lista.map(praTela) })}</script>
 <script>${JS}</script>
 ${TOPO_JS}
@@ -639,7 +645,7 @@ ${topo(de, gslug, aVendaPorGenero(beats))}
 ${pacoteBloco}
 </main>
 ${BARRA}
-${RODAPE}
+${rodapeSemZerado(beats)}
 <script>window.__PG=${jsonSeguro({ pagina: 'genero', preco, lm: precosDoProximo(preco, pk), beats: ordem.map(praTela) })}</script>
 <script>${JS}</script>
 ${TOPO_JS}

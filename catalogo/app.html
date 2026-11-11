@@ -1834,7 +1834,7 @@ __META__
     if(s) p.push(s+(s===1?' música':' músicas'));
     // rodada AH: tape com beat à venda diz quantos sobram ("16 beats · 8 à venda")
     var av=CAT.artist.tape&&!CAT.perm.beats?BEATS.filter(function(t){ return !!t.buy; }).length:0;
-    if(av) return p.join(', ')+' · '+av+' à venda';
+    if(av) return (av===b&&!s) ? b+(b===1?' beat':' beats')+' à venda' : p.join(', ')+' · '+av+' à venda';   // rodada AI: 13 de 13 vira "13 beats à venda"
     return p.join(', ') || 'catálogo vazio';
   }
 
