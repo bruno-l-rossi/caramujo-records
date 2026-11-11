@@ -64,10 +64,24 @@ function toggleAvail(btn){
 // do perfil (nv, da /api/vitrine; a 1ª tape do perfil = a mais nova); dentro da tape, a ordem
 // do catálogo. BPM = do mais lento pro mais rápido (sem BPM no fim). Sort estável: empate
 // fica na ordem do catálogo.
+// rodada AJ (11/11/2026): ordem pelo título da coluna, no computador. Sufixo -d = ao contrário. Vazio vai pro fim.
+const COLUNAS=(()=>{
+  const dur=b=>Number(((window.__VIT||{})[String(b.id)]||{}).dur)||0;
+  const txt=f=>(a,b)=>{ const x=f(a), y=f(b); return (!x)-(!y) || String(x).localeCompare(String(y),'pt-BR',{sensitivity:'base'}); };
+  const num=f=>(a,b)=>{ const x=f(a), y=f(b); return (!x)-(!y) || x-y; };
+  const base={ nome:txt(b=>b.name), genero:txt(b=>GENRE_LABELS[b.genre]||b.genre), tom:txt(b=>b.key), dur:num(dur), 'bpm-c':num(b=>Number(b.bpm)||0) };
+  const out={ nome:base.nome, genero:base.genero, tom:base.tom, dur:base.dur };
+  // ao contrário: inverte só quem tem valor (o vazio continua no fim)
+  const inv=(c,f)=>(a,b)=>{ const va=!f(a), vb=!f(b); return va-vb || c(b,a); };
+  out['nome-d']=inv(base.nome,b=>b.name); out['genero-d']=inv(base.genero,b=>b.genre); out['tom-d']=inv(base.tom,b=>b.key);
+  out['dur-d']=inv(base.dur,dur); out['bpm-d']=inv(base['bpm-c'],b=>Number(b.bpm)||0);
+  return out;
+})();
 function ordenarBeats(src){
   if(sortMode==='aleatorio'&&shuffleOrder) src.sort((a,b)=>shuffleOrder.indexOf(a.id)-shuffleOrder.indexOf(b.id));
   else if(sortMode==='novos'){ const nv=b=>{ const f=(window.__VIT||{})[String(b.id)]; return f&&typeof f.nv==='number'?f.nv:9999; }; src.sort((a,b)=>nv(a)-nv(b)); }
   else if(sortMode==='bpm'){ const bp=b=>Number(b.bpm)||9999; src.sort((a,b)=>bp(a)-bp(b)); }
+  else if(COLUNAS[sortMode]) src.sort(COLUNAS[sortMode]);
   return src;
 }
 function sortBeats(v){
@@ -159,7 +173,9 @@ function fmtDur(s){s=Math.max(0,Math.round(s||0));return Math.floor(s/60)+':'+St
 // endereço da página de cada beat (04/10/2026): o mesmo slug do servidor (functions/_lib/casar.js)
 function paginaDoBeat(nome){return '/beat/'+String(nome||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');}
 
-const BEATS_PER_PAGE = 10;
+// rodada AJ (11/11/2026): no computador (a partir de 861px) a lista mostra 20 por página; no celular seguem 10
+const computador=()=>{ try{ return window.matchMedia('(min-width:861px)').matches; }catch(_){ return false; } };
+const porPagina=()=>computador()?20:10;
 let curPage = 1;
 let beatQuery = '';
 
@@ -189,10 +205,10 @@ function renderCards(){
     if(typeof window.pintarBarra==='function') window.pintarBarra(0,0);
     return;
   }
-  const totalPages=Math.ceil(src.length/BEATS_PER_PAGE);
+  const totalPages=Math.ceil(src.length/porPagina());
   if(curPage>totalPages) curPage=totalPages;
-  const start=(curPage-1)*BEATS_PER_PAGE;
-  const pageSrc=src.slice(start,start+BEATS_PER_PAGE);
+  const start=(curPage-1)*porPagina();
+  const pageSrc=src.slice(start,start+porPagina());
 
   wrap.innerHTML=pageSrc.map((b,i)=>{
     const globalIdx=start+i;
@@ -210,6 +226,7 @@ function renderCards(){
         <a class="nome" href="${paginaDoBeat(b.name)}">${b.name}</a>
         <div class="ficha"><em>${genreLabel}</em>${resto?'  ·  '+resto:''}</div>
       </div>
+      <span class="col c-gen">${genreLabel}</span><span class="col c-bpm">${b.bpm||''}</span><span class="col c-tom">${b.key||''}</span>
       <span class="dur">${f.dur?fmtDur(f.dur):''}</span>
       ${b.sold
         ? `<a class="vendido" href="${paginaDoBeat(b.name)}#parecidos" data-de="vendido" onclick="event.stopPropagation()" aria-label="${escA(b.name)} já foi vendido: ver beats parecidos"><i>Vendido</i><span>Parecidos<b>›</b></span></a>`
@@ -353,7 +370,7 @@ function feelingLucky(){
   if(showAvailOnly) src=src.filter(b=>!b.sold);
   ordenarBeats(src);
   const idx=src.findIndex(b=>b.id===pick.id);
-  curPage=Math.floor(idx/BEATS_PER_PAGE)+1;
+  curPage=Math.floor(idx/porPagina())+1;
   luckyPlayId=pick.id;
   renderCards();
   // Scroll + destaque imediatos (independem do player carregar; o play vem no bindPlayers)
@@ -2000,7 +2017,8 @@ try{
   window.verCarrinhoDaFolha=function(){ window.fecharFolhaCarrinho(); try{ openCart(); }catch(_){} };
   var ca=window.confirmAdd, pn=$('cartPanel');
   // com o carrinho já aberto na tela, a folha não sobe por cima dele: fica o de antes
-  if(typeof ca==='function') window.confirmAdd=function(label){ if(!cel()||(pn&&pn.classList.contains('open'))) return ca.apply(this,arguments); abrir(label); };
+  // rodada AJ (11/11/2026): no computador a mesma folha vira um cartão no canto (sem véu); o painel do carrinho não abre mais sozinho
+  if(typeof ca==='function') window.confirmAdd=function(label){ if(pn&&pn.classList.contains('open')) return ca.apply(this,arguments); try{ cartOpenedOnce=true; }catch(_){} abrir(label); };
   // o carrinho abriu por outro caminho (#add= da tape, ícone do topo): a folha sai
   if(pn&&window.MutationObserver) new MutationObserver(function(){ if(pn.classList.contains('open')) window.fecharFolhaCarrinho(); }).observe(pn,{attributes:true,attributeFilter:['class']});
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!folha.hidden) window.fecharFolhaCarrinho(); });
@@ -2061,7 +2079,7 @@ try{
     var src=BEATS.slice();
     if(typeof ordenarBeats==='function') ordenarBeats(src);
     var idx=src.findIndex(function(x){return x.id===b.id;});
-    if(idx>=0) curPage=Math.floor(idx/BEATS_PER_PAGE)+1;
+    if(idx>=0) curPage=Math.floor(idx/porPagina())+1;
     renderCards();
     // rola até o card e destaca
     setTimeout(function(){
@@ -3004,7 +3022,7 @@ try{(function(){
   var gEl=function(g){ var l=gens(); for(var i=0;i<l.length;i++){ if(gDe(l[i])===g) return l[i]; } return null; };
 
   /* ── 1. A máquina de estado da lista ── */
-  var ORDENS={padrao:1,novos:1,bpm:1,aleatorio:1};
+  var ORDENS={padrao:1,novos:1,bpm:1,aleatorio:1}; Object.keys(COLUNAS).forEach(function(k){ ORDENS[k]=1; });
   var Catalogo=window.Catalogo={
     // foto do estado: é o que os testes, o "voltar no lugar" e qualquer plugin leem
     estado:function(){
@@ -3272,6 +3290,35 @@ try{(function(){
   }
   var som0=window.__npSom&&window.__npSom(); if(som0){ som0.addEventListener('play',repintarSomDoCarrinho); som0.addEventListener('pause',repintarSomDoCarrinho); }
 
+  /* ── rodada AJ (11/11/2026): cabeçalho das colunas (computador). Clique ordena, 2º clique inverte, 3º volta pro Padrão ── */
+  var COLS=[['nome','Beat'],['genero','Gênero'],['bpm','BPM'],['tom','Tom'],['dur','Duração']];
+  var cab=document.createElement('div'); cab.className='lista-cab'; cab.id='listaCab'; cab.setAttribute('role','group'); cab.setAttribute('aria-label','Ordenar a lista');
+  cab.innerHTML='<span class="lc-vago"></span>'+COLS.map(function(c){ return '<button type="button" class="lc lc-'+c[0]+'" data-col="'+c[0]+'">'+c[1]+'<i aria-hidden="true"></i></button>'; }).join('')+'<span class="lc-fim"></span>';
+  cards.parentNode.insertBefore(cab,cards);
+  var novos=document.createElement('button'); novos.type='button'; novos.className='nb-novos'; novos.id='nbNovos'; novos.textContent='Mais novos';
+  if(conta) conta.appendChild(novos);
+  novos.addEventListener('click',function(){ Catalogo.ir({ ordem:(sortMode==='novos')?'padrao':'novos' }); });
+  // a Aleatória do menu Ordem (que saiu da barra do computador) segue a um clique: embaralha de novo a cada clique
+  var aleat=document.createElement('button'); aleat.type='button'; aleat.className='nb-novos'; aleat.id='nbAleat'; aleat.textContent='Aleatória';
+  if(conta) conta.appendChild(aleat);
+  aleat.addEventListener('click',function(){ var sl=$('beatSort'); if(sl) sl.value='aleatorio'; sortBeats('aleatorio'); });
+  cab.addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('.lc'); if(!b) return;
+    var c=b.getAttribute('data-col'), sobe=(c==='bpm')?'bpm':c, desce=c+'-d';
+    Catalogo.ir({ ordem: sortMode===sobe?desce : sortMode===desce?'padrao' : sobe });
+  });
+  function pintarCab(){
+    [].forEach.call(cab.querySelectorAll('.lc'),function(b){
+      var c=b.getAttribute('data-col'), sobe=(c==='bpm')?'bpm':c, on=sortMode===sobe?'sobe':sortMode===c+'-d'?'desce':'';
+      b.classList.toggle('on',!!on); b.querySelector('i').textContent=on==='sobe'?'▲':on==='desce'?'▼':'';
+      b.setAttribute('aria-pressed',on?'true':'false'); b.setAttribute('aria-label',b.firstChild.textContent+(on==='sobe'?': ordem crescente':on==='desce'?': ordem decrescente':': ordenar'));
+    });
+    novos.classList.toggle('on',sortMode==='novos'); novos.setAttribute('aria-pressed',sortMode==='novos'?'true':'false');
+    aleat.classList.toggle('on',sortMode==='aleatorio'); aleat.setAttribute('aria-pressed',sortMode==='aleatorio'?'true':'false');
+  }
+  // a tela cruzou 860px (girou o tablet, redimensionou a janela): a página muda de 10 pra 20 beats
+  try{ var mq=window.matchMedia('(min-width:861px)'), troca=function(){ curPage=1; renderCards(); }; if(mq.addEventListener) mq.addEventListener('change',troca); else if(mq.addListener) mq.addListener(troca); }catch(_){}
+
   /* ── Site.estado(): a foto de todas as máquinas de estado da vitrine, só de leitura ──
      Carrinho, checkout e player seguem com o código de sempre: aqui só se LÊ o estado deles, num lugar só,
      pra teste, plugin e agente não precisarem adivinhar por classe e style.display. docs/maquinas-de-estado.md */
@@ -3296,7 +3343,7 @@ try{(function(){
   var rc=window.renderCards;
   window.renderCards=function(){
     var r=rc.apply(this,arguments);
-    try{ var c=pintarGeneros(); pintarFila(c); saidaDaBuscaVazia(c); pintarMarca(); guardar(); }catch(e){ setTimeout(function(){ throw e; }); }
+    try{ var c=pintarGeneros(); pintarFila(c); saidaDaBuscaVazia(c); pintarMarca(); pintarCab(); guardar(); }catch(e){ setTimeout(function(){ throw e; }); }
     return r;
   };
   var uc=window.updateCart;

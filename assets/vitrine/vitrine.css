@@ -57,7 +57,6 @@ body::before{
 
 /* CURSOR */
 .cur{position:fixed;width:8px;height:8px;background:var(--fire);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:exclusion;transition:width .15s,height .15s;}
-.cur-r{position:fixed;width:32px;height:32px;border:1px solid rgba(232,76,24,.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:transform .14s cubic-bezier(.4,0,.2,1);}
 
 /* NAV */
 nav{
@@ -138,7 +137,6 @@ html.abre .topo-tag,html.abre .nav-logo img{opacity:0;animation:abMostra 0s line
 
 /* SECTION */
 .s{padding:5rem 2.4rem;position:relative;}
-.s-dark{background:var(--deep);}
 
 .s-earth{background:var(--dark);}
 
@@ -197,13 +195,7 @@ html.abre .topo-tag,html.abre .nav-logo img{opacity:0;animation:abMostra 0s line
 /* ═══ SERVICES: em linhas desde 25/10/2026 (bloco DE-PARA FINAL, no fim) ═══ */
 
 /* SNAIL SVG DECORATIONS scattered in sections */
-.snail-svg{
-  position:absolute;pointer-events:none;opacity:.06;
-  fill:none;
-}
-.snail-svg.tl{top:3rem;left:3rem;}
-.snail-svg.br{bottom:3rem;right:3rem;transform:scaleX(-1);}
-.snail-svg.tr{top:3rem;right:3rem;}
+
 
 /* FOOTER */
 footer{
@@ -495,9 +487,6 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 .nav-eu .anel{width:34px;height:34px;border-radius:50%;padding:2px;background:conic-gradient(from 200deg,var(--fire),var(--amber),var(--clay),var(--fire));transition:transform .15s;}
 .nav-eu img{display:block;width:100%;height:100%;border-radius:50%;border:2px solid #050403;object-fit:cover;}
 .nav-eu:hover .anel,.nav-eu:focus-visible .anel{transform:scale(1.06);}
-.nav-ig{display:flex;align-items:center;justify-content:center;width:44px;height:44px;color:var(--bone);text-decoration:none;transition:color .15s;}
-.nav-ig:hover{color:var(--fire);}
-.nav-ig svg{width:22px;height:22px;display:block;}
 
 /* v12: sem scroll lateral + filtros/controles/paginação compactos no mobile */
 @media(max-width:600px){
@@ -516,7 +505,7 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
 @media(max-width:860px){
   .nav-burger{display:flex;}
   /* celular (27/09/2026): no topo fica só o anel do @rideblan33; o Instagram segue no Contato */
-  .nav-ig{display:none;}
+
 
   .nav-links{position:fixed;top:54px;left:0;right:0;flex-direction:column;background:rgba(5,4,3,.98);border-bottom:1px solid var(--wire);overflow:hidden;max-height:0;transition:max-height .3s ease;justify-content:flex-start!important;}
   .nav-links.open{max-height:82vh;border-bottom:1px solid var(--wire);}
@@ -1034,24 +1023,11 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .ci-p s{color:var(--dim);text-decoration-color:var(--dim);margin-right:.25rem;font-size:.9em}
 
 /* Fique por dentro (11/10/2026): cadastro na lista com cupom de 25%, no fim da lista de beats */
-.lista-box{margin:2.2rem auto 0;max-width:760px;padding:1.6rem 1.6rem 1.4rem;border:1px solid var(--wire);background:var(--mole)}
-.lista-k{font-size:.62rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--fire)}
-.lista-t{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-size:2rem;line-height:1.1;color:var(--cream);margin:.45rem 0 .55rem}
+
 .lista-p{font-size:.86rem;line-height:1.65;color:var(--read);max-width:58ch}
-.lista-f{display:flex;gap:.6rem;margin-top:1.1rem}
-.lista-f[hidden]{display:none}
-.lista-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.lista-in{flex:1;min-width:0;min-height:48px;padding:0 .9rem;background:var(--deep);border:1px solid var(--wire);color:var(--bone);font-family:'IBM Plex Mono',monospace;font-size:.86rem;border-radius:0}
-.lista-in:focus{outline:none;border-color:var(--clay)}
-.lista-bt{flex:none;min-height:48px;padding:0 1.3rem;background:var(--bone);border:1px solid var(--bone);color:var(--black);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;border-radius:0}
-.lista-bt:hover{background:var(--cream)}
-.lista-bt:disabled{opacity:.6;cursor:default}
-.lista-nota{margin-top:.8rem;font-family:'IBM Plex Mono',monospace;font-size:.66rem;line-height:1.6;color:var(--dim)}
-.lista-nota.erro{color:var(--fire)}
 .lista-re{background:none;border:0;padding:0;font:inherit;color:var(--fire);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .lista-re:disabled{opacity:.6;cursor:default}
-.lista-box.ok .lista-t{font-size:1.6rem}
-@media(max-width:600px){.lista-box{padding:1.3rem 1.1rem 1.2rem}.lista-t{font-size:1.7rem}.lista-f{flex-direction:column}.lista-bt{width:100%}}
+@media(max-width:600px){.lista-box{padding:1.3rem 1.1rem 1.2rem}}
 
 /* Leve mais, pague menos (12/10/2026): faixa em cima da lista (opção A) e régua no carrinho (opção C) */
 .lm-reg{margin:1rem 0 0;padding:.9rem 1rem;border:1px solid var(--wire);background:var(--deep)}
@@ -1431,3 +1407,35 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .lic-toggle,.lm-bt,.qg-ver,.sv-pe a,.foot-generos a,footer a.foot-perfil,.hero-at{position:relative}
 .lic-toggle:after,.lm-bt:after,.qg-ver:after,.sv-pe a:after,.foot-generos a:after,footer a.foot-perfil:after,.hero-at:after{content:'';position:absolute;inset:-11px -5px}
 .foot-generos a:after{inset:-9px -5px}
+
+/* ── RODADA AJ (11/11/2026): computador com a lista em colunas, 20 por página, ordem pelo título e aviso do carrinho no canto ── */
+#beatCards .col,.lista-cab,.nb-novos{display:none}
+@media(min-width:861px){
+  #ddOrdem{display:none}
+  #beatCards .item{padding:4px 10px;min-height:50px}
+  #beatCards .capa{width:40px;height:40px}
+  #beatCards .sl-cor{height:40px}
+  #beatCards .preco,#beatCards .vendido{min-height:40px}
+  .lc{flex:none;min-height:36px;padding:0;border:0;background:none;text-align:left;cursor:pointer;font:700 .6rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--label)}
+  #beatCards .ficha{display:none}
+  #beatCards .info{flex:2.2 1 0}
+  #beatCards .col{display:block;flex:none;font:400 .76rem 'IBM Plex Mono',monospace;color:var(--read);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #beatCards .c-gen,.lc-genero{flex:1.1 1 0;min-width:0}
+  #beatCards .c-gen{color:var(--label);text-transform:uppercase;font-size:.68rem;letter-spacing:.1em}
+  #beatCards .c-bpm,.lc-bpm,#beatCards .c-tom,.lc-tom{width:76px}
+  #beatCards .dur,.lc-dur{width:76px;text-align:left}
+  #beatCards .dur{color:var(--read)}
+  #beatCards .item.fora .col,#beatCards .item.fora .dur{color:var(--fosco)}
+  #beatCards .preco,#beatCards .vendido{width:132px;justify-content:center}
+  .lista-cab{display:flex;align-items:center;gap:14px;padding:0 10px;border:1px solid var(--wire);border-bottom-color:var(--clay);background:var(--deep)}
+  .lc-vago{flex:none;width:84px}
+  .lc-fim{flex:none;width:calc(132px + 14px + 26px)}
+  .lc-nome{flex:2.2 1 0}
+  .lc:hover,.lc.on{color:var(--fire)}
+  .lc i{font-style:normal;margin-left:.4em;font-size:.55rem}
+  .nb-novos{display:inline-block;border:0;background:none;padding:.2rem 0;cursor:pointer;font:400 .72rem 'IBM Plex Mono',monospace;color:var(--read);border-bottom:1px dashed var(--wire)}
+  .nb-novos:hover,.nb-novos.on{color:var(--fire);border-bottom-color:var(--clay)}
+  .cf-veu{display:none}
+  .cf-folha{left:auto;right:2.4rem;bottom:6.4rem;width:380px;border:1px solid var(--clay);padding:18px;box-shadow:0 18px 40px rgba(0,0,0,.5)}
+  .cf-folha:before{display:none}
+}
