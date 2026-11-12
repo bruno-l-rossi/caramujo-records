@@ -477,8 +477,8 @@ button.sort-select.on{background:var(--clay);border-color:var(--clay);color:var(
   .nav-links{scrollbar-width:none;-webkit-overflow-scrolling:touch;}
   .nav-links::-webkit-scrollbar{display:none;}
 }
-@media(max-width:860px){ body::before{display:none;} }
-@media(max-width:860px){ .ft{min-height:40px;} }
+@media(max-width:860px){ body::before{display:none;}
+ .ft{min-height:40px;} }
 
 /* ═══ MENU HAMBÚRGUER (variante) ═══ */
 .nav-right{display:flex;align-items:center;gap:.2rem;}

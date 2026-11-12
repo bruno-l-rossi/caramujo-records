@@ -50,7 +50,8 @@ function downloadContract() {
 /* cursor: o cursor próprio saiu no redesenho (CSS esconde .cur), mas o código
    seguia mexendo em dois elementos invisíveis a cada movimento do mouse. Saiu (03/10/2026). */
 
-/* beats data: BEATS, PRICE_BEAT e PRICE_STEMS ficam no index.html (o servidor lê e escreve lá) */
+/* beats data: BEATS e PRICE_BEAT ficam no index.html (o servidor lê e escreve lá). O PRICE_STEMS segue lá só pro servidor,
+   que ainda sabe ler pedido antigo com stems; a vitrine não usa mais. */
 let cart=[], curFilt='todos', showAvailOnly=false; // vendidos visíveis por padrão (prova social)
 let sortMode='padrao', shuffleOrder=null;
 function toggleAvail(btn){
@@ -516,9 +517,11 @@ function confirmAdd(label){
   else showToast(`✓ ${label} no carrinho`);
 }
 
-function toggleBeat(beatId,stems){
+// 12/11/2026 (ok do Bruno): o produto "beat + stems" saiu do site em 11/10 e o código dele saiu daqui. O item do
+// carrinho segue com stems:false porque a tape, a página do beat e o servidor leem esse campo.
+function toggleBeat(beatId){
   const beat=BEATS.find(b=>b.id===beatId);
-  const existing=cart.findIndex(c=>c.beatId===beatId&&c.stems===stems);
+  const existing=cart.findIndex(c=>c.beatId===beatId&&c.stems===false);
   if(existing===-1){
     // Verifica se o beat já está reservado em algum pacote no carrinho
     const inPkg=cart
@@ -529,9 +532,7 @@ function toggleBeat(beatId,stems){
       showToast(`"${beat.name}" já está reservado em um pacote no carrinho.`);
       return;
     }
-    const otherIdx=cart.findIndex(c=>c.beatId===beatId&&c.stems!==stems);
-    if(otherIdx!==-1) cart.splice(otherIdx,1);
-    cart.push({id:Date.now(),beatId:beat.id,name:stems?`${beat.name} + Stems`:beat.name,price:stems?PRICE_STEMS:PRICE_BEAT,orig:stems?PRICE_STEMS:PRICE_BEAT,type:'Beat',stems});
+    cart.push({id:Date.now(),beatId:beat.id,name:beat.name,price:PRICE_BEAT,orig:PRICE_BEAT,type:'Beat',stems:false});
     updateCart(); syncBeatButtons();
     piscar(document.getElementById('bb'+beat.id));
     piscar(document.getElementById('navCart'));
@@ -751,7 +752,7 @@ function updateCart(){
     <div class="ci">
       <div style="flex:1;min-width:0;">
         <div class="ci-n">${(c.type==='Servico'||c.type==='Pacote')&&c.qty>1?`${c.name} ×${c.qty}`:c.name}</div>
-        ${c.type==='Pacote'&&c.pkgBeats?`<div class="ci-t" style="line-height:1.6;">${c.pkgBeats.map((g,i)=>g.map(b=>b.name).join(', ')).join(' · ')}</div>`:`<div class="ci-t">${c.type}${c.stems?' · Com Stems':''}</div>`}
+        ${c.type==='Pacote'&&c.pkgBeats?`<div class="ci-t" style="line-height:1.6;">${c.pkgBeats.map((g,i)=>g.map(b=>b.name).join(', ')).join(' · ')}</div>`:`<div class="ci-t">${c.type}</div>`}
       </div>
       <div style="display:flex;align-items:center">
         ${c.type==='Servico'?`
@@ -1837,12 +1838,11 @@ try{
       if(it.type==='Beat'){
         var b=beatVivo(it.beatId);
         if(!b){ caiu++; return; }                       // vendido ou sumiu do catálogo
-        var hoje=it.stems ? PRICE_STEMS : PRICE_BEAT;
-        if(Number(it.orig!=null?it.orig:it.price)!==hoje) mexidos++;   // 11/10: price já vem com o desconto
-        bons.push({ id:it.id||marca+i, beatId:b.id,
-          name: it.stems ? b.name+' + Stems' : b.name,
-          price: it.stems ? PRICE_STEMS : PRICE_BEAT,   // preço de hoje, não o guardado
-          type:'Beat', stems:!!it.stems });
+        // carrinho guardado com "+ Stems" (de antes de 11/10) volta como o beat sozinho, no preço de hoje
+        if(Number(it.orig!=null?it.orig:it.price)!==PRICE_BEAT) mexidos++;   // 11/10: price já vem com o desconto
+        bons.push({ id:it.id||marca+i, beatId:b.id, name:b.name,
+          price: PRICE_BEAT,   // preço de hoje, não o guardado
+          type:'Beat', stems:false });
         return;
       }
 
@@ -2001,7 +2001,7 @@ try{
   }
   function item(label){
     var nome=String(label||'').replace(/^"|"$/g,'');
-    for(var i=cart.length-1;i>=0;i--){ if(cart[i].name===nome||cart[i].name===nome+' + Stems') return cart[i]; }
+    for(var i=cart.length-1;i>=0;i--){ if(cart[i].name===nome) return cart[i]; }
     return cart[cart.length-1]||null;
   }
   function abrir(label){

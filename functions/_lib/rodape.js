@@ -9,6 +9,17 @@
 // que rola dentro da caixa, sem rodapé de site.
 import { RODAPE_GENEROS, CSS_RODAPE_GENEROS } from './generos.js';
 import { deAttr } from './origem.js';
+import { vitrineNaMemoria } from './vitrine.js';
+
+// 12/11/2026: gênero sem beat à venda leva hidden no rodapé (como na vitrine e na página do beat). Só com a lista
+// já na memória do servidor; sem ela o rodapé sai inteiro, como sempre foi. O slug do link é a chave do gênero com hífen.
+export function generosDoRodape() {
+  const beats = vitrineNaMemoria();
+  if (!beats || !beats.length) return RODAPE_GENEROS;
+  const n = {};
+  for (const b of beats) if (!b.sold && !b.removido) n[b.genre] = (n[b.genre] || 0) + 1;
+  return RODAPE_GENEROS.replace(/<a href="\/beats\/([a-z0-9-]+)"/g, (m, s) => (n[s.replace(/-/g, '')] > 0 ? m : '<a hidden href="/beats/' + s + '"'));
+}
 
 const FONTES = `@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/cormorant-garamond-latin-500-normal.woff2) format('woff2')}
 @font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2')}`;
@@ -31,7 +42,7 @@ body.com-player footer.rod-cr{padding-bottom:calc(110px + env(safe-area-inset-bo
 // de = origem do clique no selo (vai pra vitrine)
 export function rodape(de = '') {
   return `<footer class="rod-cr">
-  ${RODAPE_GENEROS}
+  ${generosDoRodape()}
   <a href="/"${de ? deAttr(de) : ''} aria-label="Caramujo Records"><img loading="lazy" width="400" height="400" src="/assets/brand/selo-creme.svg" alt="Caramujo Records"></a>
   <p><a class="foot-perfil" href="mailto:contato@caramujorecords.com.br">contato@caramujorecords.com.br</a></p>
   <p>© 2026 Caramujo Records — São Carlos, SP</p>

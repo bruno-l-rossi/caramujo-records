@@ -156,7 +156,8 @@ ${CAPA_VOLTA}
 
 // menu do celular, número do carrinho e Ajuda: TOPO_JS do topo.js (rodada Q)
 const topo = topoSite('pedido', '', null, { ativo: '' });
-const rodapeP = rodape('pedido') + TOPO_JS + LEVA_DE;   // rodada R: o rodapé de todas as páginas
+// rodada R: o rodapé de todas as páginas. 12/11/2026: montado a cada pedido, pra esconder gênero sem beat à venda
+const rodapeP = () => rodape('pedido') + TOPO_JS + LEVA_DE;
 const ajuda = `<a class="ajuda" href="https://ig.me/m/rideblan33" rel="noopener">${IG}Dúvida? Chama no Direct</a>`;
 
 // p = pedido (lerPedido), faixas = Map(id -> {wav_bytes, mp3_bytes}) das faixas que ainda existem
@@ -173,7 +174,7 @@ export function paginaPedido(p, faixas = new Map()) {
     html += `<h1>Esperando o PIX</h1><p class="lede">Assim que o pagamento cair, os arquivos aparecem aqui sozinhos. Pode deixar esta página aberta.</p>` +
       '<p class="espera" id="espera"><i></i><span>conferindo o pagamento…</span></p>' +
       `<script>(function(){var n=0;function v(){if(n++>80)return;fetch('${base}/estado',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){if(j&&j.status==='pago')location.reload();else setTimeout(v,n<12?5000:12000)}).catch(function(){setTimeout(v,12000)})}setTimeout(v,4000)})();</script>`;
-    html += ajuda + '</main>' + rodapeP + '\n</body></html>';
+    html += ajuda + '</main>' + rodapeP() + '\n</body></html>';
     return html;
   }
   const um = beats.length === 1;
@@ -214,7 +215,7 @@ export function paginaPedido(p, faixas = new Map()) {
   // rodada S (23/10/2026): com arquivo pra baixar (beat na hora ou serviço entregue), o fim da página é
   // "Problema com o download?" com o código do pedido pra copiar e o Direct; sem arquivo, o "Dúvida?" de antes
   const temDownload = beats.some((b) => b.faixa && b.id != null) || servicos.some((it) => it.entrega && it.entrega.link);
-  html += (temDownload ? problemaDownload(p) : ajuda) + '</main>' + rodapeP + '\n</body></html>';
+  html += (temDownload ? problemaDownload(p) : ajuda) + '</main>' + rodapeP() + '\n</body></html>';
   return html;
 }
 
@@ -281,5 +282,5 @@ document.querySelectorAll('form[data-envio]').forEach(function(f){f.addEventList
 export function paginaAviso(titulo, texto, voltar, kicker = 'Pedido') {
   return cabecalho(`${titulo} · Caramujo Records`) + '\n<body>\n' + topo + '\n<main>' +
     `<span class="k">${esc(kicker)}</span><h1>${esc(titulo)}</h1><p class="lede">${esc(texto)}</p>` +
-    (voltar ? `<p class="guarda"><a href="${esc(voltar)}">Voltar pro pedido</a></p>` : '') + ajuda + '</main>' + rodapeP + '\n</body></html>';
+    (voltar ? `<p class="guarda"><a href="${esc(voltar)}">Voltar pro pedido</a></p>` : '') + ajuda + '</main>' + rodapeP() + '\n</body></html>';
 }

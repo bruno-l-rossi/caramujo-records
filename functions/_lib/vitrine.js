@@ -48,6 +48,10 @@ const ultimaMudanca = (b) => [b.criado_em, b.mexido_em, b.sold_at, b.unsold_at].
 // Rodada AG (06/11/2026): uma leitura por vez (quem chega junto espera a mesma resposta)
 // e um jeito de saber, sem custo, se a lista já está na memória.
 let emVoo = null;
+// 12/11/2026: a lista que já está na memória deste servidor, mesmo vencida (ou null). Nunca vai ao banco:
+// serve pro rodapé esconder gênero sem beat à venda sem custar leitura (lição da rodada AG).
+export const vitrineNaMemoria = () => cache.beats || null;
+
 export const vitrinePronta = () => !!(cache.beats && Date.now() - cache.at < VALIDADE);
 
 export async function vitrine(request, env) {
