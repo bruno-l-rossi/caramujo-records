@@ -5,7 +5,7 @@
    Tudo mora no JSON de itens do pedido: item.envio = { campos..., em } e item.entrega = { link, em }. */
 export const SERVICOS = {
   'Beat Personalizado': {
-    tipo: 'encomenda', curto: 'Beat personalizado', unidade: '1 beat', prazo: 'até 2 semanas depois que a referência chega',
+    tipo: 'encomenda', curto: 'Beat personalizado', unidade: '1 beat', prazo: '2 a 3 semanas depois que a referência chega',
     aguardando: 'Aguardando a referência', trabalho: 'Produção do beat', fim: 'Beat final entregue', fimSub: 'o link do beat, aqui nesta página',
     titulo: 'Manda a referência', texto: 'Uma música ou um beat com o som que você quer. Quanto mais perto, melhor: o @rideblan33 parte dela.',
     campos: [
@@ -16,7 +16,7 @@ export const SERVICOS = {
     ]
   },
   'Mixagem': {
-    tipo: 'vozes', curto: 'Mixagem', unidade: '1 faixa', prazo: 'até 3 semanas depois que as vozes chegam',
+    tipo: 'vozes', curto: 'Mixagem', unidade: '1 faixa', prazo: '2 a 3 semanas depois que as vozes chegam',
     aguardando: 'Aguardando suas vozes', trabalho: 'Mixagem', fim: 'Faixa mixada entregue', fimSub: 'o link da faixa, aqui nesta página',
     titulo: 'Manda as vozes', texto: 'Sobe os arquivos no Drive, WeTransfer ou Dropbox e cola o link aqui. O @rideblan33 recebe na hora.',
     dicas: ['Cada voz em WAV, começando no 0:00 do beat', 'Voz principal, dobras e ad-libs em arquivos separados'],
@@ -28,7 +28,7 @@ export const SERVICOS = {
     ]
   },
   'Masterização': {
-    tipo: 'faixa', curto: 'Masterização', unidade: '1 faixa', prazo: 'até 3 semanas depois que a faixa chega',
+    tipo: 'faixa', curto: 'Masterização', unidade: '1 faixa', prazo: '2 a 3 semanas depois que a faixa chega',
     aguardando: 'Aguardando sua faixa', trabalho: 'Masterização', fim: 'Faixa masterizada entregue', fimSub: 'o link da faixa, aqui nesta página',
     titulo: 'Manda a faixa mixada', texto: 'Sobe a faixa no Drive, WeTransfer ou Dropbox e cola o link aqui. O @rideblan33 recebe na hora.',
     dicas: ['A faixa mixada em WAV, sem limitador no master', 'Deixa uns 3 a 6 dB de folga no pico'],
@@ -41,6 +41,12 @@ export const SERVICOS = {
   }
 };
 SERVICOS['Mix + Master'] = { ...SERVICOS['Mixagem'], curto: 'Mix + Master', trabalho: 'Mixagem e master', fim: 'Faixa final entregue' };
+// 14/11/2026: a vitrine vende só Beat Personalizado e Mix & Master. As 3 chaves de cima ficam pra pedido antigo abrir igual.
+SERVICOS['Mix & Master'] = {
+  ...SERVICOS['Mix + Master'], curto: 'Mix & Master', prazo: '2 a 3 semanas depois que as stems chegam',
+  aguardando: 'Aguardando suas stems', recebido: 'Stems recebidas', titulo: 'Manda as stems',
+  campos: SERVICOS['Mixagem'].campos.map((c) => (c.k === 'link' ? { ...c, rot: 'Link das stems' } : c))
+};
 export const servicoDe = (nome) => SERVICOS[String(nome || '').replace(/ x\d+$/, '').trim()] || null;
 
 export const RE_LINK = /^https?:\/\/[^\s<>"']+\.[^\s<>"']{2,}$/i;

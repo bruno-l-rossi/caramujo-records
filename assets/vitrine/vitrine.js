@@ -790,15 +790,7 @@ function updateCart(){
     regua=`<div class="lm-reg" id="lmRegua"><p>${msg}</p><div class="lm-bar" aria-hidden="true">${seg}</div><div class="lm-num" aria-hidden="true">${num}</div></div>`;
   }
 
-  // — mix / master / combo —
-  const hasMix=cart.some(c=>c.type==='Servico'&&c.name==='Mixagem');
-  const hasMaster=cart.some(c=>c.type==='Servico'&&c.name==='Masterização');
-  const hasCombo=cart.some(c=>c.type==='Servico'&&c.name==='Mix + Master');
-  if(!hasCombo){
-    if(hasMix&&hasMaster) ups.push({msg:`Mix + Master junto sai por R$199 em vez de R$228 — <span class="cp-save">economize R$29</span>`,href:'#services',cta:'Ver Mix + Master →'});
-    else if(hasMix)       ups.push({msg:`Leve o Mix + Master por R$199: o master sai por R$50 em vez de R$79 — <span class="cp-save">economize R$29</span>`,href:'#services',cta:'Ver Mix + Master →'});
-    else if(hasMaster)    ups.push({msg:`Leve o Mix + Master por R$199: a mix sai por R$120 em vez de R$149 — <span class="cp-save">economize R$29</span>`,href:'#services',cta:'Ver Mix + Master →'});
-  }
+  // 14/11/2026: o aviso de combo saiu junto com a Mixagem e a Masterização avulsas (ficou só o Mix & Master)
 
   if(regua) pb.innerHTML+=regua;
   ups.forEach(u=>{
@@ -1791,7 +1783,7 @@ try{
     }catch(_){}
   }
 
-  // Os preços de hoje moram no próprio HTML (onclick="addSvc('Mixagem',149)").
+  // Os preços de hoje moram no próprio HTML (o onclick de cada botão + chama addSvc com o nome e o preço).
   // Leio de lá na volta: carrinho velho nunca fecha num preço que não está mais
   // na página. Nome com dois preços diferentes é ambíguo, e aí eu não decido: cai.
   function tabela(fn){

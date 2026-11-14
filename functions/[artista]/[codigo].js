@@ -7,6 +7,7 @@ import { lerEstatico } from '../_lib/loja.js';
 import { vitrine, vitrinePronta, indexar, achar } from '../_lib/vitrine.js';
 import { tapesDoPerfil, perfilPronto } from '../_lib/perfil.js';
 import { MIDIA } from '../_lib/midia.js';
+import { pacotes, precosDoProximo } from '../_lib/beatpagina.js';
 import { slug as slugDe } from '../_lib/casar.js';
 import { CHAVE_GRAVOU, fotoDaPasta } from '../_lib/gravou.js';
 import { lerAjuste, daTape, aplicarNaTape } from '../_lib/tapeajuste.js';
@@ -26,6 +27,10 @@ const nao = (request, env) => paginaErro(request, env, 404, {
 // preço do beat avulso, lido do index.html (o mesmo que a loja cobra); falhou = sem preço no texto
 async function precoDoBeat(request, env) {
   try { return (await lerEstatico(request, env)).preco || null; } catch (_) { return null; }
+}
+// 14/11/2026: a curva do Leve mais ([119, 99, 79]) pra tape mostrar o mesmo preço da vitrine (antes era número fixo no app.html)
+async function curvaDoBeat(request, env) {
+  try { const e = await lerEstatico(request, env); return precosDoProximo(e.precos.beat || e.preco, pacotes(e.precos)); } catch (_) { return []; }
 }
 
 export async function onRequestGet({ params, request, env }) {
@@ -177,6 +182,7 @@ export async function onRequestGet({ params, request, env }) {
       // o @rideblan33 vira o chip do perfil nas tapes E nas pastas de artista (26/09/2026)
       perfil: '/rideblan33',
       mais, totalPerfil, lanc,
+      ...(tape ? { lm: await curvaDoBeat(request, env) } : {}),
       ...(MIDIA ? { midia: MIDIA } : {})
     }
   });

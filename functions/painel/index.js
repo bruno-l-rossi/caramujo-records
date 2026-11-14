@@ -532,6 +532,6 @@ function pagina() {
 <div class="veil" id="veil" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="/assets/painel/painel.js?v=31dd2c71fc"></script>
+<script src="/assets/painel/painel.js?v=4895945780"></script>
 </body></html>`;
 }

@@ -233,7 +233,7 @@ function blocoServico(it, k, p, base) {
   const sv = servicoDe(it.nome);
   if (!sv) return `<section class="sec"><div class="sec-cab"><h2>${esc(it.nome)}</h2><span>serviço</span></div><p class="aviso"><b>O @rideblan33 te chama pra combinar.</b></p></section>`;
   const env = it.envio, ent = it.entrega;
-  const recebido = sv.tipo === 'encomenda' ? 'Referência recebida' : sv.tipo === 'faixa' ? 'Faixa recebida' : 'Vozes recebidas';
+  const recebido = sv.recebido ? sv.recebido : sv.tipo === 'encomenda' ? 'Referência recebida' : sv.tipo === 'faixa' ? 'Faixa recebida' : 'Vozes recebidas';
   const passos = [
     ['Pagamento confirmado', 'ok', dataCurta(p.pago_em || p.criado_em)],
     env ? [recebido, 'ok', dataCurta(env.em)] : [sv.aguardando, 'ag', 'manda pelo campo abaixo'],

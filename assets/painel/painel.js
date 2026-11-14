@@ -400,7 +400,7 @@
       });
     }); };
     teste('enTeste','pedido-teste','Criar pedido de teste',function(j){ return 'Pedido de teste com '+esc(j.beat); });
-    teste('enTesteSv','pedido-teste-servico','Criar pedido de teste de serviço',function(){ return 'Pedido de teste com Mix + Master e Beat personalizado'; });
+    teste('enTesteSv','pedido-teste-servico','Criar pedido de teste de serviço',function(){ return 'Pedido de teste com Mix & Master e Beat personalizado'; });
   }
   // o topo de toda folha (04/11/2026): título, uma linha de apoio e o ✕ (data-close, como o Fechar de antes)
   function cabFolha(t,sub){ return '<div class="f-cab"><span class="t"><h2>'+esc(t)+'</h2>'+(sub?'<p>'+sub+'</p>':'')+'</span><button type="button" class="f-x" data-close aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'; }
@@ -604,7 +604,7 @@
           '<button type="button" class="toggle" id="enLiga" aria-pressed="'+lig+'" aria-label="Entrega na hora dos beats"><i></i></button></div>'+
         '<div class="bloco"><div class="rot">TESTAR ANTES</div><p>Cria um pedido de mentira com o primeiro beat à venda e abre a página que o comprador vê. Nada é vendido e o beat segue na vitrine.</p>'+
           '<div class="acoes" style="margin-top:12px"><button type="button" class="pill solid" id="enTeste">Criar pedido de teste</button></div><div id="enTesteLink" style="margin-top:10px;font-size:13.5px"></div></div>'+
-        '<div class="bloco"><div class="rot">SERVIÇOS DOS PEDIDOS</div><p>Quem comprou mix, master ou beat personalizado manda o material pela página do pedido (chega um e-mail pra você). Terminou, cola o link do arquivo final e toca em Entregar: quem comprou recebe um e-mail e o botão de baixar aparece no pedido.</p>'+
+        '<div class="bloco"><div class="rot">SERVIÇOS DOS PEDIDOS</div><p>Quem comprou Mix & Master ou beat personalizado manda o material pela página do pedido (chega um e-mail pra você). Terminou, cola o link do arquivo final e toca em Entregar: quem comprou recebe um e-mail e o botão de baixar aparece no pedido.</p>'+
           '<div id="svLista">'+listaServicos()+'</div>'+
           '<div class="acoes" style="margin-top:12px"><button type="button" class="pill" id="enTesteSv">Criar pedido de teste de serviço</button></div><div id="enTesteSvLink" style="margin-top:10px;font-size:13.5px"></div></div>'+
         '<div class="bloco"><div class="rot">ÚLTIMOS PEDIDOS COM LINK</div>'+listaPedidos()+'</div>'+
@@ -637,7 +637,7 @@
           b.disabled=false; b.textContent='Criar pedido de teste de serviço';
           if(!j||!j.ok){ flash((j&&j.erro)||'Não criou. Tenta de novo.'); return; }
           entrega.pedidos=j.pedidos||entrega.pedidos; pinta();
-          var l=$('enTesteSvLink'); if(l) l.innerHTML='Pedido de teste com Mix + Master e Beat personalizado: <a href="'+esc(j.caminho)+'" target="_blank" rel="noopener">abrir a página do pedido</a>';
+          var l=$('enTesteSvLink'); if(l) l.innerHTML='Pedido de teste com Mix & Master e Beat personalizado: <a href="'+esc(j.caminho)+'" target="_blank" rel="noopener">abrir a página do pedido</a>';
         });
       });
       $('enTeste').addEventListener('click',function(){

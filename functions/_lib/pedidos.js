@@ -102,9 +102,9 @@ export async function salvarEntrega(d, token, k, link) {
   return { ok: true, pedido: { ...p, itens } };
 }
 
-// pedido de teste com serviços (painel): Mix + Master e Beat personalizado, sem pagamento
+// pedido de teste com serviços (painel): Mix & Master e Beat personalizado, sem pagamento
 export async function pedidoDeTesteServico(d) {
-  const itens = [{ t: 'servico', nome: 'Mix + Master' }, { t: 'servico', nome: 'Beat Personalizado' }];
+  const itens = [{ t: 'servico', nome: 'Mix & Master' }, { t: 'servico', nome: 'Beat Personalizado' }];
   const token = await criarPedido(d, { status: 'teste', nome: 'Pedido de teste', artista: '@rideblan33', itens, valor: 0 });
   return { token, caminho: '/pedido/' + token, url: SITE + '/pedido/' + token };
 }

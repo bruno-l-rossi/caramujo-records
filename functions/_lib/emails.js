@@ -64,7 +64,7 @@ export function contratoHtml({ name, cpf, email, items, category, amount, paymen
   <p>${naHora ? 'O Licenciado receberá os seguintes arquivos após a confirmação do pagamento, pelo link do pedido enviado ao email informado:' : 'O Licenciado receberá, no email informado no pedido, os seguintes arquivos após a confirmação do pagamento:'}</p>
   <ul><li>Arquivo MP3</li><li>Arquivo WAV</li><li>Uma via deste contrato assinado pelo Produtor</li></ul>
   <h4>4. Prazos de Entrega</h4>
-  <ul><li>Beat catálogo (disponível no site): ${naHora ? 'na hora, pelo link do pedido' : 'até 1 dia útil'}</li><li>Beat personalizado (produção sob encomenda): até 2 semanas</li><li>Mixagem, Masterização ou Mix + Master: até 3 semanas</li></ul>
+  <ul><li>Beat catálogo (disponível no site): ${naHora ? 'na hora, pelo link do pedido' : 'até 1 dia útil'}</li><li>Beat personalizado (produção sob encomenda): 2 a 3 semanas</li><li>Mix &amp; Master: 2 a 3 semanas</li></ul>
   <p>Em caso de imprevistos que possam impactar os prazos, o Produtor notificará o Licenciado por email com antecedência.</p>
   <h4>5. Crédito Obrigatório</h4>
   <p>O uso da Obra em qualquer plataforma digital exige a creditação do Produtor da seguinte forma:</p>
@@ -184,11 +184,11 @@ export function htmlComprador({ greeting, itemsList, contractHtml, pedidoUrl = n
                 </tr>
                 <tr>
                   <td style="padding:3px 16px 3px 0;white-space:nowrap;">&mdash; Beat personalizado</td>
-                  <td style="padding:3px 0;white-space:nowrap;">até 2 semanas</td>
+                  <td style="padding:3px 0;white-space:nowrap;">2 a 3 semanas</td>
                 </tr>
                 <tr>
-                  <td style="padding:3px 16px 3px 0;white-space:nowrap;">&mdash; Mixagem / Masterização</td>
-                  <td style="padding:3px 0;white-space:nowrap;">até 3 semanas</td>
+                  <td style="padding:3px 16px 3px 0;white-space:nowrap;">&mdash; Mix &amp; Master</td>
+                  <td style="padding:3px 0;white-space:nowrap;">2 a 3 semanas</td>
                 </tr>
               </table>
             </td></tr>

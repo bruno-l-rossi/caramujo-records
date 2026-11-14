@@ -24,7 +24,7 @@ export function parseGeneros(html) {
 }
 
 // A tabela de preço que a página mostra: PRICE_BEAT/PRICE_STEMS e os botões
-// addPkg('2 Beats',219) / addSvc('Mixagem',149). O servidor refaz a conta do
+// addPkg('2 Beats',219) / addSvc(nome, preço). O servidor refaz a conta do
 // carrinho com ela (create-payment), então a página e a cobrança nunca divergem.
 // Nome com dois preços diferentes na página vira null (ambíguo: recusa).
 export function parsePrecos(html) {
@@ -33,7 +33,8 @@ export function parsePrecos(html) {
     const achados = {};
     const re = new RegExp('onclick="[^"]*' + fn + "\\(\\s*'([^']*)'\\s*,\\s*(\\d+(?:\\.\\d+)?)", 'g');
     let m;
-    while ((m = re.exec(html))) (achados[m[1]] = achados[m[1]] || new Set()).add(Number(m[2]));
+    // 14/11/2026: o nome vem do HTML cru; "Mix &amp; Master" vira "Mix & Master", que é o que o carrinho manda
+    while ((m = re.exec(html))) { const k = m[1].replace(/&amp;/g, '&'); (achados[k] = achados[k] || new Set()).add(Number(m[2])); }
     const mapa = {};
     for (const [k, v] of Object.entries(achados)) mapa[k] = v.size === 1 ? [...v][0] : null;
     return mapa;

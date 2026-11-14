@@ -1283,9 +1283,7 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .sv-t small{display:block;margin-top:4px;font-size:.78rem;line-height:1.4;color:var(--read)}
 .sv-p{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right}
 .sv-v{font:400 .82rem 'IBM Plex Mono',monospace;color:var(--fire);white-space:nowrap}
-.sv-v s{color:var(--fosco);margin-right:2px}
 .sv-p small{font-size:.62rem;letter-spacing:.04em;color:var(--fosco)}
-.sv-off{display:inline-block;padding:3px 6px;background:var(--fire);color:var(--black);font:700 .56rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}
 .sv-bt{width:44px;height:44px;border-radius:50%;border:1px solid var(--clay);background:none;color:var(--cream);font-size:1.4rem;line-height:1;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
 .sv-bt:hover,.sv-bt:active{background:var(--bone);border-color:var(--bone);color:var(--black)}
 .sv-pe{margin:1.4rem 0 0;font-size:.78rem;color:var(--read)}
@@ -1443,3 +1441,14 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
   #beats .s-head{display:flex;align-items:baseline;gap:1.6rem}
   #beats .s-sub{margin-top:0;max-width:none;flex:1;min-width:0}
 }
+
+/* SERVIÇOS 14/11: "Como funciona" (3 passos curtos) embaixo de cada serviço */
+.sv-como{grid-column:2/-1;margin-top:-4px}
+.sv-como summary{display:inline-flex;align-items:center;gap:6px;min-height:36px;list-style:none;cursor:pointer;font:400 .72rem 'IBM Plex Mono',monospace;color:var(--amber)}
+.sv-como summary::-webkit-details-marker{display:none}
+.sv-como summary:after{content:'\25BE'}
+.sv-como[open] summary:after{content:'\25B4'}
+.sv-como ol{list-style:none;margin:4px 0 2px;padding:12px 14px;background:var(--deep);border:1px solid var(--wire);display:grid;gap:8px;counter-reset:p;font-size:.8rem;line-height:1.4;color:var(--bone)}
+.sv-como li{display:flex;gap:10px;counter-increment:p}
+.sv-como li:before{content:counter(p);flex:none;font:400 .7rem/1.6 'IBM Plex Mono',monospace;color:var(--fosco)}
+@media(min-width:861px){.sv-como ol{grid-auto-flow:column;grid-auto-columns:max-content;gap:22px}}

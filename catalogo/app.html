@@ -855,7 +855,7 @@ __META__
   function botaoCompra(t){
     var ja=noCarrinho(t);
     // rodada AH (10/11/2026): o botão mostra o preço, como na vitrine (o preço do próximo quando já tem beat no carrinho)
-    var px=precoProx(), lab=px<119?'<span class="bp"><s>R$119</s>R$'+px+'</span>':'<span class="bp">R$119</span>';
+    var px=precoProx(), lab=px<LM[0]?'<span class="bp"><s>R$'+LM[0]+'</s>R$'+px+'</span>':'<span class="bp">R$'+LM[0]+'</span>';
     return coracaoTape(t)+'<button class="buy'+(ja?' no-carrinho':' com-preco')+'" type="button" aria-label="'+(ja?'Já está no carrinho: '+esc(t.title):'Comprar '+esc(t.title)+', R$ '+px)+'">'+
       (ja ? ICO_FEITO : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" '+
       'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+ICON_CART+'</svg>'+lab)+'</button>';
@@ -878,8 +878,10 @@ __META__
   // rodada AH: preço do próximo beat pela curva do Leve mais (119, 99, 79...), só pra mostrar; a conta é da vitrine
   function precoProx(){
     var c=lerCarr(), n=c?c.itens.filter(function(x){ return x.type==='Beat'&&!x.stems; }).length:0;
-    return n<=0?119:n===1?99:79;
+    return LM[Math.min(Math.max(n,0),LM.length-1)];
   }
+  // 14/11/2026: a curva vem do servidor (CAT.lm, lida da vitrine); sem ela, a de sempre
+  var LM=(CAT.lm&&CAT.lm.length)?CAT.lm:[119,99,79];
   // rodada AH: ♡ da vitrine na tape (a mesma lista, caramujo_salvos_v1, neste aparelho)
   var SALVOS='caramujo_salvos_v1';
   function lerSalvos(){ try{ var o=JSON.parse(localStorage.getItem(SALVOS)||'null'); return o&&Array.isArray(o.ids)?o.ids.map(Number):[]; }catch(_){ return []; } }
@@ -907,7 +909,7 @@ __META__
     try{
       var c=lerCarr()||{ em:0, itens:[] };
       if(!c.itens.some(function(x){ return Number(x.beatId)===Number(t.bid)&&!x.stems; }))
-        c.itens.push({ id:Date.now(), beatId:Number(t.bid), name:t.title||'', price:119, orig:119, type:'Beat', stems:false });
+        c.itens.push({ id:Date.now(), beatId:Number(t.bid), name:t.title||'', price:LM[0], orig:LM[0], type:'Beat', stems:false });
       c.em=Date.now();
       localStorage.setItem(CARR, JSON.stringify(c));
       setTimeout(avisaCarr,0);
