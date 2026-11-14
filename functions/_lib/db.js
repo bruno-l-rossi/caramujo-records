@@ -98,6 +98,8 @@ const SCHEMA = [
   `CREATE UNIQUE INDEX IF NOT EXISTS beat_evento_um ON beat_evento (sessao, beat_id, tipo)`,
   `CREATE INDEX IF NOT EXISTS beat_evento_dia ON beat_evento (dia, tipo)`,
   `CREATE INDEX IF NOT EXISTS funil_dia ON funil (dia, etapa)`,
+  // 14/11/2026: uso dos recursos da vitrine (fileira, busca, ficha, salvar), 1 linha por visita por recurso (api/uso.js)
+  `CREATE TABLE IF NOT EXISTS uso (sessao TEXT NOT NULL, recurso TEXT NOT NULL, aparelho TEXT NOT NULL, dia TEXT NOT NULL, PRIMARY KEY (sessao, recurso))`,
   `CREATE TABLE IF NOT EXISTS meta (chave TEXT PRIMARY KEY, valor TEXT NOT NULL)`,
   // A loja (24/09/2026): a lista de beats à venda, os cupons e cada uso de cupom
   // saíram do GitHub (const BEATS no index.html e functions/coupons.json) e vieram

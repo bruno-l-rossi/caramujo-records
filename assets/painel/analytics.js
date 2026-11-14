@@ -463,6 +463,15 @@
     ap.appendChild(leg);
     dois.appendChild(ap);
     corpo.appendChild(dois);
+    // 14/11/2026: o que as visitas usam na vitrine (fileira de gêneros, busca, ficha do beat, ♡). Conta desde o deploy.
+    var us = el('div', 'an-bloco'); us.id = 'anUso'; corpo.appendChild(us);
+    fetch('/api/uso?de=' + ((j.periodo && j.periodo.de) || '') + '&ate=' + ((j.periodo && j.periodo.ate) || '')).then(function (r) { return r.json(); }).then(function (u) {
+      if (!u || !u.ok) { us.remove(); return; }
+      var Vp = u.visitas.total, NOME = [['fileira', 'Fileira de gêneros'], ['busca', 'Busca'], ['ficha', 'Ficha do beat'], ['salvar', 'Salvar (♡)']];
+      var bl = barras('O que as visitas usam', u.desde ? 'Quantas visitas usaram cada parte da lista, pelo menos 1 vez. Conta desde ' + u.desde.slice(8, 10) + '/' + u.desde.slice(5, 7) + '.' : 'Ainda sem uso contado. Começa a contar com as primeiras visitas depois de 14/11/2026.',
+        NOME.map(function (n) { var x = u.uso[n[0]] || { total: 0, celular: 0 }; return [n[1], x.total, Vp ? pct(x.total, Vp) + ' das visitas' : '', num(x.celular) + ' no celular']; }));
+      us.replaceWith(bl);
+    }).catch(function () { us.remove(); });
     corpo.appendChild(tabela('De onde vieram', 'Use ?de=bio ou ?de=story nos links que você divulga pra separar a origem.', ['Origem', 'Visitas', 'Carrinho', 'Pagaram'],
       j.origens.map(function (o) { return [nomeOrigem(o), num(o.visitas), num(o.carrinho), num(o.pagos)]; }), { vazio: 'Nenhuma visita nesse período.' }));
     // 04/11/2026 (revisão do painel, item 8): "De onde vêm as vendas" saiu dos Pedidos e veio pra cá
@@ -692,6 +701,7 @@
             corpo.classList.remove('carregando');
             corpo.textContent = '';
             if (!j || !j.dias) { corpo.appendChild(el('div', 'vazio', 'Não consegui carregar. Tenta de novo.')); return; }
+            j.periodo = { de: de === 'tudo' ? '' : de, ate: estado.ate };
             var nd = j.dias.length + (j.dias.length === 1 ? ' dia' : ' dias');
             semComparar = !!j.tudo;
             legenda.textContent = j.tudo

@@ -2292,6 +2292,8 @@ try{
     }catch(_){}
   }
   window.__funil=marca;
+  // 14/11/2026: a visita usou um recurso da vitrine (fileira, busca, ficha, salvar). 1 aviso por recurso por aba, sem nada pessoal.
+  window.__uso=function(recurso){ marca('uso-'+recurso); };
 
   function envolve(nome,antes,depois){
     var orig=window[nome]; if(typeof orig!=='function') return;
@@ -3121,7 +3123,8 @@ try{(function(){
     tag.hidden=!lig;
     if(lig){ tag.innerHTML=esc(rot(curFilt))+X; tag.setAttribute('aria-label','Tirar o filtro '+rot(curFilt)); }
   }
-  function escolher(g){ Catalogo.ir({ genero:(g===curFilt&&g!=='todos')?'todos':g }); }
+  var usou=function(r){ try{ if(window.__uso) window.__uso(r); }catch(_){} };
+  function escolher(g){ usou('fileira'); Catalogo.ir({ genero:(g===curFilt&&g!=='todos')?'todos':g }); }
   fila.addEventListener('click',function(e){
     var a=e.target.closest&&e.target.closest('.gf'); if(!a||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
     e.preventDefault(); escolher(a.getAttribute('data-g'));
@@ -3259,6 +3262,7 @@ try{(function(){
       document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&fb&&!fb.hidden) fecharFicha(); });
       var som=window.__npSom&&window.__npSom(); if(som){ som.addEventListener('play',pintarFicha); som.addEventListener('pause',pintarFicha); }
     }
+    usou('ficha');
     fbId=id; fbVolta=document.activeElement;
     fveu.hidden=false; fb.hidden=false; pintarFicha();
     var x=fb.querySelector('.fb-x'); if(x){ try{ x.focus({preventScroll:true}); }catch(_){} }
@@ -3338,6 +3342,7 @@ try{(function(){
      pra teste, plugin e agente não precisarem adivinhar por classe e style.display. docs/maquinas-de-estado.md */
   var mostra=function(id){ var e=$(id); return !!(e&&e.style.display&&e.style.display!=='none'); };
   var tem=function(id,c){ var e=$(id); return !!(e&&e.classList.contains(c)); };
+  var svAntes=window.svToque; if(typeof svAntes==='function') window.svToque=function(){ usou('salvar'); return svAntes.apply(this,arguments); };
   window.Site={ estado:function(){
     var bar=$('npBar'), som=window.__npSom&&window.__npSom(), mn=document.querySelector('#nbar .mn:not([hidden])');
     var cf=$('cfFolha'), aj=$('ajudaFolha'), st=document.querySelector('.cs-veu'), nl=document.querySelector('.nav-links');
@@ -3360,7 +3365,7 @@ try{(function(){
   var rc=window.renderCards;
   window.renderCards=function(){
     var r=rc.apply(this,arguments);
-    try{ var c=pintarGeneros(); pintarFila(c); saidaDaBuscaVazia(c); pintarMarca(); pintarCab(); guardar(); }catch(e){ setTimeout(function(){ throw e; }); }
+    try{ var c=pintarGeneros(); pintarFila(c); saidaDaBuscaVazia(c); pintarMarca(); pintarCab(); guardar(); if(pronto&&inp&&inp.value.trim().length>1) usou('busca'); }catch(e){ setTimeout(function(){ throw e; }); }
     avisar('cr:lista');
     return r;
   };

@@ -9,6 +9,7 @@ import { db } from '../_lib/db.js';
 import { ehOBruno } from '../_lib/sessao.js';
 
 export const ETAPAS = ['visita', 'play', 'carrinho', 'checkout', 'pagamento', 'pago'];
+export const USO = ['uso-fileira', 'uso-busca', 'uso-ficha', 'uso-salvar'];   // vai pra tabela uso, não pro funil
 const RETENCAO_DIAS = 400;
 
 const vazio = () => new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
@@ -24,7 +25,8 @@ export async function onRequestPost({ request, env }) {
   const sessao = String(b.s || '');
   const etapa = String(b.e || '');
   const porBeat = etapa === 'toque' || etapa === 'adicao';   // cada beat tocado / posto no carrinho
-  if (!/^[a-z0-9]{10,32}$/.test(sessao) || !(ETAPAS.includes(etapa) || porBeat)) return vazio();
+  const recurso = USO.includes(etapa) ? etapa.slice(4) : '';   // 14/11/2026: a visita usou a fileira, a busca, a ficha ou o ♡
+  if (!/^[a-z0-9]{10,32}$/.test(sessao) || !(ETAPAS.includes(etapa) || porBeat || recurso)) return vazio();
   const aparelho = b.a === 'celular' ? 'celular' : 'computador';
   const origem = /^[a-z0-9-]{1,40}$/.test(String(b.o || '')) ? String(b.o) : 'direto';
   const beat = Number.isInteger(b.b) && b.b > 0 && b.b < 100000 ? b.b : null;
@@ -39,6 +41,10 @@ export async function onRequestPost({ request, env }) {
     const d = await db(env);
     const agora = new Date();
     const dia = new Date(agora.getTime() - 3 * 3600e3).toISOString().slice(0, 10); // São Paulo
+    if (recurso) {
+      await d.prepare('INSERT OR IGNORE INTO uso (sessao, recurso, aparelho, dia) VALUES (?, ?, ?, ?)').bind(sessao, recurso, aparelho, dia).run();
+      return vazio();
+    }
     if (porBeat) {
       if (!beat) return vazio();
       await d.prepare('INSERT OR IGNORE INTO beat_evento (sessao, beat_id, tipo, dia) VALUES (?, ?, ?, ?)')
@@ -54,6 +60,7 @@ export async function onRequestPost({ request, env }) {
       const corte = new Date(agora.getTime() - RETENCAO_DIAS * 86400e3).toISOString().slice(0, 10);
       await d.prepare('DELETE FROM funil WHERE dia < ?').bind(corte).run();
       await d.prepare('DELETE FROM beat_evento WHERE dia < ?').bind(corte).run();
+      await d.prepare('DELETE FROM uso WHERE dia < ?').bind(corte).run();
     }
   } catch { /* funil fora do ar não atrapalha ninguém */ }
   return vazio();
