@@ -1438,3 +1438,8 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
   .cf-folha.saindo{opacity:0}
   .cf-folha:before{display:none}
 }
+/* 14/11/2026 (mockup 14b, escolha do Bruno): no computador a frase do catálogo fica ao lado do título, numa linha */
+@media(min-width:1024px){
+  #beats .s-head{display:flex;align-items:baseline;gap:1.6rem}
+  #beats .s-sub{margin-top:0;max-width:none;flex:1;min-width:0}
+}
