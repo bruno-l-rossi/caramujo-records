@@ -1588,7 +1588,7 @@ try{
   function aplicaVitrine(beats){
     var m={};
     // capaP/capaG vêm prontas do R2 (10/10/2026); capaF = /capa/<id> do site (lista do Google)
-    beats.forEach(function(b){ m[String(b.id)]={mp3:b.mp3,capa:b.capaP||(b.capa?b.capa+'?p':null),capaG:b.capaG||b.capa,capaF:b.capa,dur:b.dur}; });
+    beats.forEach(function(b){ m[String(b.id)]={mp3:b.mp3,capa:b.capaP||(b.capa?b.capa+'?p':null),capaG:b.capaG||b.capa,capaF:b.capa,dur:b.dur,tpn:b.tpn||'',tpu:b.tpu||''}; });
     window.__VIT=m; window.__VIT_OK=true;
     try{ if(window.__ldCatalogo) window.__ldCatalogo(); }catch(_){}    // lista do Google com as capas
     var av=$('foraAr'); if(av && !av.dataset.lista) av.remove();
@@ -3231,6 +3231,12 @@ try{(function(){
         (f.mp3?'<button type="button" class="fb-bt fb-env" aria-label="Compartilhar '+esc(b.name)+'">'+I_ENV+'</button>':'')+
       '</div>'+
       (b.sold?'':'<p class="fb-lic">Licença exclusiva · MP3 + WAV na hora</p>')+
+      // 14/11/2026 (17c): o cartão da beat tape de onde o beat saiu, com quantos dela seguem à venda
+      (f.tpu?(function(){
+        var n=0, V=window.__VIT||{}; for(var k in V){ if(V[k].tpu===f.tpu){ var o=beat(k); if(o&&!o.sold&&V[k].mp3) n++; } }
+        return '<a class="fb-tape" href="'+esc(f.tpu)+'" data-de="ficha">'+(f.capa?'<img src="'+esc(f.capa)+'" alt="" width="52" height="52">':'')+
+          '<span class="fb-tq"><small>Da beat tape</small><b>'+esc(f.tpn)+'</b><i>'+(n?n+(n===1?' beat à venda':' beats à venda'):'Ouvir a tape')+'</i></span><em>Ouvir ›</em></a>';
+      })():'')+
       '<div class="fb-links"><a href="'+pag+'#parecidos" data-de="ficha"><span>'+(b.sold?'Podem te interessar':'Beats parecidos')+'</span><i>'+esc(rot(b.genre))+' ›</i></a>'+
         '<a href="'+pag+'" data-de="ficha"><span>Abrir a página do beat</span><i>licença e detalhes ›</i></a></div>';
   }

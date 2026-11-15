@@ -97,7 +97,7 @@ async function montar(request, env) {
   // idas ao banco, uma atrás da outra
   const d = await db(env);
   const pFaixas = d.prepare(
-    `SELECT t.id, t.title, t.bpm, t.mkey AS key, t.dur, a.tipo, a.cover_key, a.perfil, a.perfil_ordem, a.id AS aid
+    `SELECT t.id, t.title, t.bpm, t.mkey AS key, t.dur, a.tipo, a.cover_key, a.perfil, a.perfil_ordem, a.id AS aid, a.name AS aname, a.slug AS aslug, a.code AS acode
        FROM tracks t JOIN artists a ON a.id = t.artist_id
       WHERE t.kind = 'beat' AND t.ready = 1`
   ).all();
@@ -134,6 +134,8 @@ async function montar(request, env) {
       capa: key ? '/capa/' + key : null,
       ...(key ? { capaP: capaUrl(key, 'p'), capaM: capaUrl(key, 'm'), capaG: capaUrl(key) } : {}),
       dur: f ? (f.dur || 0) : 0,
+      // 14/11/2026: a beat tape (do perfil) de onde vem a capa, pra ficha do beat na vitrine: nome e endereço
+      ...(comCapa && comCapa.perfil && comCapa.aslug && comCapa.acode ? { tpn: comCapa.aname, tpu: '/' + comCapa.aslug + '/' + comCapa.acode } : {}),
       nv: f && f.tipo === 'tape' && posDaTape.has(f.aid) ? posDaTape.get(f.aid) : 9999
     };
   });
