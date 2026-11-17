@@ -331,6 +331,8 @@ ${ICONES}
   .ac b{display:block;font-size:15px;font-weight:600}
   .ac small{display:block;margin-top:3px;font-size:12.5px;color:var(--ink3);line-height:1.35}
   .ac small em{font-style:normal;color:#e0b155}
+  /* 17/11/2026: prazo do serviço perto do fim ou passado, no Hoje e na lista de serviços */
+  .lin small em,.sv-prazo em{font-style:normal;color:#e0b155}
   .ac .seta{color:var(--ink3);font-size:20px}
   .nada{margin:4px 0 8px;font-size:14px;color:var(--ink4)}
   .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -523,7 +525,7 @@ function pagina() {
   <div id="musicas" hidden></div>
   <div id="gravou" hidden></div>
 </div>
-<script src="/assets/painel/analytics.js?v=a30c1ec3eb" defer></script>
+<script src="/assets/painel/analytics.js?v=e3ea739855" defer></script>
 <script src="/assets/painel/vitrine.js?v=d97862cb81" defer></script>
 <script src="/assets/painel/musicas.js?v=a54b446b13" defer></script>
 <script src="/assets/painel/gravou.js?v=018001c9a1" defer></script>
@@ -532,6 +534,6 @@ function pagina() {
 <div class="veil" id="veil" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="/assets/painel/painel.js?v=4895945780"></script>
+<script src="/assets/painel/painel.js?v=fac2671724"></script>
 </body></html>`;
 }

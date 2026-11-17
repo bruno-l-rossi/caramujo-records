@@ -272,6 +272,16 @@
     var n=Math.round((zero(new Date())-zero(d))/864e5);
     return n<=0?'hoje':n===1?'ontem':n<7?'há '+n+' dias':dm(iso);
   }
+  // 17/11/2026 (redesenho v2, ganho rápido P6): o prazo prometido no site é "2 a 3 semanas depois que o material
+  // chega". Aqui conta até o limite de 21 dias a partir do dia em que o material chegou. <em> = 3 dias ou menos, ou passou.
+  var PRAZO_DIAS=21;
+  function prazo(iso){
+    var d=new Date(iso); if(isNaN(d)) return '';
+    var zero=function(x){ return new Date(x.getFullYear(),x.getMonth(),x.getDate()).getTime(); };
+    var f=PRAZO_DIAS-Math.round((zero(new Date())-zero(d))/864e5);
+    var t=f>1?'faltam '+f+' dias':f===1?'falta 1 dia':f===0?'vence hoje':'passou '+(-f)+(f===-1?' dia':' dias')+' do prazo';
+    return f<=3?'<em>'+t+'</em>':t;
+  }
   // o estado do pedido em chip (âmbar = espera algo, branco = sua vez) e o botão quando é pra entregar
   function fimPedido(p){
     var e=estadoPedido(p);
@@ -299,7 +309,7 @@
     var IC_ALERTA='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4.5"/><path d="M12 17.5v.01"/></svg>';
     var IC_MAIL='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></svg>';
     pendServicos().forEach(function(x){
-      add(linhaTarefa(IC_DESCE,'Entregar '+esc(x.s.nome),esc(x.p.quem||'Quem comprou')+' mandou o material '+quandoRel(x.s.envio.em),'Entregar',function(){ abrirPedido(x.p); },true));
+      add(linhaTarefa(IC_DESCE,'Entregar '+esc(x.s.nome),esc(x.p.quem||'Quem comprou')+' mandou o material '+quandoRel(x.s.envio.em)+' · '+prazo(x.s.envio.em),'Entregar',function(){ abrirPedido(x.p); },true));
     });
     if(filaN) add(linhaTarefa(svg('catalogo'),filaN+(filaN===1?' beat pra publicar':' beats pra publicar'),'escolher o gênero e pôr no site','Publicar',function(){ irPara('fila'); }));
     if(revisarErro) add(linhaTarefa(svg('catalogo'),'Não consegui conferir os pendentes','a revisão das tapes não respondeu','Tentar',function(){ carregar(true); }));
@@ -584,12 +594,12 @@
     var ROT={ref:'referência',guia:'guia das vozes',link:'link',musica:'música',recado:'recado'};
     return todos.slice(0,12).map(function(x,i){
       var p=x.p, sv=x.s, e=sv.envio, en=sv.entrega;
-      var estado=en?'entregue '+dm(en.em):e?'material chegou '+dm(e.em):'esperando o material';
+      var estado=en?'entregue '+dm(en.em):e?'material chegou '+dm(e.em)+(p.status==='teste'?'':' · '+prazo(e.em)):'esperando o material';
       var mat=e?Object.keys(ROT).filter(function(k){ return e[k]; }).map(function(k){
         var v=String(e[k]); return '<div style="margin-top:4px;font-size:13px;overflow-wrap:anywhere"><span style="opacity:.6">'+ROT[k]+':</span> '+(/^https?:/.test(v)?'<a href="'+esc(v)+'" target="_blank" rel="noopener">'+esc(v)+'</a>':esc(v))+'</div>';
       }).join(''):'';
       return '<div class="bloco" style="margin-top:10px;padding:12px 14px">'+
-        '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>'+esc(sv.nome)+'</b><span style="font-size:13px;opacity:.75">'+esc((p.quem||'')+(p.status==='teste'?' · teste':''))+' · '+estado+'</span></div>'+mat+
+        '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>'+esc(sv.nome)+'</b><span class="sv-prazo" style="font-size:13px;opacity:.75">'+esc((p.quem||'')+(p.status==='teste'?' · teste':''))+' · '+estado+'</span></div>'+mat+
         '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><input type="url" class="sv-link" data-i="'+i+'" placeholder="Link da entrega (Drive, WeTransfer…)" value="'+(en?esc(en.link):'')+'" style="flex:1 1 220px;min-width:0;padding:10px 12px;border:1px solid #333;border-radius:10px;background:transparent;color:inherit;font:inherit;font-size:14px">'+
         '<button type="button" class="pill solid sv-ent" data-i="'+i+'">'+(en?'Trocar o link':'Entregar')+'</button>'+
         '<a class="pill" href="/pedido/'+esc(p.token)+'#sv'+sv.k+'" target="_blank" rel="noopener">Abrir o pedido</a></div></div>';

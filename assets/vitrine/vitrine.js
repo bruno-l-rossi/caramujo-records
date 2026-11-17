@@ -1972,60 +1972,54 @@ try{
 
 /* ─────────────────────────────────────────────────────────────── */
 try{
-/* ── MEIA TELA DO CARRINHO (02/11/2026, ideia 9) ──────────────────────
-   No celular (até 860px, onde o carrinho cobre a tela) cada item que entra mostra uma folha de meia altura:
-   o item, a régua do Leve mais (SEMPRE a mensagem do combo dos beats; o aviso do Mix + Master fica só no
-   carrinho) e os botões Continuar escolhendo e Ver carrinho. A folha não some sozinha. No computador segue
-   o de antes (abre o carrinho na 1ª adição, aviso nas outras). Só embrulha o confirmAdd: toggleBeat e addSvc
-   não mudam. */
+/* ── AVISO DE ADIÇÃO (17/11/2026, ganho rápido do redesenho, prancha O) ─────────────────
+   No lugar da meia tela (celular) e do cartão no canto (computador): uma faixa curta presa em cima do player,
+   sem véu e sem roubar o foco. Diz o que entrou, quanto sai o próximo beat (Leve mais) e leva pro carrinho.
+   Some sozinha em 6 s; mouse em cima ou foco dentro seguram. Só embrulha o confirmAdd: toggleBeat e addSvc
+   não mudam. Com o carrinho aberto na tela fica o de antes (toast). */
 (function(){
   var $=function(i){return document.getElementById(i);};
-  var folha=$('cfFolha'), veu=$('cfVeu'); if(!folha||!veu) return;
-  function cel(){ try{ return matchMedia('(max-width: 860px)').matches; }catch(_){ return false; } }
-  function regua(){
-    var r=$('lmRegua'); if(r) return r.outerHTML.replace(' id="lmRegua"','');
-    // só serviço no carrinho: a régua vazia com os preços do combo
-    var T=function(n){ return totalDosBeats(n); };
-    if(!(T(2)<2*T(1))) return '';
-    var seg='', num='';
-    for(var k=1;k<=5;k++){ seg+='<i></i>'; num+='<span>'+k+' · '+T(k)+'</span>'; }
-    return '<div class="lm-reg"><p>Beat sai por <b>R$'+T(1)+'</b>; o 2º, por R$'+(T(2)-T(1))+'; do 3º em diante, R$'+(T(3)-T(2))+' cada.</p><div class="lm-bar" aria-hidden="true">'+seg+'</div><div class="lm-num" aria-hidden="true">'+num+'</div></div>';
-  }
+  var fx=$('cfFaixa'); if(!fx) return;
+  var SOME=6000, relogio=0, apaga=0;
+  function nBeats(){ try{ return cart.filter(function(c){ return c.type==='Beat'&&!c.stems; }).length; }catch(_){ return 0; } }
   function item(label){
     var nome=String(label||'').replace(/^"|"$/g,'');
     for(var i=cart.length-1;i>=0;i--){ if(cart[i].name===nome) return cart[i]; }
     return cart[cart.length-1]||null;
   }
-  function abrir(label){
+  function proximo(){
+    var n=nBeats(); if(!n) return '';
+    try{ var p=totalDosBeats(n+1)-totalDosBeats(n), cheio=totalDosBeats(1); return p<cheio?'Próximo beat: R$'+p:''; }catch(_){ return ''; }
+  }
+  // fica logo acima do player quando ele está na tela
+  function posicionar(){
+    var bar=$('npBar'), h=0;
+    if(bar&&bar.classList.contains('on')&&!bar.classList.contains('aberta')){ var r=bar.getBoundingClientRect(); h=Math.max(0,innerHeight-r.top); }
+    fx.style.bottom=(h+8)+'px';
+  }
+  function parar(){ clearTimeout(relogio); clearTimeout(apaga); fx.classList.remove('saindo'); }
+  function agendar(ms){ parar(); relogio=setTimeout(function(){ fx.classList.add('saindo'); apaga=setTimeout(fechar,400); },ms); }
+  function fechar(){ parar(); fx.hidden=true; }
+  function mostrar(label){
     var c=item(label); if(!c) return;
     $('cfNome').textContent=c.name;
-    $('cfPreco').innerHTML=c.type==='Servico' ? 'R$'+(c.unitPrice||c.price) : (c.orig&&c.orig>c.price?'<s>R$'+c.orig+'</s>':'')+'R$'+c.price;
-    $('cfRegua').innerHTML=regua();
-    $('cfVer').textContent='Ver carrinho · '+cart.reduce(function(s,x){ return s+(x.qty||1); },0);
-    veu.hidden=false; folha.hidden=false; folha.classList.remove('saindo');
-    try{ folha.querySelector('.cf-c1').focus({preventScroll:true}); }catch(_){}
+    var px=proximo(); $('cfProx').textContent=c.type==='Beat'?px:'Entrega em 2 a 3 semanas';
+    $('cfProx').hidden=!$('cfProx').textContent;
+    $('cfVer').setAttribute('aria-label','Ver carrinho, '+cart.reduce(function(s,x){ return s+(x.qty||1); },0)+' itens');
+    posicionar(); fx.hidden=false; fx.classList.remove('saindo');
     agendar(SOME);
   }
-  // 11/11/2026 (pedido do Bruno): no computador o cartão some sozinho depois de 10 s sem ninguém mexer nele.
-  // Mouse em cima ou foco dentro seguram; saiu, conta mais 5 s. No celular a meia tela segue até a pessoa escolher.
-  var SOME=10000, relogio=0, apaga=0;
-  function parar(){ clearTimeout(relogio); clearTimeout(apaga); folha.classList.remove('saindo'); }
-  function agendar(ms){
-    parar(); if(cel()) return;
-    relogio=setTimeout(function(){ if(folha.hidden) return; folha.classList.add('saindo'); apaga=setTimeout(function(){ if(folha.classList.contains('saindo')) window.fecharFolhaCarrinho(); },700); },ms);
-  }
-  folha.addEventListener('mouseenter',parar);
-  folha.addEventListener('mouseleave',function(){ if(!folha.hidden) agendar(SOME/2); });
-  folha.addEventListener('focusin',function(e){ if(e.target&&e.target.matches&&e.target.matches(':focus-visible')) parar(); });
-  window.fecharFolhaCarrinho=function(){ parar(); veu.hidden=true; folha.hidden=true; };
-  window.verCarrinhoDaFolha=function(){ window.fecharFolhaCarrinho(); try{ openCart(); }catch(_){} };
+  // só o mouse de verdade segura (no celular o toque gera "mouse em cima" e a faixa nunca sumiria)
+  fx.addEventListener('pointerenter',function(e){ if(e.pointerType==='mouse') parar(); });
+  fx.addEventListener('pointerleave',function(e){ if(e.pointerType==='mouse'&&!fx.hidden) agendar(SOME/2); });
+  fx.addEventListener('focusin',function(e){ if(e.target&&e.target.matches&&e.target.matches(':focus-visible')) parar(); });
+  fx.addEventListener('focusout',function(){ if(!fx.hidden) agendar(SOME/2); });
+  addEventListener('resize',function(){ if(!fx.hidden) posicionar(); });
+  window.fecharAvisoCarrinho=fechar;
+  window.verCarrinhoDoAviso=function(){ fechar(); try{ openCart(); }catch(_){} };
   var ca=window.confirmAdd, pn=$('cartPanel');
-  // com o carrinho já aberto na tela, a folha não sobe por cima dele: fica o de antes
-  // rodada AJ (11/11/2026): no computador a mesma folha vira um cartão no canto (sem véu); o painel do carrinho não abre mais sozinho
-  if(typeof ca==='function') window.confirmAdd=function(label){ if(pn&&pn.classList.contains('open')) return ca.apply(this,arguments); try{ cartOpenedOnce=true; }catch(_){} abrir(label); };
-  // o carrinho abriu por outro caminho (#add= da tape, ícone do topo): a folha sai
-  if(pn&&window.MutationObserver) new MutationObserver(function(){ if(pn.classList.contains('open')) window.fecharFolhaCarrinho(); }).observe(pn,{attributes:true,attributeFilter:['class']});
-  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!folha.hidden) window.fecharFolhaCarrinho(); });
+  if(typeof ca==='function') window.confirmAdd=function(label){ if(pn&&pn.classList.contains('open')) return ca.apply(this,arguments); try{ cartOpenedOnce=true; }catch(_){} mostrar(label); };
+  if(pn&&window.MutationObserver) new MutationObserver(function(){ if(pn.classList.contains('open')) fechar(); }).observe(pn,{attributes:true,attributeFilter:['class']});
 })();
 }catch(e){ setTimeout(function(){ throw e; }); }
 
@@ -2579,7 +2573,6 @@ try{
     // ficha do beat (rodada AH, 10/11/2026)
     { aberta:function(){ return !!(window.fichaAberta&&window.fichaAberta()); }, fechar:function(){ if(window.fecharFicha) window.fecharFicha(); } },
     // meia tela do carrinho (02/11/2026, ideia 9)
-    { aberta:function(){ var f=$('cfFolha'); return !!(f&&!f.hidden); }, fechar:function(){ if(window.fecharFolhaCarrinho) window.fecharFolhaCarrinho(); } },
     { aberta:function(){ var v=document.querySelector('.cs-veu'); return !!(v&&!v.hidden); },
       fechar:function(){ try{ window.CaramujoStory.fechar(); }catch(_){} } },
     { aberta:function(){ return tem('mpModal','open'); }, fechar:function(){ closeCheckout(); },
@@ -2842,14 +2835,17 @@ try{(function(){
   window.__svTem=tem; window.__svModo=false;
   var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
 
-  // o botão "♡ Salvos N" mora na linha "136 beats · página 1 de 14"
+  // 17/11/2026 (ganho rápido do redesenho, prancha O): o "♡ N" abre a fileira de gêneros, como mais uma pílula.
+  // Sem fileira (página sem o bloco AH) fica na linha "136 beats · página 1 de 14", como antes.
   function pilula(){
-    var c=document.querySelector('#nbar .nb-conta'); if(!c) return;
+    var fila=$('gFila'), c=fila||document.querySelector('#nbar .nb-conta'); if(!c) return;
     var p=$('svPill');
-    if(!p){ p=document.createElement('button'); p.id='svPill'; p.type='button'; p.className='sl-pill';
-      p.addEventListener('click',function(){ window.__svModo?fecharModo():abrirModo(true); }); c.appendChild(p); }
+    if(!p){ p=document.createElement('button'); p.id='svPill'; p.type='button';
+      p.addEventListener('click',function(){ window.__svModo?fecharModo():abrirModo(false); }); }
+    p.className=fila?'gf sl-gf'+(window.__svModo?' on':''):'sl-pill';
+    if(fila){ if(fila.firstChild!==p) fila.insertBefore(p,fila.firstChild); } else if(p.parentNode!==c) c.appendChild(p);
     var n=validos().length;
-    p.innerHTML=(window.__svModo?CHEIO:COR)+'Salvos<b>'+n+'</b>';
+    p.innerHTML=fila?CHEIO+'<small>'+n+'</small>':(window.__svModo?CHEIO:COR)+'Salvos<b>'+n+'</b>';
     p.setAttribute('aria-pressed',window.__svModo?'true':'false');
     p.setAttribute('aria-label',window.__svModo?'Mostrar todos os beats':'Ver seus '+n+' beats salvos');
     p.hidden=!n&&!window.__svModo;
@@ -3104,9 +3100,10 @@ try{(function(){
     var h='';
     gens().forEach(function(o){
       var g=gDe(o), n=c[g]||0; if(g!=='todos'&&!n&&g!==curFilt) return;
-      h+='<a class="gf'+(g===curFilt?' on':'')+'" href="'+esc(o.getAttribute('href')||'#beats')+'" data-g="'+g+'"'+(g===curFilt?' aria-current="true"':'')+'>'+esc(g==='todos'?'Todos':rot(g))+'<small>'+n+'</small></a>';
+      var on=g===curFilt&&!window.__svModo;   // nos salvos, só o ♡ fica aceso
+      h+='<a class="gf'+(on?' on':'')+'" href="'+esc(o.getAttribute('href')||'#beats')+'" data-g="'+g+'"'+(on?' aria-current="true"':'')+'>'+esc(g==='todos'?'Todos':rot(g))+'<small>'+n+'</small></a>';
     });
-    if(fila.__h!==h){ fila.innerHTML=h; fila.__h=h; var on=fila.querySelector('.on'); if(on&&fila.scrollWidth>fila.clientWidth) fila.scrollLeft=Math.max(0,on.offsetLeft-fila.clientWidth/2+on.offsetWidth/2); }
+    if(fila.__h!==h){ var sv=$('svPill'); fila.innerHTML=h; fila.__h=h; if(sv&&sv.classList.contains('sl-gf')) fila.insertBefore(sv,fila.firstChild); var on=fila.querySelector('.on'); if(on&&fila.scrollWidth>fila.clientWidth) fila.scrollLeft=Math.max(0,on.offsetLeft-fila.clientWidth/2+on.offsetWidth/2); }
     // rodada AI (11/11/2026): a contagem diz quantos dos beats da lista ainda estão à venda ("37 beats · 35 à venda")
     var e=Catalogo.estado(), nv=c[curFilt]||0, tot=parseInt((($('nbTotal')||{}).textContent||''),10)||0;
     venda.hidden=!!(e.busca||e.salvos||e.soVenda||!nv||nv>=tot);
@@ -3343,8 +3340,8 @@ try{(function(){
   var svAntes=window.svToque; if(typeof svAntes==='function') window.svToque=function(){ usou('salvar'); return svAntes.apply(this,arguments); };
   window.Site={ estado:function(){
     var bar=$('npBar'), som=window.__npSom&&window.__npSom(), mn=document.querySelector('#nbar .mn:not([hidden])');
-    var cf=$('cfFolha'), aj=$('ajudaFolha'), st=document.querySelector('.cs-veu'), nl=document.querySelector('.nav-links');
-    var folha=window.fichaAberta()?'ficha':(cf&&!cf.hidden)?'carrinho-meia':(st&&!st.hidden)?'story':tem('mpModal','open')?'checkout':
+    var aj=$('ajudaFolha'), st=document.querySelector('.cs-veu'), nl=document.querySelector('.nav-links');
+    var folha=window.fichaAberta()?'ficha':(st&&!st.hidden)?'story':tem('mpModal','open')?'checkout':
       tem('cartPanel','open')?'carrinho':(nl&&nl.classList.contains('open'))?'menu':mn?mn.id:(aj&&!aj.hidden)?'ajuda':null;
     var nb=0; try{ nb=cart.filter(function(c){ return c.type==='Beat'&&!c.stems; }).length; }catch(_){}
     return {
@@ -3379,6 +3376,68 @@ try{(function(){
   try{ retomar(); }catch(_){}
   pronto=true;
 })();}catch(e){ setTimeout(function(){ throw e; }); }
+
+try{
+/* ── FAIXA DE RETORNO (17/11/2026, ganho rápido do redesenho, prancha O) ─────────────────
+   Pra quem já veio neste aparelho: em cima da fileira de gêneros, até 2 cartões. "N novos desde a sua última
+   visita" (põe em Mais novos e marca os novos na lista) e "BEAT foi vendido · você tinha salvo" (leva pros
+   parecidos). Nada sai do aparelho: caramujo_visita_v1 guarda os beats à venda da última visita (localStorage);
+   cr_retorno guarda a conta desta sessão (sessionStorage), pra recarregar a página não apagar a faixa.
+   Só aparece com a lista no estado de entrada (todos os gêneros, sem busca, sem salvos, página 1, Padrão).
+   Plugin por fora: escuta cr:lista e lê Catalogo.estado(). */
+(function(){
+  var $=function(i){return document.getElementById(i);};
+  var CH='caramujo_visita_v1', SS='cr_retorno', INTERVALO=30*60e3;
+  var ler=function(st,k){ try{ return JSON.parse(st.getItem(k)||'null'); }catch(_){ return null; } };
+  var gravar=function(st,k,v){ try{ st.setItem(k,JSON.stringify(v)); }catch(_){} };
+  var esc=function(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  var usou=function(r){ try{ if(window.__uso) window.__uso(r); }catch(_){} };
+  var ses=null, el=null;
+  function aVenda(){ var V=window.__VIT||{}; return BEATS.filter(function(b){ var f=V[String(b.id)]; return !b.sold&&f&&f.mp3; }).map(function(b){ return b.id; }); }
+  function salvos(){ var l=ler(localStorage,'caramujo_salvos_v1'); return Array.isArray(l)?l.map(Number):(l&&Array.isArray(l.ids)?l.ids.map(Number):[]); }
+  function contar(){
+    ses=ler(sessionStorage,SS); if(ses) return;
+    var agora=Date.now(), venda=aVenda(), vend=BEATS.filter(function(b){ return b.sold; }).map(function(b){ return b.id; });
+    var antes=ler(localStorage,CH); ses={ novos:[], vendido:null, fechado:false, usouNovos:false };
+    if(antes&&Array.isArray(antes.ids)&&agora-(antes.em||0)>INTERVALO){
+      var tinha={}; antes.ids.forEach(function(i){ tinha[i]=1; });
+      ses.novos=venda.filter(function(i){ return !tinha[i]; });
+      var jaVend={}; (antes.vend||[]).forEach(function(i){ jaVend[i]=1; });
+      var sv=salvos().filter(function(i){ return vend.indexOf(i)>-1&&!jaVend[i]; });
+      if(sv.length){ var b=BEATS.find(function(x){ return x.id===sv[0]; }); if(b) ses.vendido={ id:b.id, nome:b.name }; }
+    }
+    if(ses.novos.length>40) ses.novos=[];   // conta torta (catálogo trocado de uma vez): melhor não dizer nada
+    gravar(sessionStorage,SS,ses);
+    gravar(localStorage,CH,{ em:agora, ids:venda, vend:vend });
+  }
+  function entrada(){ var e=Catalogo.estado(); return e.genero==='todos'&&!e.busca&&!e.salvos&&e.pagina===1&&(e.ordem||'padrao')==='padrao'; }
+  function pintar(){
+    if(!ses) return;
+    var fila=$('gFila'); if(!fila) return;
+    if(!el){ el=document.createElement('div'); el.className='rt-faixa'; el.id='rtFaixa'; el.setAttribute('role','region'); el.setAttribute('aria-label','Desde a sua última visita'); fila.parentNode.insertBefore(el,fila);
+      el.addEventListener('click',function(e){
+        var a=e.target.closest&&e.target.closest('[data-rt]'); if(!a) return;
+        var k=a.getAttribute('data-rt');
+        if(k==='x'){ ses.fechado=true; gravar(sessionStorage,SS,ses); pintar(); return; }
+        if(k==='novos'){ e.preventDefault(); usou('retorno'); ses.usouNovos=true; gravar(sessionStorage,SS,ses); Catalogo.ir({ ordem:'novos' }); var b=$('beats'); if(b) b.scrollIntoView({behavior:'smooth',block:'start'}); return; }
+        if(k==='vendido'){ usou('retorno'); ses.vendido=null; gravar(sessionStorage,SS,ses); }
+      }); }
+    var h='', n=ses.novos.length;
+    if(n&&!ses.usouNovos) h+='<button type="button" class="rt-c" data-rt="novos"><b>'+(n===1?'1 beat novo':n+' beats novos')+'</b><small>desde a última visita ›</small></button>';
+    if(ses.vendido) h+='<a class="rt-c" data-rt="vendido" href="'+esc(paginaDoBeat(ses.vendido.nome))+'#parecidos" data-de="retorno" aria-label="'+esc(ses.vendido.nome)+', um dos seus salvos, foi vendido. Ver beats parecidos"><b>'+esc(ses.vendido.nome)+' foi vendido</b><small>ver parecidos ›</small></a>';
+    var mostra=!!h&&!ses.fechado&&entrada();
+    if(mostra&&el.__h!==h){ el.innerHTML=h+'<button type="button" class="rt-x" data-rt="x" aria-label="Fechar">✕</button>'; el.__h=h; }
+    el.hidden=!mostra;
+    // os novos ficam marcados na lista durante a sessão
+    if(n){ var m={}; ses.novos.forEach(function(i){ m[i]=1; });
+      document.querySelectorAll('#beatCards .item[data-bid]').forEach(function(it){ it.classList.toggle('rt-novo',!!m[it.getAttribute('data-bid')]); }); }
+  }
+  document.addEventListener('cr:lista',function(){
+    try{ if(!ses){ var V=window.__VIT; if(!V||!Object.keys(V).length||!BEATS.length) return; contar(); } pintar(); }catch(e){ setTimeout(function(){ throw e; }); }
+  });
+  window.__retorno=function(){ return ses; };
+})();
+}catch(e){ setTimeout(function(){ throw e; }); }
 
 /*AJUDA-INICIO*/
 (function(){if(window.__topo)return;window.__topo=1;var $=function(s){return document.querySelector(s)};

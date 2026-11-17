@@ -38,7 +38,7 @@
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
 <!-- 04/11/2026: o áudio e as capas saem do som.caramujorecords.com.br; a conexão abre junto com a página -->
 <link rel="preconnect" href="https://som.caramujorecords.com.br"/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.min.css?v=588b069696">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.min.css?v=744d80c0d6">
 
 
 <link rel="canonical" href="https://caramujorecords.com.br"/>
@@ -353,13 +353,12 @@ try{
   </div>
 </div>
 
-<!-- Meia tela do carrinho (02/11/2026, ideia 9): no celular cada item que entra mostra esta folha em vez de abrir o
-     carrinho inteiro. Mensagem sempre do combo dos beats; o aviso do Mix + Master fica no carrinho. -->
-<div class="cf-veu" id="cfVeu" hidden onclick="fecharFolhaCarrinho()"></div>
-<div class="cf-folha" id="cfFolha" role="dialog" aria-labelledby="cfNome" hidden>
-  <div class="cf-l1"><i aria-hidden="true">✓</i><b id="cfNome"></b><span>no carrinho</span><em id="cfPreco"></em></div>
-  <div id="cfRegua"></div>
-  <div class="cf-bts"><button type="button" class="cf-c1" onclick="fecharFolhaCarrinho()">Continuar escolhendo</button><button type="button" class="cf-c2" id="cfVer" onclick="verCarrinhoDaFolha()">Ver carrinho</button></div>
+<!-- Aviso de adição (17/11/2026): faixa curta em cima do player, sem véu. Texto montado pelo vitrine.js. -->
+<div class="cf-faixa" id="cfFaixa" role="status" aria-live="polite" hidden>
+  <span class="cff-ok" aria-hidden="true">✓</span>
+  <span class="cff-t"><span><b id="cfNome"></b> no carrinho</span><small id="cfProx"></small></span>
+  <button type="button" class="cff-ver" id="cfVer" onclick="verCarrinhoDoAviso()">Carrinho ›</button>
+  <button type="button" class="cff-x" onclick="fecharAvisoCarrinho()" aria-label="Fechar o aviso">✕</button>
 </div>
 
 <!-- ═══ MP CHECKOUT MODAL ══════════════════════════ -->
@@ -494,7 +493,7 @@ const PIX_OFF=5; // % de desconto no PIX (17/10/2026); o servidor lê daqui e co
 const LEVE_MAIS={'2':218,'3':297,'+':79};
 const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':'Hood Trap','experimental':'Experimental','detroit':'Detroit','drumless':'Drumless','hard':'Hard','funk':'Funk','pluggnb':'Pluggnb','drill':'Drill','nomelody':'No Melody','bounce':'Bounce'};
 </script>
-<script src="/assets/vitrine/vitrine.min.js?v=c86746670c"></script>
+<script src="/assets/vitrine/vitrine.min.js?v=526a302efd"></script>
 <!-- leva-de -->
 <script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
 (function(){

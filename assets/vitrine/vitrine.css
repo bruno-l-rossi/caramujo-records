@@ -289,21 +289,6 @@ footer p{
 .cp-cl-bt .v b{font-weight:400;color:var(--bone);margin-right:.7rem}
 .cp-cl-x{width:44px;min-height:48px;margin-right:-.7rem;background:none;border:0;color:var(--read);font-size:1.1rem;cursor:pointer}
 .cp-coupon:not(.aberto) .cp-coupon-row,.cp-coupon:not(.aberto) .cp-coupon-msg,.cp-coupon.aberto .cp-cupom-linha{display:none}
-/* meia tela do carrinho (02/11/2026, ideia 9): no celular cada item que entra mostra esta folha */
-.cf-veu{position:fixed;inset:0;z-index:8400;background:rgba(5,4,3,.45)}
-.cf-folha{position:fixed;left:0;right:0;bottom:0;z-index:8401;background:var(--deep);border-top:1px solid var(--clay);padding:10px 18px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -18px 40px rgba(0,0,0,.55)}
-.cf-folha:before{content:'';display:block;width:40px;height:4px;border-radius:2px;background:var(--loam);margin:0 auto 16px}
-.cf-veu[hidden],.cf-folha[hidden]{display:none}
-.cf-l1{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.cf-l1 i{width:26px;height:26px;border-radius:50%;background:var(--fire);color:var(--black);display:flex;align-items:center;justify-content:center;flex:none;font:700 1rem var(--sans)}
-.cf-l1 b{font:500 1.35rem var(--serif);color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.cf-l1 span{color:var(--read);font-size:.86rem;white-space:nowrap}
-.cf-l1 em{margin-left:auto;font:400 1.1rem var(--serif);color:var(--fire);white-space:nowrap}
-.cf-l1 em s{color:var(--fosco);margin-right:6px;font-size:.95rem}
-.cf-folha .lm-reg{margin:0}
-.cf-bts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-.cf-bts button{min-height:48px;background:none;border:1px solid var(--wire);color:var(--bone);font:700 .66rem var(--sans);letter-spacing:.16em;text-transform:uppercase;cursor:pointer}
-.cf-bts .cf-c2{background:var(--bone);border-color:var(--bone);color:var(--deep)}
 .cp-tot{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1rem;}
 .cp-tot span:first-child{font-size:.6rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--fosco);}
 .cp-tv{font-family:'Cormorant Garamond',sans-serif;font-size:2.2rem;color:var(--cream);}
@@ -1431,10 +1416,6 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
   .nb-seg button{align-self:stretch;padding:0 .8rem;border:0;border-left:1px solid var(--wire);background:none;cursor:pointer;font:700 .62rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--cream)}
   .nb-seg button:hover{color:var(--fire)}
   .nb-seg button.on{background:var(--fire);color:var(--black)}
-  .cf-veu{display:none}
-  .cf-folha{left:auto;right:2.4rem;bottom:6.4rem;width:380px;border:1px solid var(--clay);padding:18px;box-shadow:0 18px 40px rgba(0,0,0,.5);transition:opacity .6s}
-  .cf-folha.saindo{opacity:0}
-  .cf-folha:before{display:none}
 }
 /* 14/11/2026 (mockup 14b, escolha do Bruno): no computador a frase do catálogo fica ao lado do título, numa linha */
 @media(min-width:1024px){
@@ -1462,3 +1443,34 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .fb-tq b{font:500 1.2rem/1.05 'Cormorant Garamond',Georgia,serif;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fb-tq i{font:400 .7rem 'IBM Plex Mono',monospace;font-style:normal;color:var(--amber)}
 .fb-tape em{flex:none;font:700 .62rem 'Helvetica Neue',Helvetica,Arial,sans-serif;font-style:normal;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+
+/* AVISO DE ADIÇÃO 17/11: faixa curta em cima do player (no lugar da meia tela e do cartão do canto) */
+.cf-faixa{position:fixed;left:8px;right:8px;bottom:8px;z-index:8401;display:flex;align-items:center;gap:10px;min-height:52px;padding:6px 6px 6px 12px;background:var(--fire);color:var(--black);box-shadow:0 10px 28px rgba(0,0,0,.45);transition:opacity .35s,transform .35s}
+.cf-faixa[hidden]{display:none}
+.cf-faixa.saindo{opacity:0;transform:translateY(8px)}
+.cff-ok{flex:none;font-weight:700}
+.cff-t{flex:1;min-width:0;display:flex;flex-direction:column;font:600 .84rem/1.25 var(--sans)}
+.cff-t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cff-t b{font-weight:700}
+.cff-t small{font-weight:400;font-size:.76rem;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cff-ver{flex:none;min-height:40px;padding:0 12px;background:var(--black);color:var(--bone);border:0;font:700 .62rem var(--sans);letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+.cff-x{flex:none;width:36px;height:40px;background:none;border:0;color:var(--black);font-size:.9rem;cursor:pointer}
+@media(min-width:861px){.cf-faixa{left:auto;right:2.4rem;width:420px}}
+
+/* SALVOS 17/11: o ♡ N abre a fileira de gêneros (prancha O) */
+.sl-gf{gap:.45rem;color:var(--fire);cursor:pointer}
+.sl-gf[hidden]{display:none}
+.sl-gf svg{width:15px;height:15px}
+.sl-gf small{margin-left:0;color:var(--cream)}
+.sl-gf.on small{color:var(--black)}
+
+/* RETORNO 17/11: quem volta vê os beats novos e o salvo que foi vendido (prancha O) */
+.rt-faixa{display:flex;gap:.5rem;align-items:stretch;margin:0 0 .7rem}
+.rt-faixa[hidden]{display:none}
+.rt-c{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:56px;padding:.55rem .8rem;border:1px solid var(--clay);background:var(--deep);color:var(--cream);text-align:left;text-decoration:none;cursor:pointer;font:inherit}
+.rt-c:hover{border-color:var(--fire)}
+.rt-c b{font:600 .86rem/1.2 var(--sans);overflow-wrap:anywhere}
+.rt-c small{font:400 .76rem/1.3 var(--sans);color:var(--fire)}
+.rt-x{flex:none;width:40px;border:1px solid var(--wire);background:none;color:var(--read);cursor:pointer}
+#beatCards .item.rt-novo .nome:after,#beatCards .item.rt-novo .bn:after{content:'novo';margin-left:.5rem;padding:1px 5px;vertical-align:middle;background:var(--fire);color:var(--black);font:700 .52rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}
+@media(min-width:861px){.rt-faixa{max-width:720px}}
