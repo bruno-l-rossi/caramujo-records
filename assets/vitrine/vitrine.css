@@ -1474,3 +1474,32 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 .rt-x{flex:none;width:40px;border:1px solid var(--wire);background:none;color:var(--read);cursor:pointer}
 #beatCards .item.rt-novo .nome:after,#beatCards .item.rt-novo .bn:after{content:'novo';margin-left:.5rem;padding:1px 5px;vertical-align:middle;background:var(--fire);color:var(--black);font:700 .52rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}
 @media(min-width:861px){.rt-faixa{max-width:720px}}
+
+/* GANHOS 20/11 (canvas f319e807, fileira g). 1: no celular o ▶ fica dentro da capa, que cresce; o toque segue na linha toda */
+@media(max-width:760px){
+  #beatCards .cel-num{position:absolute;left:2px;top:50%;width:52px;height:52px;margin-top:-26px;z-index:1;pointer-events:none}
+  #beatCards .capa{width:52px;height:52px}
+  #beatCards .cel-num b{width:28px;height:28px;border-color:rgba(195,160,116,.65);background:rgba(20,17,13,.74)}
+}
+@media(max-width:374px){#beatCards .cel-num{width:46px;height:46px;margin-top:-23px}#beatCards .capa{width:46px;height:46px}}
+/* 2: preço contornado; cheio só o que já está no carrinho */
+#beatCards .preco{background:transparent;color:var(--cream);border-color:var(--clay)}
+#beatCards .preco:hover{background:var(--fire);border-color:var(--fire);color:var(--black)}
+#beatCards .preco.on{background:var(--bone);border-color:var(--bone);color:var(--black)}
+#beatCards .preco .lm-prox s{color:var(--fosco)}
+/* 6: atalhos do teclado na Ajuda (computador) */
+.aj-tec ul{list-style:none;margin:.5rem 0 0;padding:0;display:grid;gap:.5rem}
+.aj-tec li{display:flex;align-items:center;gap:.8rem;font-size:.82rem;color:var(--read)}
+.aj-tec kbd{flex:none;min-width:6.4rem;padding:.2rem .45rem;border:1px solid var(--loam);border-bottom-width:2px;font:500 .7rem 'IBM Plex Mono',monospace;color:var(--cream);text-align:center}
+/* 3: BPM e tom na folha Filtros, que no celular vira tela cheia com o "Ver N beats" sempre à vista */
+#filtMenu .ft small{font:400 .72rem 'IBM Plex Mono',monospace;letter-spacing:0;color:var(--read);margin-left:.5rem}
+#filtMenu .ft.on small{color:var(--black)}
+@media(max-width:860px){
+  #nbar #filtMenu{top:0;max-height:none;height:100%;border-top:0;padding-bottom:0}
+  #nbar #filtMenu:before{content:none}
+  #filtMenu .mn-t{position:sticky;top:0;z-index:1;display:flex;align-items:center;min-height:56px;padding-top:.4rem;background:var(--deep)}
+  #filtMenu .mf-ver{position:sticky;bottom:0;width:100%;margin:1.2rem 0 0;box-shadow:0 0 0 1.1rem var(--deep);margin-bottom:calc(1.1rem + env(safe-area-inset-bottom,0px))}
+}
+#filtTom .ft,#gTag-tom{text-transform:none;letter-spacing:.04em}
+#filtTom .ft[data-tom=menor],#filtTom .ft[data-tom=maior]{text-transform:uppercase;letter-spacing:.14em}
+@media(max-width:860px){#nbar #filtMenu{padding-top:0}}

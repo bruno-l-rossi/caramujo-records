@@ -217,6 +217,9 @@ __META__
   @media(max-width:480px){.row:has(.com-preco) .dur,.row:has(.no-carrinho) .dur{display:none}}
   /* comprar sem sair da tape (25/10/2026): ✓ no beat que já está no carrinho e o aviso acima do player */
   .buy.no-carrinho{background:#E4DAC7;color:#0a0a0a;border-color:#E4DAC7}
+  /* 20/11/2026 (ganho 2, igual à vitrine): preço contornado; cheio só o que já está no carrinho */
+  .buy.com-preco{background:transparent;color:#E4DAC7;border-color:rgba(228,218,199,.45)}
+  @media(hover:hover){.buy.com-preco:hover{background:#E4DAC7;color:#0a0a0a;border-color:#E4DAC7}}
   .aviso-carr{position:fixed;left:12px;right:12px;z-index:90;display:flex;justify-content:space-between;align-items:center;gap:12px;
     max-width:520px;margin:0 auto;padding:13px 16px;background:#E4DAC7;color:#0a0a0a;border-radius:10px;
     font:500 14px/1.3 var(--sans,'Helvetica Neue',Helvetica,Arial,sans-serif);box-shadow:0 10px 30px rgba(0,0,0,.5);

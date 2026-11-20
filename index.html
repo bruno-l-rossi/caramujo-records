@@ -38,7 +38,7 @@
 <link rel="preload" href="/api/vitrine" as="fetch" crossorigin/>
 <!-- 04/11/2026: o áudio e as capas saem do som.caramujorecords.com.br; a conexão abre junto com a página -->
 <link rel="preconnect" href="https://som.caramujorecords.com.br"/>
-<link rel="stylesheet" href="/assets/vitrine/vitrine.min.css?v=744d80c0d6">
+<link rel="stylesheet" href="/assets/vitrine/vitrine.min.css?v=fae9d86939">
 
 
 <link rel="canonical" href="https://caramujorecords.com.br"/>
@@ -185,6 +185,8 @@ try{
       <div class="mn mn-filt" id="filtMenu" hidden>
         <div class="mn-t"><b>Filtros</b><button class="mf-limpa" type="button" onclick="limparFiltrosBarra()">Limpar</button><button class="mn-x" type="button" onclick="fecharMenusBarra()" aria-label="Fechar">×</button></div>
         <b class="mf-k">Gênero</b><div class="mf-gen" id="filtGen"></div>
+        <b class="mf-k">BPM</b><div class="mf-gen" id="filtBpm"></div>
+        <b class="mf-k">Tom</b><div class="mf-gen" id="filtTom"></div>
         <b class="mf-k">Ordem</b><div class="mf-gen" id="filtOrd"></div>
         <button class="nb-tg mf-tg" id="filtAvail2" type="button" role="switch" aria-checked="false">Só à venda<b aria-hidden="true"></b></button>
         <button class="mf-ver" id="filtVer" type="button" onclick="fecharMenusBarra()">Ver os beats</button>
@@ -493,7 +495,7 @@ const PIX_OFF=5; // % de desconto no PIX (17/10/2026); o servidor lê daqui e co
 const LEVE_MAIS={'2':218,'3':297,'+':79};
 const GENRE_LABELS={'trap':'Trap','boombap':'Boom Bap','plug':'Plug','hoodtrap':'Hood Trap','experimental':'Experimental','detroit':'Detroit','drumless':'Drumless','hard':'Hard','funk':'Funk','pluggnb':'Pluggnb','drill':'Drill','nomelody':'No Melody','bounce':'Bounce'};
 </script>
-<script src="/assets/vitrine/vitrine.min.js?v=526a302efd"></script>
+<script src="/assets/vitrine/vitrine.min.js?v=976133f82b"></script>
 <!-- leva-de -->
 <script>/* leva-de: ?de= só no clique (functions/_lib/origem.js) */
 (function(){

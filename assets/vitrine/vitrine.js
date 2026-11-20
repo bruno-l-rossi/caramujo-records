@@ -188,6 +188,8 @@ function renderCards(){
   if(window.__VIT_OK) src=src.filter(b=>(window.__VIT[String(b.id)]||{}).mp3);
   if(showAvailOnly) src=src.filter(b=>!b.sold);
   if(beatQuery) src=src.filter(casaBusca);
+  // BPM em faixas e tom por toque (20/11/2026, ganho 3): o filtro mora no bloco GANHOS
+  if(typeof window.__filtroExtra==='function') src=src.filter(window.__filtroExtra);
   // salvos (rodada Y): com "♡ Salvos" aberto, só os beats salvos neste aparelho
   if(window.__svModo&&window.__svTem) src=src.filter(b=>window.__svTem(b.id));
   ordenarBeats(src);
@@ -1541,9 +1543,17 @@ try{
     // espaço num botão ou link focado é do botão (teclado): antes ele tocava o beat
     // em vez de, por exemplo, pôr no carrinho (03/10/2026)
     if(e.code==='Space' && (t==='BUTTON'||t==='A'||(e.target.getAttribute&&e.target.getAttribute('role')==='button'))) return;
-    if(e.code==='Space'){ e.preventDefault(); window.npToggle(); }
-    else if(e.key==='ArrowRight'&&atual!==null){ som.currentTime=Math.min(som.duration||0,som.currentTime+5); repintar(); }
-    else if(e.key==='ArrowLeft'&&atual!==null){ som.currentTime=Math.max(0,som.currentTime-5); repintar(); }
+    if(e.code==='Space'){ e.preventDefault(); window.npToggle(); return; }
+    // 20/11/2026 (ganho 6): ← → trocam de beat; com Shift andam 5 s dentro dele. S salva, A põe no carrinho, / busca
+    if(e.metaKey||e.ctrlKey||e.altKey) return;
+    var k=(e.key||'').toLowerCase();
+    if((k==='arrowright'||k==='arrowleft')&&e.shiftKey){ if(atual===null) return; e.preventDefault();
+      som.currentTime=k==='arrowright'?Math.min(som.duration||0,som.currentTime+5):Math.max(0,som.currentTime-5); repintar(); }
+    else if(k==='arrowright'||k==='arrowleft'){ if(!document.querySelector('#beatCards .item')) return; e.preventDefault(); anda(k==='arrowright'?1:-1,true); }
+    else if(k==='s'&&atual!==null&&typeof window.svToque==='function'){ window.svToque(Number(atual)); }
+    else if(k==='a'&&atual!==null&&typeof botaoBeat==='function'){ var bb=BEATS.find(function(x){return String(x.id)===String(atual);});
+      if(bb&&!bb.sold&&!cart.some(function(c){return c.beatId===bb.id&&!c.stems;})) botaoBeat(bb.id); }
+    else if(k==='/'){ var bx=$('beatSearchTop'); if(bx&&bx.offsetParent){ e.preventDefault(); bx.focus(); } }
     else if(e.key==='ArrowUp'){ e.preventDefault(); window.npSetVolume(window.__npVol+10); }
     else if(e.key==='ArrowDown'){ e.preventDefault(); window.npSetVolume(window.__npVol-10); }
   });
@@ -3184,7 +3194,7 @@ try{(function(){
   function retomar(){
     var e=null; try{ e=JSON.parse(sessionStorage.getItem(LUGAR)||'null'); }catch(_){}
     if(!e||!(Date.now()-(e.t||0)<30*60e3)||location.hash||/[?&](cupom|de)=/.test(location.search)||!veioDeVolta()) return;
-    Catalogo.ir({ soVenda:!!e.soVenda, ordem:e.ordem, genero:e.genero }); Catalogo.ir({ busca:e.busca||'' }); Catalogo.ir({ pagina:e.pagina });
+    Catalogo.ir({ soVenda:!!e.soVenda, ordem:e.ordem, genero:e.genero, bpm:e.bpm||'', tom:e.tom||'' }); Catalogo.ir({ busca:e.busca||'' }); Catalogo.ir({ pagina:e.pagina });
     var poe=function(){ try{ window.scrollTo({top:e.y||0,behavior:'instant'}); }catch(_){ window.scrollTo(0,e.y||0); } };
     var marca=function(){ marcar(e.b); };
     try{ history.scrollRestoration='manual'; }catch(_){}
@@ -3439,6 +3449,109 @@ try{
 })();
 }catch(e){ setTimeout(function(){ throw e; }); }
 
+/* ── GANHOS 20/11/2026 (canvas f319e807, fileira g: antes e depois aprovados pelo Bruno) ──────────
+   3: BPM em faixas e tom por toque na folha Filtros do celular (que vira tela cheia), com quantos beats sobram em
+      cada botão. Entra no Catalogo como bpm ('ate100'|'100'|'130'|'150'|'170') e tom ('menor'|'maior'|'Dm'…).
+   5: o som continua em outra página (window.__contAgora; a barra mora no script do topo).
+   6: os atalhos do teclado aparecem na Ajuda, só no computador (no celular não existe teclado físico). */
+try{
+(function(){
+  var C=window.Catalogo; if(!C) return;
+  var $=function(i){ return document.getElementById(i); };
+  var esc=function(x){ return String(x==null?'':x).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+  var X='<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var FX=[['ate100','Até 100',0,99],['100','100 a 129',100,129],['130','130 a 149',130,149],['150','150 a 169',150,169],['170','170+',170,999]];
+  var F={bpm:'',tom:''};
+  function faixa(k){ for(var i=0;i<FX.length;i++){ if(FX[i][0]===k) return FX[i]; } return null; }
+  function menor(k){ return /m$/.test(String(k||'')); }   // 'Bm' é menor; 'Abmaj' é maior
+  function casaBpm(b,k){ var f=faixa(k); if(!f) return true; var n=Number(b.bpm)||0; return n>=f[2]&&n<=f[3]; }
+  function casaTom(b,t){ if(!t) return true; var k=String(b.key||''); if(!k) return false; return t==='menor'?menor(k):t==='maior'?!menor(k):k===t; }
+  window.__filtroExtra=function(b){ return casaBpm(b,F.bpm)&&casaTom(b,F.tom); };
+  // a base do renderCards sem a faixa e o tom: é dela que saem os números dos botões
+  function base(){
+    var V=window.__VIT||{}, ok=!!window.__VIT_OK;
+    return BEATS.filter(function(b){
+      if(curFilt!=='todos'&&b.genre!==curFilt) return false;
+      if(ok&&!(V[String(b.id)]||{}).mp3) return false;
+      if(showAvailOnly&&b.sold) return false;
+      if(beatQuery&&!casaBusca(b)) return false;
+      if(window.__svModo&&window.__svTem&&!window.__svTem(b.id)) return false;
+      return true;
+    });
+  }
+  function rotTom(t){ return t==='menor'?'Tom menor':t==='maior'?'Tom maior':t; }
+  function bt(at,v,t,n,on){ return '<button type="button" class="ft'+(on?' on':'')+'" '+at+'="'+esc(v)+'" aria-pressed="'+(on?'true':'false')+'">'+esc(t)+'<small>'+n+'</small></button>'; }
+  function pintar(){
+    var l=base(), bx=$('filtBpm'), tx=$('filtTom');
+    if(bx){ var lt=l.filter(function(b){ return casaTom(b,F.tom); });
+      bx.innerHTML=FX.map(function(f){ var n=lt.filter(function(b){ return casaBpm(b,f[0]); }).length; return (n||F.bpm===f[0])?bt('data-bpm',f[0],f[1],n,F.bpm===f[0]):''; }).join(''); }
+    if(tx){ var lb=l.filter(function(b){ return casaBpm(b,F.bpm); }), c={}, men=0, mai=0;
+      lb.forEach(function(b){ if(!b.key) return; c[b.key]=(c[b.key]||0)+1; if(menor(b.key)) men++; else mai++; });
+      var ks=Object.keys(c).sort(function(a,b){ return c[b]-c[a]||(a<b?-1:1); }).slice(0,8);
+      if(F.tom&&F.tom!=='menor'&&F.tom!=='maior'&&ks.indexOf(F.tom)<0) ks.unshift(F.tom);
+      tx.innerHTML=((men||F.tom==='menor')?bt('data-tom','menor','Menor',men,F.tom==='menor'):'')+((mai||F.tom==='maior')?bt('data-tom','maior','Maior',mai,F.tom==='maior'):'')+
+        ks.map(function(k){ return bt('data-tom',k,k,c[k]||0,F.tom===k); }).join(''); }
+    // etiquetas na linha da contagem, como a do gênero ("130 a 149 BPM ✕")
+    var conta=document.querySelector('#nbar .nb-conta'), pg=$('nbPag');
+    [['bpm',F.bpm?faixa(F.bpm)[1]+' BPM':''],['tom',F.tom?rotTom(F.tom):'']].forEach(function(x){
+      var el=$('gTag-'+x[0]);
+      if(!el&&conta){ el=document.createElement('button'); el.type='button'; el.className='g-tag'; el.id='gTag-'+x[0];
+        el.addEventListener('click',function(){ var p={}; p[x[0]]=''; C.ir(p); }); conta.insertBefore(el,pg||null); }
+      if(!el) return; el.hidden=!x[1]; if(x[1]){ el.innerHTML=esc(x[1])+X; el.setAttribute('aria-label','Tirar o filtro '+x[1]); }
+    });
+    // o número do botão Filtros conta a faixa e o tom também
+    var n=(curFilt!=='todos'?1:0)+(sortMode&&sortMode!=='padrao'?1:0)+(showAvailOnly?1:0)+(F.bpm?1:0)+(F.tom?1:0), fn=$('filtN'), fb=$('filtBtn');
+    if(fn){ fn.textContent=n; fn.hidden=!n; }
+    if(fb){ fb.classList.toggle('ativo',n>0); fb.setAttribute('aria-label',n?'Filtros, '+n+(n===1?' ligado':' ligados'):'Filtros'); }
+  }
+  var est0=C.estado, ir0=C.ir;
+  C.estado=function(){ var e=est0.apply(C,arguments); e.bpm=F.bpm; e.tom=F.tom; return e; };
+  C.ir=function(p){
+    p=p||{}; var mudou=false;
+    if(typeof p.bpm==='string'&&p.bpm!==F.bpm&&(p.bpm===''||faixa(p.bpm))){ F.bpm=p.bpm; mudou=true; }
+    if(typeof p.tom==='string'&&p.tom!==F.tom&&p.tom.length<9){ F.tom=p.tom; mudou=true; }
+    if(mudou) curPage=1;
+    ir0.apply(C,arguments);
+    if(mudou){ renderCards(); try{ if((F.bpm||F.tom)&&window.__uso) window.__uso('filtro'); }catch(_){} }
+    return C.estado();
+  };
+  var pb=window.pintarBarra; if(typeof pb==='function') window.pintarBarra=function(){ var r=pb.apply(this,arguments); try{ pintar(); }catch(_){} return r; };
+  var mb=window.menuBarra; if(typeof mb==='function') window.menuBarra=function(nome){ var r=mb.apply(this,arguments); if(nome==='filtros') try{ pintar(); }catch(_){} return r; };
+  var lf=window.limparFiltrosBarra; if(typeof lf==='function') window.limparFiltrosBarra=function(){ F.bpm=''; F.tom=''; curPage=1; var r=lf.apply(this,arguments); renderCards(); return r; };
+  var fm=$('filtMenu');
+  if(fm) fm.addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('[data-bpm],[data-tom]'); if(!b) return;
+    e.stopPropagation();   // o botão é redesenhado: sem isso o clique parece "fora" e a folha fecha
+    if(b.hasAttribute('data-bpm')){ var v=b.getAttribute('data-bpm'); C.ir({ bpm:F.bpm===v?'':v }); }
+    else { var t=b.getAttribute('data-tom'); C.ir({ tom:F.tom===t?'':t }); }
+  });
+  pintar();
+})();
+
+(function(){
+  function atalhos(){
+    var f=document.getElementById('ajudaFolha'); if(!f||f.querySelector('.aj-tec')) return;
+    try{ if(!window.matchMedia('(hover:hover) and (pointer:fine)').matches) return; }catch(_){ return; }
+    var L=[['Espaço','Tocar ou pausar'],['← →','Beat anterior ou próximo'],['Shift + ← →','Voltar ou avançar 5 segundos'],['↑ ↓','Volume'],['S','Salvar o beat que está tocando'],['A','Pôr no carrinho o que está tocando'],['/','Buscar']];
+    var d=document.createElement('details'); d.className='aj-tec';
+    d.innerHTML='<summary>Atalhos do teclado</summary><ul>'+L.map(function(x){ return '<li><kbd>'+x[0]+'</kbd><span>'+x[1]+'</span></li>'; }).join('')+'</ul>';
+    f.insertBefore(d,f.querySelector('.aj-dm'));
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',atalhos); else atalhos();
+})();
+// 5: o som continua ao sair da home. Ao sair, o script do topo (_lib/topo.js) guarda o beat e o ponto em
+// sessionStorage cr_som; a página nova mostra a barra "parou em 0:42 · toque pra continuar" (1 toque, exigência do iPhone)
+(function(){
+  window.__contAgora=function(){
+    var c=window.__npCurrent||{}, id=c.bid; if(id==null) return null;
+    var b=BEATS.find(function(x){ return String(x.id)===String(id); }), f=(window.__VIT||{})[String(id)]||{};
+    if(!b||!f.mp3) return null;
+    var s=window.__npSom&&window.__npSom();
+    return { id:b.id, n:b.name, u:paginaDoBeat(b.name), mp3:f.mp3, capa:f.capa||'', d:(s&&s.duration)||f.dur||0 };
+  };
+})();
+}catch(e){ setTimeout(function(){ throw e; }); }
+
 /*AJUDA-INICIO*/
 (function(){if(window.__topo)return;window.__topo=1;var $=function(s){return document.querySelector(s)};
 try{var c=JSON.parse(localStorage.getItem('caramujo_carrinho_v1')||'null');if(c&&c.itens&&c.itens.length&&Date.now()-(c.em||0)<7*864e5){var n=c.itens.reduce(function(s,x){return s+(x.qty||1)},0),b=$('.js-n');if(b){b.textContent=n;b.hidden=false}}}catch(_){}
@@ -3451,5 +3564,40 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&fo&&!fo.hid
 document.addEventListener('submit',function(e){var f=e.target;if(!f||!f.classList||!f.classList.contains('js-aj-rec'))return;e.preventDefault();var i=f.querySelector('input'),b=f.querySelector('button'),m=f.parentNode.querySelector('.aj-msg'),em=String(i.value||'').trim().toLowerCase();function diz(t,erro){m.textContent=t;m.classList.toggle('erro',!!erro);m.hidden=false}
 if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)){diz('Esse e-mail não parece certo. Confere e tenta de novo.',1);i.focus();return}
 b.disabled=true;fetch('/api/recuperar',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:em})}).then(function(r){return r.json().catch(function(){return{}}).then(function(j){return{r:r,j:j}})}).then(function(x){b.disabled=false;if(x.r.ok){f.hidden=true;m.textContent='';m.appendChild(document.createTextNode('Pronto. Se tiver compra com '));var bb=document.createElement('b');bb.textContent=em;m.appendChild(bb);m.appendChild(document.createTextNode(', os links chegam em até 1 minuto. Olha o spam também.'));m.classList.remove('erro');m.hidden=false}else diz((x.j&&x.j.erro)||'Não deu pra mandar agora. Tenta de novo ou chama no Direct.',1)}).catch(function(){b.disabled=false;diz('Sem conexão agora. Tenta de novo em instantes.',1)})});
+})();
+(function(){if(window.__cont)return;window.__cont=1;var K='cr_som',vit=typeof window.__npSom==='function',st=null,au=null,bar=null,mexeu=0;
+function ler(){try{var o=JSON.parse(sessionStorage.getItem(K)||'null');return o&&o.mp3&&Date.now()-(o.em||0)<18e5?o:null}catch(_){return null}}
+function grava(o){try{if(o)sessionStorage.setItem(K,JSON.stringify(o));else sessionStorage.removeItem(K)}catch(_){}}
+function mm(x){x=Math.max(0,Math.round(x||0));return Math.floor(x/60)+':'+String(x%60).padStart(2,'0')}
+function esc(x){return String(x==null?'':x).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+addEventListener('pagehide',function(){var s=vit?window.__npSom():au;
+if(s&&!s.paused&&s.src){var o=vit?(window.__contAgora&&window.__contAgora()):st;if(o){o.t=s.currentTime;o.em=Date.now();grava(o)}return}
+if(mexeu)grava(null)});
+st=ler();if(!st)return;
+var pad=null;function fecha(){if(bar){bar.remove();bar=null;if(pad!==null){document.body.style.paddingBottom=pad;pad=null}}}
+function some(){mexeu=1;if(au)au.pause();fecha();grava(null)}
+var P=HTMLMediaElement.prototype.play,outros=[];
+HTMLMediaElement.prototype.play=function(){if(this!==au){if(au&&!au.paused)au.pause();if(bar&&!(vit&&this===window.__npSom()))some();else if(bar)fecha();if(outros.indexOf(this)<0)outros.push(this)}return P.apply(this,arguments)};
+var I={p:'<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>',a:'<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>'};
+function linha(){if(!bar)return;var sm=bar.querySelector('small'),pp=bar.querySelector('.cb-pp'),pr=bar.querySelector('i');
+if(au&&!au.paused){sm.textContent=mm(au.currentTime)+(au.duration?' / '+mm(au.duration):'');pp.innerHTML=I.a;pp.setAttribute('aria-label','Pausar '+st.n)}
+else{sm.textContent=(au&&au.currentTime?'pausado em '+mm(au.currentTime):'parou em '+mm(st.t))+' · toque pra continuar';pp.innerHTML=I.p;pp.setAttribute('aria-label','Continuar '+st.n)}
+var d=(au&&au.duration)||st.d||0,t=au?au.currentTime:st.t;pr.style.width=d?Math.min(100,t/d*100)+'%':'0'}
+function uso(){try{if(window.__uso)return window.__uso('continuar');if(sessionStorage.getItem('cr_f_uso-continuar'))return;var se=sessionStorage.getItem('cr_sessao');if(!se)return;sessionStorage.setItem('cr_f_uso-continuar','1');
+var tx=JSON.stringify({s:se,e:'uso-continuar',a:matchMedia('(max-width:760px)').matches?'celular':'computador',o:sessionStorage.getItem('cr_origem')||'direto'});if(!(navigator.sendBeacon&&navigator.sendBeacon('/api/funil',tx)))fetch('/api/funil',{method:'POST',body:tx,keepalive:true}).catch(function(){})}catch(_){}}
+function toca(){mexeu=1;if(!au||au.paused)uso();
+if(vit){var s=window.__npSom(),t=st.t||0;fecha();grava(null);window.tocarBeat(st.id);var vai=function(){try{if(t)s.currentTime=t}catch(_){}};if(s.readyState>=1)vai();else s.addEventListener('loadedmetadata',vai,{once:true});return}
+if(!au){au=new Audio(st.mp3);au.preload='auto';au.addEventListener('loadedmetadata',function(){if(st.t&&au.currentTime<1)try{au.currentTime=st.t}catch(_){}},{once:true});
+['play','pause','timeupdate'].forEach(function(e){au.addEventListener(e,linha)});au.addEventListener('ended',function(){grava(null);fecha()})}
+if(au.paused){outros.forEach(function(o){try{o.pause()}catch(_){}});P.call(au).catch(function(){})}else au.pause()}
+function mostra(){if(bar||document.getElementById('contBar'))return;bar=document.createElement('div');bar.id='contBar';bar.setAttribute('role','region');bar.setAttribute('aria-label','Continuar ouvindo');
+bar.style.cssText='position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));margin:0 auto;max-width:560px;z-index:70;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 10px;background:#1e1a15;border:1px solid #332c22;color:#E8E0CF;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.5);overflow:hidden';
+bar.innerHTML='<i style="position:absolute;left:0;top:0;height:2px;background:#c3a074;width:0"></i>'+(st.capa?'<img src="'+esc(st.capa)+'" alt="" width="44" height="44" style="flex:none;width:44px;height:44px;object-fit:cover;border:1px solid #332c22">':'')+
+'<a href="'+esc(st.u||'/')+'" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;color:#f2ecdf;text-decoration:none"><b style="font:600 18px/1.1 Cormorant Garamond,Georgia,serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(st.n)+'</b><small style="font:400 11px IBM Plex Mono,monospace;color:#c3a074;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></small></a>'+
+'<button type="button" class="cb-pp" style="flex:none;width:44px;height:44px;border-radius:50%;border:0;background:#E8E0CF;color:#14110d;display:flex;align-items:center;justify-content:center;cursor:pointer"></button>'+
+'<button type="button" class="cb-x" aria-label="Fechar" style="flex:none;width:36px;height:44px;border:0;background:none;color:#b89e72;font-size:18px;cursor:pointer">×</button>';
+pad=document.body.style.paddingBottom;document.body.style.paddingBottom='84px';bar.querySelector('.cb-pp').addEventListener('click',toca);bar.querySelector('.cb-x').addEventListener('click',some);document.body.appendChild(bar);linha()}
+if(vit){var n=0,espera=function(){var V=window.__VIT||{};if(window.__VIT_OK&&V[String(st.id)]&&V[String(st.id)].mp3){if(window.__npSom().paused)mostra()}else if(++n<30)setTimeout(espera,300)};espera()}
+else if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mostra);else mostra();
 })();
 /*AJUDA-FIM*/

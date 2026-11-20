@@ -23,6 +23,10 @@ const nMus = (n) => n + (n === 1 ? ' música' : ' músicas');
 const linhaQtd = (a) => nMus(a.faixas.length) + (a.eu ? ' como artista' : ' com @rideblan33');
 const ICONE_SP = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm4.6 14.4a.62.62 0 01-.86.2c-2.35-1.44-5.3-1.76-8.79-.96a.62.62 0 11-.28-1.22c3.81-.87 7.08-.5 9.72 1.12.3.18.39.57.2.86zm1.22-2.73a.78.78 0 01-1.07.26c-2.69-1.65-6.8-2.13-9.98-1.17a.78.78 0 11-.45-1.5c3.64-1.1 8.16-.57 11.24 1.33.37.22.48.71.26 1.08zm.1-2.84C14.7 8.92 9.38 8.74 6.3 9.68a.94.94 0 11-.54-1.8c3.53-1.07 9.4-.86 13.1 1.33a.94.94 0 01-.95 1.62z"/></svg>';
 const ICONE_BUSCA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg>';
+// 20/11/2026 (ganho 7, canvas f319e807 g7): no cartão do artista, "Compartilhar" (o link dele nesta página)
+// e "Quero um som assim", que leva pros Serviços da vitrine
+const ICONE_SHARE = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"/></svg>';
+const QUERO = '<a class="qg-quero" href="/#services" data-de="gravou-quero">Quero um som assim</a><p class="qg-quero-p">Beat personalizado ou Mix &amp; Master com o @rideblan33</p>';
 const SETA = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>';
 
 // foto redonda (ou as iniciais, quando o Spotify não tem imagem)
@@ -42,9 +46,9 @@ function faixaLi(f) {
 const CURTA = 6;
 function cartao(a, faixas) {
   return `<div class="qg-foto">${fotoArtista(a, '', true)}</div><div class="qg-cab2"><div class="q">${a.eu ? 'Produtor e artista' : 'Artista'}</div><h2 id="qgNome">${esc(a.nome)}</h2><div class="q">${linhaQtd(a)}</div>` +
-    `<div class="qg-bts"><a class="cheio" href="https://open.spotify.com/artist/${esc(a.id)}" target="_blank" rel="noopener" data-rede="gravou-spotify">${ICONE_SP}<span>Spotify</span></a></div></div>` +
+    `<div class="qg-bts"><a class="cheio" href="https://open.spotify.com/artist/${esc(a.id)}" target="_blank" rel="noopener" data-rede="gravou-spotify">${ICONE_SP}<span>Spotify</span></a><button class="qg-share" type="button" data-share="${esc(a.slug)}">${ICONE_SHARE}<span>Compartilhar</span></button></div></div>` +
     `<ul class="qg-fx${a.faixas.length > CURTA ? ' curta' : ''}">${a.faixas.map((id) => faixaLi(faixas[id])).join('')}</ul>` +
-    (a.faixas.length > CURTA ? `<button class="qg-todas" type="button" data-todas>Ver as ${a.faixas.length} músicas</button>` : '');
+    (a.faixas.length > CURTA ? `<button class="qg-todas" type="button" data-todas>Ver as ${a.faixas.length} músicas</button>` : '') + QUERO;
 }
 
 export function paginaGravou(dados, { previa = false } = {}) {
@@ -111,9 +115,13 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .qg-foto img,.qg-foto .qg-ini{width:96px;height:96px;border-radius:50%;object-fit:cover;display:flex}
 .qg-aberto h2{margin:4px 0 2px;font:800 24px/1.1 var(--grot);overflow-wrap:anywhere}
 .qg-aberto .q{font-size:13.5px;color:var(--meta)}
-.qg-bts{display:flex;gap:8px;margin-top:12px}
+.qg-bts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .qg-bts a{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:999px;font-weight:700;font-size:13.5px}
 .qg-bts a.cheio{background:var(--branco);color:var(--preto)}
+.qg-share{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:999px;border:1px solid #333;background:none;color:var(--branco);font:700 13.5px var(--grot);cursor:pointer}
+.qg-share:hover{border-color:var(--branco)}
+.qg-quero{grid-column:1/-1;display:flex;align-items:center;justify-content:center;height:50px;border-radius:999px;background:var(--branco);color:var(--preto);font:700 15px var(--grot);margin-top:4px}
+.qg-quero-p{grid-column:1/-1;margin:-6px 0 0;text-align:center;font-size:12.5px;color:var(--meta)}
 .qg-fx{grid-column:1/-1;list-style:none;margin:4px 0 0;padding:0;display:grid;grid-template-columns:minmax(0,1fr)}
 .qg-fx li{min-width:0}
 .qg-fx.curta li:nth-child(n+7){display:none}
@@ -185,19 +193,27 @@ ${rodape('artistas')}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function peq(u){return String(u||'').replace('ab67616d0000b273','ab67616d00001e02').replace('ab6761610000e5eb','ab67616100005174').replace(/(\\/capa\\/gr[va]-[A-Za-z0-9_-]+?)(?:-m)?\\.jpg$/,'$1-p.jpg');}
   function ini(n){return String(n||'').replace(/^@/,'').split(/[\\s_.-]+/).filter(Boolean).map(function(p){return p[0];}).join('').slice(0,2).toUpperCase()||'?';}
-  var SP=${JSON.stringify(ICONE_SP)}, SETA=${JSON.stringify(SETA)};
+  var SP=${JSON.stringify(ICONE_SP)}, SETA=${JSON.stringify(SETA)}, SHARE=${JSON.stringify(ICONE_SHARE)}, QUERO=${JSON.stringify(QUERO)};
   function nm(n){return n+(n===1?' música':' músicas');}
   function abrir(i,rolar){
     var a=A[i]; if(!a||!ab) return;
     var foto=a.f?'<img src="'+esc(a.f)+'" alt="" width="320" height="320">':'<span class="qg-ini" aria-hidden="true">'+esc(ini(a.n))+'</span>';
     ab.innerHTML='<div class="qg-foto">'+foto+'</div><div class="qg-cab2"><div class="q">'+(a.e?'Produtor e artista':'Artista')+'</div><h2 id="qgNome">'+esc(a.n)+'</h2><div class="q">'+nm(a.fx.length)+(a.e?' como artista':' com @rideblan33')+'</div>'+
-      '<div class="qg-bts"><a class="cheio" href="https://open.spotify.com/artist/'+esc(a.id)+'" target="_blank" rel="noopener" data-rede="gravou-spotify">'+SP+'<span>Spotify</span></a></div></div>'+
-      '<ul class="qg-fx'+(a.fx.length>6?' curta':'')+'">'+a.fx.map(function(id){var f=F[id];if(!f)return '';return '<li><a href="https://open.spotify.com/track/'+esc(f.id)+'" target="_blank" rel="noopener" data-rede="gravou-faixa" aria-label="Ouvir '+esc(f.nome)+' no Spotify">'+(f.capa?'<img src="'+esc(peq(f.capa))+'" alt="" loading="lazy" width="48" height="48">':'<span class="qg-sem" aria-hidden="true"></span>')+'<div><b>'+esc(f.nome)+'</b><small>'+esc(f.com.join(', '))+'</small></div><i>'+SETA+'</i></a></li>';}).join('')+'</ul>'+(a.fx.length>6?'<button class="qg-todas" type="button" data-todas>Ver as '+a.fx.length+' músicas</button>':'');
+      '<div class="qg-bts"><a class="cheio" href="https://open.spotify.com/artist/'+esc(a.id)+'" target="_blank" rel="noopener" data-rede="gravou-spotify">'+SP+'<span>Spotify</span></a><button class="qg-share" type="button" data-share="'+esc(a.s)+'">'+SHARE+'<span>Compartilhar</span></button></div></div>'+
+      '<ul class="qg-fx'+(a.fx.length>6?' curta':'')+'">'+a.fx.map(function(id){var f=F[id];if(!f)return '';return '<li><a href="https://open.spotify.com/track/'+esc(f.id)+'" target="_blank" rel="noopener" data-rede="gravou-faixa" aria-label="Ouvir '+esc(f.nome)+' no Spotify">'+(f.capa?'<img src="'+esc(peq(f.capa))+'" alt="" loading="lazy" width="48" height="48">':'<span class="qg-sem" aria-hidden="true"></span>')+'<div><b>'+esc(f.nome)+'</b><small>'+esc(f.com.join(', '))+'</small></div><i>'+SETA+'</i></a></li>';}).join('')+'</ul>'+(a.fx.length>6?'<button class="qg-todas" type="button" data-todas>Ver as '+a.fx.length+' músicas</button>':'')+QUERO;
     [].forEach.call(grade.querySelectorAll('button[data-i]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.i===i));});
     // rodada S (23/10/2026): tocar num artista leva pro topo da página (antes parava no cartão, um pouco abaixo)
     if(rolar){ try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){window.scrollTo(0,0);} }
   }
   if(ab) ab.addEventListener('click',function(e){
+    var sh=e.target.closest&&e.target.closest('[data-share]');
+    if(sh){ var u=location.origin+'/rideblan33/artistas#'+sh.dataset.share, nmA=(ab.querySelector('#qgNome')||{}).textContent||'';
+      manda('gravou-share');
+      var ok=function(){ var t=sh.querySelector('span'); if(t){ t.textContent='Link copiado'; setTimeout(function(){ t.textContent='Compartilhar'; },2200); } };
+      if(navigator.share){ navigator.share({title:nmA+' · Quem já gravou com o @rideblan33',url:u}).catch(function(){}); }
+      else if(navigator.clipboard){ navigator.clipboard.writeText(u).then(ok,function(){ prompt('Copie o link',u); }); }
+      else prompt('Copie o link',u);
+      return; }
     var b=e.target.closest&&e.target.closest('[data-todas]'); if(!b) return;
     var ul=ab.querySelector('.qg-fx'); if(ul) ul.classList.remove('curta'); b.remove(); manda('gravou-todas');
   });

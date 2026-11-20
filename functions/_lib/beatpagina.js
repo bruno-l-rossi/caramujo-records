@@ -178,6 +178,10 @@ ${TOPO_CSS}.wrap{max-width:1120px;margin:0 auto;padding:0 2.4rem}
 .item .sv.on{color:var(--fire)}
 .item .sv[hidden]{display:none}
 .preco:hover,.preco.no-carrinho{background:var(--fire);border-color:var(--fire)}
+/* 20/11/2026 (ganho 2): na lista o preço é contornado; cheio só o que já está no carrinho */
+.item .preco{background:transparent;color:var(--cream);border-color:var(--clay)}
+.item .preco:hover{background:var(--fire);border-color:var(--fire);color:var(--black)}
+.item .preco.no-carrinho{background:var(--bone);border-color:var(--bone);color:var(--black)}
 .vendido{flex:none;font-size:.58rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--blood);border:1px solid var(--blood);padding:.52rem .8rem}
 .item.fora .nome{color:var(--amber);text-decoration:line-through;text-decoration-color:var(--blood);text-decoration-thickness:1.5px}
 .btn{display:flex;align-items:center;justify-content:center;gap:10px;height:52px;padding:0 26px;background:var(--bone);color:var(--black);font-size:.8rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;transition:background .14s}
@@ -332,6 +336,9 @@ ${TOPO_CSS_CEL}  .wrap{padding:0 16px}
   .item .num,.item:hover .num{border:1px solid var(--clay);border-radius:50%;background:none;color:var(--fire)}
   .item .num i{display:none}.item .num .i-play{display:block}.item.tocando.rodando .num .i-play{display:none}
   .item.tocando .num{background:var(--fire);border-color:var(--fire);color:var(--black)}
+  /* 20/11/2026 (ganho 1, igual à vitrine): o ▶ fica dentro da capa, que cresce pra 52 px */
+  .item .capinha{width:52px;height:52px}
+  .item .num,.item:hover .num{position:absolute;left:14px;top:50%;width:28px;height:28px;margin-top:-14px;z-index:1;background:rgba(20,17,13,.74);border-color:rgba(195,160,116,.65)}
   .topo-g{grid-template-columns:1fr;gap:22px;padding-bottom:22px}.topo-g h1{font-size:3.2rem}
   .mosaico{display:none}
   .generos{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding-left:16px;padding-right:16px}

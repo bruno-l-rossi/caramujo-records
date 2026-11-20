@@ -143,7 +143,9 @@
     // 26/10/2026: o fim do perfil aparece nas duas abas
     'perfil-tapes': 'Quer um som assim? (aba Beat tapes)', 'perfil-gravou-tapes': 'Linha Quem já gravou (aba Beat tapes)', artistas: 'Página Quem já gravou', pedido: 'Página do pedido', vendido: 'Parecidos de um vendido (vitrine)', lista: 'E-mail da lista',
     // 04/11/2026 (rodada AF): o e-mail de carrinho abandonado e os links novos da bio
-    'carrinho-email': 'E-mail do carrinho', 'lembrete-pix': 'Aviso do PIX', 'bio-mix': 'Bio do Instagram · Mix & master', 'bio-portfolio': 'Bio do Instagram · Portfólio'
+    'carrinho-email': 'E-mail do carrinho', 'lembrete-pix': 'Aviso do PIX', 'bio-mix': 'Bio do Instagram · Mix & master', 'bio-portfolio': 'Bio do Instagram · Portfólio',
+    // 20/11/2026 (ganho 7): o botão novo do cartão do artista no Quem já gravou
+    'gravou-quero': 'Quero um som assim (Quem já gravou)'
   };
   var nomeOrigem = function (o) { return o.nome ? 'Tape: ' + o.nome : (ORIGEM[o.origem] || o.origem); };
 
@@ -467,7 +469,7 @@
     var us = el('div', 'an-bloco'); us.id = 'anUso'; corpo.appendChild(us);
     fetch('/api/uso?de=' + ((j.periodo && j.periodo.de) || '') + '&ate=' + ((j.periodo && j.periodo.ate) || '')).then(function (r) { return r.json(); }).then(function (u) {
       if (!u || !u.ok) { us.remove(); return; }
-      var Vp = u.visitas.total, NOME = [['fileira', 'Fileira de gêneros'], ['busca', 'Busca'], ['ficha', 'Ficha do beat'], ['salvar', 'Salvar (♡)'], ['retorno', 'Avisos de quem volta']];
+      var Vp = u.visitas.total, NOME = [['fileira', 'Fileira de gêneros'], ['busca', 'Busca'], ['ficha', 'Ficha do beat'], ['salvar', 'Salvar (♡)'], ['retorno', 'Avisos de quem volta'], ['filtro', 'BPM e tom nos Filtros'], ['continuar', 'Continuar ouvindo em outra página']];
       var bl = barras('O que as visitas usam', u.desde ? 'Quantas visitas usaram cada parte da lista, pelo menos 1 vez. Conta desde ' + u.desde.slice(8, 10) + '/' + u.desde.slice(5, 7) + '.' : 'Ainda sem uso contado. Começa a contar com as primeiras visitas depois de 14/11/2026.',
         NOME.map(function (n) { var x = u.uso[n[0]] || { total: 0, celular: 0 }; return [n[1], x.total, Vp ? pct(x.total, Vp) + ' das visitas' : '', num(x.celular) + ' no celular']; }));
       us.replaceWith(bl);
@@ -561,7 +563,7 @@
     'musica-spotify': 'Abriu uma música no Spotify', 'musica-youtube': 'Abriu uma música no YouTube', 'portfolio-spotify': 'Portfólio completo no Spotify', 'servico-mix': 'Quer um som assim: Mix & Master', 'servico-beat': 'Quer um som assim: Beat personalizado',
     // 16/10/2026 (rodada K): Quem já gravou (a linha da aba Músicas e a página /rideblan33/artistas)
     'aba-gravou': 'Abriu Quem já gravou (aba Músicas)', 'gravou-abre': 'Quem já gravou: abriu um artista', 'gravou-faixa': 'Quem já gravou: abriu uma faixa no Spotify',
-    'gravou-spotify': 'Quem já gravou: Spotify do artista', 'gravou-todas': 'Quem já gravou: Ver todas as músicas', 'gravou-perfil-spotify': 'Quem já gravou: Spotify do @rideblan33' };
+    'gravou-spotify': 'Quem já gravou: Spotify do artista', 'gravou-todas': 'Quem já gravou: Ver todas as músicas', 'gravou-share': 'Quem já gravou: compartilhou um artista', 'gravou-perfil-spotify': 'Quem já gravou: Spotify do @rideblan33' };
   function perfil(j, corpo) {
     var a = j.agora, an = j.antes;
     corpo.appendChild(tiles([

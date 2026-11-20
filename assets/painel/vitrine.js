@@ -37,6 +37,10 @@
     '.vt-erro:empty{display:none}',
     '.vt-acoes{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}',
     '.vt-acoes .pill{flex:1 1 auto;justify-content:center}',
+    // 20/11/2026 (ganho 9): publicar em sequência
+    '.vt-seq-cab{display:flex;align-items:center;gap:10px}.vt-seq-cab h2{flex:1;margin:0}.vt-seq-cab span{font-size:14px;color:var(--ink2,#b7b7b7)}',
+    '.vt-seq-barra{height:3px;border-radius:3px;background:#2a2a2a;margin:12px 0 4px;overflow:hidden}.vt-seq-barra i{display:block;height:100%;background:#fff}',
+    '.vt-seq-ok{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:13px;color:var(--ink2,#b7b7b7)}',
     '.vt-perigo{border-color:#5a2a22!important;color:#f0b3a6}',
     '.vt-confirma{margin-top:12px;border:1px solid #5a2a22;background:#1a100e;border-radius:12px;padding:12px 14px;font-size:13px;color:#e8c9c2;line-height:1.45}',
     '.vt-confirma[hidden]{display:none}',
@@ -695,22 +699,49 @@
   }
   function pararVigia() { if (vigia && vigia.relogio) clearInterval(vigia.relogio); vigia = null; }
 
-  function abrirPublicar(t) {
+  // 20/11/2026 (ganho 9, canvas f319e807 g9): publicar em sequência. A ordem é a da fila na tela (tape por tape);
+  // publicou ou pulou, o próximo já abre com "N de M" e a confirmação do anterior. O gênero segue sendo escolha sua.
+  var seqPub = null;
+  function filaEmOrdem() {
+    var l = [];
+    ((rel && rel.tapesFila) || []).forEach(function (g) { (g.itens || []).forEach(function (t) { l.push(t); }); });
+    return l.length ? l : ((rel && rel.semBotao) || []).slice();
+  }
+  function proximoDaFila(t) {
+    if (!seqPub) return null;
+    var i = seqPub.ids.indexOf(String(t.id));
+    for (var k = i + 1; k < seqPub.ids.length; k++) if (!seqPub.feitos[seqPub.ids[k]] && seqPub.porId[seqPub.ids[k]]) return seqPub.porId[seqPub.ids[k]];
+    return null;
+  }
+  function abrirPublicar(t, anterior) {
     if (!t || !loja) return;
+    if (anterior === undefined || !seqPub) {
+      var ord = filaEmOrdem(); seqPub = { ids: [], porId: {}, feitos: {} };
+      ord.forEach(function (x) { seqPub.ids.push(String(x.id)); seqPub.porId[String(x.id)] = x; });
+      if (seqPub.ids.indexOf(String(t.id)) < 0) { seqPub.ids.push(String(t.id)); seqPub.porId[String(t.id)] = t; }
+    }
     var c = $('card');
     var e = estado(t);
     var b = { name: String(t.title || '').toLocaleUpperCase('pt-BR'), bpm: t.bpm, key: t.key || '', genre: e.genre };
-    c.innerHTML = '<h2>Publicar no site</h2><p>' + esc(t.tape) + ' · confere a ficha e escolhe o gênero</p>' +
+    var tot = seqPub.ids.length, pos = seqPub.ids.indexOf(String(t.id)) + 1, prox = proximoDaFila(t);
+    var X = '<button type="button" class="f-x" data-close aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+    c.innerHTML = (anterior ? '<p class="vt-seq-ok"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' + esc(anterior) + '</p>' : '') +
+      (tot > 1 ? '<div class="vt-seq-cab"><h2>Publicar no site</h2><span>' + pos + ' de ' + tot + '</span>' + X + '</div>' +
+        '<div class="vt-seq-barra" aria-hidden="true"><i style="width:' + Math.round(pos / tot * 100) + '%"></i></div>' : '<h2>Publicar no site</h2>') +
+      '<p>' + esc(t.tape) + ' · confere a ficha e escolhe o gênero</p>' +
       formFicha(b, !e.genre) +
       (t.keyOnde ? '<p class="vt-nota" style="margin-top:10px">O tom não está no nome do arquivo da tape: veio de <b>' + esc(t.keyOnde) + '</b>' +
         (t.confere ? ', mas outras cópias discordam. Confere antes.' : '.') + '</p>' : '') +
       (t.bpmOnde ? '<p class="vt-nota" style="margin-top:6px">O BPM veio de <b>' + esc(t.bpmOnde) + '</b>.</p>' : '') +
       '<p class="vt-nota" style="margin-top:10px">Entra no topo da lista, à venda por R$' + esc(loja.preco || '') + '. O nome fica igual ao do Drive, em caixa alta, pro player achar o áudio.</p>' +
-      '<div class="vt-acoes"><button class="pill solid" type="button" id="vtPublicar">Publicar</button>' +
-      '<button class="pill" data-close type="button">Cancelar</button></div>';
+      (prox
+        ? '<div class="vt-acoes"><button class="pill" type="button" id="vtPular">Pular</button><button class="pill solid" type="button" id="vtPublicar">Publicar e abrir o próximo</button></div>'
+        : '<div class="vt-acoes"><button class="pill solid" type="button" id="vtPublicar">Publicar</button>' +
+          '<button class="pill" data-close type="button">' + (tot > 1 ? 'Fechar' : 'Cancelar') + '</button></div>');
     $('veil').hidden = false;
     c.scrollTop = 0;
-    c.querySelector('[data-close]').addEventListener('click', fechar);
+    c.querySelectorAll('[data-close]').forEach(function (x) { x.addEventListener('click', fechar); });
+    if (prox) $('vtPular').addEventListener('click', function () { abrirPublicar(prox, ''); });
     var sel = $('vtGenero');
     sel.addEventListener('change', function () { sel.classList.toggle('falta', !sel.value); });
     $('vtPublicar').addEventListener('click', function (ev) {
@@ -722,8 +753,12 @@
         bt.disabled = false; bt.textContent = 'Publicar';
         if (!j.ok) { $('vtErro').textContent = j.erro || 'Não consegui publicar.'; return; }
         delete escolha[t.id];
-        flash(j.name + (j.voltou ? ' voltou pro site, no topo da lista.' : ' está no site, no topo da lista.'));
-        fechar(); carregar(true);
+        var msg = j.name + (j.voltou ? ' voltou pro site, no topo da lista.' : ' está no site, no topo da lista.');
+        if (seqPub) seqPub.feitos[String(t.id)] = 1;
+        var seguinte = proximoDaFila(t);
+        carregar(true);
+        if (seguinte) abrirPublicar(seguinte, msg);
+        else { flash(msg); fechar(); seqPub = null; }
       });
     });
   }
