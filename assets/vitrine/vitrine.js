@@ -206,12 +206,15 @@ function renderCards(){
     document.getElementById('pgNums').innerHTML='';
     document.getElementById('pgNumsTop').innerHTML='';
     if(typeof window.pintarBarra==='function') window.pintarBarra(0,0);
+    if(typeof window.pintarVerMais==='function') window.pintarVerMais(0,0);
     return;
   }
   const totalPages=Math.ceil(src.length/porPagina());
   if(curPage>totalPages) curPage=totalPages;
-  const start=(curPage-1)*porPagina();
-  const pageSrc=src.slice(start,start+porPagina());
+  // 20/11/2026 (ganho 4): no celular a lista cresce no lugar ("Ver mais 10"); curPage = quantos blocos de 10 estão abertos.
+  // No computador seguem as páginas de 20.
+  const start=computador()?(curPage-1)*porPagina():0;
+  const pageSrc=src.slice(start,curPage*porPagina());
 
   wrap.innerHTML=pageSrc.map((b,i)=>{
     const globalIdx=start+i;
@@ -256,6 +259,7 @@ function renderCards(){
   document.getElementById('pgPrevTop').disabled = (curPage===1);
   document.getElementById('pgNextTop').disabled = (curPage===totalPages);
   if(typeof window.pintarBarra==='function') window.pintarBarra(src.length,totalPages);
+  if(typeof window.pintarVerMais==='function') window.pintarVerMais(src.length,pageSrc.length);
   setTimeout(bindPlayers,30);
 }
 
@@ -1422,6 +1426,8 @@ try{
     if(prox!=null){ if(auto) rolarPara(prox); return window.tocarBeat(prox); }
     // acabou a página: em modo rádio, vira a página e toca a primeira
     var bt=$(d>0?'pgNext':'pgPrev');
+    // celular (ganho 4, 20/11/2026): abre mais 10 no lugar e segue pro beat seguinte
+    if(auto && d>0 && bt && !bt.disabled && !computador()){ curPage++; renderCards(); var l2=ordem(), nx=l2[i+1]; if(nx!=null){ rolarPara(nx); return window.tocarBeat(nx); } }
     if(auto && bt && !bt.disabled){ autoPlayFirst=true; changePage(d,catalogVisible()); return; }
     window.tocarBeat(d>0?lista[0]:lista[lista.length-1]);
   }
@@ -3518,6 +3524,20 @@ try{
   var pb=window.pintarBarra; if(typeof pb==='function') window.pintarBarra=function(){ var r=pb.apply(this,arguments); try{ pintar(); }catch(_){} return r; };
   var mb=window.menuBarra; if(typeof mb==='function') window.menuBarra=function(nome){ var r=mb.apply(this,arguments); if(nome==='filtros') try{ pintar(); }catch(_){} return r; };
   var lf=window.limparFiltrosBarra; if(typeof lf==='function') window.limparFiltrosBarra=function(){ F.bpm=''; F.tom=''; curPage=1; var r=lf.apply(this,arguments); renderCards(); return r; };
+  // 4: "Ver mais 10" no fim da lista do celular (o renderCards chama pintarVerMais a cada redesenho)
+  var vm=null;
+  window.pintarVerMais=function(total,mostrando){
+    var pg=$('pagination'); if(!pg) return;
+    if(!vm){ vm=document.createElement('div'); vm.className='ver-mais'; vm.id='verMais';
+      vm.innerHTML='<button type="button" class="vm-bt"></button><span class="vm-conta"></span>';
+      vm.querySelector('button').addEventListener('click',function(){ curPage++; renderCards(); try{ if(window.__uso) window.__uso('vermais'); }catch(_){} });
+      pg.appendChild(vm); }
+    var falta=Math.max(0,total-mostrando), cel=!(window.matchMedia&&matchMedia('(min-width:861px)').matches);
+    vm.hidden=!cel||!total;
+    var bt=vm.querySelector('button'); bt.hidden=!falta; bt.textContent='Ver mais '+Math.min(10,falta);
+    vm.querySelector('.vm-conta').textContent=falta?(mostrando+' de '+total+(total===1?' beat':' beats')):(total>10?'Fim da lista · '+total+' beats':'');
+    var np=$('nbPag'); if(np&&cel) np.textContent='';
+  };
   var fm=$('filtMenu');
   if(fm) fm.addEventListener('click',function(e){
     var b=e.target.closest&&e.target.closest('[data-bpm],[data-tom]'); if(!b) return;

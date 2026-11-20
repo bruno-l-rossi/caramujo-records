@@ -469,7 +469,7 @@
     var us = el('div', 'an-bloco'); us.id = 'anUso'; corpo.appendChild(us);
     fetch('/api/uso?de=' + ((j.periodo && j.periodo.de) || '') + '&ate=' + ((j.periodo && j.periodo.ate) || '')).then(function (r) { return r.json(); }).then(function (u) {
       if (!u || !u.ok) { us.remove(); return; }
-      var Vp = u.visitas.total, NOME = [['fileira', 'Fileira de gêneros'], ['busca', 'Busca'], ['ficha', 'Ficha do beat'], ['salvar', 'Salvar (♡)'], ['retorno', 'Avisos de quem volta'], ['filtro', 'BPM e tom nos Filtros'], ['continuar', 'Continuar ouvindo em outra página']];
+      var Vp = u.visitas.total, NOME = [['fileira', 'Fileira de gêneros'], ['busca', 'Busca'], ['ficha', 'Ficha do beat'], ['salvar', 'Salvar (♡)'], ['retorno', 'Avisos de quem volta'], ['filtro', 'BPM e tom nos Filtros'], ['continuar', 'Continuar ouvindo em outra página'], ['vermais', 'Ver mais na lista (celular)']];
       var bl = barras('O que as visitas usam', u.desde ? 'Quantas visitas usaram cada parte da lista, pelo menos 1 vez. Conta desde ' + u.desde.slice(8, 10) + '/' + u.desde.slice(5, 7) + '.' : 'Ainda sem uso contado. Começa a contar com as primeiras visitas depois de 14/11/2026.',
         NOME.map(function (n) { var x = u.uso[n[0]] || { total: 0, celular: 0 }; return [n[1], x.total, Vp ? pct(x.total, Vp) + ' das visitas' : '', num(x.celular) + ' no celular']; }));
       us.replaceWith(bl);

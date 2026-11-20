@@ -5,7 +5,7 @@
 import { db } from '../_lib/db.js';
 import { autenticado } from '../_lib/sessao.js';
 
-export const RECURSOS = ['fileira', 'busca', 'ficha', 'salvar', 'retorno', 'filtro', 'continuar'];
+export const RECURSOS = ['fileira', 'busca', 'ficha', 'salvar', 'retorno', 'filtro', 'continuar', 'vermais'];
 const DIA = /^\d{4}-\d{2}-\d{2}$/;
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'private, no-store' } });
 

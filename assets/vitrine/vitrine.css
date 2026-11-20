@@ -1503,3 +1503,10 @@ a.ft{text-decoration:none;display:inline-flex;align-items:center}
 #filtTom .ft,#gTag-tom{text-transform:none;letter-spacing:.04em}
 #filtTom .ft[data-tom=menor],#filtTom .ft[data-tom=maior]{text-transform:uppercase;letter-spacing:.14em}
 @media(max-width:860px){#nbar #filtMenu{padding-top:0}}
+/* 4: no celular a lista cresce no lugar com "Ver mais 10" (as páginas ficam só no computador) */
+.ver-mais{display:flex;flex-direction:column;align-items:stretch;gap:.6rem;width:100%}
+.ver-mais[hidden],.ver-mais [hidden]{display:none}
+.vm-bt{min-height:52px;border:1px solid var(--clay);background:none;color:var(--cream);font:700 .7rem 'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;cursor:pointer}
+.vm-bt:hover{border-color:var(--fire)}
+.vm-conta{text-align:center;font:400 .72rem 'IBM Plex Mono',monospace;color:var(--fosco)}
+@media(max-width:860px){#pagination .pagination-btns{display:none}#pagination{border:0;padding:1rem 0 0}}
