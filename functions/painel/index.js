@@ -525,7 +525,7 @@ function pagina() {
   <div id="musicas" hidden></div>
   <div id="gravou" hidden></div>
 </div>
-<script src="/assets/painel/analytics.js?v=b7f0c0ce6b" defer></script>
+<script src="/assets/painel/analytics.js?v=23b0b526bc" defer></script>
 <script src="/assets/painel/vitrine.js?v=7679c3fb69" defer></script>
 <script src="/assets/painel/musicas.js?v=a54b446b13" defer></script>
 <script src="/assets/painel/gravou.js?v=018001c9a1" defer></script>

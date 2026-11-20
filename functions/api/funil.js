@@ -9,7 +9,7 @@ import { db } from '../_lib/db.js';
 import { ehOBruno } from '../_lib/sessao.js';
 
 export const ETAPAS = ['visita', 'play', 'carrinho', 'checkout', 'pagamento', 'pago'];
-export const USO = ['uso-fileira', 'uso-busca', 'uso-ficha', 'uso-salvar', 'uso-retorno', 'uso-filtro', 'uso-continuar', 'uso-vermais'];   // vai pra tabela uso, não pro funil
+export const USO = ['uso-fileira', 'uso-busca', 'uso-ficha', 'uso-salvar', 'uso-retorno', 'uso-filtro', 'uso-continuar', 'uso-vermais', 'uso-recentes'];   // vai pra tabela uso, não pro funil
 const RETENCAO_DIAS = 400;
 
 const vazio = () => new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });

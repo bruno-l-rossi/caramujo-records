@@ -3572,6 +3572,63 @@ try{
 })();
 }catch(e){ setTimeout(function(){ throw e; }); }
 
+/* ── GANHOS 20/11/2026, 2ª leva (canvas f319e807, h2 aprovado pelo Bruno) ──────────────────────
+   2: "Suas buscas" no foco da busca. As 3 últimas buscas que acharam algo, guardadas só neste aparelho
+      (localStorage cr_buscas_v1), com quantos beats cada uma acha hoje, ✕ pra tirar uma e "Limpar". Fica dentro
+      do #bEx, então aparece e some junto com os exemplos (campo vazio e em foco). */
+try{
+(function(){
+  var C=window.Catalogo, inp=document.getElementById('beatSearchTop'), bex=document.getElementById('bEx');
+  if(!C||!inp||!bex) return;
+  var K='cr_buscas_v1', MAX=3;
+  var RL='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
+  var esc=function(x){ return String(x==null?'':x).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+  var usou=function(r){ try{ if(window.__uso) window.__uso(r); }catch(_){} };
+  function ler(){ try{ var l=JSON.parse(localStorage.getItem(K)||'[]'); return Array.isArray(l)?l.filter(function(x){ return typeof x==='string'&&x.trim(); }).slice(0,MAX):[]; }catch(_){ return []; } }
+  function gravar(l){ try{ if(l.length) localStorage.setItem(K,JSON.stringify(l)); else localStorage.removeItem(K); }catch(_){} }
+  // quantos beats a busca acha agora, com o mesmo filtro da lista (gênero, só à venda, BPM e tom)
+  function conta(q){
+    var nq=normalizeStr(String(q).trim()); if(!nq) return 0;
+    var antes=beatQuery; beatQuery=nq;
+    try{
+      var src=curFilt==='todos'?BEATS.slice():BEATS.filter(function(b){ return b.genre===curFilt; });
+      if(window.__VIT_OK) src=src.filter(function(b){ return (window.__VIT[String(b.id)]||{}).mp3; });
+      if(showAvailOnly) src=src.filter(function(b){ return !b.sold; });
+      src=src.filter(casaBusca);
+      if(typeof window.__filtroExtra==='function') src=src.filter(window.__filtroExtra);
+      return src.length;
+    }finally{ beatQuery=antes; }
+  }
+  function guardar(q){
+    q=String(q||'').trim().replace(/\s+/g,' '); if(q.length<2||q.length>40||!conta(q)) return;
+    var n=normalizeStr(q), l=ler().filter(function(x){ return normalizeStr(x)!==n; });
+    l.unshift(q); gravar(l.slice(0,MAX));
+  }
+  var box=document.createElement('div'); box.className='b-rec'; box.id='bRec'; box.hidden=true;
+  bex.insertBefore(box,bex.firstChild);
+  function pintar(){
+    var l=ler();
+    if(!l.length){ box.hidden=true; box.innerHTML=''; return; }
+    box.innerHTML='<div class="b-rec-cab"><b>Suas buscas</b><button type="button" class="b-rec-limpar" data-rl="1">Limpar</button></div>'+
+      l.map(function(q){ var n=conta(q);
+        return '<div class="b-rec-l"><button type="button" class="b-rec-q" data-rq="'+esc(q)+'">'+RL+'<span>'+esc(q)+'</span><small>'+(n===1?'1 beat':n?n+' beats':'nada hoje')+'</small></button>'+
+          '<button type="button" class="b-rec-x" data-rx="'+esc(q)+'" aria-label="Tirar '+esc(q)+' das suas buscas">✕</button></div>'; }).join('');
+    box.hidden=false;
+  }
+  inp.addEventListener('focus',pintar);
+  inp.addEventListener('keydown',function(e){ if(e.key==='Enter') guardar(inp.value); });
+  inp.addEventListener('change',function(){ guardar(inp.value); });
+  bex.addEventListener('click',function(e){
+    var t=e.target.closest&&e.target.closest('button'); if(!t||!box.contains(t)){ var ex=t&&t.getAttribute('data-q'); if(ex) guardar(ex); return; }
+    e.stopPropagation();
+    if(t.hasAttribute('data-rl')){ gravar([]); pintar(); inp.focus(); return; }
+    if(t.hasAttribute('data-rx')){ var x=normalizeStr(t.getAttribute('data-rx')); gravar(ler().filter(function(q){ return normalizeStr(q)!==x; })); pintar(); inp.focus(); return; }
+    if(t.hasAttribute('data-rq')){ var q=t.getAttribute('data-rq'); usou('recentes'); guardar(q); C.ir({ busca:q }); inp.blur(); }
+  },true);
+  window.__buscasRecentes=ler;
+})();
+}catch(e){ setTimeout(function(){ throw e; }); }
+
 /*AJUDA-INICIO*/
 (function(){if(window.__topo)return;window.__topo=1;var $=function(s){return document.querySelector(s)};
 try{var c=JSON.parse(localStorage.getItem('caramujo_carrinho_v1')||'null');if(c&&c.itens&&c.itens.length&&Date.now()-(c.em||0)<7*864e5){var n=c.itens.reduce(function(s,x){return s+(x.qty||1)},0),b=$('.js-n');if(b){b.textContent=n;b.hidden=false}}}catch(_){}

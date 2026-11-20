@@ -48,6 +48,9 @@
     '.an-bloco{margin-top:24px;min-width:0}',
     '.an-bloco h3{margin:0 0 3px;font-size:15px;font-weight:600}',
     '.an-bloco p.an-sub{margin:0 0 10px;font-size:12.5px;color:var(--ink4)}',
+    '.an-frase{margin:10px 0 14px;padding:14px 16px;border:1px solid rgba(224,177,85,.45);border-radius:12px;background:#141414;font-size:15px;line-height:1.45;color:#fff}',
+    '.an-frase>b{display:block;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#e0b155;margin-bottom:6px}',
+    '.an-frase strong{font-weight:700}',
     '.an-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 6px}',
     '.an-chips button{border:1px solid var(--borda);background:#141414;color:var(--ink2);font-size:12.5px;padding:6px 11px;border-radius:999px;cursor:pointer}',
     '.an-chips button[aria-pressed="true"]{border-color:#fff;color:#fff}',
@@ -430,6 +433,28 @@
     return campo;
   }
 
+  // "De cada 100 que deram play, 31 puseram no carrinho. É a maior perda do caminho: entre dar play e pôr no carrinho."
+  // Só aparece com gente bastante pra frase valer (30 visitas e 10 na etapa de partida).
+  function fraseFunil(etapas, a, V) {
+    var DE = { visita: 'visitas', play: 'que deram play', carrinho: 'que puseram no carrinho', checkout: 'que abriram o checkout', pagamento: 'que chegaram no pagamento' };
+    var FEZ = { play: 'deram play', carrinho: 'puseram no carrinho', checkout: 'abriram o checkout', pagamento: 'chegaram no pagamento', pago: 'pagaram' };
+    var INF = { visita: 'entrar na vitrine', play: 'dar play', carrinho: 'pôr no carrinho', checkout: 'abrir o checkout', pagamento: 'chegar no pagamento', pago: 'pagar' };
+    if (!V || V < 30 || !etapas || etapas.length < 2) return null;
+    var pior = null;
+    for (var i = 1; i < etapas.length; i++) {
+      var ea = etapas[i - 1], eb = etapas[i], na = (a[ea] || {}).total || 0, nb = (a[eb] || {}).total || 0;
+      if (na < 10 || !DE[ea] || !FEZ[eb]) continue;
+      var r = Math.min(1, nb / na);
+      if (!pior || r < pior.r) pior = { r: r, de: ea, pra: eb, nb: nb };
+    }
+    if (!pior || pior.r >= 1) return null;
+    var n = Math.round(pior.r * 100), q = !pior.nb ? 'nenhum' : n < 1 ? 'menos de 1' : String(n);
+    var c = el('div', 'an-frase');
+    c.innerHTML = '<b>O que os números dizem</b>De cada <strong>100</strong> ' + DE[pior.de] + ', <strong>' + q + '</strong> ' + FEZ[pior.pra] +
+      '. É a maior perda do caminho: entre <strong>' + INF[pior.de] + '</strong> e <strong>' + INF[pior.pra] + '</strong>.';
+    return c;
+  }
+
   /* ---------- as três abas ---------- */
   function vitrine(j, corpo) {
     var a = j.agora, an = j.antes;
@@ -453,6 +478,9 @@
         var n = a[e].total, linha = [NOMES[e], n, e === 'visita' ? '' : pct(n, ant), pct(n, V) + ' das visitas'];
         ant = n; return linha;
       })));
+    // 20/11/2026 (h4 aprovado): uma frase em cima das barras com a maior perda do caminho, nos números do período
+    var fr = fraseFunil(j.etapas, a, V);
+    if (fr) { var fb = dois.lastChild, fs = fb.querySelector('.an-sub'); fb.insertBefore(fr, fs ? fs.nextSibling : fb.children[1] || null); }
     var ap = el('div', 'an-bloco');
     ap.appendChild(el('h3', null, 'Celular ou computador'));
     ap.appendChild(el('p', 'an-sub', 'Das visitas no período.'));
@@ -469,7 +497,7 @@
     var us = el('div', 'an-bloco'); us.id = 'anUso'; corpo.appendChild(us);
     fetch('/api/uso?de=' + ((j.periodo && j.periodo.de) || '') + '&ate=' + ((j.periodo && j.periodo.ate) || '')).then(function (r) { return r.json(); }).then(function (u) {
       if (!u || !u.ok) { us.remove(); return; }
-      var Vp = u.visitas.total, NOME = [['fileira', 'Fileira de gêneros'], ['busca', 'Busca'], ['ficha', 'Ficha do beat'], ['salvar', 'Salvar (♡)'], ['retorno', 'Avisos de quem volta'], ['filtro', 'BPM e tom nos Filtros'], ['continuar', 'Continuar ouvindo em outra página'], ['vermais', 'Ver mais na lista (celular)']];
+      var Vp = u.visitas.total, NOME = [['fileira', 'Fileira de gêneros'], ['busca', 'Busca'], ['ficha', 'Ficha do beat'], ['salvar', 'Salvar (♡)'], ['retorno', 'Avisos de quem volta'], ['filtro', 'BPM e tom nos Filtros'], ['continuar', 'Continuar ouvindo em outra página'], ['vermais', 'Ver mais na lista (celular)'], ['recentes', 'Suas buscas (recentes)']];
       var bl = barras('O que as visitas usam', u.desde ? 'Quantas visitas usaram cada parte da lista, pelo menos 1 vez. Conta desde ' + u.desde.slice(8, 10) + '/' + u.desde.slice(5, 7) + '.' : 'Ainda sem uso contado. Começa a contar com as primeiras visitas depois de 14/11/2026.',
         NOME.map(function (n) { var x = u.uso[n[0]] || { total: 0, celular: 0 }; return [n[1], x.total, Vp ? pct(x.total, Vp) + ' das visitas' : '', num(x.celular) + ' no celular']; }));
       us.replaceWith(bl);
